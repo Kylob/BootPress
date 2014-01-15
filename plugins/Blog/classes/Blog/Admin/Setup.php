@@ -5,7 +5,7 @@ class BlogAdminSetup extends BlogAdmin {
   private $tags = array();
   
   public function view () {
-    global $page;
+    global $page, $bp;
     $html = '';
     $page->plugin('Form_Validation');
     if (empty($this->blog['name'])) return $this->admin($this->setup());
@@ -19,17 +19,14 @@ class BlogAdminSetup extends BlogAdmin {
       $this->tags[$id]['name'] = $tag;
     }
     $url = $this->blog['url'] . 'admin/setup/';
-    $page->plugin('Bootstrap', 'Navigation');
-    $nav = new BootstrapNavigation;
     $pills = array();
     $pills['Authors'] = $page->url('add', $url, 'edit', 'authors');
     if (!empty($this->tags)) {
       $pills['Categories'] = $page->url('add', $url, 'edit', 'categories');
       $pills['Tags'] = $page->url('add', $url, 'edit', 'tags');
     }
-    $html .= $nav->menu('pills', $pills, array('align'=>'horizontal', 'active'=>$page->url('delete', '', 'id')));
+    $html .= $bp->pills($pills, array('align'=>'horizontal', 'active'=>$page->url('delete', '', 'id')));
     $html .= '<br>';
-    unset($nav);
     $edit = (isset($_GET['edit'])) ? $_GET['edit'] : '';
     switch ($edit) {
       case 'authors':

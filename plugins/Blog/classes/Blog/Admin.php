@@ -16,19 +16,17 @@ class BlogAdmin extends Blog {
   }
   
   public function admin ($content=false) {
-    global $page;
+    global $page, $bp;
     $html = '';
     $html .= '<div id="adminForms">';
-      $page->plugin('Bootstrap', 'Navigation');
-      $nav = new BootstrapNavigation;
       $url = $this->blog['url'] . 'admin/';
       $links = array();
       if (empty($this->blog['name'])) {
-        $html .= '<div class="row"><div class="col-sm-12">' . $nav->breadcrumbs(array('Blog'=>$this->blog['url'], 'Admin')) . '</div></div>';
+        $html .= '<div class="row"><div class="col-sm-12">' . $bp->breadcrumbs(array('Blog'=>$this->blog['url'], 'Admin')) . '</div></div>';
         $links['Setup'] = $url . 'setup/';
       } else {
         $html .= '<div class="row">';
-          $html .= '<div class="col-sm-12">' . $nav->breadcrumbs(array($this->blog['name'] => $this->blog['url'], 'Admin')) . '</div>';
+          $html .= '<div class="col-sm-12">' . $bp->breadcrumbs(array($this->blog['name'] => $this->blog['url'], 'Admin')) . '</div>';
         $html .= '</div>';
         $links['Setup'] = $url . 'setup/';
         $links['Blog'] = $url . 'blog/';
@@ -37,12 +35,10 @@ class BlogAdmin extends Blog {
         $links['Images'] = $url . 'images/';
         if (is_admin(1)) $links['Code'] = $url . 'code/';
       }
-      $html .= '<div class="row">';
-        $html .= '<div class="col-sm-2">' . $nav->menu('pills', $links, array('active'=>$page->url('delete', '', '?'))) . '<br></div>';
-        $html .= '<div class="col-sm-10">' . $content . '</div>';
-      $html .= '</div>';
-      unset($nav);
-      
+      $html .= $bp->row('sm', array(
+        $bp->col(2, $bp->pills($links, array('active'=>$page->url('delete', '', '?'), 'align'=>'stacked'))),
+        $bp->col(10, $content)
+      ));
     $html .= '</div>';
     $html .= $this->wyciwyg();
     $page->link('<style type="text/css">
