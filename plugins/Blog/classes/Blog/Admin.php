@@ -130,7 +130,7 @@ class BlogAdmin extends Blog {
       $this->url . 'js/jquery.fieldSelection.js',
       $this->url . 'js/jquery.selectRange.js'
     ));
-    $page->link('<script type="text/javascript" src="' . $page->plugin('CDN', 'link', 'ace/1.1.01/min/ace.js') . '"></script>');
+    $page->plugin('CDN', 'link', 'ace/1.1.01/min/ace.js');
     $page->plugin('jQuery', array('plugin'=>'bootbox', 'code'=>'
     
       var editor = ace.edit("editor");
