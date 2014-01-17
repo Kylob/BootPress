@@ -1,34 +1,12 @@
-<div class="row">
-  <div class="col-sm-9">
-    <h1>{$blog['name']}</h1>
-    {if !empty($blog['slogan'])}
-      <p class="lead">{$blog['slogan']}</p>
-    {/if}
-  </div>
-  <div class="col-sm-3">
-    <br>
-    <form class="form-inline" method="get" action="{$blog['url']}" autocomplete="off">
-      <div class="input-group">
-        <input type="text" name="search" class="form-control" placeholder="{if isset($search)}{$search}{else}Search{/if}">
-        <div class="input-group-btn">
-          <button type="submit" class="btn btn-default" title="Submit"><i class="glyphicon glyphicon-search"></i></button>
-        </div>
-      </div>
-    </form>
-  </div>
-</div>
+{$bp->row('sm', [
+  $bp->col(9, "<h1>{$blog['name']}</h1>
+              {if !empty($blog['slogan'])}
+                <p class="lead">{$blog['slogan']}</p>
+              {/if}"),
+  $bp->col(3, "<br>{$bp->search($blog['url'])}")
+])}
 
-{if isset($breadcrumbs)}
-  <ol class="breadcrumb">
-    {foreach $breadcrumbs as $name => $link}
-      {if $link@last}
-        <li class="active">{$name}</li>
-      {else}
-        <li><a href="{$link}">{$name}</a></li>
-      {/if}
-    {/foreach}
-  </ol>
-{/if}
+{if isset($breadcrumbs)} {$bp->breadcrumbs($breadcrumbs)} {/if}
 
 {if $blog['page'] == 'page'}
 
@@ -52,17 +30,9 @@
   </div>
   
   <hr>
-	
-  {if !empty($previous) OR !empty($next)}
-    <ul class="pager">
-      {if !empty($previous)}
-        <li class="previous"><a title="Previous Post" href="{$previous.url}">&larr; {$previous.title}</a></li>
-      {/if}
-      {if !empty($next)}
-        <li class="next"><a title="Next Post" href="{$next.url}">{$next.title} &rarr;</a></li>
-      {/if}
-    </ul>
-  {/if}
+  
+  {$list = $bp->listings()->symbols($bp->icon('chevron-left'), $bp->icon('chevron-right'))}
+  {$list->pager($list->previous($previous.title, $previous.url), $list->next($next.title, $next.url), 'sides')}
   
   {if !empty($similar)}
     <h4>Similar Posts</h4>
@@ -108,55 +78,21 @@
     </p>
   {/foreach}
   
-  {if !empty($pagination)}
-    <div class="text-center">
-      <ul class="pagination">
-        {if !empty($pagination.first)}
-          <li><a title="First" href="{$pagination.first}">&laquo;</a></li>
-        {else}
-          <li class="disabled"><span title="First">&laquo;</span></li>
-        {/if}
-        {if !empty($pagination.previous)}
-          <li><a title="Previous" href="{$pagination.previous}">Previous</a></li>
-        {else}
-          <li class="disabled"><span title="Previous">Previous</span></li>
-        {/if}
-        {foreach $pagination.links as $num => $url}
-          {if !empty($link)}
-            <li><a title="{$num}" href="{$url}">{$num}</a></li>
-          {else}
-            <li class="active"><span title="{$num}">{$num}</span></li>
-          {/if}
-        {/foreach}
-        {if !empty($pagination.next)}
-          <li><a title="Next" href="{$pagination.next}">Next</a></li>
-        {else}
-          <li class="disabled"><span title="Next">Next</span></li>
-        {/if}
-        {if !empty($pagination.last)}
-          <li><a title="Last" href="{$pagination.last}">&raquo;</a></li>
-        {else}
-          <li class="disabled"><span title="Last">&raquo;</span></li>
-        {/if}
-      </ul>
-    </div>
-  {/if}
-  
+  <div class="text-center">{$bp->listings()->pagination()}</div>
   
 {elseif $blog['page'] == 'archives'}
 
   {foreach $archives as $Y => $years}
-    <h3><a href="{$years.link}">{$Y}</a> <span class="label label-primary">{$years.count}</span></h3>
-    <div class="row text-center">
-      {foreach $years.months as $M => $months}
-        <div class="col-sm-1">
-          <a class="btn btn-link btn-block" href="{$months.link}">
-            {$M}
-            {if $months.count > 0} <br><span class="label label-primary">{$months.count}</span> {/if}
-          </a>
-        </div>
-      {/foreach}
-    </div>
+    <h3><a href="{$years.link}">{$Y}</a> {$bp->label('primary', $years.count)}</h3>
+    {$columns = []}
+    {foreach $years.months as $M => $months}
+      {$columns[] = $bp->col('1 text-center', $bp->button(
+        'link block',
+        "$M {if $months.count > 0} <br> {$bp->label('primary', $months.count)} {/if}",
+        ['href' => $months.link]
+      ))}
+    {/foreach}
+    {$bp->row('sm', $columns)}
     <br>
   {/foreach}
 
@@ -164,7 +100,7 @@
 
   <h2>Authors</h2><hr>
   {foreach $authors as $author}
-    <p><a href="{$author.url}">{$author.name} <span class="badge">{$author.count}</span></a></p>
+    <p><a href="{$author.url}">{$author.name} {$bp->badge($author.count)}</a></p>
   {/foreach}
   
 {elseif $blog['page'] == 'tags'}

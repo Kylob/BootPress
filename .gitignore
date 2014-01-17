@@ -1,8 +1,2 @@
 params.php
-plugins/Blog/files/
-plugins/Blog/plugins/
-plugins/Form_Validation/functions/
-plugins/Form_Validation/uploads/
-plugins/SQLite/databases/
-plugins/Smarty/3.1.13
 websites/

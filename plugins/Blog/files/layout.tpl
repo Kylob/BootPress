@@ -1,2 +1,1 @@
-{$bootstrap->content({$content}, 12)}
-{$bootstrap->display()}
+{$bp->container('body', $content)}
