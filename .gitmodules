@@ -1,3 +1,6 @@
 [submodule "plugins/CDN/jsdelivr"]
 	path = plugins/CDN/jsdelivr
 	url = git://github.com/jsdelivr/jsdelivr.git
+[submodule "plugins/Smarty/smarty"]
+	path = plugins/Smarty/smarty
+	url = git:github.com/tekimaki/smarty.git
