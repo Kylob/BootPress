@@ -153,8 +153,12 @@ class Page {
       if (substr($file, -1) == '/') {
         $path .= $file;
       } elseif (!isset($this->loaded[$path . $file])) {
-        include $path . $file;
         $this->loaded[$path . $file] = '';
+        if (file_exists($path . $file)) {
+          include $path . $file;
+        } else {
+          trigger_error($path . $file . ' does not exist');
+        }
       }
     }
   }

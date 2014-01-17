@@ -23,7 +23,7 @@ class EditFile {
     $ext = substr($_GET['file'], strrpos($_GET['file'], '.') + 1);
     if ($ext == 'js') $ext = 'javascript';
     $line = (isset($_GET['line']) && is_numeric($_GET['line'])) ? $_GET['line'] : 1;
-    $page->plugin('Ace');
+    $page->link('<script type="text/javascript" src="' . $page->plugin('CDN', 'link', 'ace/1.1.01/min/ace.js') . '"></script>');
     $page->plugin('jQuery', array('plugin'=>'bootbox', 'code'=>'
       
       $("#editor").css({height:($(window).height() - 40) + "px"});

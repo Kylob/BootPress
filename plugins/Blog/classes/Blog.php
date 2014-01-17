@@ -28,6 +28,7 @@ class Blog {
       $this->sub = substr($page->get('url'), strlen(BASE_URL), -1);
       $this->dir .= $this->sub . '/'; // for images and plugins now - no more code!
     }
+    if (!is_dir($this->dir)) mkdir($this->dir, 0755, true);
     #-- Database --#
     $database = BASE_URI . 'blog';
     if ($this->sub) $database .= '.' . str_replace('/', '.', $this->sub);

@@ -6,7 +6,8 @@ $page->load($get['plugin-uri'], 'Error_Handler.php');
 
 if (isset($get['Admin']) && is_admin(1)) {
 
-  $page->plugin('Bootstrap', 'css');
+
+  $page->plugin('CDN', 'link', 'bootstrap/3.0.3/css/bootstrap.min.css');
   $html = '<div class="container">';
 
   if (isset($_GET['file']) && file_exists(BASE . $_GET['file'])) {

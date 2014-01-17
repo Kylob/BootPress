@@ -321,6 +321,7 @@ class BlogAdminCode extends BlogAdmin {
   private function folder_files (&$folders, $dir='') { // used in $this->folders() to display $this->folders
     if (empty($dir)) $dir = $this->folders;
     $empty = true;
+    if (!file_exists($dir)) return $folders = array();
     foreach (scandir($dir) as $file) {
       if ($file != '.' && $file != '..') {
         if (is_dir($dir . $file)) {

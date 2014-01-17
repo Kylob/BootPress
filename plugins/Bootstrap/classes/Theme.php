@@ -34,22 +34,18 @@ class BootstrapTheme {
       'variables' => '', // uri or theme name
       'version' => '3.0.3'
     ), $css);
+    if (!empty($options['custom'])) $page->link($options['custom'], true);
+    $page->plugin('CDN', array('prepend', 'link'=>'bootstrap/' . $options['version'] . '/js/bootstrap.min.js'));
     $themes = array('amelia', 'cerulean', 'cosmo', 'cyborg', 'flatly', 'journal', 'readable', 'simplex', 'slate', 'spacelab', 'united', 'yeti');
     if (in_array($options['variables'], $themes)) {
       $variables = $this->uri . 'less/themes/' . $options['variables'] . '.less';
-      $bootstrap = $this->files($variables, $options['version'], $options['variables']);
-      // $bootstrap = $page->plugin('CDN', 'link', 'bootswatch/' . $options['version'] . 'b/' . $options['variables'] . '/bootstrap.min.css');
+      $page->link($this->files($variables, $options['version'], $options['variables']), true);
+      // $page->plugin('CDN', array('prepend', 'link'=>'bootswatch/' . $options['version'] . 'b/' . $options['variables'] . '/bootstrap.min.css'));
     } elseif (!empty($options['variables']) && file_exists($options['variables'])) {
-      $bootstrap = $this->files($options['variables'], $options['version']);
+      $page->link($this->files($options['variables'], $options['version']), true);
     } else {
-      $bootstrap = $page->plugin('CDN', 'link', 'bootstrap/' . $options['version'] . '/css/bootstrap.min.css');
-      // $bootstrap = $this->url . 'css/' . $options['version'] . '/bootstrap.css';
+      $page->plugin('CDN', array('prepend', 'link'=>'bootstrap/' . $options['version'] . '/css/bootstrap.min.css'));
     }
-    $links = array();
-    $links[] = $bootstrap;
-    if (!empty($options['custom'])) $links[] = $options['custom'];
-    $links[] = $page->plugin('CDN', 'link', 'bootstrap/' . $options['version'] . '/js/bootstrap.min.js');
-    $page->link($links, 'prepend');
     $page->link('<meta name="viewport" content="width=device-width, initial-scale=1.0">');
   }
   
