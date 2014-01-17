@@ -97,7 +97,7 @@ class Blog {
     return $this->cache_resources($html);
   }
   
-  protected function smarty ($vars, $template) {
+  protected function smarty ($vars, $template, $testing=false) {
     global $page, $bp;
     static $smarty = null;
     if (empty($template) || !preg_match('/\{\$(.*)}/s', $template)) return $template;
@@ -108,7 +108,12 @@ class Blog {
     }
     $vars['bp'] = $bp;
     $smarty->assign($vars);
-    $html = $smarty->fetch('string:' . $template);
+    try {
+      $html = $smarty->fetch('string:' . $template);
+    } catch (Exception $e) {
+      preg_match('/[\s]+\[message[^\]]*\][\s]+=>(.*)/i', print_r($e, true), $message);
+      if (!empty($message)) $html = '<p>' . trim($message[1]) . '</p>';
+    }
     $smarty->clearAllAssign();
     return $html;
   }
