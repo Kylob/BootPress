@@ -38,16 +38,17 @@ class BootstrapTheme {
     if (in_array($options['variables'], $themes)) {
       $variables = $this->uri . 'less/themes/' . $options['variables'] . '.less';
       $bootstrap = $this->files($variables, $options['version'], $options['variables']);
+      // $bootstrap = $page->plugin('CDN', 'link', 'bootswatch/' . $options['version'] . 'b/' . $options['variables'] . '/bootstrap.min.css');
     } elseif (!empty($options['variables']) && file_exists($options['variables'])) {
       $bootstrap = $this->files($options['variables'], $options['version']);
     } else {
-      $bootstrap = $this->url . 'css/' . $options['version'] . '/bootstrap.css';
+      $bootstrap = $page->plugin('CDN', 'link', 'bootstrap/' . $options['version'] . '/css/bootstrap.min.css');
+      // $bootstrap = $this->url . 'css/' . $options['version'] . '/bootstrap.css';
     }
     $links = array();
     $links[] = $bootstrap;
     if (!empty($options['custom'])) $links[] = $options['custom'];
-    $links = $page->plugin('Cache', array('combine'=>$links)); // the css files
-    $links[] = $this->url . 'js/bootstrap.' . $options['version'] . '.js';
+    $links[] = $page->plugin('CDN', 'link', 'bootstrap/' . $options['version'] . '/js/bootstrap.min.js');
     $page->link($links, 'prepend');
     $page->link('<meta name="viewport" content="width=device-width, initial-scale=1.0">');
   }

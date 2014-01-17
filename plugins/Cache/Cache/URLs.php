@@ -38,7 +38,7 @@ class CacheURLs {
     $cached = array();
     foreach ($urls as $url) {
       $file = substr($url, strlen(BASE_URL));
-      $local = ($url == BASE_URL . $file) ? true : false;
+      $local = ($url == BASE_URL . $file && strpos($file, 'CDN') === false) ? true : false;
       if ($local && !$this->cached($file)) {
         $uri = (file_exists(BASE_URI . $file)) ? BASE_URI . $file : BASE . $file;
         $cached[$uri] = $url;

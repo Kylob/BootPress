@@ -2,7 +2,7 @@
 
 $get = $page->get('params');
 
-include_once $get['plugin-uri'] . 'functions.php';
+include_once($get['plugin-uri'] . 'functions.php'); // don't use $page->load() because we want to use $get here
 
 if (isset($get['code'])) {
   if (isset($get['oneliner']) && $get['oneliner'] === false) {

@@ -1,16 +1,8 @@
 params.php
 plugins/Blog/files/
 plugins/Blog/plugins/
-plugins/Bootstrap/css/
-plugins/Bootstrap/fonts/
-plugins/Bootstrap/js/
-plugins/Bootstrap/less/
 plugins/Form_Validation/functions/
 plugins/Form_Validation/uploads/
 plugins/SQLite/databases/
-plugins/Smarty/cache
-plugins/Smarty/configs
-plugins/Smarty/templates
-plugins/Smarty/templates_c
 plugins/Smarty/3.1.13
 websites/

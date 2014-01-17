@@ -2,7 +2,7 @@
 
 $get = $page->get('params');
 
-$page->load($get, '3.1.13/libs/Smarty.class.php');
+$page->load($get, 'smarty/libs/Smarty.class.php');
 
 if (isset($get['class'])) {
 

@@ -27,10 +27,15 @@ class Page {
     $this->domain = substr(strstr(BASE_URL, '//'), 2, -1);
     define('BASE_URI', BASE . 'websites/' . $this->domain . '/');
     $path = substr($_SERVER['HTTP_HOST'] . $_SERVER['REQUEST_URI'], strlen($this->domain) + 1);
-    $this->file_url_uri_query($path);
-    $desired_url = $this->url . $this->uri . $this->query;
-    $actual_url = implode('//', array(($_SERVER['SERVER_PORT'] == 443) ? 'https:' : 'http:', $_SERVER['HTTP_HOST'] . $_SERVER['REQUEST_URI']));
-    if ($desired_url != $actual_url) $this->eject($desired_url, 301);
+    if (preg_match('/\.(js|css|jpe?g|gif|png|eot|ttf|otf|svg|woff)$/', $path)) {
+      $this->url = BASE_URL;
+      $this->uri = $path;
+    } else {
+      $this->file_url_uri_query($path);
+      $desired_url = $this->url . $this->uri . $this->query;
+      $actual_url = implode('//', array(($_SERVER['SERVER_PORT'] == 443) ? 'https:' : 'http:', $_SERVER['HTTP_HOST'] . $_SERVER['REQUEST_URI']));
+      if ($desired_url != $actual_url) $this->eject($desired_url, 301);
+    }
   }
   
   public function theme ($code) {
@@ -269,7 +274,10 @@ class Page {
     $uri = explode('/', preg_replace('/\?.*$/', '', $path)); // remove the query string and break up into chunks
     $paths = array();
     foreach ($uri as $key => $value) {
-      $value = preg_replace('/\..*$/', '', $value); // to remove any file extensions
+      if (strpos($value, '.') !== false) {
+      // if (strpos($value, '.') !== false && !is_numeric(str_replace('.', '', $value))) { // skip version numbers 1.0.0 etc.
+        $value = preg_replace('/\..*$/', '', $value); // to remove any file extensions
+      }
       if (!empty($value)) $paths[] = $value;
     }
     $extension = strstr(array_pop($uri), '.');
