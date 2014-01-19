@@ -27,9 +27,9 @@ class Page {
     $this->domain = substr(strstr(BASE_URL, '//'), 2, -1);
     define('BASE_URI', BASE . 'websites/' . $this->domain . '/');
     $path = substr($_SERVER['HTTP_HOST'] . $_SERVER['REQUEST_URI'], strlen($this->domain) + 1);
-    if (preg_match('/\.(js|css|jpe?g|gif|png|eot|ttf|otf|svg|woff)$/', $path)) {
+    if (preg_match('/\.(js|css|jpe?g|gif|png|eot|ttf|otf|svg|woff)$/', preg_replace('/\?.*$/', '', $path))) {
       $this->url = BASE_URL;
-      $this->uri = $path;
+      $this->uri = preg_replace('/\?.*$/', '', $path);
     } else {
       $this->file_url_uri_query($path);
       $desired_url = $this->url . $this->uri . $this->query;

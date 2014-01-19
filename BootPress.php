@@ -17,13 +17,23 @@ class BootPress {
     $html = '';
     $sizes = func_get_args();
     $columns = array_pop($sizes);
-    $prefix = array('offset', 'push', 'pull', 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12);
+    $prefix = array();
+    $grid = range(1, 12);
+    foreach ($grid as $num) {
+      $prefix[] = 'offset-' . $num;
+      $prefix[] = 'push-' . $num;
+      $prefix[] = 'pull-' . $num;
+      $prefix[] = $num;
+    }
+    // $prefix = array('offset', 'push', 'pull', 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12);
     foreach ($columns as $cols) {
       if (is_string($cols)) {
         $html .= $cols;
       } else {
         $content = array_pop($cols);
-        foreach ($cols as $key => $value) $cols[$key] = $this->classes('col-' . $sizes[$key], $value, $prefix, true);
+        foreach ($cols as $key => $value) {
+          $cols[$key] = $this->classes('col-' . $sizes[$key], $value, $prefix, true);
+        }
         $html .= "\n    " . '<div class="' . implode(' ', $cols) . '">' . $content . '</div>';
       }
     }

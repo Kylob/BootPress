@@ -381,7 +381,7 @@ class BlogAdminCode extends BlogAdmin {
         }
       }
     }
-    return array_merge($files, $dirs);
+    return array_merge($dirs, $files);
   }
   
 }

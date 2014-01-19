@@ -36,7 +36,7 @@ class Form {
     if (in_array($var, array('url', 'uri', 'name'))) return $this->$var;
   }
 
-  public function required ($required, $asterisk=true) {
+  public function required ($required, $asterisk=false) {
     if (is_array($required)) foreach ($required as $value) $this->required[] = $value;
     if (in_array('recaptcha', $this->required)) include_once $this->uri . 'functions/recaptcha.php';
     if ($asterisk === false) $this->asterisk = $asterisk;
@@ -318,9 +318,15 @@ class Form {
   
   private function calendar ($name, $options) {
     global $page;
-    $page->link($this->url . 'js/datepicker.js');
     $page->plugin('jQuery', array('code'=>'$("#' . $name . '").datepicker().on("changeDate", function(){ $(this).valid(); });'));
-    return $this->text($name, array_merge(array('style'=>'width:80px;', 'maxlength'=>10), (array) $options));
+    $page->plugin('CDN', array('links'=>array(
+      'bootstrap.datepicker-fork/1.2.0/css/datepicker.min.css',
+      'bootstrap.datepicker-fork/1.2.0/js/bootstrap-datepicker.min.js'
+    )));
+    $options['id'] = $name;
+    $options['name'] = $name;
+    $field = $this->pre_append('<input type="text"' . $this->attributes($this->form_control_class($options), $name) . $this->defaultValue('date', $name) . '>', $options);
+    return '<div style="width:102px;">' . $field . '</div>';
     return $form;
   }
   
@@ -345,23 +351,23 @@ class Form {
     global $page;
     $page->link($this->url . 'js/hierSelect.js');
     $json = array();
-    $multi = (substr($options['hier'], -2) == '[]') ? true : false;
+    if (!isset($options[0])) return $this->select($name, array());
+    $multi = (isset($options['hier']) && substr($options['hier'], -2) == '[]') ? true : false;
     foreach ($options[0] as $id => $main) {
       if (is_array($main)) { // a select menu with optgroups
         foreach ($main as $id => $main) {
-          $hier = ($multi) ? array() : array(''=>'&nbsp;');
+          $hier = ($multi) ? array() : array('&nbsp;');
           if (isset($options[$id])) foreach ($options[$id] as $key => $value) $hier[$main][$key] = $value;
           $json[$id] = $hier;
         }
       } else {
-        $hier = ($multi) ? array() : array(''=>'&nbsp;');
+        $hier = ($multi) ? array() : array('&nbsp;');
         if (isset($options[$id])) foreach ($options[$id] as $key => $value) $hier[$key] = $value;
         $json[$id] = $hier;
       }
     }
     $page->plugin('jQuery', array('code'=>'$("#' . $name . '").hierSelect("' . $options['hier'] . '", ' . json_encode($json) . ');'));
     $select = (isset($options['preselect'])) ? $options['preselect'] : $options[0];
-    if ($empty) $select['empty'] = 'option';
     return $this->select($name, $select);
   }
   
@@ -549,6 +555,7 @@ class Form {
           case 'checkbox': $default .= ' checked="checked"'; break;
           case 'radio': $default .= ' checked="checked"'; break;
           case 'select': $default .= ' selected="selected"'; break;
+          case 'date': $default .= ' value="' . date('m/d/Y', strtotime($value)) . '"'; break;
           case 'text': $default .= ' value="' . $value . '"'; break;
           case 'textarea': $default .= $value; break;
         }

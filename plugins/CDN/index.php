@@ -6,7 +6,7 @@ if (isset($get['link'])) $get['links'] = array($get['link']);
 
 if (isset($get['links'])) {
   $path = 'jsdelivr/files/';
-  $localhost = (substr($page->get('domain'), 0, 9) == 'localhost') ? true : false;
+  $localhost = ($_SERVER['HTTP_HOST'] == 'localhost') ? true : false;
   $links = (array) $get['links'];
   foreach ($links as $key => $file) {
     if (!file_exists($get['plugin-uri'] . $path . $file)) {

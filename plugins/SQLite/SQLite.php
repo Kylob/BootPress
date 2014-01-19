@@ -38,9 +38,15 @@ class SQLite {
   
   public function create ($table, $columns, $changes=array()) {
     if ($this->db === false) return $this->db;
+    $add = '';
+    if (isset($columns['add'])) { // eg. UNIQUE (field_one, field_two) ON CONFLICT REPLACE
+      $add = ", \n\t" . $columns['add'];
+      unset($columns['add']);
+    }
     $fields = array();
     foreach ($columns as $name => $type) $fields[] = $name . ' ' . $type;
-    $query = 'CREATE TABLE "' . $table . '" (' . implode(", \n\t", $fields) . ')';
+    $fields = implode(", \n\t", $fields) . $add;
+    $query = 'CREATE TABLE "' . $table . '" (' . $fields . ')';
     $executed = $this->info('tables', $table);
     $quotes = array('"', "'");
     // See http://www.sqlite.org/fileformat2.html - 2.5 Storage Of The SQL Database Schema
@@ -49,7 +55,7 @@ class SQLite {
     }
     $this->info('tables', $table, $query); // add or update
     if ($executed) { // then this table is being altered in some way
-      $this->alter($table, $columns, $changes);
+      $this->alter($table, $columns, $changes, $add);
       trigger_error("<pre>Just FYI, an SQLite table was changed:\n\nFrom: {$executed}\n\nTo: {$query}</pre>");
     } else {
       $this->exec($query); // We should only get here once
@@ -317,7 +323,7 @@ class SQLite {
     }
   }
   
-  private function alter ($table, $columns, $changes=array()) { // used in $this->create()
+  private function alter ($table, $columns, $changes=array(), $add='') { // used in $this->create()
     if ($this->db === false) return $this->db;
     $this->query("SELECT * FROM {$table} LIMIT 1");
     $row = $this->fetch('assoc', 'all'); // 'all' so that we can drop this table later
@@ -335,7 +341,8 @@ class SQLite {
     $copy = "{$table}_copy";
     $fields = array();
     foreach ($columns as $name => $type) $fields[] = $name . ' ' . $type;
-    $results[] = $this->exec('CREATE TABLE "' . $copy . '" (' . implode(", \n\t", $fields) . ')');
+    $fields = implode(", \n\t", $fields) . $add;
+    $results[] = $this->exec('CREATE TABLE "' . $copy . '" (' . $fields . ')');
     if (!empty($map)) {
       $results[] = $this->exec('INSERT INTO ' . $copy . ' (' . implode(', ', array_values($map)) . ') SELECT ' . implode(', ', array_keys($map)) . ' FROM ' . $table);
     }

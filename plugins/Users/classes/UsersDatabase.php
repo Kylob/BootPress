@@ -34,7 +34,6 @@ class UsersDatabase {
         $code = substr($_COOKIE['user'], -32);
         if ($this->db->value('SELECT id FROM users WHERE id = ? AND code = ?', array($user_id, $code))) {
           return $this->login($user_id);
-          // $page->eject($page->get('url') . $page->get('uri') . $page->get('query'));
         }
       }
       $this->user_cookie();
@@ -71,7 +70,6 @@ class UsersDatabase {
       $_SESSION['name'] = $name;
       if ($admin > 0) $_SESSION['admin'] = $admin;
       if ($cookie) $this->user_cookie($user_id, $code);
-      // session_regenerate_id();
     }
   }
   
@@ -88,18 +86,12 @@ class UsersDatabase {
     global $page;
     $value = $user_id . $code;
     $expires = (!empty($user_id)) ? time() + (60 * 60 * 24 * 30) : 1;
-    $domain = $page->get('domain');
-    if (substr($domain, 0, 9) == 'localhost') {
-      $domain = false;
-      $path = '/';
+    if ($_SERVER['HTTP_HOST'] == 'localhost') {
+      setcookie('user', $value, $expires, '/', false, false, true);
     } else {
-      $path = explode('/', $domain);
-      $domain = '.' . implode('.', array_slice(explode('.', array_shift($path)), -2));
-      $path = implode('/', $path) . '/';
+      $domain = '.' . implode('.', array_slice(explode('.', $page->get('domain')), -2));
+      setcookie('user', $value, $expires, '/', $domain, false, true);
     }
-    $domain = (substr($domain, 0, 9) == 'localhost') ? false : '.' . $domain; // implode('.', array_slice(explode('.', $domain), -2));
-    
-    setcookie('user', $value, $expires, $path, $domain);
   }
   
   private function update_admin () {

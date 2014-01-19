@@ -5,8 +5,8 @@
       var hier = $("select[name='" + select + "']");
       var preselect = hier.val();
       hier.each(function(){
+        hier.children().remove();
         if (id != "") {
-          hier.children().remove();
           $.each(options[id], function(key,value){
             if (typeof value === "object") {
               var optgroup = $("<optgroup />", {label:key});
