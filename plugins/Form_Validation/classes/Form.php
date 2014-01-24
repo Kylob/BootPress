@@ -194,6 +194,7 @@ class Form {
       case 'multicheck': $control = $this->$type($name, $options, $key); break;
       case 'multiselect': $control = $this->$type($name, $options, $key); break;
       case 'multitext': $control = $this->$type($name, $options, $key); break;
+      case 'multitextarea': $control = $this->$type($name, $options, $key); break;
       case 'password': $control = $this->$type($name, $options); break;
       case 'radio': $control = $this->$type($name, $options); break;
       case 'select': $control = $this->$type($name, $options, $key); break;
@@ -409,6 +410,13 @@ class Form {
     $options['name'] = $name . '[' . $key . ']';
     if (isset($options['value'])) $options['value'] = stripslashes(htmlspecialchars(htmlspecialchars_decode($options['value'])));
     return $this->pre_append('<input type="text"' . $this->attributes($this->form_control_class($options), $name) . '>', $options);
+  }
+  
+  private function multitextarea ($name, $options, $key) {
+    $options['name'] = $name . '[' . $key . ']';
+    $value = (isset($options['value'])) ? stripslashes(htmlspecialchars(htmlspecialchars_decode($options['value']))) : '';
+    unset($options['value']);
+    return '<textarea' . $this->attributes($this->form_control_class($options), $name) . '>' . $value. '</textarea>';
   }
   
   private function password ($name, $options) {

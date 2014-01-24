@@ -259,7 +259,8 @@ class SQLite {
   
   public function delete ($table, $column, $id, $add='') {
     if ($this->db === false) return $this->db;
-    return $this->statement('DELETE FROM ' . $table . ' WHERE ' . $column . ' = ? ' . $add, (array) $id, 'delete');
+    if (!is_array($id)) $id = array($id);
+    return $this->statement('DELETE FROM ' . $table . ' WHERE ' . $column . ' = ? ' . $add, $id, 'delete');
   }
   
   public function fetch ($return='num', $all=false) {
