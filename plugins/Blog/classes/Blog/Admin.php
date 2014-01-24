@@ -182,12 +182,14 @@ class BlogAdmin extends Blog {
         });
       });
       
-      $("#wyciwyg").css({height:($(window).height() - 40) + "px"});
+      $("#wyciwyg").css({height:($(window).height() - 10) + "px"});
+      $("#editor").css({height:($("#wyciwyg").height() - 30) + "px"});
       
       $("#toolbar button[title!=\'\']").tooltip({placement:"bottom"});
       
       $("#toolbar").click(function(e){
-        $("#wyciwyg").css({height:($(window).height() - 50) + "px"});
+        $("#wyciwyg").css({height:($(window).height() - 10) + "px"});
+        $("#editor").css({height:($("#wyciwyg").height() - 30) + "px"});
         $("html, body").scrollTop($(document).height()-$(window).height());
         editor.resize();
       });
@@ -275,24 +277,6 @@ class BlogAdmin extends Blog {
         bindKey: {win: "Ctrl-S",  mac: "Command-S"},
         exec: function() { $("#toolbar button.send").click(); },
         readOnly: false
-      });
-      
-      editor.commands.addCommand({
-        name: "clipboard",
-        bindKey: {win: "Ctrl-C",  mac: "Command-C"},
-        exec: function() {
-          var box = bootbox.alert("<br><textarea id=\'copyandpaste\' spellcheck=\'false\' rows=\'5\' class=\'form-control input-sm\'></textarea>", function(){editor.focus();});
-          $("#copyandpaste").val(editor.getCopyText()).click(function(){
-            $(this).select();
-          }).keyup(function(e){
-            if (e.keyCode == 67 && e.ctrlKey) {
-              $(this).unbind();
-              box.modal("hide");
-              editor.focus();
-            }
-          });
-        },
-        readOnly: true
       });
       
       editor.commands.addCommand({
@@ -389,7 +373,7 @@ class BlogAdmin extends Blog {
         
       $html .= '</div>'; // end #toolbar
       
-      $html .= '<div id="editor" style="height:100%;"></div>';
+      $html .= '<div id="editor"></div>';
       
     $html .= '</div>'; // end #wyciwyg
     
