@@ -130,6 +130,12 @@ class BlogAdmin extends Blog {
       $this->url . 'js/jquery.fieldSelection.js',
       $this->url . 'js/jquery.selectRange.js'
     ));
+    /*
+    $page->plugin('CDN', 'link', 'zeroclipboard/1.2.3/ZeroClipboard.min.js');
+      var client = new ZeroClipboard($("#clipboard"), {
+        moviePath: "http://localhost/fixitman.com/plugins/CDN/jsdelivr/files/zeroclipboard/1.2.3/ZeroClipboard.swf"
+      });
+    */
     $page->plugin('CDN', 'link', 'ace/1.1.01/min/ace.js');
     $page->plugin('jQuery', array('plugin'=>'bootbox', 'code'=>'
     
@@ -376,6 +382,7 @@ class BlogAdmin extends Blog {
       $html .= '<div id="editor"></div>';
       
     $html .= '</div>'; // end #wyciwyg
+    
     
     return $html;
   }

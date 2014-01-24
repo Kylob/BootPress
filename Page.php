@@ -27,7 +27,7 @@ class Page {
     $this->domain = substr(strstr(BASE_URL, '//'), 2, -1);
     define('BASE_URI', BASE . 'websites/' . $this->domain . '/');
     $path = substr($_SERVER['HTTP_HOST'] . $_SERVER['REQUEST_URI'], strlen($this->domain) + 1);
-    if (preg_match('/\.(js|css|jpe?g|gif|png|eot|ttf|otf|svg|woff)$/', preg_replace('/\?.*$/', '', $path))) {
+    if (preg_match('/\.(js|css|jpe?g|gif|png|eot|ttf|otf|svg|woff|swf)$/', preg_replace('/\?.*$/', '', $path))) {
       $this->url = BASE_URL;
       $this->uri = preg_replace('/\?.*$/', '', $path);
     } else {
@@ -411,7 +411,7 @@ class Page {
 }
 
 $page = new Page;
-if (preg_match('/\.(js|css|jpe?g|gif|png|eot|ttf|otf|svg|woff)$/', $page->get('uri'))) {
+if (preg_match('/\.(js|css|jpe?g|gif|png|eot|ttf|otf|svg|woff|swf)$/', $page->get('uri'))) {
   $page->plugin('Cache', array('deliver'=>$page->get('uri')));
 } else {
   $page->plugin('Error_Handler'); // must come before 'Sessions'

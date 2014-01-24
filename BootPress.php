@@ -25,7 +25,6 @@ class BootPress {
       $prefix[] = 'pull-' . $num;
       $prefix[] = $num;
     }
-    // $prefix = array('offset', 'push', 'pull', 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12);
     foreach ($columns as $cols) {
       if (is_string($cols)) {
         $html .= $cols;
@@ -100,6 +99,7 @@ class BootPress {
   }
   
   public function breadcrumbs ($links) {
+    if (empty($links)) return '';
     foreach ($links as $name => $href) {
       $links[$name] = '<li><a href="' . $href . '">' . $name . '</a> <span class="divider"></span></li>';
       if (is_numeric($name)) $name = $href; // this should only happen to the last breadcrumb

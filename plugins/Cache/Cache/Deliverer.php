@@ -19,6 +19,7 @@ class CacheDeliverer extends CacheURLs {
       case 'otf': $type = 'otf'; break;
       case 'svg': $type = 'svg'; break;
       case 'woff': $type = 'woff'; break;
+      case 'swf': $type = 'swf'; break;
       default:
         header ("HTTP/1.1 503 Not Implemented");
         exit;
@@ -29,6 +30,9 @@ class CacheDeliverer extends CacheURLs {
       if (file_exists(BASE_URI . $file)) $file = BASE_URI . $file;
       elseif (file_exists(BASE . $file)) $file = BASE . $file;
       else {
+      echo $file;
+      exit;
+      
         header( "HTTP/1.1 404 Not Found" );
         exit;
       }
@@ -66,8 +70,9 @@ class CacheDeliverer extends CacheURLs {
       case 'otf': header('Content-Type: font/opentype'); break;
       case 'svg': header('Content-Type: image/svg+xml'); break;
       case 'woff': header('Content-Type: font/x-woff'); break;
+      case 'swf': header("Content-Type: application/x-shockwave-flash"); break;
     }
-    if (!$image && !in_array($type, array('eot', 'woff'))) { // these are already compressed
+    if (!$image && !in_array($type, array('eot', 'woff', 'swf'))) { // these are already compressed
       $supported = (isset($_SERVER['HTTP_ACCEPT_ENCODING'])) ? $_SERVER['HTTP_ACCEPT_ENCODING'] : '';
       $gzip = strstr($supported, 'gzip');
       $deflate = strstr($supported, 'deflate');
