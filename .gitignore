@@ -1,3 +1,27 @@
-code/
-websites/
-params.php
+# Ignore everything here
+*
+
+# Except for these:
+!BootPress/
+!plugins/
+!BootPress.php
+!Page.php
+!params_blank.php
+
+# And only these plugins:
+plugins/*
+!plugins/Blog/
+!plugins/Bootstrap/
+!plugins/Cache/
+!plugins/CDN/
+!plugins/Compiler/
+!plugins/Error_Handler/
+!plugins/Feeds/
+!plugins/Form_Validation/
+!plugins/ImageMagick/
+!plugins/jQuery/
+!plugins/MySQL/
+!plugins/Sessions/
+!plugins/Smarty/
+!plugins/SQLite/
+!plugins/Users/
