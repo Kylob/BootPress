@@ -1,8 +1,9 @@
 <?php
 
-function imagemagick ($command, $params) {
-  $cmd = array();
-  $cmd[] = escapeshellarg(IMAGEMAGICK_PATH . $command);
+function imagemagick ($command, $params, $dir='') {
+  $current = getcwd();
+  if (!empty($dir)) chdir($dir);
+  $cmd = array(escapeshellarg(IMAGEMAGICK_PATH . $command));
   foreach ($params as $key => $value) {
     if (strpos($value, BASE) !== false) $value = escapeshellarg($value);
     if (!is_numeric($key)) {
@@ -15,6 +16,7 @@ function imagemagick ($command, $params) {
   $output = array();
   $cmd = implode(' ', $cmd);
   exec($cmd . ' 2>&1', $output, $return);
+  chdir($current);
   return array('cmd'=>$cmd, 'output'=>$output, 'return'=>$return);
 }
 

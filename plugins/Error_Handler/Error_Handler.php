@@ -20,6 +20,7 @@ class Error {
 
   private $db;
   private $domain = 0;
+  private $logged = array();
   
   private function __construct () {
     global $page;
@@ -49,6 +50,8 @@ class Error {
   
   public function my_error_handler ($num, $msg, $file, $line, $vars) {
     if (!($num & error_reporting())) return true; // This error code is not included in the error_reporting level
+    $errors = array('domain_id'=>$this->domain, 'num'=>$num, 'file'=>$file, 'line'=>$line, 'msg'=>$msg);
+    foreach ($this->logged as $already) if ($already == $errors) return true; // We've already made our point
     $debug = array();
     $backtraces = debug_backtrace(false);
     array_shift($backtraces); // get rid of my_error_handler reference
@@ -59,11 +62,11 @@ class Error {
       $debug[$key]['class'] = (isset($info['class'])) ? $info['class'] : '';
       $debug[$key]['function'] = $info['function'];
     }
-    return $this->log($num, $msg, $file, $line, $vars, $debug);
+    return $this->log($errors, $debug);
   }
   
-  private function log ($num, $msg, $file, $line, $vars, $debug) {
-    $errors = array('domain_id'=>$this->domain, 'num'=>$num, 'file'=>$file, 'line'=>$line, 'msg'=>$msg);
+  private function log ($errors, $debug) {
+    $this->logged[] = $errors;
     $id = $this->db->insert('errors', $errors);
     foreach ($debug as $key => $info) $debug[$key]['error_id'] = $id;
     $this->db->insert('backtraces', $debug);

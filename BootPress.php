@@ -213,11 +213,20 @@ class BootPress {
   }
   
   public function search ($url, $placeholder='Search', $button='') {
+    global $page;
     $html = '';
     if (is_array($url)) {
       list($method, $url) = each($url);
     } else {
       $method = 'get';
+    }
+    $hidden = '';
+    if ($method == 'get') {
+      $params = $page->url('params', $url);
+      $url = $page->url('delete', $url, '?');
+      foreach ($params as $key => $value) {
+        if ($key != 'search') $hidden .= '<input type="hidden" name="' . $key . '" value="' . $value . '">';
+      }
     }
     if (is_array($placeholder)) {
       list($size, $placeholder) = each($placeholder);
@@ -231,7 +240,7 @@ class BootPress {
       $button = '<button type="submit" class="btn btn-default" title="Search">' . $button . '</button>';
     }
     if (isset($_GET['search'])) $placeholder = $_GET['search'];
-    $html .= '<form class="form-inline" method="' . $method . '" action="' . $url . '" autocomplete="off" role="search">';
+    $html .= '<form class="form-inline" method="' . $method . '" action="' . $url . '" autocomplete="off" role="search">' . $hidden;
       $html .= '<div class="' . $this->classes('input-group', $size, array('sm', 'md', 'lg')) . '">';
         $html .= '<input type="text" name="search" class="form-control" placeholder="' . $placeholder . '">';
         $html .= '<div class="input-group-btn">' . $button . '</div>';

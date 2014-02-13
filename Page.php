@@ -243,33 +243,31 @@ class Page {
   public function url ($action='', $url='', $key='', $value=NULL) {
     if (empty($url)) $url = $this->url . $this->uri . $this->query;
     if (empty($action)) return $url;
-    if ($action == 'delete' && $key == '?') return preg_replace('/[\?#].*$/', '', $url); // clean the slate
-    if ($action == 'ampify') return $this->ampify($url);
-    $url = str_replace ('&amp;', '&', $url);
-    if (is_array($key) && in_array($action, array('add', 'delete'))) {
-      if ($action == 'add') foreach ($key as $k => $v) $url = $this->url('add', $url, $k, $v);
-      if ($action == 'delete') foreach ($key as $value) $url = $this->url('delete', $url, $value);
-      return $url;
+    $base = preg_replace('/[\?#].*$/', '', $url); // just the url and path
+    $url = parse_url(str_replace('&amp;', '&', $url));
+    if (isset($url['query'])) {
+      parse_str($url['query'], $params);
+    } else {
+      $params = array();
     }
-    $fragment = parse_url ($url, PHP_URL_FRAGMENT);
-    if (!empty($fragment)) {
-      $fragment = '#' . $fragment; // to add on later
-      $url = str_replace($fragment, '', $url);
-    }
+    if ($action == 'params') return $params;
+    if ($action == 'delete' && $key == '?') return $base;
+    $fragment = (!empty($url['fragment'])) ? '#' . $url['fragment'] : '';
     if ($key == '#') {
+      $url = (!empty($params)) ? $base . '?' . http_build_query($params, '', '&amp;') : $base;
       if ($action == 'delete') $fragment = '';
       elseif ($action == 'add') $fragment = '#' . urlencode($value);
-      return $this->ampify($url . $fragment);
+      return $url . $fragment;
     }
-    $url = preg_replace('/(.*)(\?|&)' . $key . '=[^&]+?(&)(.*)/i', '$1$2$4', $url . '&');
-    $url = substr($url, 0, -1);
-    $value = urlencode($value);
-    if ($action == 'delete') {
-      return $this->ampify($url . $fragment);
-    } elseif ($action == 'add') {
-      $insert = (strpos($url, '?') !== false) ? '&' : '?';
-      return $this->ampify($url . $insert . $key . '=' . $value . $fragment);
+    $merge = (is_array($key)) ? $key : array($key => $value);
+    if ($action == 'add') {
+      foreach ($merge as $key => $value) $params[$key] = $value;
+    } elseif ($action == 'delete') {
+      foreach ($merge as $key => $value) unset($params[$key]);
     }
+    $params = http_build_query($params, '', '&amp;');
+    $query = (!empty($params)) ? '?' . $params : '';
+    return $base . $query . $fragment;
   }
   
   private function file_url_uri_query ($path) { // used in $this->__construct()
@@ -323,10 +321,6 @@ class Page {
     } else {
       $this->data[$type][] = $value;
     }
-  }
-  
-  private function ampify ($string) { // used in $this->url
-    return str_replace(array('&amp;', '&'), array('&', '&amp;'), $string);
   }
   
   public function outreach ($path, $params=array()) { // used in $this->plugin()

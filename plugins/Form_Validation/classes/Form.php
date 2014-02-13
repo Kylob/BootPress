@@ -374,13 +374,10 @@ class Form {
   
   private function multicheck ($name, $options, $key) {
     $checkboxes = array();
-    $keys = (array) $key;
-    foreach ($options as $value => $description) {
-      $key = (!empty($keys)) ? array_shift($keys) : '';
-      $field = '<input type="checkbox"' . $this->attributes(array('name'=>"{$name}[{$key}]", 'value'=>$value), $name) . '>' . $description;
-      $checkboxes[] = '<label class="checkbox-inline">' . $field . '</label>';
-    }
-    return implode(' ', $checkboxes);
+    list($value, $description) = each($options);
+    $checked = (isset($options['checked']) || in_array('checked', $options)) ? ' checked="checked"' : '';
+    $field = '<input type="checkbox"' . $this->attributes(array('name'=>"{$name}[{$key}]", 'value'=>$value), $name) . $checked . '>' . $description;
+    return '<label class="checkbox-inline">' . $field . '</label>';
   }
   
   private function multiselect ($name, $options, $select=array()) {
