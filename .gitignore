@@ -1,5 +1,5 @@
 # Ignore everything here
-*
+/*
 
 # Except for these:
 !BootPress/
@@ -7,11 +7,13 @@
 !BootPress.php
 !Page.php
 !params_blank.php
+!.gitignore
+!.gitmodules
 
 # And only these plugins:
 plugins/*
 !plugins/Blog/
-!plugins/Bootstrap
+!plugins/Bootstrap/
 !plugins/Cache/
 !plugins/CDN/
 !plugins/Compiler/
