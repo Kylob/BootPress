@@ -417,7 +417,7 @@ $page->load(BASE, 'BootPress.php', 'BootPress/', 'Listings.php', 'Navbar.php', '
 $bp = new BootPress;
 if ($page->get('url') == BASE_URL) {
   switch ($page->get('uri')) {
-    case 'adminer/':
+    case 'databases/':
       $page->access('admin');
       $page->plugin('SQLite', array('adminer'=>'edit'));
       break;

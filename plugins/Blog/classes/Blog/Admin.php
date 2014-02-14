@@ -112,6 +112,10 @@ class BlogAdmin extends Blog {
           return $output; // ie. false
         }
       }
+    #-- Check the Smarty $output --#
+    } elseif (substr($file, -4) == '.tpl' && !empty($code)) {
+      $output = $this->smarty('blog', $code, 'testing');
+      if ($output !== true) return $output; // ie. false
     }
     #-- Create / Update the file --#
     if (!is_dir(dirname($file))) mkdir(dirname($file), 0755, true);
@@ -130,12 +134,6 @@ class BlogAdmin extends Blog {
       $this->url . 'js/jquery.fieldSelection.js',
       $this->url . 'js/jquery.selectRange.js'
     ));
-    /*
-    $page->plugin('CDN', 'link', 'zeroclipboard/1.2.3/ZeroClipboard.min.js');
-      var client = new ZeroClipboard($("#clipboard"), {
-        moviePath: "http://localhost/fixitman.com/plugins/CDN/jsdelivr/files/zeroclipboard/1.2.3/ZeroClipboard.swf"
-      });
-    */
     $page->plugin('CDN', 'link', 'ace/1.1.01/min/ace.js');
     $page->plugin('jQuery', array('plugin'=>'bootbox', 'code'=>'
     

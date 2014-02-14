@@ -22,4 +22,16 @@ if (isset($get['links'])) {
   $page->link($links, $prepend);
 }
 
+if (isset($get['url'])) {
+  $path = 'jsdelivr/files/';
+  $localhost = ($_SERVER['HTTP_HOST'] == 'localhost') ? true : false;
+  if (!file_exists($get['plugin-uri'] . $path . $get['url'])) {
+    trigger_error('The CDN file: "' . $get['url'] . '" does not exist');
+  } elseif ($localhost) {
+    $export = $get['plugin-url'] . $path . $get['url'];
+  } else {
+    $export = '//cdn.jsdelivr.net/' . $get['url'];
+  }
+}
+
 ?>

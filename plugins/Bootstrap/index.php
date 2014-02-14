@@ -2,7 +2,14 @@
 
 $get = $page->get('params');
 
-if (isset($get['Theme'])) $page->load($get, 'classes/Theme.php');
+$page->load($get, 'Bootstrap.php');
+
+if (isset($get['load'])) {
+  list($variables, $custom) = array_merge((array) $get['load'], array('', ''));
+  $theme = new Bootstrap;
+  $theme->load($variables, $custom);
+  unset($theme);
+}
 
 if (isset($get['preview'])) include $get['plugin-uri'] . 'preview.html';
 

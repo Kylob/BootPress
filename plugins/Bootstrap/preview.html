@@ -25,7 +25,7 @@
               echo '<option value="' . $page->url('add', $url, 'bootstrap', $theme) . '"';
               if (isset($_GET['bootstrap']) && $_GET['bootstrap'] == $theme) {
                 echo 'selected';
-                $variables = $page->plugin('Bootstrap', array('variables'=>$theme));
+                $variables = $page->plugin('Bootstrap', 'variables', $theme);
               }
               echo '>' . $theme . '</option>';
             }

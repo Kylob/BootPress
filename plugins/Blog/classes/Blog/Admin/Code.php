@@ -203,8 +203,8 @@ class BlogAdminCode extends BlogAdmin {
             echo ($result === true) ? 'Saved' : $result;
             break;
           case 'smarty':
-            $this->file_put_post($smarty, 'wyciwyg');
-            echo 'Saved';
+            $result = $this->file_put_post($smarty, 'wyciwyg');
+            echo ($result === true) ? 'Saved' : $result;
             break;
           default:
             echo 'Error';

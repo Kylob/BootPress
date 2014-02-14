@@ -19,9 +19,14 @@ class BlogAdminBlog extends BlogAdmin {
         exit;
       } elseif ($_POST['field'] == 'post') {
         $post = $this->code('wyciwyg');
-        $this->db->update('blog', array('post'=>$post), 'id', $this->edit);
-        $this->update_post_search($this->edit);
-        echo 'Saved';
+        $result = $this->smarty('blog', $post, 'testing');
+        if ($result === true) {
+          $this->db->update('blog', array('post'=>$post), 'id', $this->edit);
+          $this->update_post_search($this->edit);
+          echo 'Saved';
+        } else {
+          echo $result;
+        }
         exit;
       }
       echo 'Error';
@@ -270,9 +275,7 @@ class BlogAdminBlog extends BlogAdmin {
   
   private function update_post_search ($id) {
     global $page;
-    $this->db->delete('search', 'docid', $id);
-    $row = $this->db->row('SELECT * FROM blog WHERE id = ?', array($id));
-    if (empty($row)) return;
+    #-- Establish Vars --#
     $blog = $this->blog;
     $blog['user'] = false;
     $blog['admin'] = false;
@@ -280,6 +283,10 @@ class BlogAdminBlog extends BlogAdmin {
     if (file_exists($this->dir . 'plugins/' . $id . '.php')) {
       $vars['php'] = $page->outreach($this->dir . 'plugins/' . $id . '.php', array('img'=>$this->blog['img']));
     }
+    #-- Update Post --#
+    $this->db->delete('search', 'docid', $id);
+    $row = $this->db->row('SELECT * FROM blog WHERE id = ?', array($id));
+    if (empty($row)) return;
     $post = $this->smarty($vars, $row['post']);
     $this->save_resources_used($id, $post);
     if ($row['published']) {

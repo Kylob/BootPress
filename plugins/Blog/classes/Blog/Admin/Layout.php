@@ -17,6 +17,21 @@ class BlogAdminLayout extends BlogAdmin {
         }
         exit;
       } elseif (in_array($_POST['field'], $fields)) {
+        $template = $this->code('wyciwyg');
+        $result = $this->smarty('blog', $template, 'testing');
+        if ($result === true) {
+          $name = strtolower(substr($_POST['field'], 4));
+          $this->save_resources_used($name, $template);
+          $values = array();
+          $values[] = array($name, $template);
+          $values[] = array('updated', time());
+          $this->db->statement('INSERT OR REPLACE INTO templates (name, template) VALUES (?, ?)', $values, 'insert');
+          echo 'Saved';
+        } else {
+          echo $result;
+        }
+        exit;
+        /*
         $name = strtolower(substr($_POST['field'], 4));
         $template = $this->code('wyciwyg');
         $this->save_resources_used($name, $template);
@@ -26,6 +41,7 @@ class BlogAdminLayout extends BlogAdmin {
         $this->db->statement('INSERT OR REPLACE INTO templates (name, template) VALUES (?, ?)', $values, 'insert');
         echo 'Saved';
         exit;
+        */
       }
       echo 'Error';
       exit;

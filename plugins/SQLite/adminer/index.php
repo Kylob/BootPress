@@ -32,22 +32,24 @@ if ( (isset($_GET['file']) && in_array($_GET['file'], array('default.css', 'func
   $website = $bp->lister('dl', $dl, 'dl-horizontal');
   
   #-- BootPress --#
-  $dl = array('BootPress Files:');
-  $links = array();
+  $dl = array();
+  if (isset($_GET['db']) && is_dir($_GET['db'])) {
+    $dl[] = 'SQLite ' . substr($_GET['db'], strlen(SQLITE_URI), -1) . ':';
+    $directory = $_GET['db'];
+  } else {
+    $dl[] = 'SQLite Plugin:';
+    $directory = SQLITE_URI;
+  }
   $directory = (isset($_GET['db']) && is_dir($_GET['db'])) ? $_GET['db'] : SQLITE_URI;
   $scan = scandir($directory);
   foreach ($scan as $name) {
     if ($name != "." && $name != "..") {
       if (is_dir($directory . $name)) {
-        $links['folders'][] = '<a href="' . $page->url('add', '', 'db', $directory . $name . '/') . '">' . $name . '/</a>';
+        $dl[][] = '<a href="' . $page->url('add', '', 'db', $directory . $name . '/') . '">' . $name . '/</a>';
       } elseif (substr($name, -4) == '.db3') {
         $dl[][] = '<a href="' . $page->url('add', $sqlite, 'db', $directory . $name) . '">' . $name . '</a>';
       }
     }
-  }
-  if (isset($links['folders'])) {
-    $dl[] = '<a href="' . $page->url('add', '', 'db', SQLITE_URI) . '">Folders:</a>';
-    foreach ($links['folders'] as $url) $dl[][] = $url;
   }
   $tb->row()->cell('', $bp->lister('dl', $dl, 'dl-horizontal'));
   

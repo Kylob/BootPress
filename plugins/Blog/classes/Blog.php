@@ -56,7 +56,7 @@ class Blog {
   }
   
   public function layout ($content) { // this method should be protected, but then !is_callable in $page->theme(), so we make it public
-    global $page;
+    global $bp, $page;
     $count = func_num_args();
     if ($count > 1) { // we are wrapping this class up and delivering it's $content
       $this->blog['page'] = func_get_arg(1);
@@ -67,41 +67,34 @@ class Blog {
       if (!$page->theme(array($this, 'layout'))) return $this->cache_resources($content);
       return $content; // otherwise we'll cache the resources on the flip side (below)
     }
-    $page->plugin('Bootstrap', 'Theme');
-    $page->plugin('jQuery');
     $files = array();
-    $files['variables'] = (file_exists($this->dir . 'variables.less')) ? $this->dir . 'variables.less' : $this->uri . 'files/variables.less';
     if ($this->blog['page'] == 'admin') {
-      if (isset($_GET['preview']) && $_GET['preview'] == 'changes') {
-        if (isset($_GET['bootstrap'])) $files['variables'] = $_GET['bootstrap'];
-      } else {
-        unset($files['variables']); //  just the plain old default for 'admin'
+      if (isset($_GET['preview']) && $_GET['preview'] == 'changes' && isset($_GET['bootstrap'])) {
+        $files['variables'] = $_GET['bootstrap'];
       }
-      $theme = new BootstrapTheme($files);
-      $theme->content($content, 12);
-      $html = $theme->display();
+      $page->plugin('Bootstrap', 'load');
+      $html = $bp->container('content', $content);
     } else {
-      if (file_exists($this->dir . 'custom.css')) $files['custom'] = str_replace(array(BASE_URI, BASE), BASE_URL, $this->dir . 'custom.css');
-      $theme = new BootstrapTheme($files);
+      $files['variables'] = (file_exists($this->dir . 'variables.less')) ? $this->dir . 'variables.less' : '';
+      $files['custom'] = (file_exists($this->dir . 'custom.css')) ? $this->dir . 'custom.css' : '';
+      $page->plugin('Bootstrap', 'load', $files);
       $vars = array();
       $vars['blog'] = $this->blog; // remove this and instead just deliver an array of basic blog info
       $vars['php'] = (file_exists($this->dir . 'layout.php')) ? $page->outreach($this->dir . 'layout.php', array('img'=>$this->blog['img'])) : '';
       $export = array();
-      $export['bootstrap'] = $theme;
       $export['header'] = $this->smarty($vars, $this->templates('header'));
       $export['content'] = $content;
       $export['sidebar'] = $this->smarty($vars, $this->templates('sidebar'));
       $export['footer'] = $this->smarty($vars, $this->templates('footer'));
       $html = $this->smarty(array_merge($vars, $export), $this->templates('layout'));
     }
-    unset($theme);
     return $this->cache_resources($html);
   }
   
   protected function smarty ($vars, $template, $testing=false) {
     global $page, $bp;
     static $smarty = null;
-    if (empty($template) || !preg_match('/\{\$(.*)}/s', $template)) return $template;
+    if (empty($template) || !preg_match('/\{\$(.*)}/s', $template)) return ($testing) ? true : $template;
     if ($vars == 'blog') $vars = array('blog'=>$this->blog);
     if (is_null($smarty)) {
       $smarty = $page->plugin('Smarty', 'class');
@@ -111,12 +104,15 @@ class Blog {
     $smarty->assign($vars);
     try {
       $html = $smarty->fetch('string:' . $template);
+      $smarty->clearAllAssign();
     } catch (Exception $e) {
       preg_match('/[\s]+\[message[^\]]*\][\s]+=>(.*)/i', print_r($e, true), $message);
-      if (!empty($message)) $html = '<p>' . trim($message[1]) . '</p>';
+      $line = strpos($message[1], ' on ');
+      $message = (!empty($message) && $line !== false) ? 'Smarty Syntax Error ' . trim(substr($message[1], $line)) : 'Unknown Smarty Syntax Error';
+      if ($testing) return htmlspecialchars_decode($message);
+      $html = '<p>' . $message[1] . '</p>';
     }
-    $smarty->clearAllAssign();
-    return $html;
+    return ($testing) ? true : $html;
   }
   
   protected function tagged ($ids) {
