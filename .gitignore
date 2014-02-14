@@ -11,7 +11,7 @@
 # And only these plugins:
 plugins/*
 !plugins/Blog/
-!plugins/Bootstrap/
+!plugins/Bootstrap
 !plugins/Cache/
 !plugins/CDN/
 !plugins/Compiler/
