@@ -14,8 +14,7 @@ class BlogAdminBootstrap extends BlogAdmin {
           $variables = $this->code('wyciwyg');
           if (empty($variables)) $variables = $default;
           file_put_contents($this->dir . 'temp.less', $variables);
-          $page->plugin('Bootstrap', 'Theme');
-          $theme = new BootstrapTheme(array('variables'=>$this->dir . 'temp.less'));
+          $page->plugin('Bootstrap', 'load', $this->dir . 'temp.less');
           rename($this->dir . 'temp.less', $this->dir . 'variables.less');
         break;
         case 'custom':

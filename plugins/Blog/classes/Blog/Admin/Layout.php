@@ -31,17 +31,6 @@ class BlogAdminLayout extends BlogAdmin {
           echo $result;
         }
         exit;
-        /*
-        $name = strtolower(substr($_POST['field'], 4));
-        $template = $this->code('wyciwyg');
-        $this->save_resources_used($name, $template);
-        $values = array();
-        $values[] = array($name, $template);
-        $values[] = array('updated', time());
-        $this->db->statement('INSERT OR REPLACE INTO templates (name, template) VALUES (?, ?)', $values, 'insert');
-        echo 'Saved';
-        exit;
-        */
       }
       echo 'Error';
       exit;
@@ -50,7 +39,7 @@ class BlogAdminLayout extends BlogAdmin {
     $page->plugin('Form_Validation');
     $form = new Form('templates_form');
     $values = array();
-    foreach ($fields as $field) $values[$field] = $this->templates(strtolower(substr($field, 4)));
+    foreach ($fields as $field) $values[$field] = addslashes($this->templates(strtolower(substr($field, 4))));
     $values['php'] = (file_exists($this->dir . 'layout.php')) ? addslashes(htmlspecialchars(file_get_contents($this->dir . 'layout.php'))) : '';
     $info = array();
     $info['formHeader'] = 'This will be delivered to your layout as a {$header} variable.';

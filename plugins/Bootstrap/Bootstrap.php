@@ -70,7 +70,6 @@ class Bootstrap {
       $imports = $matches[0];
       $file = "// Import(s)\n// -------------------------\n" . implode("\n", $imports) . "\n\n\n" . $file;
     }
-    $code = ($theme === false) ? sha1($less['vars']) : $theme;
     #-- Update The File --#
     $code = sha1($file); // update the code
     file_put_contents($less['file'], $file); // To reflect the (potentially) new code

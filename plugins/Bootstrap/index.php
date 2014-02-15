@@ -5,9 +5,9 @@ $get = $page->get('params');
 $page->load($get, 'Bootstrap.php');
 
 if (isset($get['load'])) {
-  list($variables, $custom) = array_merge((array) $get['load'], array('', ''));
+  $files = array_merge((array) $get['load'], array('', ''));
   $theme = new Bootstrap;
-  $theme->load($variables, $custom);
+  $theme->load(array_shift($files), array_shift($files));
   unset($theme);
 }
 

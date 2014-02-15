@@ -134,6 +134,7 @@ class BlogAdminBlog extends BlogAdmin {
       $values['tags'] = $this->tagged($values['tags']);
       $values['page'] = ($values['page'] > 0) ? 'Y' : 'N';
       $values['published'] = ($values['published'] < 0) ? 'Y' : 'N';
+      $values['post'] = addslashes($values['post']);
       $values['php'] = (file_exists($this->dir . 'plugins/' . $this->edit . '.php')) ? addslashes(htmlspecialchars(file_get_contents($this->dir . 'plugins/' . $this->edit . '.php'))) : '';
     }
     $form->values($values);

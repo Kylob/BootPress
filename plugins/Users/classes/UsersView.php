@@ -6,17 +6,22 @@ class UsersView extends UsersDatabase {
     global $page;
     parent::__construct();
     if (isset($_GET['login'])) {
-      $row = $this->db->row('SELECT id, name FROM users WHERE email = ? LIMIT 1', array($_GET['login']));
+      $row = $this->db->row('SELECT id, name, admin FROM users WHERE email = ? LIMIT 1', array($_GET['login']));
       if ($row) {
         $_SESSION['user_id'] = $row['id'];
         $_SESSION['name'] = $row['name'];
+        if ($row['admin'] > 0) {
+          $_SESSION['admin'] = $row['admin'];
+        } else {
+          unset($_SESSION['admin']);
+        }
       }
       $page->eject($page->url('delete', '', 'login'));
     }
   }
   
   public function view () {
-    global $page;
+    global $bp, $page;
     $html = '';
     $page->plugin('Bootstrap', array('Pagination', 'Navigation'));
     $page->title = 'View Users';
@@ -30,9 +35,7 @@ class UsersView extends UsersDatabase {
         $links['View All Users (' . $total . ')'] = $url;
         $links['Confirmed (' . $confirmed . ')'] = $url . 'confirmed/';
         $links['Unconfirmed (' . $unconfirmed . ')'] = $url . 'unconfirmed/';
-        $nav = new BootstrapNavigation;
-        $html .= $nav->menu('pills', $links, array('align'=>'horizontal', 'active'=>$page->url()));
-        unset($nav);
+        $html .= $bp->pills($links,  array('align'=>'horizontal', 'active'=>'url'));
       $html .= '</div>';
       $html .= '<div class="col-sm-3">';
         $placeholder = (isset($_GET['search'])) ? $_GET['search'] : 'Search';
@@ -48,27 +51,28 @@ class UsersView extends UsersDatabase {
     $html .= '</div>';
     $html .= '<br>';
     $view = $page->next_uri(array('admin', 'view'));
-    $links = new BootstrapPagination(100);
+    $list = $bp->listings();
+    $list->display(100);
     $query = 'SELECT id, name, email, approval, confirmed, admin, date(registered) FROM users';
     $params = array();
     $where = ' ';
     if (isset($_GET['search'])) {
       $where .= 'WHERE email LIKE ? OR name LIKE ?';
       $params = array('%' . $_GET['search'] . '%', '%' . $_GET['search'] . '%');
-      if (!$links->num_pages()) $links->count($this->db->value('SELECT COUNT(*) FROM users' . $where, $params));
+      if (!$list->count()) $list->count($this->db->value('SELECT COUNT(*) FROM users' . $where, $params));
     } elseif ($view == 'confirmed') {
       $where .= 'WHERE confirmed = ?';
       $params[] = 'Y';
-      $links->count($confirmed);
+      $list->count($confirmed);
     } elseif ($view == 'unconfirmed') {
       $where .= 'WHERE confirmed = ?';
       $params[] = 'N';
-      $links->count($unconfirmed);
+      $list->count($unconfirmed);
     } else {
-      $links->count($total);
+      $list->count($total);
     }
-    $html .= $this->table($query . $where . ' ORDER BY id DESC' . $links->limit(), $params);
-    $html .= $links->display(5, 'left', 'small');
+    $html .= $this->table($query . $where . ' ORDER BY id DESC' . $list->limit(), $params);
+    $html .= '<div class="text-center">' . $list->pagination() . '</div>';
     return $html;
   }
   

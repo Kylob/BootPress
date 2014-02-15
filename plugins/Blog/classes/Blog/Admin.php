@@ -139,6 +139,7 @@ class BlogAdmin extends Blog {
     
       var editor = ace.edit("editor");
       editor.setTheme("ace/theme/tomorrow");
+      editor.setBehavioursEnabled(false);
       editor.session.setTabSize(2);
       editor.session.setUseSoftTabs(true);
       

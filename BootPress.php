@@ -468,9 +468,14 @@ class BootPress {
   }
   
   protected function links ($links, $options=array()) {
+    global $page;
     $html = '';
     $count = 1;
     $toggle = (isset($options['toggle'])) ? ' data-toggle="' . $options['toggle'] . '"' : '';
+    if (isset($options['active'])) {
+      if ($options['active'] == 'url') $options['active'] = $page->url('delete', '', '?');
+      elseif ($options['active'] == 'urlquery') $options['active'] = $page->url(); // with query string
+    }
     foreach ($links as $name => $href) {
       if (is_array($href)) {
         list($dropdown, $id) = $this->dropdown($href, $options, $count);
