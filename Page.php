@@ -24,7 +24,6 @@ class Page {
   private $loaded = array(); // include(ed) files from $this->load()
   
   public function __construct () {
-    
     preg_match('/([a-z0-9\-]{1,63}\.[a-z\.]{2,6})[\/]?$/i', BASE_URL, $matches);
     $this->domain = strtolower($matches[1]);
     define('BASE_URI', BASE . 'websites/' . $this->domain . '/');
