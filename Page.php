@@ -24,9 +24,11 @@ class Page {
   private $loaded = array(); // include(ed) files from $this->load()
   
   public function __construct () {
-    $this->domain = substr(strstr(BASE_URL, '//'), 2, -1);
+    
+    preg_match('/([a-z0-9\-]{1,63}\.[a-z\.]{2,6})[\/]?$/i', BASE_URL, $matches);
+    $this->domain = strtolower($matches[1]);
     define('BASE_URI', BASE . 'websites/' . $this->domain . '/');
-    $path = substr($_SERVER['HTTP_HOST'] . $_SERVER['REQUEST_URI'], strlen($this->domain) + 1);
+    $path = substr(stristr($_SERVER['HTTP_HOST'] . $_SERVER['REQUEST_URI'], $this->domain), strlen($this->domain) + 1);
     if (preg_match('/\.(js|css|jpe?g|gif|png|eot|ttf|otf|svg|woff|swf)$/', preg_replace('/\?.*$/', '', $path))) {
       $this->url = BASE_URL;
       $this->uri = preg_replace('/\?.*$/', '', $path);

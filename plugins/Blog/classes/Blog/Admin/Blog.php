@@ -153,11 +153,13 @@ class BlogAdminBlog extends BlogAdmin {
       $blog['title'] = $vars['title'];
       $blog['summary'] = $vars['summary'];
       $tags = array();
-      foreach ($vars['tags'] as $tag) {
-        if ($row = $this->db->row('SELECT id, tag FROM tags WHERE tag = ?', array($tag))) {
-          $tags[$row['id']] = $row['tag'];
-        } else {
-          $tags[$this->db->insert('tags', array('tag'=>$tag))] = $tag;
+      if (!empty($vars['tags'])) {
+        foreach ($vars['tags'] as $tag) {
+          if ($row = $this->db->row('SELECT id, tag FROM tags WHERE tag = ?', array($tag))) {
+            $tags[$row['id']] = $row['tag'];
+          } else {
+            $tags[$this->db->insert('tags', array('tag'=>$tag))] = $tag;
+          }
         }
       }
       $blog['tags'] = implode(',', array_keys($tags));
