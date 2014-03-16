@@ -69,10 +69,10 @@ class Blog {
     }
     $files = array();
     if ($this->blog['page'] == 'admin') {
-      if (isset($_GET['preview']) && $_GET['preview'] == 'changes' && isset($_GET['bootstrap'])) {
-        $files['variables'] = $_GET['bootstrap'];
+      if (isset($_GET['preview']) && $_GET['preview'] == 'changes' && !isset($_GET['bootstrap']) && file_exists($this->dir . 'variables.less')) {
+        $files['variables'] = $this->dir . 'variables.less';
       }
-      $page->plugin('Bootstrap', 'load');
+      $page->plugin('Bootstrap', 'load', $files);
       $html = $bp->container('content', $content);
     } else {
       $files['variables'] = (file_exists($this->dir . 'variables.less')) ? $this->dir . 'variables.less' : '';

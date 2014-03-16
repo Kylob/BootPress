@@ -51,19 +51,21 @@ class BlogAdminCode extends BlogAdmin {
       exit;
     }
     #-- Delete File --#
-    if (isset($_GET['delete']) && $_GET['delete'] == 'file' && !empty($this->file)) {
-      unlink($this->plugins . $this->file);
+    if (isset($_GET['delete']) && $_GET['delete'] == 'file') {
       $eject = $page->url('delete', '', array('delete', 'file'));
-      $dirs = explode('/', substr($this->file, 0, strrpos($this->file, '/')));
-      while (!empty($dirs)) { // if $this->file's directory is empty, then delete it
-        $dir = implode('/', $dirs) . '/';
-        foreach (scandir($this->plugins . $dir) as $file) {
-          if ($file != '.' && $file != '..') {
-            $page->eject($page->url('add', $eject, 'file', $dir));
+      if (!empty($this->file)) {
+        unlink($this->plugins . $this->file);
+        $dirs = explode('/', substr($this->file, 0, strrpos($this->file, '/')));
+        while (!empty($dirs)) { // if $this->file's directory is empty, then delete it
+          $dir = implode('/', $dirs) . '/';
+          foreach (scandir($this->plugins . $dir) as $file) {
+            if ($file != '.' && $file != '..') {
+              $page->eject($page->url('add', $eject, 'file', $dir));
+            }
           }
+          rmdir($this->plugins . $dir);
+          array_pop($dirs);
         }
-        rmdir($this->plugins . $dir);
-        array_pop($dirs);
       }
       $page->eject($eject);
     }
