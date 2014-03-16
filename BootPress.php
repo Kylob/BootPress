@@ -241,10 +241,15 @@ class BootPress {
     }
     if (isset($_GET['search'])) $placeholder = $_GET['search'];
     $html .= '<form class="form-inline" method="' . $method . '" action="' . $url . '" autocomplete="off" role="search">' . $hidden;
-      $html .= '<div class="' . $this->classes('input-group', $size, array('sm', 'md', 'lg')) . '">';
+      if (!empty($button)) {
+        $html .= '<div class="' . $this->classes('input-group', $size, array('sm', 'md', 'lg')) . '">';
+          $html .= '<input type="text" name="search" class="form-control" placeholder="' . $placeholder . '">';
+          $html .= '<div class="input-group-btn">' . $button . '</div>';
+        $html .= '</div>';
+      } else {
+        // add size here
         $html .= '<input type="text" name="search" class="form-control" placeholder="' . $placeholder . '">';
-        $html .= '<div class="input-group-btn">' . $button . '</div>';
-      $html .= '</div>';
+      }
     $html .= '</form>';
     return $html;
   }
@@ -404,8 +409,9 @@ class BootPress {
       $count++;
       $collapse = $this->id('collapse');
       $toggle = ' data-toggle="collapse" data-parent="#' . $id . '" href="#' . $collapse . '"';
+      $head = preg_replace('/(>){1}([^<]*){1}(<\/){1}/', "$1<a{$toggle}>$2</a>$3", $head);
       $in = ($open == $count) ? ' collapse in' : ' collapse';
-      $html .= substr($this->panel($class, array('head'=>'<a' . $toggle . '>' . $head . '</a>')), 0, -6); // </div>
+      $html .= substr($this->panel($class, array('head'=>$head)), 0, -6); // </div>
         $html .= '<div id="' . $collapse . '" class="panel-collapse' . $in . '">';
           $html .= '<div class="panel-body">' . $body . '</div>';
         $html .= '</div>';

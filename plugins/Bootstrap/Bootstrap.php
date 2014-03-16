@@ -16,6 +16,7 @@ class Bootstrap {
   
   public function load ($variables='', $custom='') {
     global $page;
+    if (isset($_GET['bootstrap'])) $variables = $_GET['bootstrap'];
     if (!is_string($variables)) $variables = '';
     $links = array();
     if (file_exists($variables)) {

@@ -259,11 +259,11 @@ class Page {
       elseif ($action == 'add') $fragment = '#' . urlencode($value);
       return $url . $fragment;
     }
-    $merge = (is_array($key)) ? $key : array($key => $value);
     if ($action == 'add') {
+      $merge = (is_array($key)) ? $key : array($key => $value);
       foreach ($merge as $key => $value) $params[$key] = $value;
     } elseif ($action == 'delete') {
-      foreach ($merge as $key => $value) unset($params[$key]);
+      foreach ((array) $key as $value) unset($params[$value]);
     }
     $params = http_build_query($params, '', '&amp;');
     $query = (!empty($params)) ? '?' . $params : '';

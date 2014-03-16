@@ -47,6 +47,7 @@ class BootPressNavbar extends BootPress {
   
   public function menu ($links, $options=array()) { // array('active'=>'name or url', 'pull'=>'left or right')
     $align = (isset($options['pull'])) ? ' navbar-' . $options['pull'] : '';
+    unset($options['pull']);
     $this->html .= '<ul class="nav navbar-nav' . $align . '">' . $this->links($links, $options) . '</ul>';
     return $this;
   }
