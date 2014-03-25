@@ -55,7 +55,13 @@ class Form {
   }
 
   public function values ($values='') {
-    if (!empty($values) && is_array($values)) foreach ($values as $name => $value) $this->values[$name] = $value;
+    if (!empty($values)) {
+      if (is_array($values)) {
+        foreach ($values as $name => $value) $this->values[$name] = $value;
+      } else {
+        return (isset($this->values[$values])) ? $this->values[$values] : '';
+      }
+    }
     return $this->values;
   }
   
@@ -75,7 +81,7 @@ class Form {
     list($name, $extensions) = each($upload);
     $upload = array();
     $upload['name'] = $name;
-    $upload['extensions'] = $extensions;
+    $upload['extensions'] = (array) $extensions;
     $upload['size'] = $filesize * 1048576; // megabytes to bytes
     foreach ($options as $key => $value) $upload[$key] = $value; // limit, crop, aspectRatio, minWidth
     $this->upload = new Upload($upload);
@@ -140,6 +146,7 @@ class Form {
   
   public function align ($direction, $size='sm', $indent=2) {
     switch ($direction) {
+      case 'collapse': $this->align = ''; break;
       case 'inline': $this->align = 'form-inline'; break;
       case 'horizontal':
       default:
@@ -231,19 +238,24 @@ class Form {
       if ($this->asterisk && !empty($prompt) && in_array($name, $this->required)) $prompt = '* ' . $prompt;
     }
     $field .= '">'; // closing the first div tag
+    if (!empty($prompt) && isset($this->info[$name])) {
+      $prompt .= ' <span class="glyphicon glyphicon-question-sign" style="cursor:pointer;" title="' . $this->info[$name] . '"></span>';
+    }
     #-- Alignments and Prompts --#
     if ($this->align == 'form-inline') {
       if (!empty($prompt)) $field .= '<label class="sr-only" for="' . $name . '">' . $prompt . '</label>';
       $field .= $error . $control;
-    } else { // $this->align == 'form-horizontal'
+    } elseif ($this->align == 'form-horizontal') {
       $alignment = 'col-' . $this->size . '-' . (12 - $this->indent);
       if (!empty($prompt)) {
-        if (isset($this->info[$name])) $prompt .= ' <span class="glyphicon glyphicon-question-sign" style="cursor:pointer;" title="' . $this->info[$name] . '"></span>';
         $field .= '<label class="control-label col-' . $this->size . '-' . $this->indent . '" for="' . $name . '">' . $prompt . '</label>';
       } else {
         $alignment .= ' ' . 'col-' . $this->size . '-offset-' . $this->indent;
       }
       $field .= '<div class="' . $alignment . '">' . $error . $control . '</div>';
+    } else { // else collapse
+      if (!empty($prompt)) $field .= '<label for="' . $name . '">' . $prompt . '</label>';
+      $field .= $error . $control;
     }
     #-- End div.form-group --#
     $field .= '</div>';
@@ -296,14 +308,13 @@ class Form {
     if (isset($buttons[1]) && substr($reset, 0, 1) != '<') {
       $buttons[1] = '<button type="reset" class="btn btn-default">' . $reset . '</button>';
     }
-    if ($this->align == 'form-inline') {
-      $html = implode(' ', $buttons);
-    } else { // $this->align == 'form-horizontal'
+    if ($this->align == 'form-horizontal') {
       $html = '<div class="form-group">';
         $alignment = 'col-' . $this->size . '-' . (12 - $this->indent) . ' ' . 'col-' . $this->size . '-offset-' . $this->indent;
         $html .= '<div class="' . $alignment . '">' . implode(' ', $buttons) . '</div>';
       $html .= '</div>';
-        
+    } else { // inline or collapse
+      $html = implode(' ', $buttons);
     }
     return "\n\t" . $html;
   }

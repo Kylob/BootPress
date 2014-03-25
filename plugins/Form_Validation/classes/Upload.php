@@ -12,11 +12,11 @@ class Upload {
   public function __construct ($upload=array()) {
     global $page;
     $page->plugin('SQLite');
-    $this->db = new SQLite('form_uploads');
-    $this->create_tables();
-    $get = $page->plugin('info');
-    $this->url = $get['url'] . 'uploads/';
-    $this->uri = $get['uri'] . 'uploads/';
+    $this->db = new SQLite(BASE_URI . 'uploads');
+    if ($this->db->created) $this->create_tables();
+    $this->url = BASE_URL . 'uploads/';
+    $this->uri = BASE_URI . 'uploads/';
+    if (!is_dir($this->uri)) mkdir($this->uri, 0755, true);
     if (!empty($upload) && isset($upload['name'])) {
       $this->upload['name'] = $upload['name'];
       $this->upload['extensions'] = (isset($upload['extensions'])) ? array_map("strtolower", $upload['extensions']) : array();
@@ -46,6 +46,11 @@ class Upload {
       $info[$row['id']] = $row;
     }
     return $info;
+  }
+  
+  public function keep ($ids) {
+    $ids = (array) $ids;
+    if (!empty($ids)) $this->db->exec('UPDATE uploads SET keep = 1 WHERE id IN(' . implode(',', $ids) . ')');
   }
   
   public function delete ($ids=array()) {
@@ -83,7 +88,6 @@ class Upload {
         foreach ($_POST[$this->upload['name']] as $file) {
           if (file_exists($this->uri . $file)) $uploads[] =  $this->file_parts($file, 'id');
         }
-        $this->keep($uploads);
         $this->delete(); // get rid of any floaters
         $uploads = $this->info($uploads);
       }
@@ -96,9 +100,10 @@ class Upload {
     $html = '';
     if (empty($this->upload)) return $html;
     #-- Plugin jQuery --#
-    $url = str_replace('uploads/', '', $this->url);
-    $page->link($url . 'js/fineuploader.js');
-    $page->link($url . 'js/oneFineUploader.js');
+    
+    $get = $page->plugin('info');
+    $page->link($get['url'] . 'js/fineuploader.js');
+    $page->link($get['url'] . 'js/oneFineUploader.js');
     $jquery = '$("#' . $this->upload['name'] . '").show().oneFineUploader({
       "limit": "' . $this->upload['limit'] . '",
       "allowedExtensions": "' . implode(',', $this->upload['extensions']) . '",
@@ -106,7 +111,7 @@ class Upload {
     });';
     $jquery .= '$("#' . $this->upload['name'] . 'Messages").sortable({items:"div"});';
     if ($this->upload['crop']) {
-      $page->link($url . 'js/modalCropImage.js');
+      $page->link($get['url'] . 'js/modalCropImage.js');
       $jquery .= '$("body").on("click", "#' . $this->upload['name'] . 'Messages span[class*=glyphicon-picture]", function(){
         var img = $(this).siblings("img");
         img.modalCropImage(img.data("url"), $(this).closest("form").attr("action"), img.data("options"));
@@ -283,11 +288,6 @@ class Upload {
     }
     unset($image, $info['crop']);
     return $info;
-  }
-  
-  private function keep ($ids) { // used in $this->validate() when the form is actually submitted
-    $ids = (array) $ids;
-    if (!empty($ids)) $this->db->exec('UPDATE uploads SET keep = 1 WHERE id IN(' . implode(',', $ids) . ')');
   }
   
   private function file_parts ($file, $part='') {

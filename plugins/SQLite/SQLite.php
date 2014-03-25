@@ -223,7 +223,7 @@ class SQLite {
     return false;
   }
   
-  public function insert ($table, $array) {
+  public function insert ($table, $array, $or='') {
     if ($this->db === false) return $this->db;
     $multiple = (isset($array[0])) ? true : false;
     $columns = ($multiple) ? array_keys($array[0]) : array_keys($array);
@@ -235,7 +235,8 @@ class SQLite {
     } else {
       $values = array_values($array);
     }
-    return $this->statement('INSERT INTO ' . $table . ' (' . implode(', ', $columns) . ') VALUES (' . implode(', ', $params) . ')', $values, 'insert');
+    $insert = (!empty($or)) ? 'INSERT OR ' . $or : 'INSERT';
+    return $this->statement($insert . ' INTO ' . $table . ' (' . implode(', ', $columns) . ') VALUES (' . implode(', ', $params) . ') ', $values, 'insert');
   }
   
   public function update ($table, $array, $column, $id, $add='') {

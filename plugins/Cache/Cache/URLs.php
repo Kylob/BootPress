@@ -7,7 +7,7 @@ class CacheURLs {
   public function __construct () {
     global $page;
     $page->plugin('SQLite');
-    $this->db = new SQLite ('CombineFiles');
+    $this->db = new SQLite (BASE_URI . 'cache');
     if ($this->db->created) $this->create_tables();
   }
   
@@ -60,7 +60,6 @@ class CacheURLs {
   
   protected function cached ($path) {
     return preg_match('/^([1-9a-z]{5}[0]?)+(\/.*)?\.(js|css|jpe?g|gif|png|ico|eot|ttf|otf|svg|woff)(\?.*)?$/i', $path);
-    // return preg_match('/^([1-9a-z]{5}[0]?)+\/(.*).(js|css|jpe?g|gif|png|ico|eot|ttf|otf|svg|woff)$/i', $path);
   }
   
   protected function tiny_path ($uri) {
@@ -155,16 +154,22 @@ class CacheURLs {
         $insert['updated'] = ($updated) ? $updated : filemtime($path);
         $path = $this->db->insert('paths', $insert);
       }
-      $tiny_id = ''; // 60 (characters) ^ 5 (length) gives 777,600,000 possible combinations
-      $string = "123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
-      while (strlen($tiny_id) < 5) $tiny_id .= $string[rand(0,strlen($string)-1)];
-      if ($this->db->insert('ids', array('path_id'=>$path, 'tiny_id'=>$tiny_id))) {
+      if ($tiny_id = $this->db->value('SELECT tiny_id FROM ids WHERE path_id = 0 LIMIT 1')) {
         $update = array('tiny_id'=>$tiny_id);
         if ($updated) $update['updated'] = $updated;
+        $this->db->update('ids', array('path_id'=>$path), 'tiny_id', $tiny_id);
         $this->db->update('paths', $update, 'id', $path);
         return $tiny_id;
       } elseif ($path) { // isn't false
-        return $this->new_tiny($path); // just keep trying until we get one right
+        $insert = array();
+        $string = "123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
+        while (count($insert) < 1000) {
+          $tiny_id = ''; // 60 (characters) ^ 5 (length) gives 777,600,000 possible combinations
+          while (strlen($tiny_id) < 5) $tiny_id .= $string[mt_rand(0,60)];
+          $insert[] = array('path_id'=>0, 'tiny_id'=>$tiny_id);
+        }
+        $this->db->insert('ids', $insert, 'IGNORE');
+        return $this->new_tiny($path);
       }
     }
     return false;
