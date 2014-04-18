@@ -68,7 +68,7 @@ class BlogAdminLayout extends BlogAdmin {
           $html .= $form->field('textarea', $name, 'PHP', array('class'=>'wyciwyg noMarkup readOnly php input-sm', 'rows'=>5, 'spellcheck'=>'false'));
         }
       } else {
-        $html .= $form->field('textarea', $name, substr($name, 4), array('class'=>'wyciwyg html input-sm', 'rows'=>5, 'spellcheck'=>'false'));
+        $html .= $form->field('textarea', $name, substr($name, 4), array('class'=>'wyciwyg tpl input-sm', 'rows'=>5, 'spellcheck'=>'false'));
       }
     }
     $html .= $form->close();

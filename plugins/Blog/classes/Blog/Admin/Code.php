@@ -286,7 +286,7 @@ class BlogAdminCode extends BlogAdmin {
     $html .= $form->field('text', 'folder', 'Folder', array('prepend'=>BASE_URL, 'append'=>$append));
     if ($edit) {
       $html .= $form->field('textarea', 'php', 'PHP', array('class'=>'wyciwyg noMarkup php input-sm', 'rows'=>5, 'spellcheck'=>'false'));
-      $html .= $form->field('textarea', 'smarty', 'Smarty', array('class'=>'wyciwyg html input-sm', 'rows'=>5, 'spellcheck'=>'false'));
+      $html .= $form->field('textarea', 'smarty', 'Smarty', array('class'=>'wyciwyg tpl input-sm', 'rows'=>5, 'spellcheck'=>'false'));
     } else {
       $html .= $form->field('hidden', 'php', "<?php\n\n\n\n?>");
     }

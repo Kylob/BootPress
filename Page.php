@@ -414,7 +414,7 @@ if (preg_match('/\.(js|css|jpe?g|gif|png|eot|ttf|otf|svg|woff|swf)$/', $page->ge
   $page->plugin('Users');
   if (is_admin()) notify_me_of_errors(BASE_URL . 'errors/');
 }
-$page->load(BASE, 'BootPress.php', 'BootPress/', 'Listings.php', 'Navbar.php', 'Table.php');
+$page->load(BASE, 'BootPress.php', 'BootPress/', 'Listings.php', 'Navbar.php', 'Parsedown.php', 'Table.php');
 $bp = new BootPress;
 if ($page->get('url') == BASE_URL) {
   switch ($page->get('uri')) {

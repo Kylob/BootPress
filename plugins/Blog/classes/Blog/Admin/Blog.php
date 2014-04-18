@@ -228,7 +228,7 @@ class BlogAdminBlog extends BlogAdmin {
     #-- Tags --#
     $html .= $form->field('tags', 'tags', 'Tags', array('limit'=>'5'));
     #-- Post (Content) --#
-    $html .= $form->field('textarea', 'post', 'Post', array('class'=>'wyciwyg html input-sm', 'rows'=>5, 'spellcheck'=>'false'));
+    $html .= $form->field('textarea', 'post', 'Post', array('class'=>'wyciwyg tpl input-sm', 'rows'=>5, 'spellcheck'=>'false'));
     #-- PHP --#
     if ($this->edit) {
       if (is_admin(1)) {

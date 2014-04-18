@@ -49,7 +49,7 @@ class BlogAdminBootstrap extends BlogAdmin {
     list($vars, $errors, $eject) = $form->validate();
     $html .= $form->header();
     $html .= $form->field('textarea', 'variables', 'Variables:', array('class'=>'wyciwyg noMarkup less input-sm', 'rows'=>5, 'spellcheck'=>'false'));
-    $html .= $form->field('textarea', 'custom', 'Custom:', array('class'=>'wyciwyg noMarkup css input-sm', 'rows'=>5, 'spellcheck'=>'false'));
+    $html .= $form->field('textarea', 'custom', 'Custom:', array('class'=>'wyciwyg noMarkup less input-sm', 'rows'=>5, 'spellcheck'=>'false'));
     $html .= $form->close();
     unset($form);
     return $this->admin($html);

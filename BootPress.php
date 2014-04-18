@@ -198,6 +198,15 @@ class BootPress {
     return new BootPressNavbar;
   }
   
+  public function parse ($markdown, $tag=array(), $class='') {
+    static $parser = null;
+    if (is_null($parser)) $parser = new Parsedown;
+    $markdown = $parser->parse($markdown);
+    if (empty($tag)) return $markdown;
+    if (!is_array($tag)) $tag = array($tag => $class);
+    return $this->add_class($tag, $markdown);
+  }
+  
   public function pills ($links, $options=array()) {
     $class = 'nav nav-pills';
     if (isset($options['align'])) {
@@ -409,7 +418,10 @@ class BootPress {
       $count++;
       $collapse = $this->id('collapse');
       $toggle = ' data-toggle="collapse" data-parent="#' . $id . '" href="#' . $collapse . '"';
-      $head = preg_replace('/(>){1}([^<]*){1}(<\/){1}/', "$1<a{$toggle}>$2</a>$3", $head);
+      $begin = strpos($head, '>') + 1;
+      $end = strrpos($head, '</');
+      $head = substr($head, 0, $begin) . '<a' . $toggle . '>' . substr($head, $begin, $end + 1) . '</a>' . substr($head, $end);
+      // $head = preg_replace('/(>){1}([^<]*){1}(<\/){1}/', "$1<a{$toggle}>$2</a>$3", $head);
       $in = ($open == $count) ? ' collapse in' : ' collapse';
       $html .= substr($this->panel($class, array('head'=>$head)), 0, -6); // </div>
         $html .= '<div id="' . $collapse . '" class="panel-collapse' . $in . '">';

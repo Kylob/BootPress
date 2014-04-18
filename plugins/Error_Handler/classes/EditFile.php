@@ -23,16 +23,19 @@ class EditFile {
     $ext = substr($_GET['file'], strrpos($_GET['file'], '.') + 1);
     if ($ext == 'js') $ext = 'javascript';
     $line = (isset($_GET['line']) && is_numeric($_GET['line'])) ? $_GET['line'] : 1;
-    $page->plugin('CDN', 'link', 'ace/1.1.01/min/ace.js');
+    
+    $page->plugin('CDN', 'link', 'ace/1.1.3/min/ace.js');
     $page->plugin('jQuery', array('plugin'=>'bootbox', 'code'=>'
-      
+    
       $("#editor").css({height:($(window).height() - 40) + "px"});
       
       var editor = ace.edit("editor");
       editor.setTheme("ace/theme/tomorrow");
+      editor.setBehavioursEnabled(false);
       editor.session.setTabSize(2);
       editor.session.setUseSoftTabs(true);
       editor.getSession().setMode("ace/mode/' . $ext . '");
+      
       var focus = setInterval(function(){
         editor.gotoLine(' . $line . ');
         if (editor.isRowVisible(' . ($line - 1) . ') || editor.session.getLength() == 1) clearInterval(focus);
@@ -80,24 +83,6 @@ class EditFile {
       });
       
       editor.commands.addCommand({
-        name: "clipboard",
-        bindKey: {win: "Ctrl-C",  mac: "Command-C"},
-        exec: function() {
-          var box = bootbox.alert("<br><textarea id=\'copyandpaste\' spellcheck=\'false\' rows=\'5\' class=\'form-control input-sm\'></textarea>", function(){editor.focus();});
-          $("#copyandpaste").val(editor.getCopyText()).click(function(){
-            $(this).select();
-          }).keyup(function(e){
-            if (e.keyCode == 67 && e.ctrlKey) {
-              $(this).unbind();
-              box.modal("hide");
-              editor.focus();
-            }
-          });
-        },
-        readOnly: true
-      });
-      
-      editor.commands.addCommand({
         name: "page up",
         bindKey: {win: "Ctrl-Up",  mac: "Command-Up"},
         exec: function() { editor.gotoPageUp(); },
@@ -109,6 +94,20 @@ class EditFile {
         bindKey: {win: "Ctrl-Down",  mac: "Command-Down"},
         exec: function() { editor.gotoPageDown(); },
         readOnly: true
+      });
+      
+      editor.commands.addCommand({
+        name: "indent",
+        bindKey: {win: "Ctrl-Shift-I",  mac: "Command-Shift-I"},
+        exec: function() { editor.blockIndent(); },
+        readOnly: false
+      });
+      
+      editor.commands.addCommand({
+        name: "outdent",
+        bindKey: {win: "Ctrl-Shift-O",  mac: "Command-Shift-O"},
+        exec: function() { editor.blockOutdent(); },
+        readOnly: false
       });
       
     '));
