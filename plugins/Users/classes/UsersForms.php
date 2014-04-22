@@ -35,11 +35,12 @@ class UsersForms extends UsersDatabase {
         $user_id = (is_admin() && isset($_GET['edit'])) ? $_GET['edit'] : $_SESSION['user_id'];
         $html .= $this->manage_account($user_id);
       } else {
+        if (!empty($action) && (strlen($action) < 33 || strpos($action, '-'))) array_unshift($uri, $action);
         $page->access('others');
         $page->title = (!empty($this->website)) ? 'Sign In at ' . $this->website : 'Sign In';
         $html .= $this->user_tabs();
         $html .= '<div class="tab-content">';
-          $html .= '<div id="sign_in_form" class="tab-pane fade">' . $this->sign_in_form() . '</div>';
+          $html .= '<div id="sign_in_form" class="tab-pane fade">' . $this->sign_in_form(BASE_URL . implode('/', $uri)) . '</div>';
           $html .= '<div id="register_form" class="tab-pane fade">' . $this->register_form() . '</div>';
           $html .= '<div id="reset_pass_form" class="tab-pane fade">' . $this->reset_pass_form() . '</div>';
         $html .= '</div>';
@@ -59,7 +60,7 @@ class UsersForms extends UsersDatabase {
   }
   
   private function manage_account ($user_id, $success_url='') {
-    global $page;
+    global $bp, $page;
     if (is_user()) {
       $page->title = 'Edit Your Profile';
     } else {
@@ -99,7 +100,7 @@ class UsersForms extends UsersDatabase {
       $form->message('success', 'Thank you. Your profile has been updated.');
       $page->eject($eject);
     }
-    $form->align('horizontal', 'xs', 0);
+    $form->align('collapse');
     if (is_admin()) {
       $html .= $form->header('Edit Your Profile <span style="float:right;"><small><a href="' . BASE_URL . 'users/view/">View Users</a></span></small>');
     } elseif (is_user()) {
@@ -113,9 +114,10 @@ class UsersForms extends UsersDatabase {
     $html .= $form->field('password', 'confirm', '');
     if (is_user()) {
       if (is_admin()) {
-        $html .= '<b>Admin:</b>' . $form->field('text', 'admin', '', array('input'=>'col-sm-1', 'maxlength'=>2));
-        $html .= $form->field('checkbox', 'approval', '', array('Y'=>'Approved'));
-        $html .= $form->field('checkbox', 'confirmed', '', array('Y'=>'Confirmed'));
+        $html .= $bp->row('xs', array(
+          $bp->col(3, '<b>Admin:</b>' . $form->field('text', 'admin', 'return', array('maxlength'=>2))),
+          $bp->col(9, $form->field('checkbox', 'approval', '', array('Y'=>'Approved')) . $form->field('checkbox', 'confirmed', '', array('Y'=>'Confirmed')))
+        ));
       }
       $html .= $form->buttons('Submit');
     } else {
@@ -167,7 +169,7 @@ class UsersForms extends UsersDatabase {
     return $html;
   }
   
-  private function sign_in_form () {
+  private function sign_in_form ($success_url) {
     global $page;
     $html = '';
     $form = new Form('sign_in');
@@ -179,20 +181,20 @@ class UsersForms extends UsersDatabase {
     if (!empty($vars) && empty($errors)) {
       $code = $this->db->value('SELECT code FROM users WHERE email = ?', array($vars['email']));
       if ($code === false) {
-        $form->message('danger', 'We don\'t seem to have an account for "' . $vars['email'] . '".<br />Would you like to register it?');
+        $form->message('danger', 'We don\'t seem to have an account for "' . $vars['email'] . '". Would you like to register it?');
       } else {
         $user_id = $this->db->value('SELECT id FROM users WHERE email = ? AND password = ? AND approval = ?', array($vars['email'], sha1(sha1($vars['password'] . $code, true)), 'Y'));
         if ($user_id) {
           $this->update_external($user_id);
           $cookie = ($vars['persistent'] == 'Y') ? true : false;
           $this->login($user_id, $cookie);
-          $page->eject(BASE_URL . $page->get('uri'));
+          $page->eject($success_url);
         }
         $password = $this->db->value('SELECT password FROM users WHERE email = ?', array($vars['email']));
         if ($password == '') {
-          $form->message('danger', 'The password for "' . $vars['email'] . '" has been reset.<br />Please check your inbox so that you can sign back into the site.');
+          $form->message('danger', 'The password for "' . $vars['email'] . '" has been reset. Please check your inbox so that you can sign back into the site.');
         } else {
-          $form->message('danger', 'The password for "' . $vars['email'] . '" was incorrect.<br />Please try again.');
+          $form->message('danger', 'The password for "' . $vars['email'] . '" was incorrect. Please try again.');
         }
       }
       $eject = $page->url('add', $eject, 'email', $vars['email']);
