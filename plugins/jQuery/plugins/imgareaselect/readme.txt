@@ -1,1 +1,0 @@
-http://odyniec.net/projects/imgareaselect/

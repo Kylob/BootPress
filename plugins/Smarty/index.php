@@ -1,26 +1,26 @@
 <?php
 
-$get = $page->get('params');
+extract($page->get('params'));
 
-$page->load($get, 'smarty/libs/Smarty.class.php');
+$page->load($plugin, 'Smarty-3.1.19/libs/Smarty.class.php');
 
-if (isset($get['class'])) {
+if (isset($class)) {
 
-  $page->load($get, 'SmartyPlugin.php');
-  $export = new SmartyPlugin($get['plugin-uri']);
+  $page->load($plugin, 'SmartyPlugin.php');
+  $export = new SmartyPlugin($plugin['uri']);
 
-} elseif (isset($get['assign']) && is_array($get['assign'])) {
+} elseif (isset($assign) && is_array($assign)) {
 
-  $page->load($get, 'SmartyPlugin.php');
-  $smarty = new SmartyPlugin($get['plugin-uri']);
-  $smarty->assign($get['assign']); // key => value pairs
-  if (isset($get['file'])) {
-    $smarty->setTemplateDir(dirname($get['file']) . '/');
-    $smarty->display(basename($get['file']));
-  } elseif (isset($get['string'])) {
-    $smarty->display('string:' . $get['string']);
-  } elseif (isset($get['eval'])) {
-    $smarty->display('eval:' . $get['eval']);
+  $page->load($plugin, 'SmartyPlugin.php');
+  $smarty = new SmartyPlugin($plugin['uri']);
+  $smarty->assign($assign); // key => value pairs
+  if (isset($file)) {
+    $smarty->setTemplateDir(dirname($file) . '/');
+    $smarty->display(basename($file));
+  } elseif (isset($string)) {
+    $smarty->display('string:' . $string);
+  } elseif (isset($eval)) {
+    $smarty->display('eval:' . $eval);
   }
   unset($smarty);
   

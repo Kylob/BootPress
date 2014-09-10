@@ -47,11 +47,6 @@ class BootPressListings extends BootPress {
     return ($this->display) ? ' LIMIT ' . $this->start . ', ' . $this->display : '';
   }
   
-  public function last_page () {
-    if ($this->num_pages === false) return true; // this page would be the first and the last then
-    return ($this->num_pages == 1 || ($this->start / $this->display) >= $this->num_pages) ? true : false;
-  }
-  
   public function symbols ($left='', $right='') {
     $this->left = $left;
     $this->right = $right;
@@ -139,6 +134,11 @@ class BootPressListings extends BootPress {
       $url = $page->url('add', $url, 's', $this->start + $this->display);
     }
     return (!empty($url)) ? '<a title="' . $title . '" href="' . $url . '">' . $title . ' ' . $this->right . '</a>' : '';
+  }
+  
+  public function last_page () {
+    if ($this->num_pages === false) return true; // this page would be the first and the last then
+    return ($this->num_pages == 1 || ($this->start / $this->display) >= $this->num_pages) ? true : false;
   }
   
 }

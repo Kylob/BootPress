@@ -1,1 +1,0 @@
-{$bp->container('body', $content)}

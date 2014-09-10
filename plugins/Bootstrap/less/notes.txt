@@ -1,8 +1,0 @@
-In 3.0.3 the theme.less file is not included in the bootstrap.less file.  They both import the same less files, and both are needed (in my unwanted opinion) so I've:
-
-@imported "theme.less"; at the bottom of bootstrap.less
-Removed the variables and mixins @imports from theme.less
-
-and ...
-
-Removed the variables.less @import from bootstrap.less as we inject those ourselves

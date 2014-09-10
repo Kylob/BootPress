@@ -1,1 +1,0 @@
-http://www.eyecon.ro/bootstrap-colorpicker

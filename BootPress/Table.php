@@ -38,18 +38,20 @@ class BootPressTable extends BootPress {
   
   public function close () {
     $this->wrap_up();
-    $head = array();
-    $body = array();
+    $html = '';
+    $previous = '';
+    $rows = array();
     foreach ($this->rows as $row) {
-      if (strpos($row, '</th>') !== false) {
-        $head[] = $row;
-      } else { // '</td>'
-        $body[] = $row;
+      $section = (strpos($row, '</th>') !== false) ? 'thead' : 'tbody';
+      if (!empty($rows) && $previous != $section) {
+        $html .= '<' . $previous . '>' . implode('', $rows) . '</' . $previous . '>';
+        $rows = array();
       }
+      $previous = $section;
+      $rows[] = $row;
     }
-    $head = (!empty($head)) ? '<thead>' . implode('', $head) . '</thead>' : '';
-    $body = (!empty($body)) ? '<tbody>' . implode('', $body) . '</tbody>' : '';
-    return $this->table . $head . $body . '</table>';
+    if (!empty($rows)) $html .= '<' . $previous . '>' . implode('', $rows) . '</' . $previous . '>';
+    return $this->table . $html . '</table>';
   }
   
   private function wrap_up () {

@@ -17,6 +17,11 @@ class BootPressNavbar extends BootPress {
     return $this;
   }
   
+  public function insert ($content) {
+    $this->html .= $content;
+    return $this;
+  }
+  
   public function brand ($name, $link='') {
     if (empty($link)) $link = BASE_URL;
     $this->brand = '<a class="navbar-brand" href="' . $link . '">' . $name . '</a>';
@@ -41,10 +46,6 @@ class BootPressNavbar extends BootPress {
     return $this;
   }
   
-  public function insert ($content) {
-    $this->html .= $content;
-  }
-  
   public function menu ($links, $options=array()) { // array('active'=>'name or url', 'pull'=>'left or right')
     $align = (isset($options['pull'])) ? ' navbar-' . $options['pull'] : '';
     unset($options['pull']);
@@ -53,7 +54,8 @@ class BootPressNavbar extends BootPress {
   }
   
   public function close () {
-    $id = $this->id('navbar');
+    global $page;
+    $id = $page->id('navbar');
     $class = 'navbar';
     switch ($this->fixed) {
       case 'top':
