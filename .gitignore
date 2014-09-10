@@ -14,8 +14,8 @@
 plugins/*
 !plugins/CDN/
 !plugins/Database/
-!plugins/Feeds/
+!plugins/Feed/
 !plugins/Form/
-!plugins/ImageMagick/
+!plugins/Image/
 !plugins/jQuery/
 !plugins/Smarty/
