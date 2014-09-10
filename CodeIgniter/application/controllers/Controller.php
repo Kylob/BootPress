@@ -8,13 +8,16 @@ class Controller extends CI_Controller {
   private $post;
   
   public function _remap ($model) {
-    global $bp, $ci, $page;
+    global $admin, $bp, $ci, $page;
     $this->benchmark->mark('page_cache_start');
     do { $this->errors .= ob_get_clean(); } while (ob_get_level());
-    ob_start();
-    $ci = $this; // $ci =& get_instance(); doesn't cut it so ...
-    define('BASE_URL', $this->config->base_url());
     $this->model = $model;
+    ob_start();
+    $admin = array_merge(array('name'=>'', 'email'=>'', 'password'=>'', 'folder'=>''), (array) $admin);
+    define('ADMIN', !empty($admin['folder']) ? $admin['folder'] : 'admin');
+    if (!defined('BLOG')) define('BLOG', '');
+    define('BASE_URL', $this->config->base_url());
+    $ci = $this; // $ci =& get_instance(); doesn't cut it so ...
     if ($this->model == '#cache#') {
       $this->load_database();
       $file = func_get_arg(1);
@@ -32,7 +35,6 @@ class Controller extends CI_Controller {
     } else {
       $this->benchmark->mark('page_cache_end');
       $this->benchmark->mark('page_setup_start');
-      if (!defined('BLOG')) define('BLOG', 'blog');
       require_once(BASE . 'Page.php');
       if ($this->model == '#sitemap#') {
         $page = new Page;
@@ -55,8 +57,7 @@ class Controller extends CI_Controller {
         $this->post();
         $html = '';
         if ($this->model == ADMIN) {
-          $view = func_get_arg(1);
-          $view = array_shift($view);
+          $view = $page->uri('next', ADMIN);
           $this->load->driver('blog', array('page'=>'#admin#'));
           $this->load->driver('admin', array('file'=>$view));
           switch ($view) {

@@ -5,10 +5,11 @@ class Blog extends CI_Driver_Library {
   public $db; // an SQLite object
   public $template = 'default';
   protected $valid_drivers = array('auth', 'pages', 'thumbs');
+  private $admin = array(); // information that will be passed to $ci->blog->auth
   private $blog = array(); // information that will be passed to Smarty templates
   
   public function __construct ($params) {
-    global $ci, $page;
+    global $admin, $ci, $page;
     #-- Database --#
     $this->db = $page->plugin('Database', 'sqlite', BASE_URI . 'blog/databases/blog.db');
     if ($this->db->created) $this->create_tables();
@@ -23,6 +24,8 @@ class Blog extends CI_Driver_Library {
     $this->blog['uri'] = substr(BASE_URL . $page->get('uri'), strlen($this->blog['url']));
     #-- Setup --#
     if (empty($this->blog['name']) && $this->blog['page'] != '#admin#') $page->eject('admin');
+    $this->admin = $admin;
+    unset($admin);
   }
   
   public function get ($var=false) {
@@ -102,6 +105,10 @@ class Blog extends CI_Driver_Library {
     }
     if (!empty($name)) return (isset($templates[$template][$name])) ? $templates[$template][$name] : '';
     return $templates[$template];
+  }
+  
+  public function admin () {
+    return ($this->blog['page'] == '#admin#') ? $this->admin : false;
   }
   
   private function create_tables () {

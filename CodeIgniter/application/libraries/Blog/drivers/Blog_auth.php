@@ -3,16 +3,16 @@
 class Blog_auth extends CI_Driver {
 
   public $db;
-
+  private $admin;
+  
   public function __construct () {
     global $ci, $page;
-    if (!defined('ADMIN_NAME') || !defined('ADMIN_EMAIL') || !defined('ADMIN_PASSWORD') || constant('ADMIN_NAME') == '' || constant('ADMIN_EMAIL') == '' || constant('ADMIN_PASSWORD') == '') {
-      exit('Admin params are not set in the root bootpress folder');
-    }
     $this->db = $page->plugin('Database', 'sqlite', BASE_URI . 'blog/databases/users.db');
     if ($this->db->created) $this->create_tables();
-    $admin = array('name'=>ADMIN_NAME, 'email'=>ADMIN_EMAIL, 'password'=>sha1(ADMIN_PASSWORD), 'admin'=>1, 'approved'=>'Y');
-    $user = $this->db->row('SELECT * FROM users WHERE email = ?', array(ADMIN_EMAIL));
+    if (!$this->admin = $ci->blog->admin()) return;
+    foreach (array('name', 'email', 'password') as $value) if (empty($this->admin[$value])) exit('Admin params are not set in the root bootpress folder');
+    $admin = array('name'=>$this->admin['name'], 'email'=>$this->admin['email'], 'password'=>sha1($this->admin['password']), 'admin'=>1, 'approved'=>'Y');
+    $user = $this->db->row('SELECT * FROM users WHERE email = ?', array($this->admin['email']));
     if (empty($user)) { // insert
       $this->db->insert('users', $admin);
     } else {
@@ -104,9 +104,10 @@ class Blog_auth extends CI_Driver {
   }
   
   public function login ($user_id, $expires=false, $single=false) {
-    global $ci;
+    global $ci, $page;
     $this->logout(($single !== false) ? $user_id : false);
     if ($user = $this->db->row('SELECT id AS user_id, name, admin FROM users WHERE id = ? AND approved = ?', array($user_id, 'Y'))) {
+      if (in_array($user['admin'], array(1,2)) && !$this->admin) $page->eject(ADMIN . '/users');
       if ($expires) {
         $seconds = $ci->config->item('sess_expiration');
         if (empty($seconds)) $seconds = 60 * 60 * 24 * 365 * 2; // ie. 2 years
