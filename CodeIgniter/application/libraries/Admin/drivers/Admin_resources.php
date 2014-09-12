@@ -55,10 +55,12 @@ class Admin_resources extends CI_Driver {
   private function edit ($resource) {
     global $bp, $page;
     $html = '';
-    $image = (in_array($resource['type'], array('jpg', 'gif', 'png', 'ico'))) ? true : false;
+    $types = array('jpg', 'gif', 'png', 'ico');
+    if (!$page->plugin('Image', 'Magick')) array_pop($types);
+    $image = (in_array($resource['type'], $types)) ? true : false;
     $form = $page->plugin('Form', 'name', 'edit_form');
     $form->menu('new', array('Y'=>'<strong>Create A New Image Based On The Original</strong>'));
-    $form->menu('type', array('jpg'=>'jpg', 'gif'=>'gif', 'png'=>'png', 'ico'=>'ico'));
+    $form->menu('type', array_combine($types, $types));
     $resource['quality'] = 80;
     $form->values($resource);
     $form->validate('name', 'Name', 'required', 'The file name - make it descriptive and seo friendly.  The search engines love that.');
@@ -73,7 +75,7 @@ class Admin_resources extends CI_Driver {
       #-- Update Parent Resource --#
       $parent = array();
       $parent['name'] = $this->image_filter($form->vars['name']);
-      $parent['tags'] = (is_array($form->vars['tags'])) ? implode(',', $form->vars['tags']) : '';
+      $parent['tags'] = $form->vars['tags'];
       $this->blog->db->update('resources', 'id', array($resource['id'] => $parent));
       #-- Create New Image --#
       if ($form->vars['new'] == 'Y' && !empty($form->vars['type']) && !empty($form->vars['width']) && !empty($form->vars['height']) && !empty($form->vars['coords'])) {

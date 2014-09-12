@@ -1,22 +1,21 @@
 <?php
 
-// Define these global vars and rename this file to just params.php
+// Enter the following information and rename this file to just params.php
 
-define ('ADMIN', 'admin'); // the directory in which you would like to administer your site
-
-define ('ADMIN_NAME', ''); // however you like to see it written
-
-define ('ADMIN_EMAIL', ''); // what you will use to sign in
-
-define ('ADMIN_PASSWORD', ''); // for all of your websites
-
-define ('IMAGEMAGICK_PATH', ''); // to the command line
-
-define ('PHP_PATH', ''); // used to sanitary (lint) check PHP files before they are saved
-
-$config['encryption_key'] = md5(ADMIN_NAME . ADMIN_EMAIL . ADMIN_PASSWORD);
+$admin = array(
+  'name'     => '', // however you like to see it written
+  'email'    => '', // what you will use to sign in
+  'password' => '', // for all of your websites
+  'folder'   => 'admin' // the directory in which you would like to administer your site
+);
 
 $config['compress_output'] = true;
+
+$config['encryption_key'] = md5(serialize($admin));
+
+define ('IMAGEMAGICK_PATH', ''); // to the command line (optional)
+
+define ('PHP_PATH', ''); // used to sanitary (lint) check PHP files before they are saved (optional)
 
 // -----------------------------------------------------------------------------
 // END OF USER CONFIGURABLE SETTINGS.  DO NOT EDIT BELOW THIS LINE

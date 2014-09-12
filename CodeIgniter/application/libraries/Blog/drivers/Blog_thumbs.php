@@ -17,14 +17,14 @@ class Blog_thumbs extends CI_Driver {
       $html .= $form->label('thumb', '<img class="pull-left" style="padding-right:20px;" src="' . $thumb . '">' . $bp->button('xs danger', $bp->icon('trash') . ' Delete', array('type'=>'submit', 'data-loading-text'=>'Deleting...', 'title'=>'Remove this thumbnail')) . $form->field('thumb', 'hidden'));
       $html .= $form->close();
     } else {
-      $form->validate('thumb', 'Thumb', 'required', 'Enter the URI path of the image you would like to generate a thumbnail from.  You may copy and paste the path from your image directory like so: {$blog[\'img\']}(?).jpg');
+      $form->validate('thumb', 'Thumb', 'required', 'Enter the number dot type of image from Admin Resources eg: 3.jpg');
       if ($form->submitted() && empty($form->errors)) {
-        $this->save($folder, $id, $form->vars['thumb']);
+        $this->save($folder, $id, BASE_URI . 'blog/resources/' . $form->vars['thumb']);
         $page->eject($form->eject);
       }
       $html .= $this->url($folder, $id);
       $html .= $form->header();
-      $html .= $form->label_field('thumb', 'text', array('append' => $bp->button('primary', 'Submit', array('type'=>'submit', 'data-loading-text'=>'Submitting...'))));
+      $html .= $form->label_field('thumb', 'text', array('prepend' => '{$blog[\'img\']}', 'append' => $bp->button('primary', 'Submit', array('type'=>'submit', 'data-loading-text'=>'Submitting...'))));
       $html .= $form->close();
     }
     unset($form);
@@ -38,10 +38,8 @@ class Blog_thumbs extends CI_Driver {
   
   public function save ($folder, $id, $uri) {
     global $page;
-    $page->plugin('Form');
-    if ($uri[0] == '{' && $close = strpos($uri, '}')) $uri = BASE_URI . 'blog/resources/' . substr($uri, $close + 1);
     if ($image = $page->plugin('Image', 'uri', $uri)) {
-      $image->square(200);
+      $image->square(200, 'enforce');
       $image->save($this->uri($folder, $id), 60);
       unset($image);
     }

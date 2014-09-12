@@ -1,5 +1,6 @@
 *
 
 !.gitignore
-!ImageMagick.php
+!Image.php
+!Magick.php
 !index.php
