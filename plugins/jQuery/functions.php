@@ -14,11 +14,17 @@ function add_jquery_scripts ($js, $plugin) {
 }
 
 function add_jquery_code ($html, $plugin) {
-  global $page;
+  global $ci, $page;
   $plugin = $page->get('info', $plugin);
   if (!isset($plugin['code'])) return $html;
-  $plugin['code'] = implode("\n\t", array_unique($plugin['code']));
-  return $html . "\n  " . '<script type="text/javascript">$(document).ready(function(){' . "\n\t{$plugin['code']}\n  " . '})</script>';
+  $code = array_unique($plugin['code']);
+  if (!isset($plugin['debug'])) {
+    foreach ($code as $key => $value) $code[$key] = $ci->output->minify($value, 'text/javascript');
+    $code = "\n\t" . implode("\n\t", $code) . "\n  ";
+  } else {
+    $code = "\n" . implode("\n\n", $code) . "\n  ";
+  }
+  return $html . "\n  " . '<script type="text/javascript">$(document).ready(function(){' . $code . '})</script>';
 }
 
 $page->filter('javascript', 'add_jquery_scripts', array('this', $plugin['name']));

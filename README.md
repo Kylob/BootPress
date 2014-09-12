@@ -68,13 +68,13 @@ $admin = array(
   'folder'   => 'admin' // the directory in which you would like to administer your site
 );
 
-$config['compress_output'] = true;
+$config['compress_output'] = false; // if you are getting compression errors (a blank page) then set this to false
 
 $config['encryption_key'] = md5(serialize($admin));
 
-define ('IMAGEMAGICK_PATH', ''); // to the command line (optional)
+define ('IMAGEMAGICK_PATH', ''); // (optional) to the command line
 
-define ('PHP_PATH', ''); // used to sanitary (lint) check PHP files before they are saved (optional)
+define ('PHP_PATH', ''); // (optional) used to sanitary (lint) check PHP files before they are saved
 
 ?>
 ```

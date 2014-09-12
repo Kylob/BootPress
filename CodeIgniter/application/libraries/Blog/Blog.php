@@ -23,7 +23,7 @@ class Blog extends CI_Driver_Library {
     $this->blog['url'] = trim(BASE_URL . BLOG, '/') . '/';
     $this->blog['uri'] = substr(BASE_URL . $page->get('uri'), strlen($this->blog['url']));
     #-- Setup --#
-    if (empty($this->blog['name']) && $this->blog['page'] != '#admin#') $page->eject('admin');
+    if (empty($this->blog['name']) && $this->blog['page'] != '#admin#') $page->eject(ADMIN);
     $this->admin = $admin;
     unset($admin);
   }

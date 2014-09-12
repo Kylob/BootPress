@@ -128,6 +128,7 @@ class Controller extends CI_Controller {
     } elseif (empty($this->errors)) {
       $this->sitemap->may_change();
     }
+    do { $this->errors .= ob_get_clean(); } while (ob_get_level()); // for compression's sake
     $this->load->view('view', array('html'=>$html));
     $this->benchmark->mark('page_display_end');
   }
