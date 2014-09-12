@@ -9,6 +9,7 @@
 !params_blank.php
 !.gitignore
 !.gitmodules
+!.readme
 
 # And only these plugins:
 plugins/*
