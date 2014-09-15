@@ -22,7 +22,7 @@ class Resources_deliverer extends CI_Driver {
       list($files, $updated) = $this->file_paths($file);
       if (empty($files)) exit(header('HTTP/1.1 404 Not Found'));
       if ($compress == 'pdf' || !empty($download)) {
-        $this->load->driver('session');
+        $ci->load->driver('session');
         foreach ($files as $uri) {
           $resource = str_replace(array(BASE_URI, BASE), '', $uri);
           $resource .= '#' . substr(strstr($ci->uri->uri_string(), '/'), 1);

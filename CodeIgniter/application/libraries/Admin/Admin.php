@@ -28,6 +28,14 @@ class Admin extends CI_Driver_Library {
         if ($preview) $ci->session->native->set_tempdata('preview_layout', $preview, 3000);
       }
       if ($suspend) exit;
+      if ($profiler = $ci->input->post('profiler')) {
+        if ($profiler == 'true') {
+          $ci->session->native->set_userdata('profiler', true);
+        } else {
+          $ci->session->native->unset_userdata('profiler');
+        }
+        exit;
+      }
     }
     $blog = ($this->blog->get('name') != '') ? $this->blog->get('name') : 'Blog';
     $page->title = 'Admin &raquo; ' . str_replace('Php', 'PHP', ucfirst($params['file'])) . ' &raquo; ' . $blog;
@@ -68,10 +76,18 @@ class Admin extends CI_Driver_Library {
           $links['Analytics'] = $url . 'analytics';
           $checked = ($ci->sitemap->caching()) ? ' ' : ' checked="checked" ';
           $nav->text('<label style="margin:0;"><input type="checkbox"' . $checked . 'style="margin:0;" id="suspend" value="Y"> Suspend Caching</label>');
-          $page->plugin('jQuery', 'code', '$("#suspend").change(function(){
-            var checked = $(this).is(":checked") ? "true" : "false";
-            $.post(location.href, {suspend:checked});
-          });');
+          $checked = ($ci->session->native->userdata('profiler')) ? ' checked="checked" ' : ' ';
+          $nav->text('<label style="margin:0;"><input type="checkbox"' . $checked . 'style="margin:0;" id="profiler" value="Y"> Enable Profiler</label>');
+          $page->plugin('jQuery', 'code', '
+            $("#suspend").change(function(){
+              var checked = $(this).is(":checked") ? "true" : "false";
+              $.post(location.href, {suspend:checked});
+            });
+            $("#profiler").change(function(){
+              var checked = $(this).is(":checked") ? "true" : "false";
+              $.post(location.href, {profiler:checked});
+            });
+          ');
         }
       }
       if (!is_admin(2)) $links = array();

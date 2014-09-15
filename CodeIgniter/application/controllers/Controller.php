@@ -122,7 +122,7 @@ class Controller extends CI_Controller {
       if (empty($this->errors)) $this->sitemap->update($html);
     }
     $this->log('hits');
-    if (ENVIRONMENT == 'development' && $this->output->get_content_type() == 'text/html' && $this->model != ADMIN) {
+    if ($this->session->native->userdata('profiler') && $this->output->get_content_type() == 'text/html' && $this->model != ADMIN) {
       $this->session->select_driver('native');
       $this->output->enable_profiler(true);
     } elseif (empty($this->errors)) {
@@ -210,6 +210,9 @@ class Controller extends CI_Controller {
   }
   
   public function filter_links ($html) { // made public so that it can be called elsewhere when ending the script prematurely if desired
+    if ($this->blog->get('page') != '#admin#') {
+      $html = preg_replace('/(\{\$blog\[.*img.*]})/', BASE_URL . 'blog/resources/', $html);
+    }
     $url = str_replace(array('.', '/'), array('\.', '\/'), BASE_URL);
     $chars = $this->config->item('permitted_uri_chars');
     preg_match_all('/(' . $url . ')([' . $chars . '\/]+)(#[' . $chars . '\/]+)?/i', $html, $matches);
@@ -277,10 +280,6 @@ class Controller extends CI_Controller {
     return $html;
   }
   
-  private function blog_img ($html) { //  for php scripts that don't go directly through the smarty filter
-    return preg_replace('/(\{\$blog\[.*img.*]})/', BASE_URL . 'blog/resources/', $html);
-  }
-  
   private function layout ($content, $view) {
     global $page;
     if (($preview = $this->session->native->tempdata('preview_layout')) && is_admin(2)) $this->template = $preview;
@@ -313,7 +312,7 @@ class Controller extends CI_Controller {
       $export['footer'] = $page->customize('footer', $this->blog->smarty($vars, $this->blog->templates('footer', $this->blog->template)));
       $layout = $this->blog->smarty(array_merge($vars, $export), $this->blog->templates('layout', $this->blog->template));
     }
-    return $this->blog_img($page->customize('layout', $layout));
+    return $page->customize('layout', $layout);
   }
   
   private function post () {
@@ -332,7 +331,7 @@ class Controller extends CI_Controller {
         if (is_array($export)) $data = $this->compile($export);
       }
       $data = json_encode($data);
-      $data = $this->filter_links($this->blog_img($data));
+      $data = $this->filter_links($data);
       header("Content-type: application/json");
       exit($data);
     }

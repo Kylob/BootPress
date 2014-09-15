@@ -54,7 +54,7 @@ class Admin_pages extends CI_Driver {
       if (!$list->count()) $list->count($this->blog->db->value('SELECT COUNT(*) FROM blog WHERE ' . $where));
     }
     $order = ($type == 'published') ? 'published' : 'updated';
-    $this->blog->db->query('SELECT id, url, title, summary, ABS(updated) FROM blog WHERE ' . $where . ' ORDER BY ' . $order . ' ASC');
+    $this->blog->db->query('SELECT id, url, title, summary, ABS(updated) FROM blog WHERE ' . $where . ' ORDER BY ' . $order . ' ASC' . $list->limit());
     while (list($id, $url, $title, $summary, $updated) = $this->blog->db->fetch('row')) {
       $thumb = $bp->img($this->blog->thumbs->url('blog', $id), 'width="75" class="pull-right" style="margin-left:10px;"');
       $html .= $bp->media(array(
