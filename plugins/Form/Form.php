@@ -137,7 +137,7 @@ class Form {
     global $page;
     if (is_array($name)) { // to establish multiple id's at once
       $names = array();
-      foreach ($name as $value) $names[$this->id($value)] = $value;
+      foreach ($name as $value) $names[$value] = $this->id($value);
       return $names;
     }
     if (!isset($this->ids[$name])) {
