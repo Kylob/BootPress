@@ -90,7 +90,7 @@ class Admin_php extends CI_Driver {
     if (!isset($_GET['folder'])) return $html;
     if (!file_exists($this->folders . $_GET['folder'] . '.php')) $page->eject($page->url('delete', '', 'folder'));
     $form = $page->plugin('Form', 'name', 'edit_folders');
-    $fields = $form->id(array('php', 'smarty'));
+    $fields = array_flip($form->id(array('php', 'smarty')));
     $code = $this->folders . $_GET['folder'] . '.php';
     $smarty = $this->folders . $_GET['folder'] . '.tpl';
     if (isset($_POST['wyciwyg']) && isset($_POST['field']) && isset($fields[$_POST['field']])) {
@@ -163,7 +163,7 @@ class Admin_php extends CI_Driver {
     global $bp, $page;
     if (empty($this->file)) return '';
     $form = $page->plugin('Form', 'name', 'edit_plugins');
-    $fields = $form->id(array('code'));
+    $fields = array_flip($form->id(array('code')));
     $html = '';
     #-- Edit File --#
     if (isset($_POST['wyciwyg']) && isset($_POST['field']) && isset($fields[$_POST['field']]) && $fields[$_POST['field']] == 'code') {
