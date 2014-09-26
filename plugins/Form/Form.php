@@ -277,6 +277,29 @@ class Form {
     return (!empty($this->vars)) ? true : false;
   }
   
+  public function process ($values) {
+    global $ci;
+    if (!is_array($values)) return '<input type="hidden" name="process[]" value="' . $values . '" />';
+    $info = array();
+    $method = $this->type; // either get or post
+    $process = $ci->input->$method('process');
+    if (is_array($process)) {
+      foreach ($process as $id) {
+        $index = ($id[0] == '[') ? $id : '[' . $id . ']';
+        foreach ($values as $field => $default) {
+          if (is_numeric($field)) {
+            $field = $default;
+            $info[$id][$field] = $ci->input->$method($field . $index);
+          } else {
+            $value = $ci->input->$method($field . $index);
+            $info[$id][$field] = (empty($value)) ? $default : $value;
+          }
+        }
+      }
+    }
+    return $info;
+  }
+  
   public function reset_attempts () {
     global $ci;
     if ($this->log !== false) {
@@ -434,10 +457,9 @@ class Form {
   }
   
   public function field ($name, $field, $options=array()) {
-    if (isset($options['value'])) {
-      $this->values($name, $options['value']); // to establish or override the default
-      unset($options['value']);
-    }
+    $rnr = (isset($options['multi'])) ? array('name="' . $name . '"', ($pos = strpos($name, '[')) ? substr($name, 0, $pos) : $name, '[' . $options['multi'] . ']') : false;
+    if (isset($options['value'])) $this->values($name, $options['value']); // to establish or override the default
+    unset($options['multi'], $options['value']);
     switch ($field) {
       case 'calendar':
       case 'checkbox':
@@ -449,7 +471,8 @@ class Form {
       case 'tags':
       case 'text':
       case 'textarea':
-         return $this->$field($name, $options);
+         $html = $this->$field($name, $options);
+         return ($rnr) ? str_replace(array_shift($rnr), 'name="' . implode('', $rnr) . '"', $html) : $html;
          break;
     }
   }

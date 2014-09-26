@@ -96,7 +96,7 @@ class Page {
     $uri = explode('/', $this->uri);
     switch($action) {
       case 'count': return count($uri); break;
-      case 'first': return implode('/', array_slice($uri, 0, (int) $arg)); break;
+      case 'first': return implode('/', array_slice($uri, 0, max((int) $arg, 1))); break;
       case 'after':
         if (is_numeric($arg)) return implode('/', array_slice($uri, (int) $arg));
         if (!empty($arg)) {
@@ -267,8 +267,10 @@ class Page {
         unset($params[$key]);
       }
     }
+    $params['plugin']['params'] = array_keys($params); // so we check if in_array()
     $path = 'plugins/' . $name . '/';
-    $params['plugin'] = array('name'=>$name, 'url'=>BASE_URL . $path);
+    $params['plugin']['name'] = $name;
+    $params['plugin']['url'] = BASE_URL . $path;
     if (file_exists(BASE_URI . $path . 'index.php')) {
       $params['plugin']['uri'] = BASE_URI . $path;
       $file = BASE_URI . $path . 'index.php';
