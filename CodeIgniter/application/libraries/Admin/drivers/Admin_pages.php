@@ -206,7 +206,7 @@ class Admin_pages extends CI_Driver {
     if ($edit) $html .= $ci->blog->thumbs->form('blog', $edit);
     $html .= $form->header();
     #-- Page --#
-    $html .= $form->label_field('page', 'checkbox');
+    $html .= $form->field('page', 'checkbox');
     $page->plugin('jQuery', 'code', '
       if ($("input[name=page]").is(":checked")) $("#authors").hide();
       $("input[name=page]").change(function(){
@@ -218,35 +218,35 @@ class Admin_pages extends CI_Driver {
       });
     ');
     #-- Author --#
-    if (!empty($authors)) $html .= '<div id="authors">' . $form->label_field('author_id', 'select') . '</div>';
+    if (!empty($authors)) $html .= '<div id="authors">' . $form->field('author_id', 'select') . '</div>';
     #-- URL --#
     if (!empty($values)) { // we don't offer this option until they have submitted something
       $args = array('prepend'=>'/', 'maxlength'=>150);
       if ($ci->config->item('url_suffix') != '') $args['append'] = $ci->config->item('url_suffix');
-      $html .= $form->label_field('url', 'text', $args);
+      $html .= $form->field('url', 'text', $args);
     }
     #-- Title --#
-    $html .= $form->label_field('title', 'text', array('maxlength'=>100));
+    $html .= $form->field('title', 'text', array('maxlength'=>100));
     #-- Summary --#
-    $html .= $form->label_field('summary', 'textarea', array('rows'=>2));
+    $html .= $form->field('summary', 'textarea', array('rows'=>2));
     #-- Tags --#
-    $html .= $form->label_field('tags', 'tags');
+    $html .= $form->field('tags', 'tags');
     #-- Post (Content) --#
     $args = array('class'=>'wyciwyg tpl input-sm', 'rows'=>5, 'spellcheck'=>'false');
     if (!$edit) $args['class'] .= ' noSaving';
     $result = $this->blog->smarty('blog', $form->values('post'), 'testing');
     if ($result !== true) $form->errors['post'] = $result;
-    $html .= $form->label_field('post', 'textarea', $args);
+    $html .= $form->field('post', 'textarea', $args);
     #-- PHP --#
     if ($edit) {
       if (is_admin(1)) {
-        $html .= $form->label_field('php', 'textarea', array('class'=>'wyciwyg noMarkup php input-sm', 'rows'=>5, 'spellcheck'=>'false'));
+        $html .= $form->field('php', 'textarea', array('class'=>'wyciwyg noMarkup php input-sm', 'rows'=>5, 'spellcheck'=>'false'));
       } elseif (file_exists(BASE_URI . 'blog/plugins/' . $edit . '.php')) {
-        $html .= $form->label_field('php', 'textarea', array('class'=>'wyciwyg noMarkup readOnly php input-sm', 'rows'=>5, 'spellcheck'=>'false'));
+        $html .= $form->field('php', 'textarea', array('class'=>'wyciwyg noMarkup readOnly php input-sm', 'rows'=>5, 'spellcheck'=>'false'));
       }
     }
     #-- Published --#
-    $html .= $form->label_field('published', 'checkbox');
+    $html .= $form->field('published', 'checkbox');
     #-- Wrap Up --#
     $html .= $form->submit($edit ? 'Save Changes' : 'Submit');
     $html .= $form->close();

@@ -140,8 +140,7 @@ class Admin extends CI_Driver_Library {
   }
   
   public function code ($post) {
-    $code = (ini_get('magic_quotes_gpc') == '1') ? stripslashes($_POST[$post]) : $_POST[$post];
-    return str_replace("\r\n", "\n", base64_decode(base64_encode($code)));
+    return str_replace("\r\n", "\n", base64_decode(base64_encode($_POST[$post])));
   }
   
   public function wyciwyg () {

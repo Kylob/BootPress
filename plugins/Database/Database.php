@@ -77,6 +77,7 @@ class Database {
   }
   
   public function row ($query, $values=array()) {
+    if (is_array($query)) $query = implode("\n", $query);
     $query = $this->query($query, $values);
     if ($query->num_rows() > 0) $row = $query->row_array();
     $query->free_result();

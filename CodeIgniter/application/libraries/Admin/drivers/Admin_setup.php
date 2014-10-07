@@ -64,9 +64,9 @@ class Admin_setup extends CI_Driver {
     }
     if ($edit) $html .= $this->blog->thumbs->form('blog', 0);
     $html .= $form->header();
-    $html .= $form->label_field('name', 'text', array('maxlength'=>100));
-    $html .= $form->label_field('slogan', 'text', array('maxlength'=>100));
-    $html .= $form->label_field('summary', 'textarea', array('rows'=>3));
+    $html .= $form->field('name', 'text', array('maxlength'=>100));
+    $html .= $form->field('slogan', 'text', array('maxlength'=>100));
+    $html .= $form->field('summary', 'textarea', array('rows'=>3));
     $html .= $form->submit($edit ? 'Edit' : 'Submit');
     $html .= $form->close();
     unset($form);
@@ -99,8 +99,8 @@ class Admin_setup extends CI_Driver {
     }
     if ($edit) $html .= $this->blog->thumbs->form('authors', $_GET['id']);
     $html .= $form->header();
-    $html .= $form->label_field('author', 'text', array('maxlength'=>100));
-    $html .= $form->label_field('summary', 'textarea', array('rows'=>3));
+    $html .= $form->field('author', 'text', array('maxlength'=>100));
+    $html .= $form->field('summary', 'textarea', array('rows'=>3));
     $html .= $form->submit($edit ? 'Edit' : 'Submit');
     $html .= $form->close();
     unset($form);
@@ -153,11 +153,11 @@ class Admin_setup extends CI_Driver {
       $page->eject($page->url('delete', $form->eject, 'id'));
     }
     $html .= $form->header();
-    $html .= $form->label_field('category', 'text', array('maxlength'=>100));
+    $html .= $form->field('category', 'text', array('maxlength'=>100));
     if (empty($this->tags)) {
       $html .= $form->label('Tags', '<p class="help-block">You have no tags from which to select from.</p>');
     } else {
-      $html .= $form->label_field('tags[]', 'select');
+      $html .= $form->field('tags[]', 'select');
     }
     $html .= $form->submit($edit ? 'Edit' : 'Submit');
     $html .= $form->close();

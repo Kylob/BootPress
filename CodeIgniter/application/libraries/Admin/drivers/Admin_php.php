@@ -68,9 +68,9 @@ class Admin_php extends CI_Driver {
       }
     }
     $html .= $form->header();
-    $html .= $form->label_field('url', 'text', array('prepend'=>BASE_URL, 'append'=>array('/', $bp->button('primary', 'Create', array('type'=>'Submit', 'data-loading-text'=>'Submitting...')))));
+    $html .= $form->field('url', 'text', array('prepend'=>BASE_URL, 'append'=>array('/', $bp->button('primary', 'Create', array('type'=>'Submit', 'data-loading-text'=>'Submitting...')))));
     if (!empty($menu)) {
-      $html .= $form->label_field('edit', 'select');
+      $html .= $form->field('edit', 'select');
     }
     $html .= $form->close();
     $page->plugin('jQuery', 'code', '
@@ -147,12 +147,12 @@ class Admin_php extends CI_Driver {
     }
     $html .= $form->header();
     $html .= $form->fieldset('<a href="' . BASE_URL . $_GET['folder'] . '/" title="View Page">' . BASE_URL . $_GET['folder'] . '/</a>',
-      $form->label_field('folder', 'text', array(
+      $form->field('folder', 'text', array(
         'prepend' => $bp->button('link delete', $bp->icon('trash'), array('data-url'=>$page->url('add', '', 'delete', 'folder'), 'title'=>'Delete')),
         'append' => $bp->button('warning', 'Edit', array('type'=>'Submit', 'data-loading-text'=>'Submitting...'))
       )),
-      $form->label_field('php', 'textarea', array('class'=>'wyciwyg noMarkup php input-sm', 'rows'=>5, 'spellcheck'=>'false')),
-      $form->label_field('smarty', 'textarea', array('class'=>'wyciwyg tpl input-sm', 'rows'=>5, 'spellcheck'=>'false'))
+      $form->field('php', 'textarea', array('class'=>'wyciwyg noMarkup php input-sm', 'rows'=>5, 'spellcheck'=>'false')),
+      $form->field('smarty', 'textarea', array('class'=>'wyciwyg tpl input-sm', 'rows'=>5, 'spellcheck'=>'false'))
     );
     $html .= $form->close();
     unset($form);
@@ -215,9 +215,9 @@ class Admin_php extends CI_Driver {
     $html .= $form->header();
     $delete = $bp->button('link', $bp->icon('trash'), array('id'=>'delete', 'data-url'=>$page->url('add', '', 'delete', 'file'), 'title'=>'Delete File'));
     $edit = $bp->button('warning', 'Edit', array('type'=>'submit', 'data-loading-text'=>'Submitting...'));
-    $html .= $form->label_field('file', 'text', array('prepend'=>$delete, 'append'=>$edit));
+    $html .= $form->field('file', 'text', array('prepend'=>$delete, 'append'=>$edit));
     $ext = substr($_GET['file'], strrpos($_GET['file'], '.') + 1);
-    $html .= $form->label_field('code', 'textarea', array('class'=>"wyciwyg noMarkup {$ext} input-sm", 'rows'=>5, 'spellcheck'=>'false'));
+    $html .= $form->field('code', 'textarea', array('class'=>"wyciwyg noMarkup {$ext} input-sm", 'rows'=>5, 'spellcheck'=>'false'));
     $html .= $form->close();
     unset($form);
     $page->plugin('jQuery', 'code', '
@@ -260,14 +260,14 @@ class Admin_php extends CI_Driver {
     }
     $html .= $form->header();
     $create = $bp->button('primary', 'Create', array('type'=>'submit', 'data-loading-text'=>'Submitting'));
-    $html .= $form->label_field($prompt, 'text', array('prepend'=>'Plugin', 'append'=>$create));
+    $html .= $form->field($prompt, 'text', array('prepend'=>'Plugin', 'append'=>$create));
     if (file_exists($this->plugins)) {
       $plugins = array();
       foreach (scandir($this->plugins) as $dir) if ($dir != '.' && $dir != '..' && is_dir($this->plugins . $dir . '/')) $plugins[$dir . '/'] = $dir;
       if (!empty($plugins)) {
         natcasesort($plugins);
         $preselect = (isset($_GET['file'])) ? $_GET['file'] : '';
-        $html .= $form->label('edit', '<div id="selected" class="row">' . $this->plugin_options($plugins, $preselect) . '</div>');
+        $html .= $form->field('edit', '<div id="selected" class="row">' . $this->plugin_options($plugins, $preselect) . '</div>');
       }
     }
     $html .= $form->close();

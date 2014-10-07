@@ -60,9 +60,9 @@ class Admin_users extends CI_Driver {
     }
     $html .= $form->header();
     $html .= $form->fieldset('Sign In',
-      $form->label_field('email', 'text', array('prepend'=>$bp->icon('envelope'))),
-      $form->label_field('password', 'password', array('prepend'=>$bp->icon('lock'))),
-      $form->label_field('remember', 'checkbox')
+      $form->field('email', 'text', array('prepend'=>$bp->icon('envelope'))),
+      $form->field('password', 'password', array('prepend'=>$bp->icon('lock'))),
+      $form->field('remember', 'checkbox')
     );
     $html .= $form->submit('Sign In');
     $html .= $form->close();
@@ -95,10 +95,10 @@ class Admin_users extends CI_Driver {
     }
     $html .= $form->header();
     $html .= $form->fieldset('Edit Your Profile',
-      $form->label('Email', '<p class="help-block">' . $form->values('email') . '</p>'),
-      $form->label_field('name', 'text'),
-      $form->label_field('password', 'password'),
-      $form->label_field('confirm', 'password'),
+      $form->field('Email', '<p class="help-block">' . $form->values('email') . '</p>'),
+      $form->field('name', 'text'),
+      $form->field('password', 'password'),
+      $form->field('confirm', 'password'),
       $form->submit('Edit Profile')
     );
     $html .= $form->close();
@@ -165,7 +165,7 @@ class Admin_users extends CI_Driver {
           $page->eject($form->eject);
         }
         $html .= $form->header();
-        $html .= $form->label_field('group', 'text', array('append'=>$bp->button('warning', 'Edit', array('type'=>'submit', 'data-loading-text'=>'Submitting...'))));
+        $html .= $form->field('group', 'text', array('append'=>$bp->button('warning', 'Edit', array('type'=>'submit', 'data-loading-text'=>'Submitting...'))));
         $html .= $form->close();
         unset($form);
         if (!$list->count()) $list->count($groups[$view]['count']);
@@ -238,12 +238,12 @@ class Admin_users extends CI_Driver {
     }
     $html .= $form->header();
     $html .= $form->fieldset('Edit User',
-      $form->label_field('name', 'text', array('prepend'=>$bp->icon('user'))),
-      $form->label_field('email', 'text', array('prepend'=>$bp->icon('envelope'))),
-      $form->label_field('password', 'text', array('prepend'=>$bp->icon('lock'), 'append'=>$this->blog->auth->random_password(), 'placeholder'=>'Leave empty to keep current password')),
-      $form->label_field('admin', 'select'),
-      $form->label_field('groups', 'tags'),
-      $form->label_field('approved', 'checkbox')
+      $form->field('name', 'text', array('prepend'=>$bp->icon('user'))),
+      $form->field('email', 'text', array('prepend'=>$bp->icon('envelope'))),
+      $form->field('password', 'text', array('prepend'=>$bp->icon('lock'), 'append'=>$this->blog->auth->random_password(), 'placeholder'=>'Leave empty to keep current password')),
+      $form->field('admin', 'select'),
+      $form->field('groups', 'tags'),
+      $form->field('approved', 'checkbox')
     );
     $html .= $form->submit('Edit User');
     $html .= $form->close();
@@ -271,9 +271,9 @@ class Admin_users extends CI_Driver {
     }
     $html .= $form->header();
     $html .= $form->fieldset('Register User',
-      $form->label_field('name', 'text', array('prepend'=>$bp->icon('user'))),
-      $form->label_field('email', 'text', array('prepend'=>$bp->icon('envelope'))),
-      $form->label_field('password', 'text', array('prepend'=>$bp->icon('lock')))
+      $form->field('name', 'text', array('prepend'=>$bp->icon('user'))),
+      $form->field('email', 'text', array('prepend'=>$bp->icon('envelope'))),
+      $form->field('password', 'text', array('prepend'=>$bp->icon('lock')))
     );
     $html .= $form->submit('Register User');
     $html .= $form->close();

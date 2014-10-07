@@ -209,6 +209,10 @@ class Controller extends CI_Controller {
     }
   }
   
+  public function default_value ($str, $default) { // used as a form validation callback, and for anything else you would like
+    return (empty($str)) ? $default : $str;
+  }
+  
   public function filter_links ($html) { // made public so that it can be called elsewhere when ending the script prematurely if desired
     if ($this->blog->get('page') != '#admin#') {
       $html = preg_replace('/(\{\$blog\[.*img.*]})/', BASE_URL . 'blog/resources/', $html);

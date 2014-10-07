@@ -276,8 +276,7 @@ class Admin_layouts extends CI_Driver {
     $this->blog->db->query('SELECT template FROM templates WHERE template != ? ORDER BY template ASC', array('default'));
     while (list($template) = $this->blog->db->fetch('row')) $templates[$template] = $template;
     $form->menu('template', $templates);
-    $form->menu('preview', array('Y'=>'Preview the selected template'));
-    $form->menu('cacheable', array('Y'=>'This template is cacheable'));
+    $form->menu('state[]', array('preview'=>'Preview the selected template', 'cacheable'=>'This template is cacheable'));
     $form->menu('action', array(
       'copy' => '<b>Copy</b> will make a duplicate of this template if it does not already exist',
       'rename' => '<b>Rename</b> will change the name of this template as long as it does not already exist',
@@ -285,23 +284,22 @@ class Admin_layouts extends CI_Driver {
     ));
     $cache = $this->dir . $this->template . '.cache';
     $values = $this->blog->templates(array(), $this->template);
-    $values['preview'] = ($this->preview) ? 'Y' : 'N';
-    $values['cacheable'] = (file_exists($cache)) ? 'Y' : 'N';
+    if ($this->preview) $values['state[]'][] = 'preview';
+    if (file_exists($cache)) $values['state[]'][] = 'cacheable';
     $values['action'] = 'copy';
     $form->values($values);
     $form->validate('template', 'Template', 'required|inarray[menu]', 'Select the template you would like to edit.');
-    $form->validate('preview', '', 'YN');
-    $form->validate('cacheable', '', 'YN');
+    $form->validate('state[]', '', 'inarray[menu]');
     $form->validate('save', 'Save As', '', 'Enter the name of the template for which you would like to Copy, Rename, or Replace.');
     $form->validate('action', '', 'required', 'inarray[menu]');
     if ($form->submitted() && empty($form->errors)) {
-      if ($form->vars['preview'] == 'Y') {
+      if (in_array('preview', $form->vars['state'])) {
         $ci->sitemap->suspend_caching(60);
         $ci->session->native->set_tempdata('preview_layout', $this->template, 3000);
       } else {
         $ci->session->native->unset_tempdata('preview_layout');
       }
-      if ($form->vars['cacheable'] == 'Y') {
+      if (in_array('cacheable', $form->vars['state'])) {
         if (!file_exists($cache)) file_put_contents($cache, '');
       } else {
         if (file_exists($cache)) unlink($cache);
@@ -354,10 +352,10 @@ class Admin_layouts extends CI_Driver {
       }
     }
     $html .= $form->header();
-    $html .= $form->label_field('template', 'select');
-    $html .= $form->label('', $form->field('preview', 'checkbox') . $form->field('cacheable', 'checkbox'));
-    $html .= $form->label_field('save', 'text');
-    $html .= $form->label_field('action', 'radio');
+    $html .= $form->field('template', 'select');
+    $html .= $form->field('state[]', 'checkbox');
+    $html .= $form->field('save', 'text');
+    $html .= $form->field('action', 'radio');
     $html .= $form->submit('Submit', $bp->button('danger pull-right delete', $bp->icon('trash')));
     $html .= $form->close();
     $page->plugin('jQuery', 'code', '

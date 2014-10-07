@@ -239,7 +239,13 @@ class BootPress {
   public function breadcrumbs ($links) {
     if (empty($links)) return '';
     foreach ($links as $name => $href) {
-      $links[$name] = '<li><a href="' . $href . '">' . $name . '</a> <span class="divider"></span></li>';
+      if (is_array($href)) {
+        list($dropdown, $id) = $this->dropdown($href);
+        $link = '<a href="#" data-toggle="dropdown" id="' . $id . '">' . $name . ' <b class="caret"></b></a>';
+        $links[$name] = '<li class="dropdown">' . $link . $dropdown . '</li>';
+      } else {
+        $links[$name] = '<li><a href="' . $href . '">' . $name . '</a></li>';
+      }
       if (is_numeric($name)) $name = $href; // this should only happen to the last breadcrumb
     }
     array_pop($links);

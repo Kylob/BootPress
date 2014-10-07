@@ -113,15 +113,15 @@ class Admin_resources extends CI_Driver {
       $page->eject($form->eject);
     }
     $html .= $form->header();
-    $html .= $form->label_field('name', 'text', array('append'=>'.' . $resource['type'], 'input'=>'col-sm-8', 'maxlength'=>100));
-    $html .= $form->label_field('tags', 'tags');
+    $html .= $form->field('name', 'text', array('append'=>'.' . $resource['type'], 'input'=>'col-sm-8', 'maxlength'=>100));
+    $html .= $form->field('tags', 'tags');
     if ($image) {
-      $html .= $form->label_field('new', 'checkbox');
+      $html .= $form->field('new', 'checkbox');
       $html .= '<div id="child" style="display:none;">';
-        $html .= $form->label_field('type', 'select', array('input'=>'col-sm-2'));
-        $html .= $form->label_field('width', 'text', array('append'=>'px', 'input'=>'col-sm-2', 'maxlength'=>4));
-        $html .= $form->label_field('height', 'text', array('append'=>'px', 'input'=>'col-sm-2', 'maxlength'=>4));
-        $html .= $form->label_field('quality', 'text', array('append'=>'%', 'input'=>'col-sm-2', 'maxlength'=>3));
+        $html .= $form->field('type', 'select', array('input'=>'col-sm-2'));
+        $html .= $form->field('width', 'text', array('append'=>'px', 'input'=>'col-sm-2', 'maxlength'=>4));
+        $html .= $form->field('height', 'text', array('append'=>'px', 'input'=>'col-sm-2', 'maxlength'=>4));
+        $html .= $form->field('quality', 'text', array('append'=>'%', 'input'=>'col-sm-2', 'maxlength'=>3));
         $html .= $form->field('coords', 'hidden');
         $html .= '<img id="crop" class="img-responsive" src="' . $this->blog->get('img') . $resource['id'] . '.' . $resource['type'] . '" width="' . $resource['width'] . '" height="' . $resource['height'] . '" alt="">';
         $html .= '<br>';
@@ -237,9 +237,9 @@ class Admin_resources extends CI_Driver {
       $page->eject($page->url('delete', $form->eject, 'upload'));
     }
     $html .= $form->header();
-    $html .= $form->label_field('website', 'text');
-    $html .= $form->label_field('resources[]', 'file');
-    $html .= $form->label_field('tags', 'tags');
+    $html .= $form->field('website', 'text');
+    $html .= $form->field('resources[]', 'file');
+    $html .= $form->field('tags', 'tags');
     $html .= $form->submit();
     $html .= $form->close();
     unset($form);

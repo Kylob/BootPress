@@ -61,15 +61,17 @@ class Admin_errors extends CI_Driver {
       $left = '<span class="label label-danger">' . $count . '</span>';
       $right = '<span class="timeago" title="' . date('c', strtotime($date)) . '">' . $date . '</span>';
       $media = '<p><b>' . $this->severity(substr($severity, 10)) . '</b></p>';
-      // $media .= '<p>' . $file . '</p>';
       $media .= '<p>' . $msg . '</p>';
-      $dl = array();
-      foreach ($backtraces as $error) {
-        list($msg, $file) = $this->msg_file($error);
-        $dl[] = $msg;
-        $dl[][] = $file;
+      $li = array();
+      if (empty($backtraces)) {
+        $li[] = $file;
+      } else {
+        foreach ($backtraces as $error) {
+          list($msg, $file) = $this->msg_file($error);
+          $li[] = '<b>' . $msg . '</b> ' . $file;
+        }
       }
-      $media .= $bp->lister('dl', $dl, 'dl-horizontal');
+      $media .= $bp->lister('ul', $li, 'list-unstyled');
       $html .= $bp->media(array($left, $media, $right));
     }
     $html .= '<hr><p>' . $delete . '</p>';
@@ -81,8 +83,7 @@ class Admin_errors extends CI_Driver {
   public function logs () {
     global $ci;
     $ci->load->helper('file');
-    $logs = get_filenames($this->logs);
-    array_shift($logs); // index.html
+    $logs = array_diff(get_filenames($this->logs), array('index.html'));
     return $logs;
   }
   

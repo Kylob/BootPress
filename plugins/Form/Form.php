@@ -2,6 +2,8 @@
 
 class Form {
   
+  private $form_validation; // class object
+  
   // Populated in $this->__construct()
   private $name = '';
   private $type = 'post';
@@ -11,7 +13,7 @@ class Form {
   // Populated in $this->attempts()
   private $db;
   private $log = false; // else $name
-  private $process = true;
+  private $disabled = false;
   private $warning = '';
   private $captcha = false;
   
@@ -20,10 +22,11 @@ class Form {
   
   // Populated in $this->validate()
   private $ids = array(); // managed in $this->id()
-  private $labels = array();
   private $info = array();
+  private $labels = array();
+  private $rules = array();
+  private $validate = array();
   private $required = array();
-  private $jquery = array();
   
   // Populated in $this->submitted()
   public $vars = array();
@@ -35,6 +38,7 @@ class Form {
   private $values = array(); // managed in $this->values()
   private $input = ''; // managed in $this->input($size)
   private $prompt = array(); // managed in $this->prompt()
+  private $process = array(); // managed in $this->process(), dispensed in $this->multi()
   private $placeholders = false; // detected in $this->form_control_class()
   
   // Populated in $this->align() and utilized in $this->label()
@@ -44,8 +48,8 @@ class Form {
 
   public function __construct ($name, $plugin) {
     global $ci, $page;
-    $ci->load->helper('form');
     $ci->load->library('form_validation');
+    $this->form_validation = new My_Form_validation; // so that we can have multiple forms without any conflicts
     if (is_array($name)) list($type, $name) = each($name);
     $this->name = $name;
     $this->type = (isset($type) && strtolower($type) == 'get') ? 'get' : 'post';
@@ -113,7 +117,8 @@ class Form {
     if (!empty($this->upload['extensions']) && $this->upload['extensions'][0] == 'required') {
       $this->upload['required'] = array_shift($this->upload['extensions']);
     }
-    if (isset($_GET['submitted']) && $_GET['submitted'] == $this->name && isset($_FILES['blueimp']) && !empty($_FILES['blueimp']['name'])) {
+    if ($ci->input->get('submitted') == $this->name && isset($_FILES['blueimp']) && !empty($_FILES['blueimp']['name'])) {
+      if (!is_dir($this->uri . 'uploads/')) mkdir($this->uri . 'uploads/', 0755, true);
       $config = array();
       $config['upload_path'] = $this->uri . 'uploads/';
       $config['allowed_types'] = implode('|', $this->upload['extensions']);
@@ -130,7 +135,7 @@ class Form {
       echo json_encode($result);
       exit;
     }
-    $this->validate($name, $label, '', $info);
+    $this->validate($name, $label, 'default[]', $info);
   }
   
   public function id ($name) {
@@ -165,16 +170,12 @@ class Form {
   }
   
   public function validate ($name, $label='', $rules='', $info='') {
-    global $ci, $page;
+    global $page;
     if (is_array($name)) {
       foreach (func_get_args() as $args) call_user_func_array(array($this, 'validate'), $args);
       return;
     }
-    $this->ids[$name] = $this->id($name);
-    $this->labels[$name] = $label;
-    if (!empty($info)) $this->info[$name] = $info;
-    #-- Create jQuery rule validation routines --#
-    $jquery = array();
+    $validate = array();
     $rules = explode('|', $rules);
     foreach ($rules as $key => $rule) {
       $param = '';
@@ -183,38 +184,36 @@ class Form {
         $param	= $match[2];
       }
       switch ($rule) {
-        case 'required':            $jquery[] = 'required:true'; $this->required[$name] = true; break;
+        case 'required':            $validate['required'] = 'true'; $this->required[$name] = true; break;
         // Numbers:
-        case 'numeric':             $jquery[] = 'numeric:true'; break;
-        case 'integer':             $jquery[] = 'integer:true'; break;
-        case 'decimal':             $jquery[] = 'decimal:true'; break;
-        case 'gte':                 $jquery[] = 'min:'.$param; break;
-        case 'lte':                 $jquery[] = 'max:'.$param; break;
+        case 'numeric':             $validate['numeric'] = 'true'; $rules[] = 'callback_default_value[0]'; break;
+        case 'integer':             $validate['integer'] = 'true'; $rules[] = 'callback_default_value[0]'; break;
+        case 'decimal':             $validate['decimal'] = 'true'; $rules[] = 'callback_default_value[0.0]'; break;
+        case 'gte':                 $validate['min'] = $param; break;
+        case 'lte':                 $validate['max'] = $param; break;
         // Strings:
-        case 'alpha':               $jquery[] = 'alpha:true'; break;
-        case 'alphanumeric':        $jquery[] = 'alphanumeric:true'; break;
-        case 'base64':              $jquery[] = 'base64:true'; break; // defined but has no message
-        case 'creditcard':          $jquery[] = 'creditcard:true'; break;
-        case 'date':                $jquery[] = 'date:true'; $rules[] = 'sqldate'; break;
-        case 'email':               $jquery[] = 'email:true'; break;
-        case 'ip':                  $jquery[] = 'ip:"' . substr($param, -2) . '"'; break;
-        case 'url':                 $jquery[] = 'url:true'; break; // has message but not defined
-        case 'regex':               $jquery[] = 'regex:"' . $param . '"'; break;
-        case 'minlength':           $jquery[] = 'minlength:'.$param; break;
-        case 'maxlength':           $jquery[] = 'maxlength:'.$param; break;
-        case 'nowhitespace':        $jquery[] = 'nowhitespace:true'; break;
-        case 'matches':             $jquery[] = 'equalTo:"#'.$this->id($param).'"'; break;
-        case 'inarray':
-          if ($param == 'menu') $param = implode(',', array_keys($this->multi_to_single($this->menu($name))));
-          $rules[$key] = 'inarray[' . $param . ']';
-          $jquery[] = 'inarray:"' . $param . '"';
-          break;
-        case 'remote':              $jquery[] = 'remote:"' . $page->url() . '"';
+        case 'alpha':               $validate['alpha'] = 'true'; break;
+        case 'alphanumeric':        $validate['alphanumeric'] = 'true'; break;
+        case 'base64':              $validate['base64'] = 'true'; break; // defined but has no message
+        case 'creditcard':          $validate['creditcard'] = 'true'; break;
+        case 'date':                $validate['date'] = 'true'; $rules[] = 'sqldate'; break;
+        case 'email':               $validate['email'] = 'true'; break;
+        case 'ip':                  $validate['ip'] = substr($param, -2); break;
+        case 'url':                 $validate['url'] = 'true'; break; // has message but not defined
+        case 'regex':               $validate['regex'] = $param; break;
+        case 'minlength':           $validate['minlength'] = $param; break;
+        case 'maxlength':           $validate['maxlength'] = $param; break;
+        case 'nowhitespace':        $validate['nowhitespace'] = 'true'; break;
+        case 'matches':             $validate['equalTo'] = '#'.$this->id($param); break;
+        case 'inarray':             if ($param == 'menu') $param = implode(',', array_keys($this->multi_to_single($this->menu($name))));
+                                    $validate['inarray'] = $param; $rules[$key] = 'inarray[' . $param . ']'; break;
+        case 'remote':              $validate['remote'] = $page->url();
           if (isset($_GET[$this->base($name)])) {
             header('Content-Type: application/json');
             exit('false'); // we should have handled this request by now
           }
           break;
+        case 'default':             $rules[] = 'callback_default_value[' . $param . ']'; unset($rules[$key]); break;
         // case 'custom':              break;
         // Filters: (beyond php itself)
         case 'YN':
@@ -226,37 +225,60 @@ class Form {
         case 'strip_image_tags':    break;
         case 'xss_clean':           break;
       }
-      if (!$ci->lang->line('form_validation_' . $rule, false)) $ci->form_validation->set_message($rule, '');
     }
-    $ci->form_validation->set_message('', '');
-    foreach ($jquery as $key => $value) if (empty($value)) unset($jquery[$key]);
-    $this->jquery[] = '"' . $name . '":{' . implode(', ', $jquery) . '}'; // to be imploded in $this->header()
-    #-- Trim all and set CodeIgniter rules --#
     array_unshift($rules, 'trim');
-    $ci->form_validation->set_rules($name, strip_tags($label), $rules);
+    $this->rules[$name] = $rules;
+    if (!empty($validate)) $this->validate[$name] = $validate;
+    if (!empty($info)) $this->info[$name] = $info;
+    $this->ids[$name] = $this->id($name);
+    $this->labels[$name] = $label;
   }
   
   public function submitted () {
     global $ci, $page;
-    if ($this->process === false) return false;
-    if ($ci->input->get('submitted') != $this->name) return false;
-    $ci->form_validation->set_data($this->type == 'get' ? $_GET : $_POST);
-    $ci->form_validation->run(); // if we don't run this, then we can't pick out any errors
-    foreach ($this->labels as $name => $label) {
-      $var = $this->base($name);
-      $this->vars[$var] = $ci->input->post($var);
-      if (isset($this->upload['name']) && $this->upload['name'] == $name) {
-        $replace = array();
-        foreach ((array) $this->vars[$var] as $url) {
-          if (!empty($url)) {
-            list($uri, $name) = $this->uri_name($url);
-            $replace[$uri] = $name;
-          }
-        }
-        $this->vars[$var] = $replace;
+    if ($this->disabled || $ci->input->get('submitted') != $this->name) return false;
+    $method = $this->type; // either get or post
+    $process = array_flip(explode(',', (string) $ci->input->$method('process[fields]')));
+    $ids = explode(',', (string) $ci->input->$method('process[ids]'));
+    $this->form_validation->set_data($method == 'get' ? $_GET : $_POST);
+    foreach ($this->rules as $name => $validate) {
+      $field = $this->base($name);
+      $label = strip_tags($this->labels[$name]);
+      if (isset($process[$field])) {
+        foreach ($ids as $id) $this->form_validation->set_rules($field . '[' . $id . ']', $label, $validate);
+      } else {
+        $this->form_validation->set_rules($name, $label, $validate);
       }
-      $error = form_error($name);
-      if (!empty($error)) $this->errors[$name] = strip_tags($error);
+    }
+    $this->form_validation->set_message('', ''); // This is stupid, but we don't like meaningless error messages either
+    $this->form_validation->run(); // If we don't run this, then we can't pick out any errors
+    foreach ($this->labels as $name => $label) {
+      $field = $this->base($name);
+      $var = $ci->input->post($field);
+      if (is_null($var)) {
+        $this->errors[$name] = 'This field does not exist.'; // if you are okay with this then set a default[] value when $this->validate()ing
+      } else {
+        $this->vars[$field] = $var;
+        if (isset($this->upload['name']) && $this->upload['name'] == $name) {
+          $replace = array();
+          foreach ((array) $this->vars[$field] as $url) {
+            if (!empty($url)) {
+              list($uri, $name) = $this->uri_name($url);
+              $replace[$uri] = $name;
+            }
+          }
+          $this->vars[$field] = $replace;
+        }
+        if (isset($process[$field])) {
+          foreach ($ids as $id) {
+            $error = $this->form_validation->error($field . '[' . $id . ']');
+            if (!empty($error)) $this->errors[$field . '[' . $id . ']'] = strip_tags($error);
+          }
+        } else {
+          $error = $this->form_validation->error($name);
+          if (!empty($error)) $this->errors[$name] = strip_tags($error);
+        }
+      }
     }
     if ($this->type == 'get') {
       $this->eject = $page->url('delete', '', array_keys($this->vars));
@@ -277,23 +299,16 @@ class Form {
     return (!empty($this->vars)) ? true : false;
   }
   
-  public function process ($values) {
+  public function process ($id=null) {
     global $ci;
-    if (!is_array($values)) return '<input type="hidden" name="process[]" value="' . $values . '" />';
+    if (is_numeric($id)) $this->process[$id] = array();
+    if (func_num_args() > 0) return;
     $info = array();
     $method = $this->type; // either get or post
-    $process = $ci->input->$method('process');
-    if (is_array($process)) {
-      foreach ($process as $id) {
-        $index = ($id[0] == '[') ? $id : '[' . $id . ']';
-        foreach ($values as $field => $default) {
-          if (is_numeric($field)) {
-            $field = $default;
-            $info[$id][$field] = $ci->input->$method($field . $index);
-          } else {
-            $value = $ci->input->$method($field . $index);
-            $info[$id][$field] = (empty($value)) ? $default : $value;
-          }
+    if (($fields = $ci->input->$method('process[fields]')) && ($ids = $ci->input->$method('process[ids]'))) {
+      foreach (explode(',', (string) $fields) as $field) {
+        foreach (explode(',', (string) $ids) as $id) {
+          $info[$id][$field] = $ci->input->$method($field . '[' . $id . ']');
         }
       }
     }
@@ -357,28 +372,29 @@ class Form {
       $page->link('<style type="text/css">#' . $this->name . ' div.tooltip-inner { text-align:left; max-width:500px; }</style>');
       $page->plugin('jQuery', 'code', '$("#' . $this->name . ' span.glyphicon-question-sign").tooltip({html:true, placement:"right", container:"#' . $this->name . '"});');
     }
-    if (!empty($this->jquery)) {
-      $page->plugin('jQuery', 'code', '
-        $("#' . $this->name . '").validate({
-          ignore:[],
-          rules:{' . implode(', ', $this->jquery) . '},
-          errorClass:"has-error",
-          validClass:"",
-          errorElement:"span",
-          highlight:highlight,
-          unhighlight:unhighlight,
-          errorPlacement:errorPlacement,
-          submitHandler:submitHandler,
-          onkeyup:false
-        });
-      ');
+    if (!empty($this->validate)) {
+      $validate = (isset($attributes['validate']) && is_array($attributes['validate'])) ? $attributes['validate'] : array();
+      $validate = array_merge(array(
+        'ignore' => '[]',
+        'errorClass' => '"has-error"',
+        'validClass' => '""',
+        'errorElement' => '"span"',
+        'highlight' => 'highlight',
+        'unhighlight' => 'unhighlight',
+        'errorPlacement' => 'errorPlacement',
+        'submitHandler' => 'submitHandler',
+        'onkeyup' => 'false'
+      ), $validate);
+      unset($attributes['validate']);
+      foreach ($validate as $key => $value) $validate[$key] = $key . ':' . $value;
+      $page->plugin('jQuery', 'code', '$("#' . $this->name . '").validate({' . implode(',', $validate) . '});');
     }
     if ($this->align == 'form-horizontal') $html .= '<div class="row"><div class="col-' . $this->size . '-12">';
     $flash = $ci->session->native->flashdata('form-messenger');
     if (!empty($flash) && $flash['form'] == $this->name) {
       $html .= ($flash['status'] == 'html') ? $flash['msg'] : $bp->alert($flash['status'], $flash['msg']);
     }
-    if ($this->process === false) $page->link('<style type="text/css">#' . $this->name . ' { display:none; }</style>');
+    if ($this->disabled) $page->link('<style type="text/css">#' . $this->name . ' { display:none; }</style>');
     if (!empty($this->warning)) $html .= $bp->alert('danger', $this->warning);
     $attributes = array_merge(array(
       'action' => ($this->type == 'get') ? $page->url() : $page->url('add', '', 'submitted', $this->name),
@@ -410,19 +426,11 @@ class Form {
     return "\n\t<fieldset><legend>" . $legend . "</legend>" . $html . "\n\t</fieldset>";
   }
   
-  public function label ($name, $field) {
-    #-- Begin div.form-group --#
-    $html = '<div class="form-group';
-      #-- Manage Errors --#
-      if (isset($this->errors[$name])) {
-        $html .= ' has-error';
-        $error = '<p class="validation help-block">' . $this->errors[$name] . '</p>';
-      } else {
-        $error = '<p class="validation help-block" style="display:none;"></p>';
-      }
-    $html .= '">'; // closing the first div tag
-    #-- Configure Prompt --#
+  public function field ($name, $field, $options=array()) {
+    $html = '';
+    #-- $prompt and Overrides --#
     $prompt = (isset($this->labels[$name])) ? $this->labels[$name] : $name;
+    if (isset($options['label'])) $prompt = $options['label'];
     if (!empty($prompt)) {
       if (isset($this->prompt['prepend'])) {
         if (!$this->prompt['prepend']['required'] || isset($this->required[$name])) {
@@ -434,32 +442,9 @@ class Form {
         $prompt .= ' <span class="glyphicon glyphicon-question-sign" style="cursor:pointer;" title="' . form_prep($this->info[$name]) . '"></span>';
       }
     }
-    #-- Alignments and Prompts --#
-    $id = (isset($this->labels[$name])) ? $this->id($name) : '';
-    if ($this->align == 'form-inline') {
-      if (!empty($prompt)) $html .= '<label class="sr-only" for="' . $id . '">' . $prompt . '</label>';
-      $html .= $error . $field;
-    } elseif ($this->align == 'form-horizontal') {
-      $alignment = 'col-' . $this->size . '-' . (12 - $this->indent);
-      if (!empty($prompt)) {
-        $html .= '<label class="control-label col-' . $this->size . '-' . $this->indent . $this->input . '" for="' . $id . '">' . $prompt . '</label>';
-      } else {
-        $alignment .= ' ' . 'col-' . $this->size . '-offset-' . $this->indent;
-      }
-      $html .= '<div class="' . $alignment . '">' . $error . $field . '</div>';
-    } else { // else collapse
-      if (!empty($prompt)) $html .= '<label class="' . $this->input . '" for="' . $name . '">' . $prompt . '</label>';
-      $html .= $error . $field;
-    }
-    #-- End div.form-group --#
-    $html .= '</div>';
-    return "\n\t" . $html;
-  }
-  
-  public function field ($name, $field, $options=array()) {
-    $rnr = (isset($options['multi'])) ? array('name="' . $name . '"', ($pos = strpos($name, '[')) ? substr($name, 0, $pos) : $name, '[' . $options['multi'] . ']') : false;
     if (isset($options['value'])) $this->values($name, $options['value']); // to establish or override the default
-    unset($options['multi'], $options['value']);
+    unset($options['label'], $options['value']);
+    #-- Form $field --#
     switch ($field) {
       case 'calendar':
       case 'checkbox':
@@ -471,14 +456,56 @@ class Form {
       case 'tags':
       case 'text':
       case 'textarea':
-         $html = $this->$field($name, $options);
-         return ($rnr) ? str_replace(array_shift($rnr), 'name="' . implode('', $rnr) . '"', $html) : $html;
-         break;
+        $this->multi($name, $options);
+        if (isset($this->validate[$name])) {
+          foreach ($this->validate[$name] as $validate => $param) {
+            if (!isset($options["data-rule-{$validate}"])) $options["data-rule-{$validate}"] = $param;
+          }
+        }
+        $field = $this->$field($name, $options);
+        if ($prompt === false || func_get_arg(1) == 'hidden') return $field;
+        break;
     }
+    #-- Begin div.form-group --#
+    $html = '<div class="form-group';
+      #-- Manage Errors --#
+      if (isset($this->errors[$this->multi($name)])) {
+        $html .= ' has-error';
+        $error = '<p class="validation help-block">' . $this->errors[$this->multi($name)] . '</p>';
+      } else {
+        $error = '<p class="validation help-block" style="display:none;"></p>';
+      }
+    $html .= '">'; // closing the first div tag
+    #-- Alignments and Prompts --#
+    $id = (isset($this->labels[$name])) ? $this->id($this->multi($name)) : '';
+    if ($this->align == 'form-inline') {
+      if (!empty($prompt)) $html .= '<label class="sr-only" for="' . $id . '">' . $prompt . '</label>';
+      $html .= $error . $field;
+    } elseif ($this->align == 'form-horizontal') {
+      $alignment = 'col-' . $this->size . '-' . (12 - $this->indent);
+      if (!empty($prompt)) {
+        $html .= '<label class="control-label col-' . $this->size . '-' . $this->indent . $this->input . '" for="' . $id . '">' . $prompt . '</label>';
+      } else {
+        $alignment .= ' ' . 'col-' . $this->size . '-offset-' . $this->indent;
+      }
+      $html .= '<div class="' . $alignment . '">' . $error . $field . '</div>';
+    } else { // collapse
+      if (!empty($prompt)) $html .= '<label class="' . $this->input . '" for="' . $name . '">' . $prompt . '</label>';
+      $html .= $error . $field;
+    }
+    #-- End div.form-group --#
+    $html .= '</div>';
+    return "\n\t" . $html;
+  }
+  
+  public function label ($name, $field) {
+    trigger_error('Form::label() has been deprecated.');
+    return $field;
   }
   
   public function label_field ($name, $field, $options=array()) {
-    return $this->label($name, $this->field($name, $field, $options));
+    trigger_error('Form::label_field() has been deprecated.');
+    return $this->field($name, $field, $options);
   }
   
   public function submit ($submit='Submit', $reset='') {
@@ -520,12 +547,15 @@ class Form {
   public function close () {
     global $page;
     $html = '';
-    if ($this->align == 'form-horizontal') $html .= '</div></div>';
     if ($this->placeholders) {
       $page->plugin('CDN', 'link', 'jquery.placeholder/2.0.7/jquery.placeholder.min.js');
       $page->plugin('jQuery', 'code', '$("input, textarea").placeholder();');
     }
-    return "\n  " . form_close($html);
+    if (!empty($this->process)) {
+      $html .= '<input type="hidden" name="process[ids]" value="' . implode(',', array_keys($this->process)) . '" />';
+      $html .= '<input type="hidden" name="process[fields]" value="' . implode(',', array_shift($this->process)) . '" />';
+    }
+    return $html . "\n  " . form_close(($this->align == 'form-horizontal') ? '</div></div>' : '');
   }
   
   #-- Private Form Methods --#
@@ -536,25 +566,27 @@ class Form {
       'bootstrap.datepicker-fork/1.2.0/css/datepicker.min.css',
       'bootstrap.datepicker-fork/1.2.0/js/bootstrap-datepicker.min.js'
     ));
-    $page->plugin('jQuery', 'code', '$("#' . $this->id($name) . '").datepicker().on("changeDate", function(){ $(this).valid(); });');
+    $page->plugin('jQuery', 'code', '$("#' . $this->id($this->multi($name)) . '").datepicker().on("changeDate", function(){ $(this).valid(); });');
     $date = $this->values($name);
     if (!empty($date)) $date = date('m/d/Y', strtotime($date));
-    $options['name'] = $name;
-    $options['id'] = $this->id($name);
-    $options['value'] = set_value($name, $date);
+    $options['name'] = $this->multi($name);
+    $options['id'] = $this->id($this->multi($name));
+    $options['value'] = $this->form_validation->set_value($this->multi($name), $date);
     return $this->pre_append('form_input', $options);
   }
   
   private function checkbox ($name, $options) {
     $boxes = array();
-    $boxes[] = form_hidden($name, '');
+    $boxes[] = form_hidden($this->multi($name), '');
+    $default = $this->values($name);
     foreach ($this->menu($name) as $value => $description) {
-      $checked = set_checkbox($name, $value, $this->values($name) == $value);
-      if (!empty($options)) $checked .= ' ' . _attributes_to_string($options);
+      $options['name'] = $this->multi($name);
+      $options['value'] = $value;
+      $options['checked'] = $this->form_validation->set_checkbox($this->multi($name), $value, (is_array($default)) ? in_array($value, $default) : $default == $value);
       if ($this->align == 'form-inline') {
-        $boxes[] = '<label class="checkbox-inline' . $this->input . '">' . form_checkbox($name, $value, false, $checked) . ' ' . $description . '</label>';
+        $boxes[] = '<label class="checkbox-inline' . $this->input . '">' . form_checkbox($options) . ' ' . $description . '</label>';
       } else {
-        $boxes[] = '<div class="checkbox' . $this->input . '"><label>' . form_checkbox($name, $value, false, $checked) . ' ' . $description . '</label></div>';
+        $boxes[] = '<div class="checkbox' . $this->input . '"><label>' . form_checkbox($options) . ' ' . $description . '</label></div>';
       }
     }
     return implode(' ', $boxes);
@@ -615,27 +647,28 @@ class Form {
   }
   
   private function hidden ($name, $options) {
-    $options['name'] = $name;
-    if (strpos($name, '[]') === false) $options['id'] = $this->id($name);
-    $options['value'] = set_value($name, $this->values($name));
+    $options['name'] = $this->multi($name);
+    $options['id'] = $this->id($this->multi($name));
+    $options['value'] = $this->form_validation->set_value($this->multi($name), $this->values($name));
     return '<input type="hidden"' . _attributes_to_string($options) . ' />';
   }
   
   private function password ($name, $options) {
-    $options['name'] = $name;
-    $options['id'] = $this->id($name);
+    $options['name'] = $this->multi($name);
+    $options['id'] = $this->id($this->multi($name));
     return $this->pre_append('form_password', $options);
   }
   
   private function radio ($name, $options) {
     $radios = array();
     foreach ($this->menu($name) as $value => $description) {
-      $checked = set_radio($name, $value, $this->values($name) == $value);
-      if (!empty($options)) $checked .= ' ' . _attributes_to_string($options);
+      $options['name'] = $this->multi($name);
+      $options['value'] = $value;
+      $options['checked'] = $this->form_validation->set_radio($this->multi($name), $value, $this->values($name) == $value);
       if ($this->align == 'form-inline') {
-        $radios[] = '<label class="radio-inline' . $this->input . '">' . form_radio($name, $value, false, $checked) . ' ' . $description . '</label>';
+        $radios[] = '<label class="radio-inline' . $this->input . '">' . form_radio($options) . ' ' . $description . '</label>';
       } else {
-        $radios[] = '<div class="radio' . $this->input . '"><label>' . form_radio($name, $value, false, $checked) . ' ' . $description . '</label></div>';
+        $radios[] = '<div class="radio' . $this->input . '"><label>' . form_radio($options) . ' ' . $description . '</label></div>';
       }
     }
     return implode(' ', $radios);
@@ -653,11 +686,11 @@ class Form {
         $menu = (isset($this->prepend[$name])) ? array($this->prepend[$name]) : array();
         foreach ($values as $key => $value) $menu[$key] = $value;
         $json[$id] = $menu;
-        $value = set_select($hier, $id, $id == $default);
+        $value = $this->form_validation->set_select($this->multi($hier), $id, $id == $default);
         if (!empty($value)) $selected = $values;
       }
       $page->link($this->url . 'js/hierSelect.js');
-      $page->plugin('jQuery', 'code', '$("#' . $this->id($hier) . '").hierSelect("#' . $this->id($name) . '", ' . json_encode($json) . ');');
+      $page->plugin('jQuery', 'code', '$("#' . $this->id($this->multi($hier)) . '").hierSelect("#' . $this->id($this->multi($name)) . '", ' . json_encode($json) . ');');
       $select = (isset($selected)) ? $selected : array();
     }
     #-- Make the select $menu --#
@@ -665,16 +698,17 @@ class Form {
     foreach ($select as $key => $value) $menu[$key] = $value;
     #-- Extract the $selected values --#
     $selected = array();
-    $values = array_flip((array) $this->values($name));
+    $values = $this->values($name);
+    $values = (!empty($values)) ? array_flip((array) $values) : array(); // so that we don't get an array(''=>0)
     foreach ($this->multi_to_single($menu) as $key => $value) {
       if (!empty($key)) {
-        $value = set_select($name, $key, isset($values[$key]));
+        $value = $this->form_validation->set_select($this->multi($name), $key, isset($values[$key]));
         if (!empty($value)) $selected[] = $key;
       }
     }
     #-- Establish the $options --#
-    $options['id'] = $this->id($name);
-    if (strpos($name, '[')) { // a multiselect menu (or not)
+    $options['id'] = $this->id($this->multi($name));
+    if (strpos($this->multi($name), '[')) { // a multiselect menu (or not)
       if (isset($options['multiple']) && $options['multiple'] === false) {
         unset($options['multiple']);
       } else {
@@ -689,10 +723,10 @@ class Form {
     #-- Create the $field --#
     if (isset($options['multiple'])) { // we are unable (or at least unwilling) to prepend and append data
       $options = $this->form_control_class($options);
-      $field = form_dropdown($name, $menu, $selected, $options);
+      $field = form_dropdown($this->multi($name), $menu, $selected, $options);
     } else {
       list($prepend, $append, $options) = $this->pre_append('return', $options);
-      $field = $prepend . form_dropdown($name, $menu, array_shift($selected), $options) . $append;
+      $field = $prepend . form_dropdown($this->multi($name), $menu, array_shift($selected), $options) . $append;
     }
     return str_replace('value="0"', 'value=""', $field);
   }
@@ -705,25 +739,25 @@ class Form {
     ));
     $options[] = 'confirmKeys:[13,44,9]'; // shift, comma (not working?), tab - also: is tagClass screwed up, or what?
     $page->plugin('jQuery', 'code', '
-      $("#' . $this->id($name) . '").tagsinput({' . implode(',', $options) . '});
+      $("#' . $this->id($this->multi($name)) . '").tagsinput({' . implode(',', $options) . '});
       $("div.bootstrap-tagsinput").css("width", "100%");
     ');
     $value = $this->values($name);
     if (is_array($value)) $value = implode(',', $value);
-    return form_input($name, set_value($name, $value), 'id="' . $this->id($name) . '"');
+    return form_input($this->multi($name), $this->form_validation->set_value($this->multi($name), $value), 'id="' . $this->id($this->multi($name)) . '"');
   }
   
   private function text ($name, $options) {
-    $options['name'] = $name;
-    $options['id'] = $this->id($name);
-    $options['value'] = set_value($name, $this->values($name));
+    $options['name'] = $this->multi($name);
+    $options['id'] = $this->id($this->multi($name));
+    $options['value'] = $this->form_validation->set_value($this->multi($name), $this->values($name));
     return $this->pre_append('form_input', $options);
   }
   
   private function textarea ($name, $options) {
-    $options['name'] = $name;
-    $options['id'] = $this->id($name);
-    $options['value'] = set_value($name, $this->values($name));
+    $options['name'] = $this->multi($name);
+    $options['id'] = $this->id($this->multi($name));
+    $options['value'] = $this->form_validation->set_value($this->multi($name), $this->values($name));
     return form_textarea($this->form_control_class($options));
   }
   
@@ -776,6 +810,22 @@ class Form {
       }
     }
     return $single;
+  }
+  
+  private function multi ($name, &$options=null) {
+    static $names = array();
+    if (is_null($options)) return (isset($names[$name])) ? $names[$name] : $name;
+    if (!empty($this->process) && $split = strpos($name, '[')) {
+      $base = substr($name, 0, $split);
+      end($this->process);
+      $id = key($this->process);
+      if (!in_array($base, current($this->process))) {
+        $names[$name] = $base . '[' . $id . ']';
+        $this->process[$id][] = $base;
+      } else {
+        $names[$name] = $name;
+      }
+    }
   }
   
   private function base ($name) {
@@ -832,16 +882,16 @@ class Form {
     while (list($time) = $this->db->fetch('row')) $attempts[] = $time;
     $total = count($attempts);
     if (!empty($limit) && $total >= $limit) {
-      $this->process = false;
+      $this->disabled = true;
       $this->warning = "You have submitted this form more than {$limit} times.  You have been banned from any further attempts.";
       return; // this is all that we (and they) need to know
     }
     if (empty($after) || $total >= $after) $this->captcha = true;
-    if ($this->process && !empty($after) && !empty($throttle)) {
+    if (!$this->disabled && !empty($after) && !empty($throttle)) {
       $expired = time() - ($throttle * 60);
       foreach ($attempts as $key => $time) if ($expired > $time) unset($attempts[$key]);
       if (count($attempts) >= $after) {
-        $this->process = false;
+        $this->disabled = true;
         $this->warning = "You may only submit this form {$after} times within any {$throttle} minute period.  This page will automatically reload itself when you may try again.";
         $reload = array_shift($attempts) - $expired + 3; // in seconds
         $page->link('<meta http-equiv="refresh" content="' . $reload . '">');

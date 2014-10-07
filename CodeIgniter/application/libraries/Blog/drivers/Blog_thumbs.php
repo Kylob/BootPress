@@ -24,7 +24,7 @@ class Blog_thumbs extends CI_Driver {
       }
       $html .= $this->url($folder, $id);
       $html .= $form->header();
-      $html .= $form->label_field('thumb', 'text', array('prepend' => '{$blog[\'img\']}', 'append' => $bp->button('primary', 'Submit', array('type'=>'submit', 'data-loading-text'=>'Submitting...'))));
+      $html .= $form->field('thumb', 'text', array('prepend' => '{$blog[\'img\']}', 'append' => $bp->button('primary', 'Submit', array('type'=>'submit', 'data-loading-text'=>'Submitting...'))));
       $html .= $form->close();
     }
     unset($form);

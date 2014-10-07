@@ -164,7 +164,6 @@ class Page {
   
   public function url ($action='', $url='', $key='', $value=NULL) {
     if (empty($url)) $url = $this->url . $this->uri . $this->query;
-    if (empty($action)) return $url;
     $base = preg_replace('/[\?#].*$/', '', $url); // just the url and path
     $url = parse_url(str_replace('&amp;', '&', $url));
     if (isset($url['query'])) {

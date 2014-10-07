@@ -969,7 +969,6 @@ class CI_Form_validation {
 		{
 			return '';
 		}
-
 		return ' selected="selected"';
 	}
 
