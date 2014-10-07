@@ -46,7 +46,7 @@ class Admin_php extends CI_Driver {
     $html = '';
     $form = $page->plugin('Form', 'name', 'create_folders');
     $menu = array();
-    $this->folder_files($folders);
+    $folders = $this->folder_files();
     sort($folders);
     foreach ($folders as $file) {
       $file = substr($file, strlen($this->folders), -4);
@@ -54,8 +54,10 @@ class Admin_php extends CI_Driver {
     }
     $form->menu('edit', $menu, '&nbsp;');
     if (isset($_GET['folder'])) $form->values('edit', $_GET['folder']);
-    $form->validate('url', 'URL', 'required', 'The folder you create here will be directly accessible at: ' . BASE_URL . '[folder]/...  You, of course, will have to deal with the dot dot dot\'s.  Alternatively, you can create any url rule structure that you like in the .htaccess file, and direct it to the same page as your blog with the additional parameter: ?page=[folder]');
-    $form->validate('edit', 'Edit', '', 'Select a folder that you would like to edit.');
+    $form->validate(
+      array('url', 'URL', 'required', 'The folder you create here will be directly accessible at: ' . BASE_URL . '[folder]/...  You, of course, will have to deal with the dot dot dot\'s.  Alternatively, you can create any url rule structure that you like in the .htaccess file, and direct it to the same page as your blog with the additional parameter: ?page=[folder]'),
+      array('edit', 'Edit', 'default[]', 'Select a folder that you would like to edit.')
+    );
     if ($form->submitted() && empty($form->errors)) {
       $folder = $this->folder_filter($form->vars['url']);
       $file = $this->folders . $folder . '.php';
@@ -69,9 +71,7 @@ class Admin_php extends CI_Driver {
     }
     $html .= $form->header();
     $html .= $form->field('url', 'text', array('prepend'=>BASE_URL, 'append'=>array('/', $bp->button('primary', 'Create', array('type'=>'Submit', 'data-loading-text'=>'Submitting...')))));
-    if (!empty($menu)) {
-      $html .= $form->field('edit', 'select');
-    }
+    $html .= $form->field('edit', !empty($menu) ? 'select' : 'hidden');
     $html .= $form->close();
     $page->plugin('jQuery', 'code', '
       $("#' . $form->id('edit') . '").change(function(){
@@ -296,14 +296,15 @@ class Admin_php extends CI_Driver {
     ');
   }
   
-  private function folder_files (&$folders, $dir='') {
+  private function folder_files ($dir='') {
     if (empty($dir)) $dir = $this->folders;
     $empty = true;
-    if (!file_exists($dir)) return $folders = array();
+    $folders = array();
+    if (!file_exists($dir)) return array();
     foreach (scandir($dir) as $file) {
       if ($file != '.' && $file != '..') {
         if (is_dir($dir . $file)) {
-          $this->folder_files($folders, $dir . $file . '/');
+          $folders = array_merge($folders, $this->folder_files($dir . $file . '/'));
           $empty = false;
         } elseif (preg_match('/\.(php)$/', $file)) {
           $folders[] = $dir . $file;
@@ -312,6 +313,7 @@ class Admin_php extends CI_Driver {
       }
     }
     if ($empty) rmdir($dir);
+    return $folders;
   }
   
   private function folder_filter ($file) {
