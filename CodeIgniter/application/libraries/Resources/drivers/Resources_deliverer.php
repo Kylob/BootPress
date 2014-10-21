@@ -4,24 +4,27 @@ class Resources_deliverer extends CI_Driver {
 
   public function view ($file, $type) {
     global $ci;
-    $image = $compress = $deliver = $download = false;
+    $image = $compress = $deliver = $download = $stream = false;
     if (preg_match('/^(jpe?g|gif|png|ico)$/', $type)) {
       $image = $type;
     } elseif (preg_match('/^(js|css|pdf|ttf|otf|svg)$/', $type)) {
       $compress = $type;
     } elseif (preg_match('/^(eot|woff|swf)$/', $type)) {
       $deliver = $type;
-    } elseif (preg_match('/^(tar|t?gz|zip|csv|xls?x?|word|docx?|ppt|mp3|mpeg?|mpg|mov|qt|psd)$/', $type)) {
+    } elseif (preg_match('/^(tar|t?gz|zip|csv|xls?x?|word|docx?|ppt|psd)$/', $type)) {
       $download = $type;
+    } elseif (preg_match('/^(mp3|ogg|wav|mpeg?|mpg|mov|qt)$/', $type)) {
+      $stream = $type;
     } else {
       exit(header('HTTP/1.1 503 Not Implemented'));
     }
-    $cache = '';
     $file .= '.' . $type;
     if ($this->cached($file)) {
       list($files, $updated) = $this->file_paths($file);
       if (empty($files)) exit(header('HTTP/1.1 404 Not Found'));
-      if ($compress == 'pdf' || !empty($download)) {
+      $cache = array_shift($files); // Only one file at a time is allowed now
+      if (!$download && !$stream) $this->never_expires(array_shift($updated));
+      if ($compress == 'pdf' || $download || $stream) {
         $ci->load->driver('session');
         foreach ($files as $uri) {
           $resource = str_replace(array(BASE_URI, BASE), '', $uri);
@@ -29,17 +32,9 @@ class Resources_deliverer extends CI_Driver {
           $ci->log('hits', $resource);
         }
       }
-      $this->never_expires(max($updated));
-      if ($image) {
-        $cache .= file_get_contents(array_shift($files));
-      } elseif ($type == 'css') {
-        foreach ($files as $uri) $cache .= $this->css_get_contents($uri, $file);
-      } else {
-        foreach ($files as $uri) $cache .= file_get_contents($uri);
-      }
     } elseif (strpos($file, 'CDN') !== false && file_exists(BASE . $file)) {
+      $cache = BASE . $file;
       $this->never_expires(filemtime(BASE . $file));
-      $cache .= file_get_contents(BASE . $file);
     } else {
       exit(header('HTTP/1.1 404 Not Found'));
     }
@@ -71,6 +66,8 @@ class Resources_deliverer extends CI_Driver {
       case 'doc': header('Content-Type: application/msword'); break;
       case 'ppt': header('Content-Type: application/powerpoint'); break;
       case 'mp3': header('Content-Type: audio/mpeg'); break;
+      case 'ogg': header('Content-Type: audio/ogg'); break;
+      case 'wav': header('Content-Type: audio/wav'); break;
       case 'mpeg':
       case 'mpe':
       case 'mpg': header('Content-Type: video/mpeg'); break;
@@ -88,18 +85,67 @@ class Resources_deliverer extends CI_Driver {
         if ($version < 6) $encoding = 'none';				
         if ($version == 6 && !strstr($_SERVER['HTTP_USER_AGENT'], 'EV1')) $encoding = 'none';
       }
+      $cache = ($type == 'css') ? $this->css_get_contents($cache, $file) : file_get_contents($cache);
       if ($encoding != 'none') {
         $cache = gzencode($cache, 9, ($encoding == 'gzip') ? FORCE_GZIP : FORCE_DEFLATE);
         header('Vary: Accept-Encoding');
         header('Content-Encoding: ' . $encoding);
       }
+      header('Content-Length: ' . strlen($cache));
+      exit($cache);
     }
-    header('Content-Length: ' . strlen($cache));
-    if ($download) {
-      header('Content-Disposition: attachment; filename="' . basename($file) . '"');
-      header('Content-Transfer-Encoding: binary');
+    if (!$fp = fopen($cache, 'rb')) {
+      header('HTTP/1.1 500 Internal Server Error');
+      exit;
     }
-    exit($cache);
+    $size = filesize($cache);
+    if ($download || $stream) {
+      ini_set('zlib.output_compression', 'Off');
+      $length = $size;
+      $start = 0;
+      $end = $size - 1;
+      if ($range = $ci->input->server('HTTP_RANGE')) { // serve a partial file
+        if (preg_match('%bytes=(\d+)-(\d+)?%i', $range, $match)) {
+          $match = array_map('intval', $match);
+          if (!isset($match[2])) $match[2] = $end;
+          $length = $match[2] - $match[1] + 1;
+        }
+        if ($length <= $size) {
+          fseek($fp, $match[1]);
+          header('HTTP/1.1 206 Partial Content');
+          header("Content-Range: bytes {$match[1]}-{$match[2]}/{$size}");
+        } else {
+          header('HTTP/1.1 416 Requested Range Not Satisfiable');
+          header("Content-Range: bytes {$start}-{$end}/{$size}");
+          exit;
+        }
+      }
+      header('Accept-Ranges: bytes');
+      header('Connection: Keep-Alive"');
+      header('X-Pad: avoid browser bug');
+      header('Pragma: public'); // Fix IE6 Content-Disposition
+      header('Expires: -1'); // Prevent caching
+      header('Cache-Control: public, must-revalidate, post-check=0, pre-check=0');
+      header('Etag: "' . filemtime($cache) . '-' . md5($cache) . '"'); // Enable resumable download in IE9.
+      if ($download) {
+        header('Content-Disposition: attachment; filename="' . basename($file) . '"');
+      } elseif ($stream) {
+        header('Content-Disposition: inline;');
+        header('Content-Transfer-Encoding: binary');
+      }
+      $size = $length;
+    }
+    header('Content-Length: ' . $size);
+    ob_end_clean();
+    while ($size) {
+      set_time_limit(0);
+      $read = ($size > 8192) ? 8192 : $size;
+      $size -= $read;
+      echo fread($fp, $read);
+      flush();
+    }
+    fclose($fp);
+    exit;
   }
   
   private function never_expires ($filemtime) {
