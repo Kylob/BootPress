@@ -243,7 +243,6 @@ class Admin_php extends CI_Driver {
       $form->values($prompt, $_GET['file']);
     }
     $form->validate($prompt, $prompt, 'required', 'Enter the name of the file you would like to create.  Only php, txt, css, less, and js files can be managed here.  eg. New_Plugin/index.php');
-    $form->validate('edit', 'Edit', '', 'Select a file that you would like to edit.');
     if ($form->submitted()) {
       $file = $this->plugin_filter($form->vars[$prompt]);
       $ext = ($pos = strrpos($file, '.')) ? substr($file, $pos + 1) : false;
@@ -267,6 +266,7 @@ class Admin_php extends CI_Driver {
       if (!empty($plugins)) {
         natcasesort($plugins);
         $preselect = (isset($_GET['file'])) ? $_GET['file'] : '';
+        $form->validate('edit', 'Edit', 'default[]', 'Select a file that you would like to edit.');
         $html .= $form->field('edit', '<div id="selected" class="row">' . $this->plugin_options($plugins, $preselect) . '</div>');
       }
     }

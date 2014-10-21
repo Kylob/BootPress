@@ -109,19 +109,53 @@ class SQLite extends Database {
     }
   }
   
-  private function alter ($table, $fields, $changes, $columns) {
-    $compare = $this->row('SELECT * FROM ' . $table . ' LIMIT 1');
-    $map = array();
-    foreach ($changes as $old => $new) {
-      if (isset($fields[$new]) && isset($compare[$old])) $map[$old] = $new; // legitimate changes
+  public function insert ($table, $insert, $and='', $or='') {
+    $ids = array();
+    $multiple = (isset($insert[0])) ? true : false;
+    if (!$multiple) $insert = array($insert);
+    $query = (!empty($or)) ? 'INSERT ' . $or . ' INTO ' . $table : 'INSERT INTO ' . $table;
+    $query .= ' (' . implode(', ', array_keys($insert[0])) . ") VALUES (" . implode(', ', array_fill(0, count($insert[0]), '?')) . ') ' . $and;
+    if ($multiple) $this->ci->trans_start();
+    $stmt = $this->ci->conn_id->prepare($query);
+    foreach ($insert as $values) {
+      foreach (array_values($values) as $key => $value) $stmt->bindValue($key + 1, $value);
+      $ids[] = ($stmt->execute()) ? $this->ci->insert_id() : 0;
     }
-    foreach (array_keys($compare) as $field) {
-      if (isset($fields[$field]) && !isset($map[$field])) $map[$field] = $field; // old fields that match the new
+    if ($multiple) $this->ci->trans_complete();
+    return ($multiple) ? $ids : array_shift($ids);
+  }
+  
+  public function update ($table, $column, $update, $and='') {
+    $affected_rows = 0;
+    $fields = array_slice($update, 0, 1);
+    $fields = array_shift($fields);
+    $this->ci->trans_start();
+    $stmt = $this->ci->conn_id->prepare('UPDATE ' . $table . ' SET ' . implode(' = ?, ', array_keys($fields)) . ' = ? WHERE ' . $column . ' = ? ' . $and);
+    foreach ($update as $id => $values) {
+      foreach (array_values($values) as $key => $value) $stmt->bindValue($key + 1, $value);
+      $stmt->bindValue($key + 2, $id);
+      if ($stmt->execute()) $affected_rows += $this->ci->affected_rows();
+    }
+    $this->ci->trans_complete();
+    return $affected_rows;
+  }
+  
+  private function alter ($table, $fields, $changes, $columns) {
+    $map = array();
+    if ($compare = $this->row('SELECT * FROM ' . $table . ' LIMIT 1')) {
+      foreach ($changes as $old => $new) {
+        if (isset($fields[$new]) && isset($compare[$old])) $map[$old] = $new; // legitimate changes
+      }
+      foreach (array_keys($compare) as $field) {
+        if (isset($fields[$field]) && !isset($map[$field])) $map[$field] = $field; // old fields that match the new
+      }
     }
     $this->ci->simple_query("PRAGMA foreign_keys = OFF");
     $this->ci->trans_start();
     $this->ci->simple_query('CREATE TABLE ' . $table . '_copy (' . $columns . ')');
-    if (!empty($map)) $this->ci->simple_query('INSERT INTO ' . $table . '_copy (' . implode(', ', array_values($map)) . ') SELECT ' . implode(', ', array_keys($map)) . ' FROM ' . $table);
+    if (!empty($map)) {
+      $this->ci->simple_query('INSERT INTO ' . $table . '_copy (' . implode(', ', array_values($map)) . ') SELECT ' . implode(', ', array_keys($map)) . ' FROM ' . $table);
+    }
     $this->ci->simple_query('DROP TABLE ' . $table);
     $this->ci->simple_query('ALTER TABLE ' . $table . '_copy RENAME TO ' . $table);
     $this->ci->trans_complete();
