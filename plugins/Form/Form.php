@@ -255,29 +255,25 @@ class Form {
     foreach ($this->labels as $name => $label) {
       $field = $this->base($name);
       $var = $ci->input->post($field);
-      if (is_null($var)) {
-        $this->errors[$name] = 'This field does not exist.'; // if you are okay with this then set a default[] value when $this->validate()ing
+      $this->vars[$field] = (is_null($var)) ? '' : $var;
+      if (isset($this->upload['name']) && $this->upload['name'] == $name) {
+        $replace = array();
+        foreach ((array) $this->vars[$field] as $url) {
+          if (!empty($url)) {
+            list($uri, $name) = $this->uri_name($url);
+            $replace[$uri] = $name;
+          }
+        }
+        $this->vars[$field] = $replace;
+      }
+      if (isset($process[$field])) {
+        foreach ($ids as $id) {
+          $error = $this->form_validation->error($field . '[' . $id . ']');
+          if (!empty($error)) $this->errors[$field . '[' . $id . ']'] = strip_tags($error);
+        }
       } else {
-        $this->vars[$field] = $var;
-        if (isset($this->upload['name']) && $this->upload['name'] == $name) {
-          $replace = array();
-          foreach ((array) $this->vars[$field] as $url) {
-            if (!empty($url)) {
-              list($uri, $name) = $this->uri_name($url);
-              $replace[$uri] = $name;
-            }
-          }
-          $this->vars[$field] = $replace;
-        }
-        if (isset($process[$field])) {
-          foreach ($ids as $id) {
-            $error = $this->form_validation->error($field . '[' . $id . ']');
-            if (!empty($error)) $this->errors[$field . '[' . $id . ']'] = strip_tags($error);
-          }
-        } else {
-          $error = $this->form_validation->error($name);
-          if (!empty($error)) $this->errors[$name] = strip_tags($error);
-        }
+        $error = $this->form_validation->error($name);
+        if (!empty($error)) $this->errors[$name] = strip_tags($error);
       }
     }
     if ($this->type == 'get') {

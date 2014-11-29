@@ -85,16 +85,16 @@ class Admin_php extends CI_Driver {
   }
   
   private function folders_edit () {
-    global $bp, $page;
+    global $bp, $ci, $page;
     $html = '';
-    if (!isset($_GET['folder'])) return $html;
-    if (!file_exists($this->folders . $_GET['folder'] . '.php')) $page->eject($page->url('delete', '', 'folder'));
+    if (!$folder = $ci->input->get('folder')) return $html;
+    if (!file_exists($this->folders . $folder . '.php')) $page->eject($page->url('delete', '', 'folder'));
     $form = $page->plugin('Form', 'name', 'edit_folders');
     $fields = array_flip($form->id(array('php', 'smarty')));
-    $code = $this->folders . $_GET['folder'] . '.php';
-    $smarty = $this->folders . $_GET['folder'] . '.tpl';
-    if (isset($_POST['wyciwyg']) && isset($_POST['field']) && isset($fields[$_POST['field']])) {
-      switch ($fields[$_POST['field']]) {
+    $code = $this->folders . $folder . '.php';
+    $smarty = $this->folders . $folder . '.tpl';
+    if ($ci->input->post('wyciwyg') && ($field = $ci->input->post('field')) && isset($fields[$field])) {
+      switch ($fields[$field]) {
         case 'php':
           $result = $this->file_put_post($code, 'wyciwyg', false);
           echo ($result === true) ? 'Saved' : $result;
@@ -109,11 +109,12 @@ class Admin_php extends CI_Driver {
       }
       exit;
     }
-    if (isset($_GET['delete']) && $_GET['delete'] == 'folder') {
+    if ($ci->input->get('delete') == 'folder') {
       unlink($code);
       if (file_exists($smarty)) unlink($smarty);
       $page->eject($page->url('delete', '', array('delete', 'folder')));
     }
+    $page->title = $folder . ' &raquo; Folder';
     $page->plugin('jQuery', 'code', '
       $("button.delete").click(function(){
         var url = $(this).data("url");
@@ -124,7 +125,7 @@ class Admin_php extends CI_Driver {
       });
     ');
     $form->values(array(
-      'folder' => $_GET['folder'],
+      'folder' => $folder,
       'php' => file_get_contents($code),
       'smarty' => (file_exists($smarty)) ? file_get_contents($smarty) : ''
     ));
@@ -146,7 +147,7 @@ class Admin_php extends CI_Driver {
       }
     }
     $html .= $form->header();
-    $html .= $form->fieldset('<a href="' . BASE_URL . $_GET['folder'] . '/" title="View Page">' . BASE_URL . $_GET['folder'] . '/</a>',
+    $html .= $form->fieldset('<a href="' . BASE_URL . $folder . '/" title="View Page">' . BASE_URL . $folder . '/</a>',
       $form->field('folder', 'text', array(
         'prepend' => $bp->button('link delete', $bp->icon('trash'), array('data-url'=>$page->url('add', '', 'delete', 'folder'), 'title'=>'Delete')),
         'append' => $bp->button('warning', 'Edit', array('type'=>'Submit', 'data-loading-text'=>'Submitting...'))

@@ -189,7 +189,7 @@ class FTS {
 
   private $db;
   
-  public function __construct ($db) {
+  public function __construct (SQLite $db) {
     $this->db = $db;
   }
   

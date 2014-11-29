@@ -4,6 +4,8 @@ class Resources_deliverer extends CI_Driver {
 
   public function view ($file, $type) {
     global $ci;
+    $file .= '.' . $type;
+    $type = strtolower($type);
     $image = $compress = $deliver = $download = $stream = false;
     if (preg_match('/^(jpe?g|gif|png|ico)$/', $type)) {
       $image = $type;
@@ -18,7 +20,6 @@ class Resources_deliverer extends CI_Driver {
     } else {
       exit(header('HTTP/1.1 503 Not Implemented'));
     }
-    $file .= '.' . $type;
     if ($this->cached($file)) {
       list($files, $updated) = $this->file_paths($file);
       if (empty($files)) exit(header('HTTP/1.1 404 Not Found'));

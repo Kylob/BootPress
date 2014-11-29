@@ -215,7 +215,7 @@ class Controller extends CI_Controller {
   
   public function filter_links ($html) { // made public so that it can be called elsewhere when ending the script prematurely if desired
     if ($this->blog->get('page') != '#admin#') {
-      $html = preg_replace('/(\{\$blog\[.*img.*]})/', BASE_URL . 'blog/resources/', $html);
+      $html = preg_replace('/(\{\$blog\[.?img.?]})/', BASE_URL . 'blog/resources/', $html);
     }
     $url = str_replace(array('.', '/'), array('\.', '\/'), BASE_URL);
     $chars = $this->config->item('permitted_uri_chars');
@@ -392,7 +392,7 @@ class Controller extends CI_Controller {
       )');
       $this->db->query('CREATE TABLE "ci_full_paths" (
         id INTEGER PRIMARY KEY,
-        path TEXT UNIQUE COLLATE NOCASE,
+        path TEXT UNIQUE,
         tiny_id INTEGER NOT NULL DEFAULT 0,
         updated INTEGER NOT NULL DEFAULT 0
       )');
