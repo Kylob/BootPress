@@ -2,15 +2,15 @@
 /*
 
 # Except for these:
-!bootpress/
+!bootstrap/
 !code/
 !plugins/
-!Page.php
-!params_blank.php
 !.gitignore
 !.gitmodules
-!README.md
 !license.txt
+!Page.php
+!params_blank.php
+!README.md
 
 # This code:
 code/*
@@ -25,3 +25,4 @@ plugins/*
 !plugins/Form/
 !plugins/Image/
 !plugins/jQuery/
+!plugins/Smarty/
