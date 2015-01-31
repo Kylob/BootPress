@@ -10,6 +10,7 @@ class Image {
   public $saved = ''; // the last saved file uri
   private $crop = ''; // -crop command line
   private $cropped = false; // an array of data if image is cropped
+  private $original = false; // to reset the coords as needed
   private $resize = false; // an array(width, height) if image is resized
   
   public function __construct ($uri) {
@@ -30,17 +31,74 @@ class Image {
     }
   }
   
-  public function crop ($coords='') {
+  public function crop ($coords='', $user=true) {
     if (!is_array($coords)) $coords = explode(',', $coords);
     if (count($coords) == 4) {
       list($x1, $y1, $x2, $y2) = $coords;
       $width = $x2 - $x1;
       $height = $y2 - $y1;
-      $this->crop = " -crop {$width}x{$height}+{$x1}+{$y1}";
+      // See http://www.imagemagick.org/Usage/crop/#crop_repage for why gif's are screwed up if you don't +repage
+      $this->crop = " -crop {$width}x{$height}+{$x1}+{$y1} +repage";
       $this->cropped = array('width'=>$width, 'height'=>$height, 'x1'=>$x1, 'y1'=>$y1, 'x2'=>$x2, 'y2'=>$y2);
+      if ($user) $this->original = $coords;
     }
   }
   
+  // Returns the entire image within the width and height maximum boundaries
+  public function constrain ($width, $height=null) {
+    $scale = $this->max('width') / $this->max('height');
+    if (empty($height)) $height = round($this->max('height') / $this->max('width') * $width); // ie. keep the same aspect ratio
+    if ($scale <= ($width / $height)) { // keep the height
+      $width = $scale * $height;
+    } else { // keep the width
+      $height = $width / $scale;
+    }
+    return $this->resize($width, $height);
+  }
+  
+  // Returns a cropped (as necessary) image of width and height dimensions
+  // Enforce will enlarge (and NOT distort) the image if smaller than the original
+  public function resize ($width, $height=null, $enforce=false) {
+    if (empty($height)) $height = round($this->max('height') / $this->max('width') * $width); // ie. keep the same aspect ratio
+    $requested = array($width, $height);
+    $scale = $width / $height;
+    if ($width > $this->max('width')) {
+      $width = $this->max('width');
+      $height = round($width / $scale);
+    }
+    if ($height > $this->max('height')) {
+      $height = $this->max('height');
+      $width = round($height * $scale);
+    }
+    $x = $y = 0;
+    if ($scale <= ($this->max('width') / $this->max('height'))) { // crop the width, keep the height
+      $factor = $this->max('height') * $scale;
+      $x = round(($this->max('width') - $factor) / 2);
+      if ($this->cropped) {
+        $x += $this->cropped['x1'];
+        $y = $this->cropped['y1'];
+      }
+      $this->crop(array($x, $y, $x+$factor, $y+$this->max('height')), false);
+    } else { // crop the height, keep the width
+      $factor = $this->max('width') / $scale;
+      $y = round(($this->max('height') - $factor) / 2);
+      if ($this->cropped) {
+        $y += $this->cropped['y1'];
+        $x = $this->cropped['x1'];
+      }
+      $this->crop(array($x, $y, $x+$this->max('width'), $y+$factor), false);
+    }
+    if ($enforce !== false) list($width, $height) = $requested;
+    $this->resize = array($width, $height);
+  }
+  
+  // Returns a cropped (as necessary) square image of pixels width and height
+  public function square ($pixels, $enforce=false) {
+    return $this->resize($pixels, $pixels, $enforce);
+  }
+  
+  
+  /*
   public function resize ($width, $height=0, $enforce=false) {
     if (empty($height)) $height = round($this->max('height') / $this->max('width') * $width); // ie. keep the same aspect ratio
     if ($enforce === false) { // We want to constrain proportions within $width and $height
@@ -70,18 +128,19 @@ class Image {
         $x += $this->cropped['x1'];
         $y = $this->cropped['y1'];
       }
-      $this->crop(array($x, $y, $x+$height, $y+$height));
+      $this->crop(array($x, $y, $x+$height, $y+$height), false);
     } else { // keep the width
       $y = round(($height - $width) / 2);
       if ($this->cropped) {
         $y += $this->cropped['y1'];
         $x = $this->cropped['x1'];
       }
-      $this->crop(array($x, $y, $x+$width, $y+$width));
+      $this->crop(array($x, $y, $x+$width, $y+$width), false);
     }
     if ($enforce !== false) $pixels = $requested;
     $this->resize($pixels, $pixels, 'enforce');
   }
+  */
   
   public function save ($uri, $quality=80) {
     if (empty($this->source)) return false;
@@ -138,6 +197,7 @@ class Image {
       unset($image, $source);
     }
     if ($saved) $this->saved = $uri;
+    $this->crop($this->original ? $this->original : array(0, 0, $this->width, $this->height), false);
     return $saved;
   }
   

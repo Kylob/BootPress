@@ -6,9 +6,9 @@ class SQLite extends Database {
   public $created = false; // whether or not this is a new database
   private $info = array();
   
-  public function __construct ($file='', $query_builder=false) {
+  public function __construct ($file='', $query_builder=false, $profile=true) {
     if (strpos($file, BASE) !== false) {
-      if (!file_exists($file)) {
+      if (!is_file($file)) {
         if (!is_dir(dirname($file))) mkdir(dirname($file), 0755, true);
         $this->created = true;
       }
@@ -16,8 +16,10 @@ class SQLite extends Database {
       $file = ':memory:';
       $this->created = true;
     }
-    parent::__construct(ci_load_database('sqlite3', $file, $query_builder));
+    parent::__construct(ci_load_database('sqlite3', $file, $query_builder, $profile));
     $this->ci->simple_query("PRAGMA foreign_keys = ON");
+    $temp = str_replace('\\', '/', dirname(__FILE__)) . '/temp/';
+    $this->ci->simple_query("PRAGMA temp_store_directory = '{$temp}'"); // This is deprecated, but on shared hosting it is necessary
     $this->fts = new FTS($this);
   }
   
@@ -138,6 +140,52 @@ class SQLite extends Database {
     }
     $this->ci->trans_complete();
     return $affected_rows;
+  }
+  
+  // http://stackoverflow.com/questions/396748/ordering-by-the-order-of-values-in-a-sql-in-clause
+  public function order_in ($field, $ids) {
+    if (empty($ids)) return '';
+    $count = 1;
+    $order = 'ORDER BY CASE ' . $field;
+    foreach ($ids as $id) $order .= ' WHEN ' . $id . ' THEN ' . $count++;
+    $order .= ' ELSE NULL END ASC';
+    return $order;
+  }
+  
+  public function recreate ($file) {
+    global $page;
+    if (is_file($file)) return;
+    $virtual = $tables = $indexes = array();
+    $this->query('SELECT * FROM sqlite_master');
+    while ($row = $this->fetch('assoc')) {
+      if (!empty($row['sql'])) {
+        switch ($row['type']) {
+          case 'table':
+            if (strpos($row['sql'], 'VIRTUAL TABLE')) $virtual[] = $row['name'];
+            $tables[$row['name']] = $row['sql'];
+            break;
+          case 'index':
+            $indexes[] = $row['sql'];
+            break;
+        }
+      }
+    }
+    foreach ($virtual as $table) {
+      foreach ($tables as $key => $value) {
+        if (strpos($key, $table . '_') === 0) unset($tables[$key]);
+      }
+    }
+    $db = $page->plugin('Database', 'sqlite', $file);
+    $this->query("ATTACH DATABASE '{$file}' AS recreate");
+    foreach ($tables as $table => $sql) {
+      $db->query($sql);
+      if ($fields = $this->row("SELECT * FROM {$table} LIMIT 1")) {
+        $fields = implode(', ', array_keys($fields));
+        $this->query("INSERT INTO recreate.{$table} ({$fields}) SELECT * FROM {$table}");
+      }
+    }
+    foreach ($indexes as $sql) $db->query($sql);
+    $db->ci->close();
   }
   
   private function alter ($table, $fields, $changes, $columns) {

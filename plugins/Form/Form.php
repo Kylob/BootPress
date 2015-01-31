@@ -592,11 +592,11 @@ class Form {
     global $bp, $page;
     $html = '';
     $id = $this->id($name);
-    $page->plugin('CDN', 'links', array(
-      'bootstrap.filestyle/1.0.3/js/bootstrap-filestyle.min.js',
-      'jquery.fileupload/9.5.2/js/jquery.iframe-transport.js',
-      'jquery.fileupload/9.5.2/js/jquery.fileupload.js'
-    )); // $(":file").filestyle();
+    // 'bootstrap.filestyle/1.0.3/js/bootstrap-filestyle.min.js' - $(":file").filestyle();
+    $page->plugin('CDN', 'links', array( // 9.5.7
+      'jquery.fileupload/9.5.7/js/jquery.iframe-transport.js',
+      'jquery.fileupload/9.5.7/js/jquery.fileupload.js'
+    ));
     $page->link($this->url . 'js/blueimpFileUploader.js');
     $page->plugin('jQuery', array('ui'=>'1.10.4', 'code'=>'
       $("#' . $id . '").blueimpFileUploader({

@@ -1,5 +1,7 @@
 <?php
 
+// http://umumble.com/blogs/php/smarty-vs-twig%3A-performance/
+
 class SmartyPlugin extends Smarty {
 
   public function __construct ($uri) {

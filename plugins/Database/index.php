@@ -8,30 +8,32 @@ $export = false;
 
 $query_builder = (isset($query_builder)) ? $query_builder : false;
 
+$profile = (isset($profile) && $profile === false) ? false : true;
+
 if (isset($mssql)) // MS SQL
 {
-	if ($export = ci_load_database('mssql', $mssql, $query_builder)) $export = new Database($export);
+	if ($export = ci_load_database('mssql', $mssql, $query_builder, $profile)) $export = new Database($export);
 }
 elseif (isset($mysql)) // MySQL
 {
-	if ($export = ci_load_database('mysqli', $mysql, $query_builder)) $export = new Database($export);
+	if ($export = ci_load_database('mysqli', $mysql, $query_builder, $profile)) $export = new Database($export);
 }
 elseif (isset($oracle)) // Oracle
 {
-	if ($export = ci_load_database('oci8', $oracle, $query_builder)) $export = new Database($export);
+	if ($export = ci_load_database('oci8', $oracle, $query_builder, $profile)) $export = new Database($export);
 }
 elseif (isset($postgre)) // PostgreSQL
 {
-	if ($export = ci_load_database('postgre', $postgre, $query_builder)) $export = new Database($export);
+	if ($export = ci_load_database('postgre', $postgre, $query_builder, $profile)) $export = new Database($export);
 }
 elseif (isset($sqlite)) // SQLite 3
 {
-	$export = new SQLite($sqlite, $query_builder);
+	$export = new SQLite($sqlite, $query_builder, $profile);
 }
 elseif (isset($fts))
 {
-  	$export = array();
-  	list($search, $values) = each($fts);
+	$export = array();
+	list($search, $values) = each($fts);
 	$db = new SQLite;
 	$db->fts->create('results', 'search', 'porter');
 	$db->fts->upsert('results', 'search', $values);

@@ -2,14 +2,20 @@
 /*
 
 # Except for these:
-!BootPress/
-!CodeIgniter/
+!bootpress/
+!code/
 !plugins/
 !Page.php
 !params_blank.php
 !.gitignore
 !.gitmodules
 !README.md
+!license.txt
+
+# This code:
+code/*
+!code/CodeIgniter/
+!code/Smarty/
 
 # And only these plugins:
 plugins/*
@@ -19,4 +25,3 @@ plugins/*
 !plugins/Form/
 !plugins/Image/
 !plugins/jQuery/
-!plugins/Smarty/

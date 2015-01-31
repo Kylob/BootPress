@@ -54,13 +54,13 @@ define ('PHP_PATH', ''); // (optional) used to sanitary (lint) check PHP files b
  	$config['allow_get_array'] = TRUE;
 	$config['enable_query_strings'] = FALSE;
 	$config['time_reference'] = 'GMT';
-	$config['cache_path'] = BASE . 'CodeIgniter/application/cache/' . $website . '/';
+	$config['cache_path'] = BASE . 'code/CodeIgniter/application/cache/' . $website . '/';
 	if (!isset($config['sess_expiration'])) $config['sess_expiration'] = 0;
 	$config['sess_encrypt_cookie'] = TRUE;
 	$config['sess_use_database'] = TRUE;
 	$config['sess_driver'] = 'native';
 
-	require_once(BASE . 'CodeIgniter/index.php');
+	require_once(BASE . 'code/CodeIgniter/index.php');
 	
 /* End of file params.php */
 /* Location: ./params.php */

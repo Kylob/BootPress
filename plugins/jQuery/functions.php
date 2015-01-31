@@ -24,7 +24,7 @@ function add_jquery_code ($html, $plugin) {
   } else {
     $code = "\n" . implode("\n\n", $code) . "\n  ";
   }
-  return $html . "\n  " . '<script type="text/javascript">$(document).ready(function(){' . $code . '})</script>';
+  return $html . "\n  " . '<script>$(document).ready(function(){' . $code . '})</script>';
 }
 
 $page->filter('javascript', 'add_jquery_scripts', array('this', $plugin['name']));

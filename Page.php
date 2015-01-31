@@ -1,13 +1,13 @@
 <?php
 
 class Page {
-
-  private $domain = ''; // as defined in the main index.php page - retrieve in $this->get('domain')
-  private $folder = ''; // a "folder" that shifts the relative context of the $this->url - retrieve in $this->get('folder')
-  private $type = ''; // either 'txt', 'xml', or 'html' - retrieve in $this->get('type')
-  private $url = ''; // includes BASE_URL, the "folder" (if applicable), and a trailing slash - retrieve in $this->get('url')
-  private $uri = ''; // between $this->url and '?' - it does not include a trailing slash or dot extension (unless it's .txt or .xml) - retrieve in $this->get('uri')
-  private $query = ''; // a string beginning with '?' (if any params) - retrieve in $this->get('query')
+  
+  private $url = ''; // Includes BASE_URL, the "folder" (if applicable), and a trailing slash
+  private $uri = ''; // Between $this->url and '?'
+  private $type = ''; // $this->uri's file extension (if any)
+  private $query = ''; // A string beginning with '?' (if any params)
+  private $domain = ''; // As defined in the main index.php page
+  private $folder = ''; // A "folder" that shifts the relative context of the $this->url and $this->uri
   public $language = 'en';
   public $charset = 'UTF-8';
   public $title = '';
@@ -15,119 +15,197 @@ class Page {
   public $keywords = '';
   public $robots = true;
   public $body = '';
+  public $theme = 'default';
+  public $vars = array(); // an extra array that can be stuffed with whatever values you please - for themes mainly
   private $data = array(); // meta, ico, apple, css, style, other, js, script
   private $params = array(); // managed in $this->outreach() (private) for plugins, retrieved in $this->get('params') (public)
   private $saved = array(); // managed in $this->save($name), and retrieved in $this->get('info', $name) - for filters mainly
   private $filters = array(); // managed in $this->filter() (public), and retrieved in $this->customize() (private)
   private $loaded = array(); // include(ed) files from $this->load()
   
-  public function __construct ($folder=false) {
-    global $ci;
-    $paths = array();
-    $uri = explode('/', $ci->uri->uri_string());
-    foreach ($uri as $key => $value) {
-      $extension = strpos($value, '.');
-      if ($extension !== false) $value = substr($value, 0, $extension); // remove file extensions
-      if (!empty($value)) $paths[] = $value; // remove empty "folders"
-    }
-    while (isset($paths[0]) && $paths[0] == 'index') $paths = array_slice($paths, 1); // remove base references to index
-    // Here we make sure the $actual_url has the desired protocol, subdomain(s), and url_suffix (if there is no $extension).
-    $actual_url = implode('//', array(
-      ($_SERVER['SERVER_PORT'] == 443) ? 'https:' : 'http:',
-      $_SERVER['HTTP_HOST'] . $_SERVER['REQUEST_URI']
-    ));
-    $extension = strstr(array_pop($uri), '.');
-    if (!empty($paths) && ($extension == '.txt' || $extension == '.xml')) {
-      $this->type = substr($extension, 1);
-      $desired_url = $ci->config->base_url(implode('/', $paths) . $extension);
-    } else {
-      $this->type = 'html';
-      $desired_url = $ci->config->site_url($paths) . strstr($actual_url, '?');
-    }
-    if ($desired_url != $actual_url) {
-      header('Location: ' . $desired_url, true, 301);
-      exit;
-    }
+  public function __construct ($folders=false, $allow=array('xml','txt','less')) {
+    global $ci;	
     $this->url = $ci->config->site_url();
     $this->uri = $ci->uri->uri_string();
-    $this->query = strstr($actual_url, '?');
-    if ($folder !== false) {
-      $page = $ci->input->get('page');
-      if (empty($this->uri) && file_exists(BASE_URI . 'code/index.php')) {
-        $this->folder = 'index';
-      } elseif ($page && !preg_match('/(\?|&)page=/i', $actual_url) && file_exists(BASE_URI . 'code/' . $page . '.php')) {
-        $this->folder = $page;
+    $this->type = pathinfo($this->uri, PATHINFO_EXTENSION);
+    $this->query = strstr($ci->input->server('REQUEST_URI'), '?');
+    $this->domain = substr(BASE_URI, strrpos(trim(BASE_URI, '/'), '/') + 1, -1);
+    if (!empty($folders)) {
+      $actual_url = implode('//', array(
+        ($_SERVER['SERVER_PORT'] == 443) ? 'https:' : 'http:',
+        $_SERVER['HTTP_HOST'] . $_SERVER['REQUEST_URI']
+      ));
+      $paths = array();
+      foreach (explode('/', $this->uri) as $value) {
+        $extension = strpos($value, '.');
+        if ($extension !== false) $value = substr($value, 0, $extension); // remove file extensions
+        if (!empty($value)) $paths[] = $value; // remove empty "folders"
+      }
+      $paths = array_diff($paths, array('index')); // remove any reference to 'index'
+      if (in_array($this->type, $allow)) {
+        $desired_url = $ci->config->base_url(implode('/', $paths) . '.' . $this->type);
+      } else {
+        $desired_url = $ci->config->site_url($paths) . $this->query;
+        $this->type = 'html';
+      }
+      if ($actual_url != $desired_url) {
+        header('Location: ' . $desired_url, true, 301);
+        exit;
+      }
+      if (empty($this->uri) && is_file($folders . 'index/index.php')) {
+        $this->folder = $folders . 'index/index.php';
+      } elseif (($folder = $ci->input->get('page')) && !preg_match('/(\?|&)page=/i', $this->query) && is_file($folders . $folder . '/index.php')) {
+        $this->folder = $folders . $folder . '/index.php';
       } else {
         for ($count = count($paths); $count > 0; $count--) {
           $path = implode('/', $paths);
-          if (file_exists(BASE_URI . 'code/' . $path . '.php')) {
-            $this->folder = $path;
-            $this->url .= $this->folder . '/';
-            $this->uri = substr($this->uri, strlen($this->folder . '/'));
-            break;
+          if (is_file($folders . $path . '/index.php')) {
+            $this->url .= $path . '/';
+            $this->uri = substr($this->uri, strlen($path . '/'));
+            $this->folder = $folders . $path . '/index.php';
           }
-          array_pop($paths);
         }
       }
     }
-    $this->domain = substr(BASE_URI, strrpos(trim(BASE_URI, '/'), '/') + 1, -1);
+  }
+  
+  public function set ($var, $value='') {
+    if (!is_array($var)) $var = array($var => $value);
+    foreach ($var as $key => $value) {
+      switch ($key) {
+        case 'language':
+        case 'charset':
+        case 'title':
+        case 'description':
+        case 'keywords':
+        case 'robots':
+        case 'body':
+        case 'theme':
+          $this->$key = $value;
+          break;
+        default:
+          $this->vars[$key] = $value;
+          break;
+      }
+    }
+  }
+  
+  public function __get ($name) {
+    return (isset($this->vars[$name])) ? $this->vars[$name] : null;
   }
   
   public function get ($var, $name='') {
     $value = false;
     switch ($var) {
-      case 'file': $value = (!empty($this->folder)) ? BASE_URI . 'code/' . $this->folder . '.php' : false; break;
       case 'info': $value = (!empty($name) && isset($this->saved[$name])) ? $this->saved[$name] : array(); break;
       case 'params':
         $params = $this->params;
         $value = array_pop($params);
         break;
-      case 'domain':
-      case 'folder':
-      case 'type':
       case 'url':
       case 'uri':
-      case 'query': $value = $this->$var; break;
+      case 'type':
+      case 'query':
+      case 'domain':
+      case 'folder': $value = $this->$var; break;
     }
     return $value;
   }
   
-  public function uri ($action, $arg='') {
-    $uri = explode('/', $this->uri);
-    switch($action) {
-      case 'count': return count($uri); break;
-      case 'first': return implode('/', array_slice($uri, 0, max((int) $arg, 1))); break;
-      case 'after':
-        if (is_numeric($arg)) return implode('/', array_slice($uri, (int) $arg));
-        if (!empty($arg)) {
-          if (strpos($arg, $this->url) === 0) $arg = trim(substr($arg, strlen($this->url)), '/');
-          if (strpos($this->uri, $arg) === 0) return trim(substr($this->uri, strlen($arg)), '/');
+  ##
+  # 
+  # kudos to: https://github.com/dannyvankooten/AltoRouter - we copied the complicated stuff from them verbatim
+  # 
+  # [ match_type : param_name ]
+  # 
+  # *                    // Match all request URIs
+  # [i]                  // Match an integer
+  # [i:id]               // Match an integer as 'id'
+  # [a:action]           // Match alphanumeric characters as 'action'
+  # [h:key]              // Match hexadecimal characters as 'key'
+  # [:action]            // Match anything up to the next / or end of the URI as 'action'
+  # [create|edit:action] // Match either 'create' or 'edit' as 'action'
+  # [*]                  // Catch all (lazy)
+  # [*:trailing]         // Catch all as 'trailing' (lazy)
+  # [**:trailing]        // Catch all (possessive - will match the rest of the URI)
+  # .[:format]?          // Match an optional parameter 'format' - a / or . before the block is also optional
+  # 
+  # posts/[*:title][i:id]      // Matches "posts/this-is-a-title-123"
+  # output.[xml|json:format]?  // Matches "output", "output.xml", "output.json"
+  # [:controller]?/[:action]?  // Matches the typical controller/action format
+  # @\.(json|csv)$             // Match all requests that end with '.json' or '.csv'
+  # !@^admin/                  // Match all requests that _don't_ start with admin/
+  # 
+  # if ($route = $page->routes(array(
+  #   '' => 'index.php',
+  #   'plans/[farout|groovy:future]' => 'plans.php', // matches "plans/farout", "plans/groovy"
+  #   'charge/[i:customer]' => 'charge.php', // matches "charge/4815162342"
+  #   'payment/[:status]' => 'payment.php', // matches "payment/[^/\.]+"
+  #   'api/[*:key]/[*:name]' => 'api.php', // matches "api/123/456/gadd" and name = "456/gadd"
+  #   'blog/[*:title]-[i:id]' => 'blog.php', // matches "blog/this-is-a-title-123"
+  #   'posts/[create|edit:action]?/[i:id]?' => 'posts.php', // matches "posts", "posts/123", "posts/create", "posts/create/123"
+  #   'report.[xml|csv|json:format]?' => 'report.php', // matches "report", "report.xml", "report.csv", "report.json"
+  #   '@\.(jpg|gif|png)$' => 'image.php', // matches anything that ends with ".jpg", ".gif", or ".png"
+  #   '[:controller]?/[:method]?/[**:uri]?' => 'class.php' // for everything else there is this
+  # ), 'argh/freak/out')) {
+  #   
+  #   $html .= '<pre>routes: ' . print_r($route, true) . '</pre>';
+  #   
+  # }
+  # 
+  ##
+  public function routes ($routes, $uri=null, $types=array()) {
+    global $ci, $page;
+    $uri = (is_null($uri)) ? $page->get('uri') : trim($uri, '/');
+    $types = array_merge(array(
+      'i'  => '[0-9]++', // integer
+      'a'  => '[0-9A-Za-z]++', // alphanumeric
+      'h'  => '[0-9A-Fa-f]++', // hexadecimal
+      '*'  => '.+?', // anything (lazy)
+      '**' => '.++', // anything (possessive)
+      ''   => '[^/\.]++' // not a slash (/) or period (.)
+    ), $types);
+    $params = array();
+    $match = false;
+    foreach ((array) $routes as $_route => $target) {
+      $_route = (is_int($_route)) ? trim($target, '/') : trim($_route, '/');
+      if (empty($_route)) {
+        $match = (empty($uri)) ? true : false;
+      } elseif ($_route === '*') {
+        $match = true;
+      } elseif (isset($_route[0]) && $_route[0] === '@') {
+        $match = preg_match('`' . substr($_route, 1) . '`u', $uri, $params);
+      } else {
+        $route = null;
+        $regex = false;
+        $j = $i = 0;
+        $n = isset($_route[0]) ? $_route[0] : null;
+        while (true) { // Find the longest non-regex substring and match it against the URI
+          if (!isset($_route[$i])) break;
+          if (false === $regex) {
+            $c = $n;
+            $regex = $c === '[' || $c === '(' || $c === '.';
+            if (false === $regex && false !== isset($_route[$i+1])) {
+              $n = $_route[$i + 1];
+              $regex = $n === '?' || $n === '+' || $n === '*' || $n === '{';
+            }
+            if (false === $regex && $c !== '/' && (!isset($uri[$j]) || $c !== $uri[$j])) continue 2;
+            $j++;
+          }
+          $route .= $_route[$i++];
         }
-        return '';
-        break;
-      case 'number':
-      case 'num': $index = (int) $arg - 1; break;
-      case 'next':
-        if (empty($arg)) {
-          $index = 0;
-        } else {
-          if (!is_array($arg)) $arg = explode('/', trim($arg, '/'));
-          $index = count($arg);
-        }
-        break;
+        $match = preg_match($this->altoRouter($route, $types), $uri, $params);
+      }
+      if (($match == true || $match > 0)) {
+        if ($params) foreach ($params as $key => $value) if (is_numeric($key)) unset($params[$key]);
+        return array(
+          'target' => $target,
+          'params' => $params,
+          'method' => ($method = $ci->input->server('REQUEST_METHOD')) ? $method : 'GET'
+        );
+      }
     }
-    return (isset($index) && isset($uri[$index])) ? $uri[$index] : '';
-  }
-  
-  public function seo ($title, $slashes=false) {
-    global $ci;
-    $ci->load->helper(array('text', 'url'));
-    $title = str_replace('-', ' ', $title);
-    $title = entities_to_ascii($title);
-    $title = convert_accented_characters($title);
-    $title = ($slashes !== false && strpos($title, '/') !== false) ? explode('/', $title) : array($title);
-    foreach ($title as $key => $value) $title[$key] = url_title($value, '-', true);
-    return implode('/', $title);
+    return false;
   }
   
   public function enforce ($uri, $redirect=301) {
@@ -152,18 +230,34 @@ class Page {
   }
   
   public function eject ($url='', $response='') { // http_response_code
+    global $ci;
+    if (empty($url)) {
+      $url = BASE_URL;
+    } elseif (!strpos($url, '://') || strpos($url, BASE_URL) !== false) {
+      $parts = explode('?', $url);
+      $uri = trim(str_replace(BASE_URL, '', array_shift($parts)), '/');
+      $query = (!empty($parts)) ? '?' . htmlspecialchars_decode(implode('?', $parts)) : '';
+      $type = pathinfo($uri, PATHINFO_EXTENSION);
+      $url = (empty($type)) ? $ci->config->site_url($uri) . $query : $ci->config->base_url($uri) . $query;
+    }
     do { ob_end_clean(); } while (ob_get_level());
-    if (strpos($url, BASE_URL) === false) $url = BASE_URL . ltrim($url, '/');
     if (is_numeric($response)) { // ie. an http_response_code
-      header('Location: ' . str_replace('&amp;', '&', $url), true, (int) $response);
+      header('Location: ' . $url, true, (int) $response);
     } else { // just redirect then
-      header('Location: ' . str_replace('&amp;', '&', $url));
+      header('Location: ' . $url);
     }
     exit;
   }
   
   public function url ($action='', $url='', $key='', $value=NULL) {
-    if (empty($url)) $url = $this->url . $this->uri . $this->query;
+    global $ci;
+    if (empty($url)) {
+      if (empty($this->uri) && !empty($this->folder)) {
+        $url = substr($this->url, 0 , -1) . $this->query;
+      } else {
+        $url = $this->url . $this->uri . $this->query;
+      }
+    }
     $base = preg_replace('/[\?#].*$/', '', $url); // just the url and path
     $url = parse_url(str_replace('&amp;', '&', $url));
     if (isset($url['query'])) {
@@ -191,8 +285,15 @@ class Page {
     return $base . $query . $fragment;
   }
   
-  public function post ($params) {
-    return '<!--post' . json_encode($params) . '-->';
+  public function seo ($title, $slashes=false) {
+    global $ci;
+    $ci->load->helper(array('text', 'url'));
+    $title = str_replace(array('\\', '_', '-'), array('/', ' ', ' '), $title);
+    $title = entities_to_ascii($title);
+    $title = convert_accented_characters($title);
+    $title = ($slashes !== false && strpos($title, '/') !== false) ? array_filter(explode('/', $title)) : array($title);
+    foreach ($title as $key => $value) $title[$key] = url_title($value, '-', true);
+    return implode('/', $title);
   }
   
   public function meta ($args) {
@@ -270,10 +371,10 @@ class Page {
     $path = 'plugins/' . $name . '/';
     $params['plugin']['name'] = $name;
     $params['plugin']['url'] = BASE_URL . $path;
-    if (file_exists(BASE_URI . $path . 'index.php')) {
+    if (is_file(BASE_URI . $path . 'index.php')) {
       $params['plugin']['uri'] = BASE_URI . $path;
       $file = BASE_URI . $path . 'index.php';
-    } elseif (file_exists(BASE . $path . 'index.php')) {
+    } elseif (is_file(BASE . $path . 'index.php')) {
       $params['plugin']['uri'] = BASE . $path;
       $file = BASE . $path . 'index.php';
     }
@@ -289,7 +390,7 @@ class Page {
         $path .= $file;
       } elseif (!isset($this->loaded[$path . $file])) {
         $this->loaded[$path . $file] = '';
-        if (file_exists($path . $file)) {
+        if (is_file($path . $file)) {
           include $path . $file;
         } else {
           trigger_error($path . $file . ' does not exist');
@@ -308,7 +409,7 @@ class Page {
   
   public function filter ($section, $function, $params, $order=10) {
     $errors = array();
-    if (!in_array($section, array('document', 'metadata', 'css', 'styles', 'header', 'content', 'sidebar', 'footer', 'layout', 'javascript', 'scripts', 'page'))) {
+    if (!in_array($section, array('document', 'metadata', 'css', 'styles', 'content', 'layout', 'javascript', 'scripts', 'page'))) {
       $errors[] = "'{$section}' cannot be filtered";
     } elseif (in_array($function, array('prepend', 'append'))) {
       if (!is_string($params)) $errors[] = "When using '{$function}', \$params must be a string";
@@ -382,17 +483,20 @@ class Page {
   }
   
   private function document () { // used in $this->display()
-    $doc = array('<!DOCTYPE html>');
-    $doc[] = '<html lang="' . $this->language . '">';
-    return $this->customize('document', implode("\n", $doc));
+    return $this->customize('document', implode("\n", array(
+      '<!DOCTYPE html>',
+      '<html lang="' . $this->language . '">'
+    )));
   }
   
   private function metadata () { // used in $this->display()
     $meta = array('<meta charset="' . $this->charset . '">');
-    $meta[] = '<title>' . $this->title . '</title>';
-    if (!empty($this->description)) $meta[] = '<meta name="description" content="' . $this->description . '">';
-    if (!empty($this->keywords)) $meta[] = '<meta name="keywords" content="' . $this->keywords . '">';
-    if ($this->robots === false) $meta[] = '<meta name="robots" content="noindex, nofollow">';
+    $meta[] = '<title>' . trim($this->title) . '</title>';
+    if (!empty($this->description)) $meta[] = '<meta name="description" content="' . trim($this->description) . '">';
+    if (!empty($this->keywords)) $meta[] = '<meta name="keywords" content="' . trim($this->keywords) . '">';
+    if ($this->robots !== true) {
+      $meta[] = ($this->robots) ? '<meta name="robots" content="' . $this->robots . '">' : '<meta name="robots" content="noindex, nofollow">'; // ie. false
+    }
     if (isset($this->data['meta'])) foreach ($this->data['meta'] as $tag) $meta[] = '<meta ' . $tag . '>';
     return $this->customize('metadata', '  ' . implode("\n  ", $meta));
   }
@@ -407,7 +511,7 @@ class Page {
     }
     $css = (isset($this->data['css'])) ? $this->data['css'] : array();
     $css = $this->customize('css', array_unique($css));
-    foreach ($css as $url) $styles[] = '<link type="text/css" rel="stylesheet" href="' . $url . '">';
+    foreach ($css as $url) $styles[] = '<link rel="stylesheet" href="' . $url . '">';
     if (isset($this->data['style'])) {
       foreach ($this->data['style'] as $style) $styles[] = $style;
     }
@@ -421,11 +525,24 @@ class Page {
     $scripts = array();
     $javascript = (isset($this->data['js'])) ? $this->data['js'] : array();
     $javascript = $this->customize('javascript', array_unique($javascript));
-    foreach ($javascript as $url) $scripts[] = '<script type="text/javascript" src="' . $url . '"></script>';
+    foreach ($javascript as $url) $scripts[] = '<script src="' . $url . '"></script>';
     if (isset($this->data['script'])) {
       foreach ($this->data['script'] as $script) $scripts[] = $script;
     }
     return $this->customize('scripts', '  ' . implode("\n  ", $scripts));
+  }
+  
+  private function altoRouter ($route, $types) {
+    if (preg_match_all('`(/|\.|)\[([^:\]]*+)(?::([^:\]]*+))?\](\?|)`', $route, $matches, PREG_SET_ORDER)) {
+      foreach($matches as $match) {
+        list($block, $pre, $type, $param, $optional) = $match;
+        if (isset($types[$type])) $type = $types[$type];
+        if ($pre === '.') $pre = '\.';
+        $pattern = '(?:' . ($pre !== '' ? $pre : null) . '(' . ($param !== '' ? "?P<$param>" : null) . $type . '))' . ($optional !== '' ? '?' : null);
+        $route = str_replace($block, $pattern, $route);
+      }
+    }
+    return "`^$route$`u";
   }
   
 }
@@ -435,6 +552,7 @@ function in_session ($reset=false) {
   static $session = null;
   if (is_null($session) || $reset) {
     if ($ci->input->cookie('ci_session')) {
+      $ci->load->driver('auth');
       $ci->session->load_driver('cookie');
       $session = true;
     } else {
@@ -461,7 +579,7 @@ function is_admin ($level=1) {
 
 function in_group ($group, $check='all') { // or 'any'
   global $ci;
-  if ($user_id = is_user()) return $ci->blog->auth->user_in_group($user_id, $group, $check);
+  if ($user_id = is_user()) return $ci->auth->user_in_group($user_id, $group, $check);
   return false;
 }
 

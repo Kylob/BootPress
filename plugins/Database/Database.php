@@ -1,11 +1,12 @@
 <?php
 
-function ci_load_database ($driver, $database, $query_builder=false) {
+function ci_load_database ($driver, $database, $query_builder=false, $profile=true) {
   global $ci;
+  $ci->load->driver('resources');
   $config = '';
   $insert = false;
   if (is_string($database)) {
-    $query = $ci->db->query("SELECT config FROM ci_databases\nWHERE driver = ? AND database = ?", array($driver, $database));
+    $query = $ci->resources->db->query("SELECT config FROM databases\nWHERE driver = ? AND database = ?", array($driver, $database));
     if ($query->num_rows() == 1) {
       list($config) = array_values($query->row_array());
     } elseif ($driver == 'sqlite3') { // The database (uri) is all we really need anyways, and it just hasn't been inserted yet
@@ -21,7 +22,7 @@ function ci_load_database ($driver, $database, $query_builder=false) {
       $params = array($config['dbdriver'], $config['database']);
       $config = serialize($config);
       $database = '';
-      $query = $ci->db->query("SELECT config FROM ci_databases\nWHERE driver = ? AND database = ?", $params);
+      $query = $ci->resources->db->query("SELECT config FROM databases\nWHERE driver = ? AND database = ?", $params);
       if ($query->num_rows() == 1) $database = array_shift($query->row_array());
       if ($config != $database) {
         $params[] = $config;
@@ -34,10 +35,13 @@ function ci_load_database ($driver, $database, $query_builder=false) {
   if (!empty($config)) {
     $config = unserialize($config);
     foreach (array('pconnect', 'db_debug', 'cache_on') as $key) $config[$key] = (bool) $config[$key];
-    $name = 'db' . md5($config['dbdriver'] . ':' . $config['database']);
-    if ($ci->$name = $ci->load->database($config, true, (bool) $query_builder)) {
-      if ($insert) $ci->db->query('INSERT OR REPLACE INTO ci_databases (driver, database, config) VALUES (?, ?, ?)', $insert);
-      return $ci->$name;
+    if ($db = $ci->load->database($config, true, (bool) $query_builder)) {
+      if ($insert) $ci->resources->db->query('INSERT OR REPLACE INTO databases (driver, database, config) VALUES (?, ?, ?)', $insert);
+      if ($profile) {
+        $name = 'db' . md5($config['dbdriver'] . ':' . $config['database']);
+        $ci->$name = $db;
+      }
+      return $db;
     }
   }
   return false;
