@@ -519,7 +519,7 @@ class Form {
         'pool' => '2346789abcdefghjkmnpqrtuvwxyzABCDEFGHJKMNPQRTUVWXYZ'
       )); // image, time, and word
       $ci->session->native->set_flashdata('captcha', $captcha['word']);
-      $html .= $this->label('captcha', $bp->media(array('<div id="captchaimage">' . $captcha['image'] . '</div>', form_input('captcha', '', 'class="form-control"'))) . '<span class="help-block">Please enter the characters as shown in the image above (case insensitive)</span>');
+      $html .= $this->field(false, $bp->media(array('<div id="captchaimage">' . $captcha['image'] . '</div>', form_input('captcha', '', 'class="form-control"'))) . '<span class="help-block">Please enter the characters as shown in the image above (case insensitive)</span>');
     }
     // never use name="submit" per: http://jqueryvalidation.org/reference/#developing-and-debugging-a-form
     $buttons = func_get_args();

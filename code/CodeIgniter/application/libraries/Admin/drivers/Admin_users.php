@@ -7,6 +7,7 @@ class Admin_users extends CI_Driver {
   
   public function view ($params) {
     global $ci, $page;
+    $ci->load->driver('auth');
     $this->url = BASE_URL . ADMIN . '/users';
     $this->view = (isset($params['action'])) ? $params['action'] : false;
     switch ($this->view) {
