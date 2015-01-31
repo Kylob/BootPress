@@ -60,12 +60,11 @@ class Admin_users extends CI_Driver {
         $form->errors['email'] = 'The email address provided has not been registered.';
       }
     }
+    $html .= '<div class="page-header"><p class="lead">' . $bp->icon('user') . ' Sign In</p></div>';
     $html .= $form->header();
-    $html .= $form->fieldset($bp->icon('user') . ' Sign In',
-      $form->field('email', 'text', array('prepend'=>$bp->icon('envelope'))),
-      $form->field('password', 'password', array('prepend'=>$bp->icon('lock'))),
-      $form->field('remember', 'checkbox')
-    );
+    $html .= $form->field('email', 'text', array('prepend'=>$bp->icon('envelope')));
+    $html .= $form->field('password', 'password', array('prepend'=>$bp->icon('lock')));
+    $html .= $form->field('remember', 'checkbox');
     $html .= $form->submit('Sign In');
     $html .= $form->close();
     unset($form);
@@ -95,14 +94,13 @@ class Admin_users extends CI_Driver {
       if (!empty($update)) $ci->auth->update($edit, $update);
       $page->eject($form->eject);
     }
+    $html .= '<div class="page-header"><p class="lead">' . $bp->icon('user') . ' Edit Your Profile</p></div>';
     $html .= $form->header();
-    $html .= $form->fieldset($bp->icon('user') . ' Edit Your Profile',
-      $form->field('Email', '<p class="help-block">' . $form->values('email') . '</p>'),
-      $form->field('name', 'text'),
-      $form->field('password', 'password'),
-      $form->field('confirm', 'password'),
-      $form->submit('Edit Profile')
-    );
+    $html .= $form->field('Email', '<p class="help-block">' . $form->values('email') . '</p>');
+    $html .= $form->field('name', 'text');
+    $html .= $form->field('password', 'password');
+    $html .= $form->field('confirm', 'password');
+    $html .= $form->submit('Edit Profile');
     $html .= $form->close();
     unset($form);
     return $html;
@@ -128,10 +126,12 @@ class Admin_users extends CI_Driver {
         $links['Groups'][$group['name'] . ' ' . $bp->badge($group['count'])] = $page->url('add', '', 'view', $id);
       }
     }
-    $html .= $bp->row('sm', array(
-      $bp->col(8, $bp->pills($links, array('align'=>'horizontal', 'active'=>$page->url()))),
-      $bp->col(4, $bp->search($page->url()))
-    )) . '<br>';
+    $html .= '<div class="page-header">';
+      $html .= $bp->row('md', 'sm', array(
+        $bp->col(9, 8, $bp->pills($links, array('align'=>'horizontal', 'active'=>$page->url()))),
+        $bp->col(3, 4, str_replace('form-inline', '', $bp->search($page->url())))
+      ));
+    $html .= '</div>';
     $bp->listings->display(100);
     $ids = array();
     if (isset($_GET['search'])) {
@@ -239,15 +239,14 @@ class Admin_users extends CI_Driver {
         $page->eject($form->eject);
       }
     }
+    $html .= '<div class="page-header"><p class="lead">' . $bp->icon('user') . ' Edit User</p></div>';
     $html .= $form->header();
-    $html .= $form->fieldset($bp->icon('user') . ' Edit User',
-      $form->field('name', 'text', array('prepend'=>$bp->icon('user'))),
-      $form->field('email', 'text', array('prepend'=>$bp->icon('envelope'))),
-      $form->field('password', 'text', array('prepend'=>$bp->icon('lock'), 'append'=>$ci->auth->random_password(), 'placeholder'=>'Leave empty to keep current password')),
-      $form->field('admin', 'select'),
-      $form->field('groups', 'tags'),
-      $form->field('approved', 'checkbox')
-    );
+    $html .= $form->field('name', 'text', array('prepend'=>$bp->icon('user')));
+    $html .= $form->field('email', 'text', array('prepend'=>$bp->icon('envelope')));
+    $html .= $form->field('password', 'text', array('prepend'=>$bp->icon('lock'), 'append'=>$ci->auth->random_password(), 'placeholder'=>'Leave empty to keep current password'));
+    $html .= $form->field('admin', 'select');
+    $html .= $form->field('groups', 'tags');
+    $html .= $form->field('approved', 'checkbox');
     $html .= $form->submit('Edit User');
     $html .= $form->close();
     unset($form);
@@ -272,12 +271,11 @@ class Admin_users extends CI_Driver {
       }
       $page->eject($page->url('add', $this->url . '/edit', 'id', $user_id));
     }
+    $html .= '<div class="page-header"><p class="lead">' . $bp->icon('user') . ' Register User</p></div>';
     $html .= $form->header();
-    $html .= $form->fieldset($bp->icon('user') . ' Register User',
-      $form->field('name', 'text', array('prepend'=>$bp->icon('user'))),
-      $form->field('email', 'text', array('prepend'=>$bp->icon('envelope'))),
-      $form->field('password', 'text', array('prepend'=>$bp->icon('lock')))
-    );
+    $html .= $form->field('name', 'text', array('prepend'=>$bp->icon('user')));
+    $html .= $form->field('email', 'text', array('prepend'=>$bp->icon('envelope')));
+    $html .= $form->field('password', 'text', array('prepend'=>$bp->icon('lock')));
     $html .= $form->submit('Register User');
     $html .= $form->close();
     unset($form);

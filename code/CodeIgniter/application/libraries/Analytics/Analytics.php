@@ -6,13 +6,13 @@ class Analytics extends CI_Driver_Library {
   
   public function __construct () {
     global $page;
-    $this->db = $page->plugin('Database', 'sqlite', BASE_URI . 'blog/databases/analytics.db');
+    $this->db = $page->plugin('Database', 'sqlite', BASE_URI . 'databases/analytics.db');
     if ($this->db->created) $this->create_tables();
   }
   
   public function process_hits () {
-    $current = BASE_URI . 'blog/databases/analytics.csv';
-    $file = BASE_URI . 'blog/databases/analytics-temp.csv';
+    $current = BASE_URI . 'databases/analytics.csv';
+    $file = BASE_URI . 'databases/analytics-temp.csv';
     if (is_file($file)) {
       if ((time() - filemtime($file)) < 600) return; // we are already on it
       touch($file); // Houston, we had a problem

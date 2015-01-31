@@ -142,7 +142,8 @@ class Controller extends CI_Controller {
   }
   
   public function log ($type, $resource=false) { // made public so that we can log resources
-    $file = fopen(BASE_URI . 'blog/databases/analytics.csv', 'ab');
+    global $page;
+    $file = fopen(BASE_URI . 'databases/analytics.csv', 'ab');
     $analytics = $this->session->native->userdata('analytics');
     switch ($type) {
       case 'hits':
@@ -216,6 +217,7 @@ class Controller extends CI_Controller {
     $this->session->native->set_userdata('analytics', $analytics);
     fclose($file);
     if ($type == 'users' && mt_rand(1, ini_get('session.gc_divisor')) <= ini_get('session.gc_probability')) {
+      $page = new Page;
       $this->load->driver('analytics');
       $this->analytics->process_hits();
       $this->sitemap->refresh();
@@ -302,14 +304,14 @@ class Controller extends CI_Controller {
       if (!is_object($page)) $page = new Page; // we are just logging a user hit in this instance
       $config = array();
       $query_builder = false;
-      if (is_file(BASE_URI . 'database.php')) include(BASE_URI . 'database.php');
+      if (is_file(BASE_URI . 'blog/database.php')) include(BASE_URI . 'blog/database.php');
       switch (isset($config['dbdriver']) ? $config['dbdriver'] : '') {
         case 'oci8': $config = array('oracle' => $config); break;
         case 'mysqli': $config = array('mysql' => $config); break;
         case 'mysql':
         case 'mssql':
         case 'postgre': $config = array($config['dbdriver'] => $config); break;
-        default: $config = array('sqlite' => BASE_URI . 'blog/databases/users.db'); break;
+        default: $config = array('sqlite' => BASE_URI . 'databases/users.db'); break;
       }
       $config['profile'] = false;
       $config['query_builder'] = true;

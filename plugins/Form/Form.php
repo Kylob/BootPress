@@ -41,7 +41,7 @@ class Form {
   private $process = array(); // managed in $this->process(), dispensed in $this->multi()
   private $placeholders = false; // detected in $this->form_control_class()
   
-  // Populated in $this->align() and utilized in $this->label()
+  // Populated in $this->align()
   private $align = 'form-horizontal';
   private $size = 'sm'; // col(umn)
   private $indent = 2;
@@ -170,7 +170,7 @@ class Form {
   }
   
   public function validate ($name, $label='', $rules='', $info='') {
-    global $page;
+    global $ci, $page;
     if (is_array($name)) {
       foreach (func_get_args() as $args) call_user_func_array(array($this, 'validate'), $args);
       return;
@@ -207,8 +207,10 @@ class Form {
         case 'matches':             $validate['equalTo'] = '#'.$this->id($param); break;
         case 'inarray':             if ($param == 'menu') $param = implode(',', array_keys($this->multi_to_single($this->menu($name))));
                                     $validate['inarray'] = $param; $rules[$key] = 'inarray[' . $param . ']'; break;
-        case 'remote':              $validate['remote'] = $page->url();
-          if (isset($_GET[$this->base($name)])) {
+        case 'remote':              $validate['remote'] = $page->url(); unset($rules[$key]);
+          // If we didn't unset($rules[$key]) then $this->errors[$name] will tell us to 'Please fix this field.'
+          // If 'post'ed then you should verify when $this->submitted() && empty($this->errors)
+          if ($ci->input->get($this->base($name))) {
             header('Content-Type: application/json');
             exit('false'); // we should have handled this request by now
           }
@@ -252,7 +254,7 @@ class Form {
     }
     $this->form_validation->set_message('', ''); // This is stupid, but we don't like meaningless error messages either
     $this->form_validation->run(); // If we don't run this, then we can't pick out any errors
-    foreach ($this->labels as $name => $label) {
+    foreach (array_keys($this->rules) as $name) {
       $field = $this->base($name);
       $var = $ci->input->post($field);
       $this->vars[$field] = (is_null($var)) ? '' : $var;
@@ -279,7 +281,7 @@ class Form {
     if ($this->type == 'get') {
       $this->eject = $page->url('delete', '', array_keys($this->vars));
     } else {
-      if ($this->captcha && strtolower($this->vars['captcha']) !== strtolower($ci->session->native->flashdata('captcha'))) {
+      if ($this->captcha && !isset($this->errors['captcha']) && strtolower($this->vars['captcha']) !== strtolower($ci->session->native->flashdata('captcha'))) {
         $this->errors['captcha'] = 'The CAPTCHA entered was incorrect.  Please try again.';
       }
       $this->eject = $page->url('delete', '', 'submitted');
@@ -370,6 +372,7 @@ class Form {
     }
     if (!empty($this->validate)) {
       $validate = (isset($attributes['validate']) && is_array($attributes['validate'])) ? $attributes['validate'] : array();
+      unset($attributes['validate']);
       $validate = array_merge(array(
         'ignore' => '[]',
         'errorClass' => '"has-error"',
@@ -381,7 +384,17 @@ class Form {
         'submitHandler' => 'submitHandler',
         'onkeyup' => 'false'
       ), $validate);
-      unset($attributes['validate']);
+      $rules = array();
+      foreach ($this->validate as $name => $check) {
+        if (strpos($name, '[') === false) { // otherwise we will get it in $this->field()
+          foreach ($check as $key => $value) {
+            $value = (is_numeric($value) || $value == 'true') ? $value : '"' . $value . '"';
+            $check[$key] = $key . ':' . $value;
+          }
+          $rules[$name] = $name . ':{' . implode(',', $check) . '}';
+        }
+      }
+      $validate['rules'] = '{' . implode(',', $rules) . '}';
       foreach ($validate as $key => $value) $validate[$key] = $key . ':' . $value;
       $page->plugin('jQuery', 'code', '$("#' . $this->name . '").validate({' . implode(',', $validate) . '});');
     }
@@ -453,7 +466,7 @@ class Form {
       case 'text':
       case 'textarea':
         $this->multi($name, $options);
-        if (isset($this->validate[$name])) {
+        if (isset($this->validate[$name]) && strpos($name, '[') !== false) {
           foreach ($this->validate[$name] as $validate => $param) {
             if (!isset($options["data-rule-{$validate}"])) $options["data-rule-{$validate}"] = $param;
           }
@@ -494,16 +507,6 @@ class Form {
     return "\n\t" . $html;
   }
   
-  public function label ($name, $field) {
-    trigger_error('Form::label() has been deprecated.');
-    return $field;
-  }
-  
-  public function label_field ($name, $field, $options=array()) {
-    trigger_error('Form::label_field() has been deprecated.');
-    return $this->field($name, $field, $options);
-  }
-  
   public function submit ($submit='Submit', $reset='') {
     global $bp, $ci, $page;
     $html = '';
@@ -519,7 +522,10 @@ class Form {
         'pool' => '2346789abcdefghjkmnpqrtuvwxyzABCDEFGHJKMNPQRTUVWXYZ'
       )); // image, time, and word
       $ci->session->native->set_flashdata('captcha', $captcha['word']);
-      $html .= $this->field(false, $bp->media(array('<div id="captchaimage">' . $captcha['image'] . '</div>', form_input('captcha', '', 'class="form-control"'))) . '<span class="help-block">Please enter the characters as shown in the image above (case insensitive)</span>');
+      $html .= $this->field('captcha', $bp->media(array(
+        '<div id="captchaimage">' . $captcha['image'] . '</div>',
+        form_input('captcha', '', 'class="form-control"')
+      )) . '<span class="help-block">Please enter the characters as shown in the image above (case insensitive)</span>', array('label'=>false));
     }
     // never use name="submit" per: http://jqueryvalidation.org/reference/#developing-and-debugging-a-form
     $buttons = func_get_args();

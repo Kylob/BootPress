@@ -7,7 +7,7 @@ class Resources extends CI_Driver_Library {
   
   public function __construct () {
     global $ci;
-    $database = BASE_URI . 'blog/databases/resources.db';
+    $database = BASE_URI . 'databases/resources.db';
     $config['database'] = $database;
     $config['dbdriver'] = 'sqlite3';
     $config['dbprefix'] = '';

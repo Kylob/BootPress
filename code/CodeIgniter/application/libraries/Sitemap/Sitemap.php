@@ -47,7 +47,7 @@ class Sitemap extends CI_Driver_Library {
   public function __get ($name) {
     global $page;
     if ($name == 'db' && !isset($this->db)) {
-      $this->db = $page->plugin('Database', 'sqlite', BASE_URI . 'blog/databases/sitemap.db');
+      $this->db = $page->plugin('Database', 'sqlite', BASE_URI . 'databases/sitemap.db');
       if ($this->db->created) {
         $this->db->fts->create('search', array('uri', 'title', 'description', 'keywords', 'content'), 'porter');
         $this->db->create('uris', array(

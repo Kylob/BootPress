@@ -49,7 +49,7 @@ class Blog extends CI_Driver_Library {
     switch ($name) {
       case 'db':
         if (!isset($this->db)) {
-          $this->db = $page->plugin('Database', 'sqlite', BASE_URI . 'blog/databases/blog.db');
+          $this->db = $page->plugin('Database', 'sqlite', BASE_URI . 'databases/blog.db');
           if ($this->db->created) {
           
             $this->db->create('blog', array(
