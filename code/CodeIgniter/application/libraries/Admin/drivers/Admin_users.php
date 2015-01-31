@@ -230,8 +230,10 @@ class Admin_users extends CI_Driver {
       if ($edit['email'] != $form->vars['email'] && $ci->auth->check($form->vars['email'])) {
         $form->errors['email'] = 'Sorry, the email submitted has already been registered.';
       } else {
-        if (empty($form->vars['password'])) unset($form->vars['password']);
-        $ci->auth->update($user_id, $form->vars);
+        $update = $form->vars;
+        unset($update['groups']);
+        if (empty($update['password'])) unset($update['password']);
+        $ci->auth->update($user_id, $update);
         $ci->auth->db->ci->simple_query('DELETE FROM ci_user_groups WHERE user_id = ' . $user_id);
         $ci->auth->add_to_group($user_id, explode(',', $form->vars['groups']));
         $page->eject($form->eject);
