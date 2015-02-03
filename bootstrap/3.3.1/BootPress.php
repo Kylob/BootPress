@@ -54,7 +54,6 @@ class BootPress {
   }
   
   public function md ($markdown, $tag=array(), $class='') {
-    global $page;
     static $parser = null;
     if (is_null($parser)) {
       include_once('Parsedown.php');

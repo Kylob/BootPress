@@ -60,6 +60,7 @@ class Admin_sitemap extends CI_Driver {
   private function robots () {
     global $bp, $ci;
     if (!$updated = $ci->analytics->db->value('SELECT MAX(time) FROM hits')) return;
+    $ci->admin->files->save(array('robots.txt' => BASE_URI . 'blog/content/robots.txt'));
     $month = $updated - 2592000; // last 30 days
     $html = '<h3>' . $bp->icon('sitemap', 'fa') . ' Robots <small>Last 30 Days</small></h3><br>';
     $sitemaps = $ci->analytics->db->value('SELECT GROUP_CONCAT(id) AS ids FROM uris WHERE uri LIKE ? AND uri NOT LIKE ?', array('sitemap%.xml', '%/%'));
@@ -68,7 +69,7 @@ class Admin_sitemap extends CI_Driver {
     $html .= $bp->table->head();
     $html .= $bp->table->cell('', 'User Agents');
     $html .= $bp->table->cell('style=text-align:center;', 'Hits');
-    $html .= $bp->table->cell('style=text-align:center;', '<a href="#" class="wyciwyg txt text-nowrap" data-retrieve="' . substr($ci->blog->post, strlen(BASE)) . 'robots.txt" data-file="robots.txt" title="Edit">' . $bp->icon('pencil') . ' robots.txt</a>');
+    $html .= $bp->table->cell('style=text-align:center;', '<a href="#" class="wyciwyg txt text-nowrap" data-retrieve="robots.txt" data-file="robots.txt" title="Edit">' . $bp->icon('pencil') . ' robots.txt</a>');
     $html .= $bp->table->cell('style=text-align:center;', '<a href="' . BASE_URL . 'sitemap.xml" class="text-nowrap" target="sitemap">' . $bp->icon('new-window') . ' sitemap%.xml</a>');
     $html .= $bp->table->cell('style=text-align:center;', 'Checked');
     $bp->listings->display(100);
