@@ -211,7 +211,6 @@ class Controller extends CI_Controller {
     $this->session->native->set_userdata('analytics', $analytics);
     fclose($file);
     if ($type == 'users' && mt_rand(1, ini_get('session.gc_divisor')) <= ini_get('session.gc_probability')) {
-      $page = new Page;
       $this->load->driver('analytics');
       $this->analytics->process_hits();
       $this->sitemap->refresh();
@@ -295,7 +294,6 @@ class Controller extends CI_Controller {
     global $page;
     static $db = null;
     if (is_null($db)) {
-      if (!is_object($page)) $page = new Page; // we are just logging a user hit in this instance
       $config = array();
       $query_builder = false;
       if (is_file(BASE_URI . 'blog/database.php')) include(BASE_URI . 'blog/database.php');
