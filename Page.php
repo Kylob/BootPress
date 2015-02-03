@@ -25,7 +25,7 @@ class Page {
   
   public function __construct () {
     global $ci;	
-    $this->url = $ci->config->site_url();
+    $this->url = BASE_URL;
     $this->uri = $ci->uri->uri_string();
     $this->type = pathinfo($this->uri, PATHINFO_EXTENSION);
     if (empty($this->type)) $this->type = 'html';

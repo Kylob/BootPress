@@ -25,7 +25,7 @@ class Sitemap extends CI_Driver_Library {
     if (isset($config)) $this->config = $config;
     $this->config['file'] = $file;
     if (!$analytics && empty($_POST)) {
-      $this->id = md5($uri);
+      $this->id = md5(BASE_URL . $uri);
       if (empty($_GET)) {
         if (strpos($uri, '.') === false) $this->uri = $uri; // ie. not an xml, txt or less file
       } else {

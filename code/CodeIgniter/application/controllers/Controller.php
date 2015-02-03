@@ -27,12 +27,6 @@ class Controller extends CI_Controller {
     }
     $this->load->driver(array('session', 'sitemap'));
     if ($html = $this->sitemap->cached()) {
-      $actual_url = (is_https() ? 'https' : 'http') . '://' . $_SERVER['HTTP_HOST'] . $_SERVER['REQUEST_URI'];
-      $desired_url = $this->config->site_url() . $this->uri->uri_string() . strstr($_SERVER['REQUEST_URI'], '?');
-      if ($actual_url != $desired_url) {
-        header('Location: ' . $desired_url, true, 301);
-        exit;
-      }
       $this->benchmark->mark('page_setup_end');
       $this->benchmark->mark('page_display_start');
     } else {
