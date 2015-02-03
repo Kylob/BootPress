@@ -7,7 +7,7 @@ class Page {
   private $type = ''; // $this->uri's file extension (if any)
   private $query = ''; // A string beginning with '?' (if any params)
   private $domain = ''; // As defined in the main index.php page
-  private $folder = ''; // A "folder" that shifts the relative context of the $this->url and $this->uri
+  private $folder = null; // A "folder" (directory) that shifts the relative context of the $this->url and $this->uri
   public $language = 'en';
   public $charset = 'UTF-8';
   public $title = '';
@@ -23,22 +23,25 @@ class Page {
   private $filters = array(); // managed in $this->filter() (public), and retrieved in $this->customize() (private)
   private $loaded = array(); // include(ed) files from $this->load()
   
-  public function __construct ($folders=false, $allow=array('xml','txt','less')) {
+  public function __construct () {
     global $ci;	
     $this->url = $ci->config->site_url();
     $this->uri = $ci->uri->uri_string();
     $this->type = pathinfo($this->uri, PATHINFO_EXTENSION);
-    $this->query = strstr($ci->input->server('REQUEST_URI'), '?');
+    if (empty($this->type)) $this->type = 'html';
+    $this->query = strstr($_SERVER['REQUEST_URI'], '?');
     $this->domain = substr(BASE_URI, strrpos(trim(BASE_URI, '/'), '/') + 1, -1);
-    if (!empty($folders)) {
-      $actual_url = implode('//', array(
-        ($_SERVER['SERVER_PORT'] == 443) ? 'https:' : 'http:',
-        $_SERVER['HTTP_HOST'] . $_SERVER['REQUEST_URI']
-      ));
+    $this->charset = $ci->config->item('charset');
+  }
+  
+  public function folder ($folders='', $allow=array('xml', 'txt', 'less')) {
+    global $ci;
+    if (is_null($this->folder) && !empty($folders)) {
+      $this->folder = false;
+      $actual_url = (is_https() ? 'https' : 'http') . '://' . $_SERVER['HTTP_HOST'] . $_SERVER['REQUEST_URI'];
       $paths = array();
-      foreach (explode('/', $this->uri) as $value) {
-        $extension = strpos($value, '.');
-        if ($extension !== false) $value = substr($value, 0, $extension); // remove file extensions
+      foreach (explode('/', str_replace('_', '-', $this->uri)) as $value) {
+        if (($extension = strpos($value, '.')) !== false) $value = substr($value, 0, $extension); // remove file extensions
         if (!empty($value)) $paths[] = $value; // remove empty "folders"
       }
       $paths = array_diff($paths, array('index')); // remove any reference to 'index'
@@ -46,27 +49,28 @@ class Page {
         $desired_url = $ci->config->base_url(implode('/', $paths) . '.' . $this->type);
       } else {
         $desired_url = $ci->config->site_url($paths) . $this->query;
-        $this->type = 'html';
       }
       if ($actual_url != $desired_url) {
         header('Location: ' . $desired_url, true, 301);
         exit;
       }
       if (empty($this->uri) && is_file($folders . 'index/index.php')) {
-        $this->folder = $folders . 'index/index.php';
+        $this->folder = $folders . 'index/';
       } elseif (($folder = $ci->input->get('page')) && !preg_match('/(\?|&)page=/i', $this->query) && is_file($folders . $folder . '/index.php')) {
-        $this->folder = $folders . $folder . '/index.php';
+        $this->folder = $folders . $folder . '/';
       } else {
         for ($count = count($paths); $count > 0; $count--) {
           $path = implode('/', $paths);
           if (is_file($folders . $path . '/index.php')) {
             $this->url .= $path . '/';
             $this->uri = substr($this->uri, strlen($path . '/'));
-            $this->folder = $folders . $path . '/index.php';
+            $this->folder = $folders . $path . '/';
+            break;
           }
         }
       }
     }
+    return $this->folder;
   }
   
   public function set ($var, $value='') {
@@ -106,8 +110,7 @@ class Page {
       case 'uri':
       case 'type':
       case 'query':
-      case 'domain':
-      case 'folder': $value = $this->$var; break;
+      case 'domain': $value = $this->$var; break;
     }
     return $value;
   }
