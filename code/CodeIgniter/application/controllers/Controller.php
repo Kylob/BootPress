@@ -27,18 +27,20 @@ class Controller extends CI_Controller {
     }
     $this->load->driver(array('session', 'sitemap'));
     if ($html = $this->sitemap->cached()) {
+      $actual_url = (is_https() ? 'https' : 'http') . '://' . $_SERVER['HTTP_HOST'] . $_SERVER['REQUEST_URI'];
+      $desired_url = $this->config->site_url() . $this->uri->uri_string() . strstr($_SERVER['REQUEST_URI'], '?');
+      if ($actual_url != $desired_url) {
+        header('Location: ' . $desired_url, true, 301);
+        exit;
+      }
       $this->benchmark->mark('page_setup_end');
       $this->benchmark->mark('page_display_start');
     } else {
       require_once(BASE . 'Page.php');
-      if ($this->model == '#sitemap#') {
-        $page = new Page;
-        $this->benchmark->mark('page_setup_end');
-        $this->benchmark->mark('page_content_start');
-        $params = func_get_arg(1);
-        $method = array_shift($params); // Either 'robots' or 'xml'
-        $html = $this->sitemap->$method(array_shift($params));
-      } elseif ($this->model == $this->poster) {
+      $page = new Page;
+      $this->benchmark->mark('page_setup_end');
+      $this->benchmark->mark('page_content_start');
+      if ($this->model == $this->poster) {
         $this->delay_flashdata();
         $this->log('users');
         $image = base64_decode('R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7');
@@ -48,32 +50,30 @@ class Controller extends CI_Controller {
         header('Content-Type: image/gif');
         header('Pragma: no-cache');
         exit($image);
-      } else {
-        $page = new Page(BASE_URI . 'folders/');
-        $page->charset = $this->config->item('charset');
-        $this->benchmark->mark('page_setup_end');
-        $this->benchmark->mark('page_content_start');
-        if ($template = $this->input->post($this->poster)) {
-          $this->delay_flashdata();
-          $data = array();
-          $file = BASE_URI . 'themes/' . $page->seo($template) . '/post.php';
-          if ($this->model != ADMIN && is_file($file)) {
-            $this->load->driver('blog', array('role'=>'#post#'));
-            $export = $page->outreach($file);
-            if (is_array($export)) $data = $this->compile($export);
-            if (isset($data['css'])) $data = array('css'=>$data['css']) + $data; // move css to the beginning
-            if (isset($data['javascript'])) { // move javascript to the end
-              $javascript = $data['javascript'];
-              unset($data['javascript']);
-              $data['javascript'] = $javascript;
-            }
+      } elseif ($template = $this->input->post($this->poster)) {
+        $this->delay_flashdata();
+        $data = array();
+        $file = BASE_URI . 'themes/' . $page->seo($template) . '/post.php';
+        if (is_file($file)) {
+          $this->load->driver('blog', array('role'=>'#post#'));
+          $export = $page->outreach($file);
+          if (is_array($export)) $data = $this->compile($export);
+          if (isset($data['css'])) $data = array('css'=>$data['css']) + $data; // move css to the beginning
+          if (isset($data['javascript'])) { // move javascript to the end
+            $javascript = $data['javascript'];
+            unset($data['javascript']);
+            $data['javascript'] = $javascript;
           }
-          $data = json_encode($this->filter_links($data));
-          header('Content-Type: application/json');
-          header('Content-Length: ' . strlen($data));
-          exit($data);
         }
-        $html = '';
+        $data = json_encode($this->filter_links($data));
+        header('Content-Type: application/json');
+        header('Content-Length: ' . strlen($data));
+        exit($data);
+      } elseif ($this->model == '#sitemap#') {
+        $params = func_get_arg(1);
+        $method = array_shift($params); // Either 'robots' or 'xml'
+        $html = $this->sitemap->$method(array_shift($params));
+      } else {
         if ($this->model == ADMIN) {
           $this->load->driver('blog', array('role'=>'#admin#'));
           if ($route = $page->routes(array(
@@ -87,17 +87,17 @@ class Controller extends CI_Controller {
             if (!isset($route['params']['view'])) $page->eject(ADMIN . '/blog');
             $view = $route['params']['view'];
             $this->load->driver('admin', array('file'=>$view));
-            $html .= $this->admin->$view->view($route['params']);
+            $html = $this->admin->$view->view($route['params']);
           } else {
             $page->eject(BASE_URL . ADMIN . '/users');
           }
-        } elseif ($page->get('folder') != '') {
+        } elseif ($folder = $page->folder(BASE_URI . 'folders/')) {
           $this->load->driver('blog', array('role'=>'#folder#'));
-          $html .= $page->outreach($page->get('folder'));
+          $html = $page->outreach($folder . 'index.php');
         } else {
           $this->load->driver('blog', array('role'=>'#blog#'));
           if ($file = $this->blog->file($page->get('uri'))) {
-            $html .= $this->blog->pages->post($file);
+            $html = $this->blog->pages->post($file);
           } elseif ($route = $page->routes(array(
             BLOG,
             BLOG . '/[atom|rss:method].xml',
@@ -113,12 +113,12 @@ class Controller extends CI_Controller {
                 show_404($page->url());
               }
             }
-            $html .= $this->blog->pages->$method($route['params']);
+            $html = $this->blog->pages->$method($route['params']);
           } else {
             show_404($page->url());
           }
         }
-      } // end if ($this->model == '#sitemap#')
+      }
       $this->benchmark->mark('page_content_end');
       $this->benchmark->mark('page_display_start');
       if ($page->get('type') == 'html') {
