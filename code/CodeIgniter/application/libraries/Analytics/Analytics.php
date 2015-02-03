@@ -168,7 +168,7 @@ class Analytics extends CI_Driver_Library {
     $avg = $this->db->value(array(
       'SELECT AVG(loaded) AS avg',
       'FROM hits AS h INNER JOIN sessions AS s ON h.session_id = s.id',
-      str_replace('time', 'h.time', $this->where($start, $stop, 'h.loaded > 0', 's.admin != 1'))
+      str_replace('time', 'h.time', $this->where($start, $stop, 'h.loaded > 0', 'h.loaded < 20', 's.admin != 1'))
     ));
     if (empty($avg)) return $default;
     $avg = explode('.', round($avg, 2));
