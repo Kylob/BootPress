@@ -73,9 +73,9 @@ class Admin_databases extends CI_Driver {
         }
       }
       foreach ($display as $driver => $database) {
-        $dl = array($driver);
-        foreach ($database as $link) $dl[][] = $link;
-        $html .= $bp->lister('dl', $dl, 'dl-horizontal');
+        $dl = array();
+        foreach ($database as $link) $dl[$driver][] = $link;
+        $html .= $bp->lister('dl dl-horizontal', $dl);
       }
     }
     
