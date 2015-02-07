@@ -1,11 +1,11 @@
 # BootPress
 
-A Flat File CMS That Will Knock Your Socks Off
+A PHP Framework with a Built in Blog and Flat File CMS
 
-See http://bootpress.org/ for more info.
+See http://bootpress.org for more info.
 
 ## License
 
 Copyright (c) 2015 Kyle Gadd
 
-See the LICENSE file for license rights and limitations (MIT).
+See the license.txt file for license rights and limitations (MIT).
