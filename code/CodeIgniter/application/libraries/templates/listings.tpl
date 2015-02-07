@@ -1,4 +1,4 @@
-{$bp->breadcrumbs($breadcrumbs)}
+{if $blog.page != 'index'} {$bp->breadcrumbs($breadcrumbs)} {/if}
 
 {if $blog.page == 'index'}
   
@@ -6,8 +6,6 @@
     'title' => "{$blog.name} {if !empty($blog.slogan)} - {$blog.slogan} {/if}",
     'description' => "{if !empty($blog.summary)} {$blog.summary} {else} View all of the posts at {$blog.name} {/if}"
   ])}
-  
-  <div class="page-header"><h2>Blog Posts</h2></div><br>
   
 {elseif $blog.page == 'search'}
 
@@ -72,4 +70,4 @@
   </p>
 {/foreach}
 
-<div class="text-center">{$bp->listings->pagination()}</div>
+{$bp->listings->pager($bp->listings->previous(), $bp->listings->next(), 'sides')}

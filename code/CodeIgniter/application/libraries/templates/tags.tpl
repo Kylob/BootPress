@@ -7,7 +7,7 @@
 
 <div class="page-header"><h2>Tag Cloud</h2></div><br>
 
-<div style="margin:20px auto; text-align:center;">
+<div style="text-align:center;">
 
   {foreach $tags as $tag => $links}
     {if $links.rank == 1}

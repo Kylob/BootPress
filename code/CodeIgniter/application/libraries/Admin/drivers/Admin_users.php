@@ -129,7 +129,7 @@ class Admin_users extends CI_Driver {
     $html .= '<div class="page-header">';
       $html .= $bp->row('md', 'sm', array(
         $bp->col(9, 8, $bp->pills($links, array('align'=>'horizontal', 'active'=>$page->url()))),
-        $bp->col(3, 4, str_replace('form-inline', '', $bp->search($page->url())))
+        $bp->col(3, 4, $bp->search($page->url(), 'Search Users', $bp->icon('search')))
       ));
     $html .= '</div>';
     $bp->listings->display(100);
