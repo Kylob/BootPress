@@ -13,7 +13,10 @@ class Admin_themes extends CI_Driver {
     $this->theme = $page->seo($params['theme']);
     $this->bootstrap = BASE . 'bootstrap/' . $ci->blog->bootstrap . '/';
     if (!is_dir($this->dir . $this->theme)) mkdir($this->dir . $this->theme, 0755, true);
-    if (!is_file($this->dir . $this->theme . '/index.tpl')) file_put_contents($this->dir . $this->theme . '/index.tpl', file_get_contents($ci->blog->templates . 'layout.tpl'));
+    if (!is_file($this->dir . $this->theme . '/index.tpl')) {
+      file_put_contents($this->dir . $this->theme . '/index.tpl', file_get_contents($ci->blog->templates . 'theme/index.tpl'));
+      file_put_contents($this->dir . $this->theme . '/blog.css', file_get_contents($ci->blog->templates . 'theme/blog.css'));
+    }
     if (isset($params['less'])) {
       $less = $this->less($this->theme);
       header('Content-Type: text/css');
@@ -43,7 +46,7 @@ class Admin_themes extends CI_Driver {
       }
       $page->eject(ADMIN . '/themes/default');
     }
-    if ($preview = $ci->input->post('preview')) {
+    if ($preview = $ci->input->post('preview') && $ci->input->is_ajax_request()) {
       if ($preview == 'true') {
         $ci->sitemap->suspend_caching(60);
         $ci->session->native->set_tempdata('preview_layout', $this->theme, 3000);
@@ -51,9 +54,9 @@ class Admin_themes extends CI_Driver {
         $ci->session->native->unset_tempdata('preview_layout');
       }
       exit;
+    } elseif ($preview = $ci->session->native->tempdata('preview_layout')) {
+      if ($preview != $this->theme) $ci->session->native->set_tempdata('preview_layout', $this->theme, 3000);
     }
-    $preview = ($ci->session->native->tempdata('preview_layout')) ? true : false;
-    if ($preview && $preview != $this->theme) $ci->session->native->set_tempdata('preview_layout', $this->theme, 3000);
     $html = '';
     $form = $page->plugin('Form', 'name', 'admin_theme_manager');
     $themes = array(BASE_URL . ADMIN . '/themes/default'=>'default');
