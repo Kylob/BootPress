@@ -83,7 +83,7 @@ class BootPress {
     return '<' . $tag . $class . '>' . $html . '</' . $tag . '>';
   }
 
-  public function search ($url, $placeholder='Search', $button='') {
+  public function search ($url, $placeholder='Search', $button=array()) {
     global $page;
     $html = '';
     if (is_array($url)) {
@@ -111,7 +111,7 @@ class BootPress {
       $button = '<button type="submit" class="btn btn-default" title="Search">' . $button . '</button>';
     }
     if (isset($_GET['search'])) $placeholder = $_GET['search'];
-    $html .= '<form class="form-inline" method="' . $method . '" action="' . $url . '" autocomplete="off" role="search">' . $hidden;
+    $html .= '<form class="form-horizontal" method="' . $method . '" action="' . $url . '" autocomplete="off" role="search">' . $hidden;
       if (!empty($button)) {
         $html .= '<div class="' . $this->classes('input-group', $size, array('sm', 'md', 'lg')) . '">';
           $html .= '<input type="text" name="search" class="form-control" placeholder="' . $placeholder . '">';
@@ -195,7 +195,7 @@ class BootPress {
         case 'right': $class .= ' pull-' . $options['align']; break;
       }
     }
-    return '<ul class="' . $class . '">' . $this->links($links, $options) . '</ul>';
+    return '<ul class="' . $class . '">' . $this->links('li', $links, $options) . '</ul>';
   }
   
   public function pills ($links, $options=array()) {
@@ -209,7 +209,7 @@ class BootPress {
         case 'right': $class .= ' pull-' . $options['align']; break;
       }
     }
-    return '<ul class="' . $class . '">' . $this->links($links, $options) . '</ul>';
+    return '<ul class="' . $class . '">' . $this->links('li', $links, $options) . '</ul>';
   }
   
   public function breadcrumbs ($links) {
@@ -394,7 +394,7 @@ class BootPress {
       $class = 'nav nav-tabs';
     }
     if (isset($options['align']) && $options['align'] == 'justified') $class .= ' nav-justified';
-    return '<ul class="' . $class . '">' . $this->links($toggle, $options) . '</ul><br><div class="tab-content">' . $content . '</div>';
+    return '<ul class="' . $class . '">' . $this->links('li', $toggle, $options) . '</ul><br><div class="tab-content">' . $content . '</div>';
   }
   
   public function accordion ($class, $sections, $open=1) {
@@ -477,9 +477,15 @@ class BootPress {
     return implode(' ', $attributes); // without any duplicates or empty values
   }
   
-  protected function links ($links, $options=array()) {
+  public function links ($tag, $links, $options=array()) {
     global $page;
     $html = '';
+    $class = '';
+    if ($space = strpos($tag, ' ')) {
+      $class = trim(substr($tag, $space));
+      $tag = substr($tag, 0, $space);
+    }
+    if ($tag != 'li') $tag = 'a';
     $count = 1;
     if (isset($options['active'])) {
       if ($options['active'] == 'url') $options['active'] = $page->url('delete', '', '?');
@@ -488,28 +494,29 @@ class BootPress {
     foreach ($links as $name => $href) {
       if (is_array($href)) {
         list($dropdown, $id) = $this->dropdown($href, $options, $count);
-        $class = 'dropdown';
+        $active = (strpos($dropdown, 'class="active"') !== false) ? ' active' : null;
         $attributes = array(
           'id' => $id,
+          'class' => $class,
           'data-target' => '#',
-          'href' => $page->url(),
+          'href' => '#', // $page->url(),
           'data-toggle' => 'dropdown',
           'aria-haspopup' => 'true',
           'role' => 'button',
-          'aria-expanded' => 'false'
+          'aria-expanded' => ($active ? 'true' : 'false')
         );
-        if (strpos($dropdown, 'class="active"') !== false) {
-          $class .= ' active';
-          $attributes['aria-expanded'] = 'true';
-        }
         $link = '<a ' . $this->attributes($attributes) . '>' . $name . ' <span class="caret"></span></a>';
-        $class = (strpos($dropdown, 'class="active"') !== false) ? 'dropdown active' : 'dropdown';
-        $html .= '<li class="' . $class . '">' . $link . $dropdown . '</li>';
+        if ($tag == 'li') {
+          $html .= '<li class="dropdown' . $active . '">' . $link . $dropdown . '</li>';
+        } else {
+          if ($active) $link = $this->add_class(array('a'=>'active'), $link);
+          $html .= '<div class="dropdown' . $active . '">' . $link . $dropdown . '</div>';
+        }
       } else {
         if (is_numeric($name)) {
           $link = $href;
         } else {
-          $attributes = array('href'=>$href);
+          $attributes = array('class'=>$class, 'href'=>$href);
           if (isset($options['toggle'])) {
             $attributes['role'] = $options['toggle'];
             $attributes['data-toggle'] = $options['toggle'];
@@ -517,7 +524,16 @@ class BootPress {
           }
           $link = '<a ' . $this->attributes($attributes) . '>' . $name . '</a>';
         }
-        $html .= $this->list_item($link, $options, $name, $href, $count);
+        $li = $this->list_item($link, $options, $name, $href, $count);
+        if ($tag == 'li') {
+          $html .= $li;
+        } elseif (strpos($li, 'class="active"') !== false) {
+          $html .= $this->add_class(array('a'=>'active'), $link);
+        } elseif (strpos($li, 'class="disabled"') !== false) {
+          $html .= $this->add_class(array('a'=>'disabled'), $link);
+        } else {
+          $html .= $link;
+        }
         $count++;
       }
     }
@@ -528,7 +544,7 @@ class BootPress {
     global $page;
     $html = '';
     $id = $page->id('dropdown');
-    $align = (isset($options['pull'])) ? ' pull-' . $options['pull'] : '';
+    $align = (isset($options['pull'])) ? ' dropdown-menu-' . $options['pull'] : '';
     $toggle = (isset($options['toggle'])) ? ' data-toggle="' . $options['toggle'] . '"' : '';
     foreach ($links as $name => $href) {
       $link = (is_numeric($name)) ? $href : '<a role="menuitem" tabindex="-1" href="' . $href . '"' . $toggle . '>' . $name . '</a>';
@@ -582,9 +598,13 @@ class BootPress {
   
   private function attributes ($array) {
     foreach ($array as $key => $value) {
-      $array[$key] = $key . '="' . $value . '"';
+      if (empty($value)) {
+        unset($array[$key]);
+      } else {
+        $array[$key] = $key . '="' . $value . '"';
+      }
     }
-    return implode(' ' , $array);
+    return implode(' ', $array);
   }
   
 }

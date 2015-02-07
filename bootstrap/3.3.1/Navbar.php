@@ -36,7 +36,7 @@ class BootPressNavbar extends BootPress {
   public function menu ($links, $options=array()) { // array('active'=>'name or url', 'pull'=>'left or right')
     $align = (isset($options['pull'])) ? ' navbar-' . $options['pull'] : '';
     unset($options['pull']);
-    return "\n\t" . '<ul class="nav navbar-nav' . $align . '">' . $this->links($links, $options) . '</ul>';
+    return "\n\t" . '<ul class="nav navbar-nav' . $align . '">' . $this->links('li', $links, $options) . '</ul>';
   }
   
   public function button ($class, $name, $options=array()) {
@@ -44,9 +44,9 @@ class BootPressNavbar extends BootPress {
     return "\n\t" . parent::button($class, $name, $options);
   }
   
-  public function search ($url, $placeholder='Search', $button='') {
+  public function search ($url, $placeholder='Search', $button=array()) {
     $search = parent::search($url, $placeholder, $button);
-    return "\n\t" . str_replace('form-inline', 'navbar-form navbar-right', $search);
+    return "\n\t" . str_replace('form-horizontal', 'navbar-form navbar-right', $search);
   }
   
   public function text ($string, $pull=false) {
