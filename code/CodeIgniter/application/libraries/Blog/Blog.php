@@ -219,9 +219,9 @@ class Blog extends CI_Driver_Library {
       if ($row['published'] > 1) {
         $row['page'] = false;
         $row['tags'] = (!empty($row['tag_uris'])) ? array_combine(explode(',', $row['tag_names']), explode(',', $row['tag_uris'])) : array();
-        foreach ($row['tags'] as $tag => $url) $row['tags'][$tag] = $this->blog['url']['listings'] . 'tags/' . $url;
+        foreach ($row['tags'] as $tag => $url) $row['tags'][$tag] = $this->listings . 'tags/' . $url;
         $row['author'] = (!empty($row['author_id'])) ? $this->authors($row['author_uri'], $row['author_name']) : array();
-        $row['archive'] = $this->blog['url']['listings'] . 'archives/' . date('Y/m/d', $row['published']);
+        $row['archive'] = $this->listings . 'archives/' . date('Y/m/d', $row['published']);
       }
       $row['uri'] = $row['seo']; // we are just swapping out the uri for a more practical value now
       unset($row['seo'], $row['author_id'], $row['author_uri'], $row['author_name'], $row['tag_uris'], $row['tag_names']);
@@ -303,7 +303,7 @@ class Blog extends CI_Driver_Library {
       if (is_array($info)) $author = $info;
     }
     $author['uri'] = $uri;
-    $author['url'] = $this->blog['url']['listings'] . 'authors/' . $uri;
+    $author['url'] = $this->listings . 'authors/' . $uri;
     if (!isset($author['name'])) $author['name'] = $name;
     if ($author['name'] != $name) $this->db->update('authors', 'uri', array($uri => array('author'=>$author['name'])));
     $author['thumb'] = (isset($author['thumb']) && is_file($this->authors . $author['thumb'])) ? str_replace(BASE_URI, BASE_URL, $this->authors . $author['thumb']) : '';
