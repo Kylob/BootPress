@@ -186,6 +186,69 @@ class BootPress {
     return '<div ' . $this->attributes($attributes) . '>' . $buttons . '</div>';
   }
   
+  public function links ($tag, $links, $options=array()) {
+    global $page;
+    $html = '';
+    $class = '';
+    if ($space = strpos($tag, ' ')) {
+      $class = trim(substr($tag, $space));
+      $tag = substr($tag, 0, $space);
+    }
+    if ($tag != 'li') $tag = 'a';
+    $count = 1;
+    if (isset($options['active'])) {
+      if ($options['active'] == 'url') $options['active'] = $page->url('delete', '', '?');
+      elseif ($options['active'] == 'urlquery') $options['active'] = $page->url(); // with query string
+    }
+    foreach ($links as $name => $href) {
+      if (is_array($href)) {
+        list($dropdown, $id) = $this->dropdown($href, $options, $count);
+        $active = (strpos($dropdown, 'class="active"') !== false) ? ' active' : null;
+        $attributes = array(
+          'id' => $id,
+          'class' => $class,
+          'data-target' => '#',
+          'href' => '#', // $page->url(),
+          'data-toggle' => 'dropdown',
+          'aria-haspopup' => 'true',
+          'role' => 'button',
+          'aria-expanded' => ($active ? 'true' : 'false')
+        );
+        $link = '<a ' . $this->attributes($attributes) . '>' . $name . ' <span class="caret"></span></a>';
+        if ($tag == 'li') {
+          $html .= '<li class="dropdown' . $active . '">' . $link . $dropdown . '</li>';
+        } else {
+          if ($active) $link = $this->add_class(array('a'=>'active'), $link);
+          $html .= '<span class="dropdown' . $active . '">' . $link . $dropdown . '</span>';
+        }
+      } else {
+        if (is_numeric($name)) {
+          $link = $href;
+        } else {
+          $attributes = array('class'=>$class, 'href'=>$href);
+          if (isset($options['toggle'])) {
+            $attributes['role'] = $options['toggle'];
+            $attributes['data-toggle'] = $options['toggle'];
+            if ($href[0] == '#') $attributes['aria-controls'] = substr($href, 1);
+          }
+          $link = '<a ' . $this->attributes($attributes) . '>' . $name . '</a>';
+        }
+        $li = $this->list_item($link, $options, $name, $href, $count);
+        if ($tag == 'li') {
+          $html .= $li;
+        } elseif (strpos($li, 'class="active"') !== false) {
+          $html .= $this->add_class(array('a'=>'active'), $link);
+        } elseif (strpos($li, 'class="disabled"') !== false) {
+          $html .= $this->add_class(array('a'=>'disabled'), $link);
+        } else {
+          $html .= $link;
+        }
+        $count++;
+      }
+    }
+    return $html;
+  }
+  
   public function tabs ($links, $options=array()) {
     $class = 'nav nav-tabs';
     if (isset($options['align'])) {
@@ -475,69 +538,6 @@ class BootPress {
       $attributes[$name] = $name;
     }
     return implode(' ', $attributes); // without any duplicates or empty values
-  }
-  
-  public function links ($tag, $links, $options=array()) {
-    global $page;
-    $html = '';
-    $class = '';
-    if ($space = strpos($tag, ' ')) {
-      $class = trim(substr($tag, $space));
-      $tag = substr($tag, 0, $space);
-    }
-    if ($tag != 'li') $tag = 'a';
-    $count = 1;
-    if (isset($options['active'])) {
-      if ($options['active'] == 'url') $options['active'] = $page->url('delete', '', '?');
-      elseif ($options['active'] == 'urlquery') $options['active'] = $page->url(); // with query string
-    }
-    foreach ($links as $name => $href) {
-      if (is_array($href)) {
-        list($dropdown, $id) = $this->dropdown($href, $options, $count);
-        $active = (strpos($dropdown, 'class="active"') !== false) ? ' active' : null;
-        $attributes = array(
-          'id' => $id,
-          'class' => $class,
-          'data-target' => '#',
-          'href' => '#', // $page->url(),
-          'data-toggle' => 'dropdown',
-          'aria-haspopup' => 'true',
-          'role' => 'button',
-          'aria-expanded' => ($active ? 'true' : 'false')
-        );
-        $link = '<a ' . $this->attributes($attributes) . '>' . $name . ' <span class="caret"></span></a>';
-        if ($tag == 'li') {
-          $html .= '<li class="dropdown' . $active . '">' . $link . $dropdown . '</li>';
-        } else {
-          if ($active) $link = $this->add_class(array('a'=>'active'), $link);
-          $html .= '<div class="dropdown' . $active . '">' . $link . $dropdown . '</div>';
-        }
-      } else {
-        if (is_numeric($name)) {
-          $link = $href;
-        } else {
-          $attributes = array('class'=>$class, 'href'=>$href);
-          if (isset($options['toggle'])) {
-            $attributes['role'] = $options['toggle'];
-            $attributes['data-toggle'] = $options['toggle'];
-            if ($href[0] == '#') $attributes['aria-controls'] = substr($href, 1);
-          }
-          $link = '<a ' . $this->attributes($attributes) . '>' . $name . '</a>';
-        }
-        $li = $this->list_item($link, $options, $name, $href, $count);
-        if ($tag == 'li') {
-          $html .= $li;
-        } elseif (strpos($li, 'class="active"') !== false) {
-          $html .= $this->add_class(array('a'=>'active'), $link);
-        } elseif (strpos($li, 'class="disabled"') !== false) {
-          $html .= $this->add_class(array('a'=>'disabled'), $link);
-        } else {
-          $html .= $link;
-        }
-        $count++;
-      }
-    }
-    return $html;
   }
   
   protected function dropdown ($links, $options=array(), &$count=1) {
