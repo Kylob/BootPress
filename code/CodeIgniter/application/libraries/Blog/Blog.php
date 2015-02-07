@@ -16,7 +16,7 @@ class Blog extends CI_Driver_Library {
     $this->admin = $admin; // An array of values we pass to the $ci->auth class
     unset($admin); // We do not want these values accessible anywhere else
     $this->controller = $blog['role']; // Either '#admin#', '#folder#', '#blog#', or '#post#'
-    $this->templates = APPPATH . 'libraries/templates/';
+    $this->templates = str_replace('\\', '/', APPPATH) . 'libraries/templates/';
     $this->authors = BASE_URI . 'blog/authors/';
     $this->post = BASE_URI . 'blog/content/';
     if (!is_dir($this->post)) mkdir($this->post, 0755, true);

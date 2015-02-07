@@ -22,6 +22,7 @@ h1, .h1, h2, .h2, h3, .h3, h4, .h4, h5, .h5, h6, .h6 {
 /* Masthead for nav */
 #masthead {
   background-color: #428bca;
+  border-bottom: 1px solid #2376bb;
   -webkit-box-shadow: inset 0 -2px 5px rgba(0,0,0,.1);
      -moz-box-shadow: inset 0 -2px 5px rgba(0,0,0,.1);
           box-shadow: inset 0 -2px 5px rgba(0,0,0,.1);
@@ -32,11 +33,12 @@ h1, .h1, h2, .h2, h3, .h3, h4, .h4, h5, .h5, h6, .h6 {
   display: inline-block;
   padding: 10px;
   font-weight: 500;
-  color: #cdddeb;
+  font-size: larger;
+  color: #fff;
 }
 #masthead .blog-nav-item:hover,
 #masthead .blog-nav-item:focus {
-  color: #fff;
+  background-color: #337ab7;
   text-decoration: none;
 }
 #masthead .blog-nav .dropdown {

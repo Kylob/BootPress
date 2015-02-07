@@ -7,33 +7,27 @@
 
 {$page->plugin('jQuery')}
 
-{capture assign='header'}
-  <div id="header">
-    <h1>{$blog.name}</h1>
-    {if !empty($blog.slogan)} <p class="lead">{$blog.slogan}</p> {/if}
-  </div>
-{/capture}
-
 {capture assign='sidebar'}
-  <div id="sidebar" style="margin:25px auto;">
-    {$bp->search($blog.url.listings)}<br>
-    {if !empty($blog.summary)} <h4>About</h4><p>{$blog.summary}</p><br> {/if}
-  </div>
+  
+  {$bp->search($blog.url.listings)}
+  
 {/capture}
 
 <div id="masthead">
   <div class="container">
     <nav class="blog-nav">
       {$bp->links('a blog-nav-item', [
-        'Home' => "{$blog.url.base}"
+        $blog.name => "{$blog.url.base}"
       ], ['active'=>'url'])}
     </nav>
   </div>
 </div>
 
+<br>
+
 <div class="container">
   {$bp->row('sm', [
-    $bp->col('9', $header|cat:$content),
+    $bp->col('9', $content),
     $bp->col('3', $sidebar)
   ])}
 </div>

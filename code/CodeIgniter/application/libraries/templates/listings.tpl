@@ -7,6 +7,8 @@
     'description' => "{if !empty($blog.summary)} {$blog.summary} {else} View all of the posts at {$blog.name} {/if}"
   ])}
   
+  <div class="page-header"><h2>Blog Posts</h2></div><br>
+  
 {elseif $blog.page == 'search'}
 
   {$page->set([

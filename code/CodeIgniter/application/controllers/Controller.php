@@ -367,8 +367,8 @@ class Controller extends CI_Controller {
           $this->blog->set('layout', BASE_URL . 'themes/' . $page->theme . '/');
           $layout = BASE_URI . 'themes/' . $page->theme . '/index.tpl';
         } else {
-          $this->blog->set('layout');
-          $layout = $this->blog->templates . 'layout.tpl';
+          $this->blog->set('layout', str_replace(BASE, BASE_URL, $this->blog->templates . 'theme/'));
+          $layout = $this->blog->templates . '/theme/index.tpl';
         }
         if (is_file(BASE_URI . 'themes/' . $page->theme . '/post.php')) {
           $page->plugin('jQuery', 'code', '$.ajax({type:"POST", url:location.href, data:{"' . md5(BASE_URL) . '":"' . $page->theme . '"}, cache:false, success:function(data){ $.each(data,function(key,value){ if(key=="css")$("<style/>").html(value).appendTo("head"); else if(key=="javascript")eval(value); else $("<span/>").html(value).prependTo(key) })}, dataType:"json"});');
