@@ -82,45 +82,49 @@ class BootPress {
     }
     return '<' . $tag . $class . '>' . $html . '</' . $tag . '>';
   }
-
-  public function search ($url, $placeholder='Search', $button=array()) {
-    global $page;
-    $html = '';
-    if (is_array($url)) {
-      list($method, $url) = each($url);
-    } else {
-      $method = 'get';
-    }
-    $hidden = '';
-    if ($method == 'get') {
-      $params = $page->url('params', $url);
-      $url = $page->url('delete', $url, '?');
-      foreach ($params as $key => $value) {
-        if ($key != 'search') $hidden .= '<input type="hidden" name="' . $key . '" value="' . $value . '">';
+  
+  public function search ($url, $form=array()) {
+    global $ci, $page;
+    $form = array_merge(array(
+      'method' => 'get',
+      'key' => 'search',
+      'placeholder' => 'Search',
+      'button' => $this->icon('search'),
+      'class' => 'form-horizontal',
+      'size' => ''
+    ), (array) $form);
+    $input = array(
+      'type' => 'text',
+      'name' => $form['key'],
+      'placeholder' => ($search = $ci->input->get($form['key'])) ? $search : $form['placeholder'],
+      'class' => 'form-control'
+    );
+    $html = '<form ' . $this->attributes(array(
+      'action' => ($form['method'] == 'get') ? $page->url('delete', $url, '?') : $url,
+      'method' => $form['method'],
+      'class' => $form['class'],
+      'autocomplete' => 'off',
+      'role' => 'search'
+    )) . '>';
+    if ($form['method'] == 'get') {
+      foreach ($page->url('params', $url) as $name => $value) {
+        if ($name != $form['key']) $html .= '<input type="hidden" name="' . $name . '" value="' . $value . '">';
       }
     }
-    if (is_array($placeholder)) {
-      list($size, $placeholder) = each($placeholder);
-    } else {
-      $size = '';
-    }
-    if (is_array($button)) {
-      $button = implode('', $button);
-    } else {
-      if (empty($button)) $button = $this->icon('search');
-      $button = '<button type="submit" class="btn btn-default" title="Search">' . $button . '</button>';
-    }
-    if (isset($_GET['search'])) $placeholder = $_GET['search'];
-    $html .= '<form class="form-horizontal" method="' . $method . '" action="' . $url . '" autocomplete="off" role="search">' . $hidden;
-      if (!empty($button)) {
-        $html .= '<div class="' . $this->classes('input-group', $size, array('sm', 'md', 'lg')) . '">';
-          $html .= '<input type="text" name="search" class="form-control" placeholder="' . $placeholder . '">';
-          $html .= '<div class="input-group-btn">' . $button . '</div>';
-        $html .= '</div>';
-      } else {
-        // add size here
-        $html .= '<input type="text" name="search" class="form-control" placeholder="' . $placeholder . '">';
+    if (!empty($form['button'])) {
+      if (strpos($form['button'], '<button') === false) {
+        $form['button'] = '<button type="submit" class="btn btn-default" title="Search">' . $form['button'] . '</button>';
       }
+      $html .= '<div class="' . $this->classes('input-group', $form['size'], array('sm', 'md', 'lg')) . '">';
+        $html .= '<input ' . $this->attributes($input) . '>';
+        $html .= '<div class="input-group-btn">' . $form['button'] . '</div>';
+      $html .= '</div>';
+    } else {
+      if (!empty($form['size']) && in_array($form['size'], array('sm', 'md', 'lg'))) {
+        $input['class'] .= ' input-' . $form['size'];
+      }
+      $html .= '<input ' . $this->attributes($input) . '>';
+    }
     $html .= '</form>';
     return $html;
   }

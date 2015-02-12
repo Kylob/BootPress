@@ -44,9 +44,9 @@ class BootPressNavbar extends BootPress {
     return "\n\t" . parent::button($class, $name, $options);
   }
   
-  public function search ($url, $placeholder='Search', $button=array()) {
-    $search = parent::search($url, $placeholder, $button);
-    return "\n\t" . str_replace('form-horizontal', 'navbar-form navbar-right', $search);
+  public function search ($url, $form=array()) {
+    if (!isset($form['class'])) $form['class'] = 'navbar-form navbar-right';
+    return "\n\t" . parent::search($url, $form);
   }
   
   public function text ($string, $pull=false) {
