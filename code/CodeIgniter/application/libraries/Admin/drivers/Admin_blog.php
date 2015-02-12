@@ -50,6 +50,16 @@ class Admin_blog extends CI_Driver {
     return $this->display($menu . $header . $html);
   }
   
+  public function update ($uri=null) {
+    global $ci;
+    if (!empty($uri)) {
+      $ci->blog->file($uri);
+      $ci->sitemap->refresh();
+    } else {
+      $ci->sitemap->suspend_caching(0);
+    }
+  }
+  
   private function published ($params) {
     global $bp, $ci, $page;
     if ($search = $ci->input->post('search')) $page->eject($page->url('add', BASE_URL . ADMIN . '/blog/published', 'search', trim($search, "'")));
@@ -105,7 +115,7 @@ class Admin_blog extends CI_Driver {
     $html .= $form->header();
     foreach ($this->set_authors() as $row) {
       list($count, $id, $uri, $name) = $row;
-      $ci->admin->files->save(array($uri => $ci->blog->authors . $uri . '.php'), array($uri));
+      $ci->admin->files->save(array($uri => $ci->blog->authors . $uri . '.php'), array($uri), array($this, 'update'));
       $author = $ci->blog->authors($uri, $name);
       $label = '<a href="' . $ci->blog->url['listings'] . 'authors/' . $uri . '/">' . $author['name'] . '</a> ' . $bp->badge($count);
       if (!empty($author['thumb'])) {
@@ -160,6 +170,7 @@ class Admin_blog extends CI_Driver {
       } else {
         $ci->blog->db->insert('categories', $categories);
       }
+      $this->update();
       $page->eject($page->url('delete', $form->eject, '?'));
     }
     $html .= $form->header();
@@ -211,6 +222,7 @@ class Admin_blog extends CI_Driver {
           $ci->blog->db->query('UPDATE tags SET tag = ? WHERE id = ? AND uri = ?', array($tag, $id, $this->tags[$id]['uri']));
         }
       }
+      $this->update();
       $page->eject($form->eject);
     }
     $html .= '<p class="text-center">This form is to help you standardize the capitalization of your tags.<br>The only way to delete or change them is by editing the applicable pages and posts.<br>It is not necessary to re-enter every value.  Only the ones you wish to update.</p>';
@@ -239,7 +251,7 @@ class Admin_blog extends CI_Driver {
       'tags' => array($ci->blog->post . 'tags.tpl', $ci->blog->templates . 'tags.tpl'),
       'authors' => array($ci->blog->post . 'authors.tpl', $ci->blog->templates . 'authors.tpl'),
       'archives' => array($ci->blog->post . 'archives.tpl', $ci->blog->templates . 'archives.tpl')
-    ), array('post', 'listings', 'tags', 'authors', 'archives')));
+    ), array('post', 'listings', 'tags', 'authors', 'archives'), array($this, 'update')));
     $form->validate(
       array('post', 'post.tpl'),
       array('listings', 'listings.tpl'),
@@ -256,11 +268,6 @@ class Admin_blog extends CI_Driver {
     $html .= $form->close();
     unset($form);
     return $html;
-  }
-  
-  public function update ($uri) {
-    global $ci;
-    $ci->blog->file($uri);
   }
   
   private function form () {

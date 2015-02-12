@@ -129,14 +129,14 @@ class Admin_users extends CI_Driver {
     $html .= '<div class="page-header">';
       $html .= $bp->row('md', 'sm', array(
         $bp->col(9, 8, $bp->pills($links, array('align'=>'horizontal', 'active'=>$page->url()))),
-        $bp->col(3, 4, $bp->search($page->url(), 'Search Users', $bp->icon('search')))
+        $bp->col(3, 4, $bp->search($page->url(), array('key'=>'users', 'placeholder'=>'Users')))
       ));
     $html .= '</div>';
     $bp->listings->display(100);
     $ids = array();
-    if (isset($_GET['search'])) {
+    if (isset($_GET['users'])) {
       $where = 'WHERE email LIKE ? OR name LIKE ?';
-      $params = array('%' . $_GET['search'] . '%', '%' . $_GET['search'] . '%');
+      $params = array('%' . $_GET['users'] . '%', '%' . $_GET['users'] . '%');
       if (!$bp->listings->set) $bp->listings->count($ci->auth->db->value('SELECT COUNT(*) FROM ci_users ' . $where, $params));
       $ci->auth->db->query('SELECT id FROM ci_users ' . $where . ' ORDER BY id DESC' . $bp->listings->limit(), $params);
       while (list($id) = $ci->auth->db->fetch('row')) $ids[] = $id;

@@ -109,7 +109,7 @@ class Admin extends CI_Driver_Library {
         if ($this->view == 'errors') {
           $html .= $content;
         } else {
-          $search = (count($links) > 1) ? $bp->search(BASE_URL . ADMIN . '/blog/published', 'Search Blog', $bp->icon('search')) . '<br>' : '';
+          $search = (count($links) > 1) ? $bp->search(BASE_URL . ADMIN . '/blog/published') . '<br>' : '';
           $errors = ($this->view != 'setup' && in_array('errors', $this->valid_drivers)) ? $ci->admin->errors->btn() : '';
           $sidebar = $bp->pills($links, array('active'=>$url . $this->view, 'align'=>'stacked'));
           $sidebar = str_replace('<a href="#">Setup</a>', '<a href="#" class="wyciwyg php" data-retrieve="setup.php" data-file="setup.php">' . $bp->icon('cog', 'fa') . ' Setup</a>', $sidebar);

@@ -87,7 +87,7 @@ class Sitemap extends CI_Driver_Library {
     $file = fopen(BASE_URI . 'sitemap/index.txt', 'ab');
     fwrite($file, $uri . "\n");
     fclose($file);
-    $id = md5($uri);
+    $id = md5(BASE_URL . $uri);
     if (is_file($this->folder . $id . '.txt')) unlink($this->folder . $id . '.txt');
     if (is_dir($this->folder . $id)) {
       list($dirs, $files) = $ci->blog->folder($this->folder . $id);

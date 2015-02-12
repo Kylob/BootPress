@@ -27,14 +27,21 @@ class Admin_themes extends CI_Driver {
     return $this->display($this->theme());
   }
   
+  public function update () {
+    global $ci;
+    $ci->sitemap->suspend_caching(0);
+  }
+  
   private function theme () {
     global $bp, $ci, $page;
     $files = $ci->admin->files->save(array(
-      'index' => array($this->dir . $this->theme . '/index.tpl', $ci->blog->templates . 'layout.tpl'),
+      'index' => array($this->dir . $this->theme . '/index.tpl', $ci->blog->templates . 'layout.tpl')
+    ), array('index'), array($this, 'update'));
+    $files = array_merge($files, $ci->admin->files->save(array(
       'bootstrap' => array($this->dir . $this->theme . '/variables.less', $this->bootstrap . 'less/variables.less'),
       'custom' => $this->dir . $this->theme . '/custom.less',
       'post' => $this->dir . $this->theme . '/post.php'
-    ), array('index', 'bootstrap', 'custom', 'post'));
+    ), array('bootstrap', 'custom', 'post')));
     $media = $ci->admin->files->view('themes', $this->dir . $this->theme);
     if ($ci->input->get('image')) return $media;
     if ($ci->input->get('delete') == 'theme') {
@@ -117,6 +124,7 @@ class Admin_themes extends CI_Driver {
         }
         if (empty($form->errors)) $page->eject(ADMIN . '/themes/' . $new_theme); // $page->url('add', $form->eject, 'theme', $new_theme));
       } else { // $form->vars['save'] is empty
+        $this->update();
         $page->eject($form->eject);
       }
     }

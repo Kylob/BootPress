@@ -4,7 +4,7 @@ class Blog_pages extends CI_Driver {
   
   public function index () {
     global $ci, $page;
-    $page->enforce($ci->blog->listings);
+    $page->enforce($ci->blog->blog['url']['listings']);
     $breadcrumbs = $this->breadcrumbs();
     $count = 'SELECT COUNT(*) FROM blog WHERE published < 0';
     $query = 'SELECT id FROM blog WHERE published < 0 ORDER BY published ASC';
@@ -14,9 +14,9 @@ class Blog_pages extends CI_Driver {
   
   public function search () {
     global $bp, $ci, $page;
-    $page->enforce($ci->blog->listings);
+    $page->enforce($ci->blog->blog['url']['listings']);
     $term = urldecode($_GET['search']);
-    $breadcrumbs = $this->breadcrumbs(array('Search'=>$ci->blog->listings . '?search=' . urlencode($term)));
+    $breadcrumbs = $this->breadcrumbs(array('Search'=>$ci->blog->blog['url']['listings'] . '?search=' . urlencode($term)));
     if (!$bp->listings->set) $bp->listings->count($ci->sitemap->count($term, 'blog'));
     $search = $ci->sitemap->search($term, 'blog', $bp->listings->limit());
     $posts = $snippets = array();
@@ -32,8 +32,8 @@ class Blog_pages extends CI_Driver {
   public function atom () {
     global $ci, $page;
     $page->enforce($ci->blog->listings . 'atom.xml');
-    $atom = $page->plugin('Feed', 'Atom', array($ci->blog->name, $ci->blog->listings, array(
-      'link' => array('title'=>$ci->blog->name, 'href'=>$ci->blog->listings, 'rel'=>'alternate'),
+    $atom = $page->plugin('Feed', 'Atom', array($ci->blog->name, $ci->blog->blog['url']['listings'], array(
+      'link' => array('title'=>$ci->blog->name, 'href'=>$ci->blog->blog['url']['listings'], 'rel'=>'alternate'),
       'subtitle' => $ci->blog->slogan
     )));
     $this->db->query('SELECT id FROM blog WHERE published < 0 ORDER BY published ASC LIMIT 10');
@@ -59,7 +59,7 @@ class Blog_pages extends CI_Driver {
     } else {
       $description = 'The latest posts from ' . $ci->blog->name;
     }
-    $rss = $page->plugin('Feed', 'RSS', array($ci->blog->name, $ci->blog->listings, $description, array(
+    $rss = $page->plugin('Feed', 'RSS', array($ci->blog->name, $ci->blog->blog['url']['listings'], $description, array(
       'atom:link' => array('href'=>$ci->blog->listings . 'rss.xml', 'rel'=>'self', 'type'=>'application/rss+xml')
     )));
     $this->db->query('SELECT id FROM blog WHERE published < 0 ORDER BY published ASC LIMIT 10');
@@ -247,25 +247,25 @@ class Blog_pages extends CI_Driver {
   public function post ($row) { // 'id', 'uri', and 'content'
     global $ci, $page;
     if ($row['uri'] != 'index') $page->enforce($row['uri']);
-    $info = $this->info($row['id']);
-    $info['content'] = $row['content'];
-    unset($row); // we are done with this now
-    $breadcrumbs = array($ci->blog->name => $ci->blog->listings);
-    $breadcrumbs[$info['title']] = $info['url'];
-    if ($page->robots && $info['published'] != 0) $ci->sitemap->save('blog', $info['id'], $info['content']);
-    if ($info['published']) {
-      $vars = array('post'=>$info, 'breadcrumbs'=>$breadcrumbs, 'previous'=>array(), 'next'=>array(), 'similar'=>array());
-      if ($previous = $this->db->row('SELECT uri, title FROM blog WHERE published > ? AND published != 0 ORDER BY published ASC LIMIT 1', array(-$info['published']))) {
+    $post = $this->info($row['id']);
+    $breadcrumbs = array(
+      $ci->blog->name => $ci->blog->blog['url']['listings'],
+      $post['title'] => $post['url'],
+    );
+    if ($post['page']) {
+      $vars = array('post'=>$post, 'breadcrumbs'=>$breadcrumbs);
+    } else {
+      $vars = array('post'=>$post, 'breadcrumbs'=>$breadcrumbs, 'previous'=>array(), 'next'=>array());
+      if ($previous = $this->db->row('SELECT uri, title FROM blog WHERE published > ? AND published != 0 ORDER BY published ASC LIMIT 1', array(-$post['published']))) {
         $previous['url'] = BASE_URL . $previous['uri'];
         $vars['previous'] = $previous;
       }
-      if ($next = $this->db->row('SELECT uri, title FROM blog WHERE published < ? AND published != 0 ORDER BY published DESC LIMIT 1', array(-$info['published']))) {
+      if ($next = $this->db->row('SELECT uri, title FROM blog WHERE published < ? AND published != 0 ORDER BY published DESC LIMIT 1', array(-$post['published']))) {
         $next['url'] = BASE_URL . $next['uri'];
         $vars['next'] = $next;
       }
-    } else {
-      $vars = array('post'=>$info, 'breadcrumbs'=>$breadcrumbs);
     }
+    if ($page->robots && $post['published'] != 0) $ci->sitemap->save('blog', $post['id'], $post['content']);
     return $this->export('post', $vars);
   }
   
@@ -303,14 +303,14 @@ class Blog_pages extends CI_Driver {
   
   private function breadcrumbs ($links=array()) {
     global $ci;
-    $url = $ci->blog->listings;
-    $breadcrumbs = array($ci->blog->name => $url);
+    $breadcrumbs = array($ci->blog->name => $ci->blog->blog['url']['listings']);
+    $url = trim($ci->blog->listings, '/');
     if (!empty($links)) {
-      foreach ($links as $key => $value) {
-        $url .= $value . '/';
-        $breadcrumbs[$key] = $url;
+      foreach ($links as $name => $uri) {
+        $url .= '/' . $uri;
+        $breadcrumbs[$name] = $url;
       }
-      $breadcrumbs[$key] = $value; // the last one in the set
+      $breadcrumbs[$name] = $name; // the last one in the set
     }
     return $breadcrumbs;
   }

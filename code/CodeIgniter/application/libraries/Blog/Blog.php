@@ -8,6 +8,7 @@ class Blog extends CI_Driver_Library {
   private $templates;
   private $authors;
   private $post;
+  private $listings;
   private $config;
   private $blog;
   
@@ -20,6 +21,7 @@ class Blog extends CI_Driver_Library {
     $this->authors = BASE_URI . 'blog/authors/';
     $this->post = BASE_URI . 'blog/content/';
     if (!is_dir($this->post)) mkdir($this->post, 0755, true);
+    $this->listings = trim(BASE_URL . BLOG, '/') . '/';
     #-- Blog --#
     $this->blog = array('name'=>'', 'slogan'=>'', 'summary'=>'');
     if (!is_file($this->post . 'setup.php')) file_put_contents($this->post . 'setup.php', file_get_contents($this->templates . 'setup.php'));
@@ -37,9 +39,9 @@ class Blog extends CI_Driver_Library {
     $bp = new BootPress;
     $this->blog['page'] = ''; // This is established in the $ci->blog->pages class
     $this->blog['url'] = array(
-      'base' => BASE_URL,
-      'listings' => trim(BASE_URL . BLOG, '/') . '/',
-      'media' => ''
+      'listings' => ($this->listings == BASE_URL) ? BASE_URL : trim($this->listings, '/'), // so we can properly manage their suffixes
+      'base' => BASE_URL, // with trailing slash
+      'media' => '' // with trailing slash
     );
     if (empty($this->blog['name']) && $this->controller != '#admin#') $page->eject(ADMIN);
   }
@@ -96,7 +98,6 @@ class Blog extends CI_Driver_Library {
         return $this->db;
         break;
       case 'admin': return ($this->controller == '#admin#') ? $this->admin : false; break;
-      case 'listings': return $this->blog['url']['listings']; break;
       default:
         if (isset($this->$name)) {
           return $this->$name;
@@ -156,6 +157,13 @@ class Blog extends CI_Driver_Library {
     $file = $this->post . $uri . '/index.tpl';
     if (is_file($file)) {
       $this->set('file', BASE_URL . 'blog/content/' . $uri . '/');
+      $page->title = '';
+      $page->description = '';
+      $page->keywords = '';
+      $page->robots = true;
+      $page->body = '';
+      $page->theme = 'default';
+      $page->vars = array();
       $content = $this->smarty($file);
       $published = $page->published;
       if (is_string($published) && ($date = strtotime($published))) {
