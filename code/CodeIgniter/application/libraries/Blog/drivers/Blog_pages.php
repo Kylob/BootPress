@@ -256,11 +256,11 @@ class Blog_pages extends CI_Driver {
       $vars = array('post'=>$post, 'breadcrumbs'=>$breadcrumbs);
     } else {
       $vars = array('post'=>$post, 'breadcrumbs'=>$breadcrumbs, 'previous'=>array(), 'next'=>array());
-      if ($previous = $this->db->row('SELECT uri, title FROM blog WHERE published > ? AND published != 0 ORDER BY published ASC LIMIT 1', array(-$post['published']))) {
+      if ($previous = $this->db->row('SELECT uri, title FROM blog WHERE published > ? AND published < 0 ORDER BY published ASC LIMIT 1', array(-$post['published']))) {
         $previous['url'] = BASE_URL . $previous['uri'];
         $vars['previous'] = $previous;
       }
-      if ($next = $this->db->row('SELECT uri, title FROM blog WHERE published < ? AND published != 0 ORDER BY published DESC LIMIT 1', array(-$post['published']))) {
+      if ($next = $this->db->row('SELECT uri, title FROM blog WHERE published < ? AND published < 0 ORDER BY published DESC LIMIT 1', array(-$post['published']))) {
         $next['url'] = BASE_URL . $next['uri'];
         $vars['next'] = $next;
       }
