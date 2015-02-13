@@ -87,7 +87,7 @@ class BootPress {
     global $ci, $page;
     $form = array_merge(array(
       'method' => 'get',
-      'key' => 'search',
+      'name' => 'search',
       'placeholder' => 'Search',
       'button' => $this->icon('search'),
       'class' => 'form-horizontal',
@@ -95,8 +95,8 @@ class BootPress {
     ), (array) $form);
     $input = array(
       'type' => 'text',
-      'name' => $form['key'],
-      'placeholder' => ($search = $ci->input->get($form['key'])) ? $search : $form['placeholder'],
+      'name' => $form['name'],
+      'placeholder' => ($search = $ci->input->get($form['name'])) ? $search : $form['placeholder'],
       'class' => 'form-control'
     );
     $html = '<form ' . $this->attributes(array(
@@ -108,7 +108,7 @@ class BootPress {
     )) . '>';
     if ($form['method'] == 'get') {
       foreach ($page->url('params', $url) as $name => $value) {
-        if ($name != $form['key']) $html .= '<input type="hidden" name="' . $name . '" value="' . $value . '">';
+        if ($name != $form['name']) $html .= '<input type="hidden" name="' . $name . '" value="' . $value . '">';
       }
     }
     if (!empty($form['button'])) {

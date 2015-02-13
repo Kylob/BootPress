@@ -129,7 +129,7 @@ class Admin_users extends CI_Driver {
     $html .= '<div class="page-header">';
       $html .= $bp->row('md', 'sm', array(
         $bp->col(9, 8, $bp->pills($links, array('align'=>'horizontal', 'active'=>$page->url()))),
-        $bp->col(3, 4, $bp->search($page->url(), array('key'=>'users', 'placeholder'=>'Users')))
+        $bp->col(3, 4, $bp->search($page->url(), array('name'=>'users', 'placeholder'=>'Users')))
       ));
     $html .= '</div>';
     $bp->listings->display(100);

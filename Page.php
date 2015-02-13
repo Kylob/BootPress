@@ -158,8 +158,8 @@ class Page {
   # 
   ##
   public function routes ($routes, $uri=null, $types=array()) {
-    global $ci, $page;
-    $uri = (is_null($uri)) ? $page->get('uri') : trim($uri, '/');
+    global $ci;
+    $uri = (is_null($uri)) ? $this->uri : trim($uri, '/');
     $types = array_merge(array(
       'i'  => '[0-9]++', // integer
       'a'  => '[0-9A-Za-z]++', // alphanumeric
