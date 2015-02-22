@@ -38,7 +38,7 @@ class RSS {
     $xml .= '</rss>';
     $ci->output->set_content_type('application/rss+xml');
     if (!empty($cache)) $ci->sitemap->cache($cache);
-    return $xml;
+    return $ci->filter_links($xml);
   }
   
   private function tag ($key, $values) {

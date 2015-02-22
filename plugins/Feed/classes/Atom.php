@@ -38,7 +38,7 @@ class Atom {
     $xml .= $entries . '</feed>';
     $ci->output->set_content_type('application/atom+xml');
     if (!empty($cache)) $ci->sitemap->cache($cache);
-    return $xml;
+    return $ci->filter_links($xml);
   }
   
   private function tag ($key, $values) {
