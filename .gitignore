@@ -23,6 +23,7 @@ plugins/*
 !plugins/Database/
 !plugins/Feed/
 !plugins/Form/
+!plugins/Hierarchy/
 !plugins/Image/
 !plugins/jQuery/
 !plugins/Smarty/
