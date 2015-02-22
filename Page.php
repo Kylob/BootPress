@@ -254,12 +254,34 @@ class Page {
   
   public function url ($action='', $url='', $key='', $value=NULL) {
     global $ci;
+    if (!empty($action)) {
+      if (is_array($action) && isset($action['url'])) {
+        $href = $action['url'];
+      } elseif (substr($action, 0, 4) == 'http') {
+        $href = $action;
+      } elseif (in_array($action, array('base', 'blog', 'admin', 'folder', 'post', 'theme'))) {
+        switch ($action) {
+          case 'base': $href = BASE_URL; break;
+          case 'blog': $href = BASE_URL . BLOG; break;
+          case 'admin': $href = BASE_URL . ADMIN; break;
+          case 'folder': $href = $this->url; break;
+          case 'post':
+          case 'theme': $href = $ci->blog->url; break;
+        }
+      }
+      if (isset($href)) {
+        $href = array_merge((array) $href, (array_slice(func_get_args(), 1)));
+        $href = implode('/', array_map('trim', $href, array_fill(0, count($href), '/')));
+        return ($href == substr(BASE_URL, 0, -1)) ? BASE_URL : $href;
+      }
+    }
     if (empty($url)) {
       if (empty($this->uri) && !empty($this->folder)) {
         $url = substr($this->url, 0 , -1) . $this->query;
       } else {
         $url = $this->url . $this->uri . $this->query;
       }
+      if (empty($action)) return $url;
     }
     $base = preg_replace('/[\?#].*$/', '', $url); // just the url and path
     $url = parse_url(str_replace('&amp;', '&', $url));
