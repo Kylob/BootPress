@@ -2,18 +2,16 @@
 
 class Admin_users extends CI_Driver {
 
-  private $url;
   private $view;
   
   public function view ($params) {
     global $ci, $page;
     $ci->load->driver('auth');
-    $this->url = BASE_URL . ADMIN . '/users';
     $this->view = (isset($params['action'])) ? $params['action'] : false;
     switch ($this->view) {
       case 'logout':
         $ci->auth->logout();
-        $page->eject($this->url);
+        $page->eject($page->url('admin', 'users'));
         break;
       case 'register':
         if (is_admin(1)) $html = $this->register_user();
@@ -193,7 +191,7 @@ class Admin_users extends CI_Driver {
       $info = $ci->auth->info($ids);
       foreach ($info as $id => $user) {
         $html .= $bp->table->row();
-        $html .= $bp->table->cell('', '<a href="' . $page->url('add', $this->url . '/edit', 'id', $id) . '" title="Edit User">' . $bp->icon('pencil') . '</a>');
+        $html .= $bp->table->cell('', '<a href="' . $page->url('admin', 'users/edit?id=' . $id) . '" title="Edit User">' . $bp->icon('pencil') . '</a>');
         $html .= $bp->table->cell('', $user['id']);
         $html .= $bp->table->cell('', $user['name']);
         $html .= $bp->table->cell('', $user['email']);
@@ -269,7 +267,7 @@ class Admin_users extends CI_Driver {
       } else {
         $form->message('warning', 'The email "' . $form->vars['email'] . '" has already been registered.');
       }
-      $page->eject($page->url('add', $this->url . '/edit', 'id', $user_id));
+      $page->eject($page->url('admin', 'users/edit?id=' . $user_id));
     }
     $html .= '<div class="page-header"><p class="lead">' . $bp->icon('user') . ' Register User</p></div>';
     $html .= $form->header();

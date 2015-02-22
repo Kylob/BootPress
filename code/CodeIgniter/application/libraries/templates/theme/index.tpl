@@ -1,4 +1,4 @@
-{$page->link("{$blog.url.media}blog.css")}
+{$page->link($page->url('theme', 'blog.css'))}
 
 {$page->plugin('CDN', ['prepend', 'links'=>[
   "bootstrap/{$blog.bootstrap}/css/bootstrap.min.css",
@@ -9,7 +9,7 @@
 
 {capture assign='sidebar'}
   
-  {$bp->search($blog.url.listings)}
+  {$bp->search($page->url('blog'))}
   
 {/capture}
 
@@ -17,7 +17,7 @@
   <div class="container">
     <nav class="blog-nav">
       {$bp->links('a blog-nav-item', [
-        $blog.name => "{$blog.url.base}"
+        $blog.name => $page->url('base')
       ], ['active'=>'url'])}
     </nav>
   </div>

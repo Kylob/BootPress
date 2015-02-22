@@ -22,21 +22,21 @@ class Admin_blog extends CI_Driver {
     $page->link('<style>.nav.nav-tabs > li { white-space: nowrap; }</style>');
     $menu = array();
     if ($unpublished = $ci->blog->db->value('SELECT COUNT(*) FROM blog WHERE published = 0')) {
-      $menu['<span class="text-danger"><b>Unpublished</b> ' . $bp->badge($unpublished) . '</span>'] = BASE_URL . ADMIN . '/blog/unpublished';
+      $menu['<span class="text-danger"><b>Unpublished</b> ' . $bp->badge($unpublished) . '</span>'] = $page->url('admin', 'blog/unpublished');
     }
     if ($posts = $ci->blog->db->value('SELECT COUNT(*) FROM blog WHERE published < 0')) {
-      $menu[$bp->icon('thumb-tack', 'fa') . ' Posts ' . $bp->badge($posts)] = BASE_URL . ADMIN . '/blog/posts';
+      $menu[$bp->icon('thumb-tack', 'fa') . ' Posts ' . $bp->badge($posts)] = $page->url('admin', 'blog/posts');
     }
     if ($pages = $ci->blog->db->value('SELECT COUNT(*) FROM blog WHERE published = 1')) {
-      $menu[$bp->icon('file', 'fa') . ' Pages ' . $bp->badge($pages)] = BASE_URL . ADMIN . '/blog/pages';
+      $menu[$bp->icon('file', 'fa') . ' Pages ' . $bp->badge($pages)] = $page->url('admin', 'blog/pages');
     }
     if (is_admin(1)) {
-      if (count($this->set_authors()) > 0) $menu['Authors'] = BASE_URL . ADMIN . '/blog/authors';
+      if (count($this->set_authors()) > 0) $menu['Authors'] = $page->url('admin', 'blog/authors');
       if (count($this->set_tags()) > 0) {
-        $menu['Categories'] = BASE_URL . ADMIN . '/blog/categories';
-        $menu['Tags'] = BASE_URL . ADMIN . '/blog/tags';
+        $menu['Categories'] = $page->url('admin', 'blog/categories');
+        $menu['Tags'] = $page->url('admin', 'blog/tags');
       }
-      if ($posts || $pages) $menu['Templates'] = BASE_URL . ADMIN . '/blog/templates';
+      if ($posts || $pages) $menu['Templates'] = $page->url('admin', 'blog/templates');
     }
     $options = array('active'=>'url');
     if (count($menu > 2)) $options['align'] = 'justified';
@@ -62,7 +62,7 @@ class Admin_blog extends CI_Driver {
   
   private function published ($params) {
     global $bp, $ci, $page;
-    if ($search = $ci->input->post('search')) $page->eject($page->url('add', BASE_URL . ADMIN . '/blog/published', 'search', trim($search, "'")));
+    if ($search = $ci->input->post('search')) $page->eject($page->url('admin', 'blog/published?search=' . trim($search, "'")));
     $bp->listings->display(20);
     if ($search = $ci->input->get('search')) {
       $page->title = 'Search Published Posts and Pages at ' . $ci->blog->name;
@@ -117,7 +117,7 @@ class Admin_blog extends CI_Driver {
       list($count, $id, $uri, $name) = $row;
       $ci->admin->files->save(array($uri => $ci->blog->authors . $uri . '.php'), array($uri), array($this, 'update'));
       $author = $ci->blog->authors($uri, $name);
-      $label = '<a href="' . $ci->blog->url['listings'] . 'authors/' . $uri . '/">' . $author['name'] . '</a> ' . $bp->badge($count);
+      $label = '<a href="' . $page->url('blog', 'authors', $uri) . '">' . $author['name'] . '</a> ' . $bp->badge($count);
       if (!empty($author['thumb'])) {
         $label .= '<br>' . $bp->img($author['thumb'], 'style="margin:20px auto;"', '', '~75x75/' . $author['uri']);
         $author['thumb'] = substr($author['thumb'], strrpos($author['thumb'], '/') + 1);
@@ -139,106 +139,73 @@ class Admin_blog extends CI_Driver {
   
   private function categories () {
     global $bp, $ci, $page;
-    $html = '';
-    if ($delete = $ci->input->get('delete')) {
-      if (is_numeric($delete)) $ci->blog->db->delete('categories', 'id', (int) $delete);
-      $page->eject($page->url('delete', '', '?'));
+    $hier = $page->plugin('Hierarchy', 'categories', $ci->blog->db);
+    if (($pk = $ci->input->post('pk')) && ($value = $ci->input->post('value'))) {
+      $ci->blog->db->update('categories', 'id', array((int) $pk => array('category'=>html_escape($value))));
+      $hier->refresh('category');
+      exit;
     }
-    $form = $page->plugin('Form', 'name', 'admin_blog_categories');
-    if ($edit = $ci->input->get('id')) {
-      if ($edit = $ci->blog->db->row('SELECT category, tags FROM categories WHERE id = ?', array($edit))) {
-        $edit['tags[]'] = explode(',', $edit['tags']);
-        $form->values($edit);
-      } else {
-        $page->eject($page->url('delete', '', 'id'));
-      }
+    $tree = $hier->tree(array('uri', 'category'));
+    $counts = $hier->counts('blog', 'category_id');
+    foreach ($tree as $id => $fields) {
+      $category = array();
+      $category[] = '<a class="rename-category" href="#" data-pk="' . $id . '" title="Rename Category">' . $fields['category'] . '</a>';
+      $category[] = $bp->button('link', $fields['uri'] . ' ' . $bp->icon('new-window'), array('href'=>$page->url('blog', $fields['uri']), 'target'=>'_blank'));
+      $category[] = $bp->badge($counts[$id]);
+      array_unshift($tree[$id], '<p>' . implode(' ', $category) . '</p>');
     }
-    $tags = array();
-    foreach ($this->set_tags() as $id => $tag) $tags[$id] = '(' . $tag['count'] . ') ' . $tag['name'];
-    $form->menu('tags[]', $tags);
-    $form->validate(
-      array('category', 'Category', 'required', 'Enter the categories name.'),
-      array('tags[]', 'Tags', 'required|inarray[menu]', 'Select the tags that will be used to determine what posts and pages should be listed under this category.')
-    );
-    if ($form->submitted() && empty($form->errors)) {
-      $categories = array();
-      $categories['uri'] = $page->seo($form->vars['category']);
-      $categories['category'] = $form->vars['category'];
-      $categories['tags'] = implode(',', $form->vars['tags']);
-      if ($edit) {
-        $ci->blog->db->update('categories', 'id', array($edit['id'] => $categories));
-      } else {
-        $ci->blog->db->insert('categories', $categories);
-      }
-      $this->update();
-      $page->eject($page->url('delete', $form->eject, '?'));
-    }
-    $html .= $form->header();
-    $html .= $form->field('category', 'text', array('maxlength'=>100));
-    if (empty($this->tags)) {
-      $html .= $form->field(false, '<p class="form-control-static">You have no tags from which to select from.</p>');
-    } else {
-      $html .= $form->field('tags[]', 'select');
-    }
-    $html .= $form->submit($edit ? 'Edit' : 'Create');
-    $html .= $form->close();
-    unset($form);
-    $ci->blog->db->query('SELECT id, uri, category, tags FROM categories ORDER BY uri ASC');
-    $categories = $ci->blog->db->fetch('assoc', 'all');
-    if (empty($categories)) return $html;
-    $html .= '<div class="page-header"><p class="lead">' . $bp->icon('globe', 'fa') . ' View</p></div>';
-    foreach ($categories as $row) {
-      list($id, $uri, $category, $tags) = array_values($row);
-      $tagged = array();
-      foreach (explode(',', $tags) as $key) $tagged[] = $this->tags[$key]['name'];
-      $html .= $bp->row('xs', array(
-        $bp->col('2 text-right', $bp->button('xs warning', $bp->icon('pencil') . ' edit', array('href'=>$page->url('add', '', 'id', $id)))),
-        $bp->col(10, $bp->media(array('', 
-          '<h4><a href="' . $ci->blog->url['listings'] . $uri . '">' . $category . '</a></h4><p>' . implode(', ', $tagged) . '</p>',
-          $bp->button('link delete', $bp->icon('trash'), array('data-url'=>$page->url('add', '', 'delete', $id), 'title'=>'Delete'))
-        )))
-      )) . '<br>';
-    }
+    $page->plugin('CDN', 'links', array(
+      'bootstrap.editable/1.5.1/css/bootstrap-editable.min.css',
+      'bootstrap.editable/1.5.1/js/bootstrap-editable.min.js'
+    ));
     $page->plugin('jQuery', 'code', '
-      $("button.delete").click(function(){
-        var url = $(this).data("url");
-        if (confirm("Are you sure you would like to delete this category?")) {
-          window.location = url;
-        }
+      $(".rename-category").editable({
+        type: "text",
+        name: "category",
+        title: "Rename Category",
+        url: window.location.href,
+        validate: function(value) { if($.trim(value) == "") return "This field is required"; }
       });
     ');
-    return $html;
+    return $bp->lister('ul list-unstyled', $hier->lister($tree));
   }
   
   private function tags () {
     global $bp, $ci, $page;
-    $html = '';
     $this->set_tags();
-    $form = $page->plugin('Form', 'name', 'admin_blog_tags');
-    $form->validate('tags[]', 'Tags');
-    if ($form->submitted() && empty($form->errors)) {
-      foreach ($form->vars['tags'] as $id => $tag) {
-        if (!empty($tag) && isset($this->tags[$id]) && strtolower($this->tags[$id]['name']) == strtolower($tag)) {
-          $ci->blog->db->query('UPDATE tags SET tag = ? WHERE id = ? AND uri = ?', array($tag, $id, $this->tags[$id]['uri']));
+    if (($pk = $ci->input->post('pk')) && ($value = $ci->input->post('value'))) {
+      if (isset($this->tags[$pk])) {
+        if ($page->seo($value) != $page->seo($this->tags[$pk]['name'])) {
+          set_status_header(400);
+          exit('The tag is misspelled.');
+        } else {
+          $ci->blog->db->update('tags', 'id', array($pk => array('tag' => html_escape($value))));
+          exit;
         }
       }
-      $this->update();
-      $page->eject($form->eject);
     }
-    $html .= '<p class="text-center">This form is to help you standardize the capitalization of your tags.<br>The only way to delete or change them is by editing the applicable pages and posts.<br>It is not necessary to re-enter every value.  Only the ones you wish to update.</p>';
-    if (!empty($this->tags)) {
-      $html .= $form->header();
-      foreach ($this->tags as $id => $tag) {
-        $html .= $form->field('tags[' . $id . ']', 'text', array(
-          'label' => '<a href="' . $ci->blog->url['listings'] . 'tags/' . $tag['uri'] . '">' . $tag['name'] . '</a>',
-          'prepend' => '<span class="badge">' . $tag['count'] . '</span>'
-        ));
-      }
-      $html .= $form->submit('Edit');
-      $html .= $form->close();
+    $tags = array();
+    foreach ($this->tags as $id => $fields) {
+      $tags[] = $bp->col(4, '<p>' . implode(' ', array(
+        '<a class="capitalize-tag" href="#" data-pk="' . $id . '" title="Edit Capitalization">' . $fields['name'] . '</a>',
+        $bp->button('link', $bp->icon('new-window'), array('href'=>$page->url('blog', 'tags', $fields['uri']), 'target'=>'_blank')),
+        $bp->badge($fields['count'])
+      )) . '</p>');
     }
-    unset($form);
-    return $html;
+    $page->plugin('CDN', 'links', array(
+      'bootstrap.editable/1.5.1/css/bootstrap-editable.min.css',
+      'bootstrap.editable/1.5.1/js/bootstrap-editable.min.js'
+    ));
+    $page->plugin('jQuery', 'code', '
+      $(".capitalize-tag").editable({
+        type: "text",
+        name: "tag",
+        title: "Edit Capitalization",
+        url: window.location.href,
+        validate: function(value) { if($.trim(value) == "") return "This field is required"; }
+      });
+    ');
+    return $bp->row('md', $tags);
   }
   
   private function templates () {
@@ -317,11 +284,12 @@ class Admin_blog extends CI_Driver {
     } else {
       $args['append'] = $bp->button('primary', ($edit) ? 'Submit' : 'Create', array('type'=>'submit', 'data-loading-text'=>'Submitting...'));
     }
+    
     if ($edit) {
       $post = $ci->blog->db->row('SELECT uri, title, published FROM blog WHERE id = ?', array($edit));
       if (empty($post['title'])) $post['title'] = 'Untitled';
       $type = ($post['published'] < 0) ? 'post' : 'page';
-      $title = '<a href="' . BASE_URL . $post['uri'] . '" target="_blank">' . $post['title'] . ' ' . $bp->icon('new-window') . '</a>';
+      $title = '<a href="' . $page->url('base', $post['uri']) . '" target="_blank">' . $post['title'] . ' ' . $bp->icon('new-window') . '</a>';
       $delete = $bp->button('sm danger delete pull-right', $bp->icon('trash'), array('title'=>'Click to delete this ' . $type));
       $html .= '<p class="lead">' . $title . ' ' . $delete . '</p><br>';
       $page->plugin('jQuery', array('code'=>'
@@ -332,6 +300,38 @@ class Admin_blog extends CI_Driver {
           }
         });
       '));
+    }
+    /*
+    $slash = ($edit) ? strrpos($post['uri'], '/') : false;
+    $suffix = ($edit) ? ($slash ? substr($post['uri'], $slash + 1) : $post['uri']) : ''; // edit uri without the categories (if any)
+    $select = ($edit) ? ($slash ? substr($post['uri'], 0, $slash + 1) : $post['uri']) : '&nbsp;'; // first the key
+    $select = ($edit) ? array($select => $post['uri'] . ' (original url)') : array($select => ''); // then the value
+    */
+    
+    $select = array();
+    $suffix = ($edit) ? (($slash = strrpos($post['uri'], '/')) ? substr($post['uri'], $slash) : '/' . $post['uri']) : '/';
+    $ci->blog->db->query('SELECT uri FROM categories ORDER BY uri ASC');
+    while (list($uri) = $ci->blog->db->fetch('row')) $select[$uri . $suffix] = $uri . $suffix;
+    if (!empty($select)) {
+      
+      $default = ($edit) ? $post['uri'] : '&nbsp;';
+      if ($edit && isset($select[$post['uri']])) {
+        $default = '&nbsp;';
+        $select[$post['uri']] .= ' (current url)';
+      }
+      
+      // exit('<pre>' . print_r($select, true) . '</pre>');
+      
+      $form->menu('category', $select, '&nbsp;');
+      $form->validate('category', 'Category', '', 'You may select a category among those already in use.');
+      $html .= $form->field('category', 'select');
+      $page->plugin('jQuery', 'code', '
+        $("select[name=category]").change(function(){
+          $("input[name=uri]").focus().val($(this).val());
+        });
+      ');
+    }
+    if ($edit) {
       $html .= $form->field('uri', 'text', $args);
       $html .= $form->field('index', 'textarea', array('class'=>'wyciwyg tpl input-sm', 'data-file'=>'index.tpl'));
     } else {
@@ -405,8 +405,8 @@ class Admin_blog extends CI_Driver {
         $reference = $bp->icon('tack', 'fa') . ' ' . date('M j, Y', $published);
       }
       $html .= $bp->row('sm', array(
-        $bp->col(1, '<p>' . $bp->button('xs warning', $bp->icon('pencil') . ' edit', array('href'=>BASE_URL . ADMIN . '/blog?edit=' . $id)) . '</p>'),
-        $bp->col(8, $bp->media(array($thumb, '<h4><a href="' . BASE_URL . $uri . '/">' . (!empty($title) ? $title : 'Untitled') . '</a></h4><p>' . (isset($alt[$id]) ? $alt[$id] : $description) . '</p>'))),
+        $bp->col(1, '<p>' . $bp->button('xs warning', $bp->icon('pencil') . ' edit', array('href'=>$page->url('admin', 'blog?edit=' . $id))) . '</p>'),
+        $bp->col(8, $bp->media(array($thumb, '<h4><a href="' . $page->url('base', $uri) . '">' . (!empty($title) ? $title : 'Untitled') . '</a></h4><p>' . (isset($alt[$id]) ? $alt[$id] : $description) . '</p>'))),
         $bp->col(3, '<p>' . $reference . '</p>')
       )) . '<br>';
     }

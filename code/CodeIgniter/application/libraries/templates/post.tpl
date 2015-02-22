@@ -23,6 +23,6 @@
   </div>
   
   {$bp->listings->symbols($bp->icon('chevron-left'), $bp->icon('chevron-right'))}
-  {$bp->listings->pager($bp->listings->previous($previous.title, $previous.url), $bp->listings->next($next.title, $next.url), 'sides')}
+  {$bp->listings->pager($bp->listings->previous($post.previous.title, $post.previous.url), $bp->listings->next($post.next.title, $post.next.url), 'sides')}
   
 {/if}  

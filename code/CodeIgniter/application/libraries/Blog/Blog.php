@@ -8,9 +8,9 @@ class Blog extends CI_Driver_Library {
   private $templates;
   private $authors;
   private $post;
-  private $listings;
   private $config;
   private $blog;
+  private $url = '';
   
   public function __construct ($blog) {
     global $admin, $bp, $page;
@@ -21,7 +21,6 @@ class Blog extends CI_Driver_Library {
     $this->authors = BASE_URI . 'blog/authors/';
     $this->post = BASE_URI . 'blog/content/';
     if (!is_dir($this->post)) mkdir($this->post, 0755, true);
-    $this->listings = trim(BASE_URL . BLOG, '/') . '/';
     #-- Blog --#
     $this->blog = array('name'=>'', 'slogan'=>'', 'summary'=>'');
     if (!is_file($this->post . 'setup.php')) file_put_contents($this->post . 'setup.php', file_get_contents($this->templates . 'setup.php'));
@@ -39,7 +38,7 @@ class Blog extends CI_Driver_Library {
     $bp = new BootPress;
     $this->blog['page'] = ''; // This is established in the $ci->blog->pages class
     $this->blog['url'] = array(
-      'listings' => ($this->listings == BASE_URL) ? BASE_URL : trim($this->listings, '/'), // so we can properly manage their suffixes
+      'listings' => BASE_URL . BLOG, // may or may not have trailing slash
       'base' => BASE_URL, // with trailing slash
       'media' => '' // with trailing slash
     );
@@ -52,10 +51,12 @@ class Blog extends CI_Driver_Library {
       case 'db':
         if (!isset($this->db)) {
           $this->db = $page->plugin('Database', 'sqlite', BASE_URI . 'databases/blog.db');
-          if ($this->db->created) {
-          
+          if ($this->db->created || version_compare('1.0', $this->db->settings('version'))) {
+            $this->db->settings('version', '1.0');
+            
             $this->db->create('blog', array(
               'id' => 'INTEGER PRIMARY KEY',
+              'category_id' => 'INTEGER NOT NULL DEFAULT 0',
               'uri' => 'TEXT UNIQUE COLLATE NOCASE',
               'seo' => 'TEXT NOT NULL DEFAULT ""',
               'title' => 'TEXT NOT NULL DEFAULT ""',
@@ -63,11 +64,11 @@ class Blog extends CI_Driver_Library {
               'keywords' => 'TEXT NOT NULL DEFAULT ""',
               'theme' => 'TEXT NOT NULL DEFAULT ""',
               'thumb' => 'TEXT NOT NULL DEFAULT ""',
-              'author' => 'TEXT NOT NULL DEFAULT ""',
               'published' => 'INTEGER NOT NULL DEFAULT 0',
               'updated' => 'INTEGER NOT NULL DEFAULT 0',
+              'author' => 'TEXT NOT NULL DEFAULT ""',
               'content' => 'TEXT NOT NULL DEFAULT ""'
-            ), 'published, updated, author');
+            ), array('category_id', 'published, updated, author'));
             
             $this->db->create('authors', array(
               'id' => 'INTEGER PRIMARY KEY',
@@ -79,7 +80,10 @@ class Blog extends CI_Driver_Library {
               'id' => 'INTEGER PRIMARY KEY',
               'uri' => 'TEXT UNIQUE COLLATE NOCASE',
               'category' => 'TEXT NOT NULL COLLATE NOCASE DEFAULT ""',
-              'tags' => 'TEXT NOT NULL DEFAULT ""'
+              'parent' => 'INTEGER NOT NULL DEFAULT 0',
+              'level' => 'INTEGER NOT NULL DEFAULT 0',
+              'lft' => 'INTEGER NOT NULL DEFAULT 0',
+              'rgt' => 'INTEGER NOT NULL DEFAULT 0'
             ));
             
             $this->db->create('tags', array(
@@ -115,6 +119,7 @@ class Blog extends CI_Driver_Library {
   public function set ($page, $media='') {
     $this->blog['page'] = $page;
     $this->blog['url']['media'] = $media;
+    $this->url = $media;
   }
   
   public function smarty ($file, $vars=array(), $testing=false) {
@@ -124,7 +129,7 @@ class Blog extends CI_Driver_Library {
       $smarty = $page->plugin('Smarty', 'class');
       $smarty->assign(array(
         'bp' => $bp,
-        'page' => new PageClone($page, array('set', 'meta', 'link', 'plugin', 'filter'))
+        'page' => new PageClone($page, array('url', 'set', 'meta', 'link', 'plugin', 'filter'))
       ));
       $security = new Smarty_Security($smarty);
       $security->php_functions = $this->config['php_functions'];
@@ -145,6 +150,169 @@ class Blog extends CI_Driver_Library {
     return ($testing) ? true : $html;
   }
   
+  public function query ($type, $params=null) {
+    global $bp, $ci, $page;
+    $posts = array();
+    switch ($type) {
+    
+      #-- The following are for listings --#
+      
+      case 'similar': // keywords, limit 5 (order by RANK)
+        if (empty($params)) $params = $this->db->row('SELECT id AS exclude, keywords AS tags FROM blog WHERE uri = ?', array($page->get('uri')));
+        if (!empty($params)) {
+          $id = (is_array($params) && isset($params['exclude'])) ? (int) $params['exclude'] : 0;
+          $limit = (is_array($params) && isset($params['limit'])) ? (int) $params['limit'] : 10;
+          $tags = (is_array($params) && isset($params['tags'])) ? $params['tags'] : $params;
+          if (!is_array($tags)) $tags = array_map('trim', explode(',', $params));
+          $search = $ci->sitemap->search('"' . implode('" OR "', $tags) . '"', 'blog', $limit, array(0,0,0,1,0), 'AND u.id != ' . $id);
+          foreach ($search as $blog) $posts[] = $blog['id'];
+          $posts = $this->info($posts);
+        }
+        break;
+        
+      case 'posts': // uris (limit and order inherent)
+        foreach ((array) $params as $uri) $posts[$uri] = '';
+        $this->db->query('SELECT uri, id FROM blog WHERE uri IN(' . implode(', ', array_fill(0, count($posts), '?')) . ')', array_keys($posts));
+        while (list($uri, $id) = $this->db->fetch('row')) $posts[$uri] = $id;
+        $posts = $this->info(array_values(array_filter($posts)));
+        break;
+        
+      case 'search': // phrase, limit config (order by RANK) - same as search page
+        $term = (string) $params;
+        if (!$bp->listings->set) $bp->listings->count($ci->sitemap->count($term, 'blog'));
+        $search = $ci->sitemap->search($term, 'blog', $bp->listings->limit());
+        $posts = $snippets = array();
+        foreach ($search as $blog) {
+          $posts[] = $blog['id'];
+          $snippets[$blog['id']] = $blog['snippet'];
+        }
+        $posts = $this->info($posts);
+        foreach ($posts as $id => $row) $posts[$id]['snippet'] = $snippets[$id];
+        break;
+        
+      case 'listings': // limit config (order by published ~DESC) - same as index page
+        if (!$bp->listings->set) $bp->listings->count($this->db->value('SELECT COUNT(*) FROM blog WHERE published < 0'));
+        $this->db->query('SELECT id FROM blog WHERE published < 0 ORDER BY published ASC' . $bp->listings->limit());
+        while (list($id) = $this->db->fetch('row')) $posts[] = $id;
+        $posts = $this->info($posts);
+        break;
+      
+      #-- The following are for linking --#
+      
+      case 'archives': // no limit (order by month DESC, and only start if count > 0) - include empty months?
+        $years = (is_array($params)) ? $params : array();
+        if (empty($years)) {
+          $times = $this->db->row('SELECT ABS(MAX(published)) AS begin, ABS(MIN(published)) AS end FROM blog WHERE published < 0');
+          if (!is_null($times['end'])) $years = range(date('Y', $times['begin']), date('Y', $times['end']));
+        }
+        $months = array('Jan'=>1, 'Feb'=>2, 'Mar'=>3, 'Apr'=>4, 'May'=>5, 'Jun'=>6, 'Jul'=>7, 'Aug'=>8, 'Sep'=>9, 'Oct'=>10, 'Nov'=>11, 'Dec'=>12);
+        $archives = array();
+        foreach ($years as $Y) {
+          foreach ($months as $M => $n) {
+            $to = mktime(23, 59, 59, $n + 1, 0, $Y) * -1;
+            $from = mktime(0, 0, 0, $n, 1, $Y) * -1;
+            $archives[] = "SUM(CASE WHEN published >= {$to} AND published <= {$from} THEN 1 ELSE 0 END) AS {$M}{$Y}";
+          }
+        }
+        if (!empty($archives)) {
+          $archives = array('SELECT', implode(",\n", $archives), 'FROM blog');
+          $archives = $this->db->row($archives);
+          foreach ($archives as $date => $count) {
+            $time = mktime(0, 0, 0, $months[substr($date, 0, 3)], 15, substr($date, 3));
+            list($Y, $M, $m) = explode(' ', date('Y M m', $time));
+            if (!isset($posts[$Y])) $posts[$Y] = array('count'=>0, 'url'=>$page->url('blog', 'archives', $Y));
+            $posts[$Y]['months'][$M] = array('url'=>$page->url('blog', 'archives', $Y, $m), 'count'=>$count, 'time'=>$time);
+            $posts[$Y]['count'] += $count;
+          }
+        }
+        break;
+        
+      case 'authors': // no limit (order by count DESC, then author ASC)
+        $this->db->query(array(
+          'SELECT COUNT(*) AS count, a.id, a.uri, a.author AS name',
+          'FROM blog AS b',
+          'INNER JOIN authors AS a ON b.author = a.uri',
+          'WHERE b.published < 0 AND b.updated < 0 AND b.author != ""',
+          'GROUP BY b.author',
+          'ORDER BY a.author ASC'
+        ));
+        $authors = $this->db->fetch('assoc', 'all');
+        $authored = array();
+        foreach ($authors as $author) $authored[$authors['uri']] = $authors['count'];
+        arsort($authored);
+        if (is_int($params)) $authored = array_slice($authored, 0, $params, true);
+        foreach ($authors as $author) {
+          if (isset($authored[$author['uri']])) {
+            $info = $this->authors($author['uri'], $author['name']);
+            $info['count'] = $author['count'];
+            $posts[] = $info;
+          }
+        }
+        break;
+        
+      case 'categories': // no limit (order by count DESC, then category ASC)
+        // http://www.smarty.net/docs/en/language.function.function.tpl
+        if (is_array($params) && isset($params['nest']) && isset($params['tree'])) {
+          foreach ($params['nest'] as $id => $subs) {
+            $posts[$id] = array(
+              'url' => $page->url('blog', $params['tree'][$id]['uri']),
+              'category' => $params['tree'][$id]['category'],
+              'count' => $params['tree'][$id]['count']
+            );
+            if (!empty($subs)) $posts[$id]['subs'] = $this->query('categories', array('nest'=>$subs, 'tree'=>$params['tree']));
+          }
+          return array_values($posts);
+        }
+        $hier = $page->plugin('Hierarchy', 'categories', $this->db);
+        $tree = $hier->tree(array('uri', 'category'));
+        $counts = $hier->counts('blog', 'category_id');
+        foreach ($tree as $id => $fields) $tree[$id]['count'] = $counts[$id];
+        $nest = $hier->nestify($tree);
+        $slice = array();
+        foreach ($nest as $id => $subs) if ($tree[$id]['count'] > 0) $slice[$id] = $tree[$id]['count'];
+        arsort($slice);
+        if (is_int($params)) $slice = array_slice($slice, 0, $params, true);
+        foreach ($nest as $id => $subs) if (!isset($slice[$id])) unset($nest[$id]);
+        if (!empty($slice)) $posts = $this->query('categories', array('nest'=>$nest, 'tree'=>$tree));
+        break;
+        
+      case 'tags': // no limit (order by count DESC, then tag ASC)
+        $this->db->query(array(
+          'SELECT COUNT(t.blog_id) AS count, tags.uri, tags.tag AS name',
+          'FROM tagged AS t',
+          'INNER JOIN blog AS b ON t.blog_id = b.id',
+          'INNER JOIN tags ON t.tag_id = tags.id',
+          'WHERE b.published != 0',
+          'GROUP BY tags.id',
+          'ORDER BY tags.tag ASC'
+        ));
+        $tags = $this->db->fetch('assoc', 'all');
+        $tagged = array();
+        foreach ($tags as $tag) $tagged[$tag['uri']] = $tag['count'];
+        arsort($tagged);
+        if (is_int($params)) $tagged = array_slice($tagged, 0, $params, true);
+        if (count($tagged) > 0) {
+          // http://en.wikipedia.org/wiki/Tag_cloud
+          // http://stackoverflow.com/questions/18790677/what-algorithm-can-i-use-to-sort-tags-for-tag-cloud?rq=1
+          // http://stackoverflow.com/questions/227/whats-the-best-way-to-generate-a-tag-cloud-from-an-array-using-h1-through-h6-fo
+          $min = min($tagged);
+          $range = max(.01, max($tagged) - $min) * 1.0001;
+          foreach ($tags as $tag) {
+            if (isset($tagged[$tag['uri']])) {
+              $posts[$tag['name']] = array(
+                'rank' => ceil(((4 * ($tag['count'] - $min)) / $range) + 1),
+                'url' => $page->url('blog', 'tags', $tag['uri']),
+                'count' => $tag['count']
+              );
+            }
+          }
+        }
+        break;
+        
+    }
+    return $posts;
+  }
+  
   public function file ($uri) {
     global $ci, $page;
     if (preg_match('/[^a-z0-9-\/]/', $uri)) {
@@ -153,7 +321,11 @@ class Blog extends CI_Driver_Library {
       $uri = $seo;
     }
     if (empty($uri)) $uri = 'index';
-    $blog = $this->db->row('SELECT id, keywords, author, updated FROM blog WHERE uri = ?', array($uri));
+    $blog = $this->db->row(array(
+      'SELECT b.id, b.category_id AS category, c.uri AS path, b.keywords, b.author, b.updated',
+      'FROM blog AS b LEFT JOIN categories AS c ON b.category_id = c.id',
+      'WHERE b.uri = ?'
+    ), array($uri));
     $file = $this->post . $uri . '/index.tpl';
     if (is_file($file)) {
       $this->set('file', BASE_URL . 'blog/content/' . $uri . '/');
@@ -175,6 +347,7 @@ class Blog extends CI_Driver_Library {
       }
       $author = (string) $page->author;
       $update = array(
+        'category_id' => $this->category($blog, $uri),
         'uri' => $uri,
         'title' => $page->title,
         'description' => $page->description,
@@ -207,13 +380,17 @@ class Blog extends CI_Driver_Library {
   }
   
   public function info ($ids) {
-    global $ci;
+    global $ci, $page;
     $single = (is_array($ids)) ? false : true;
     if (empty($ids)) return array();
     $ids = (array) $ids;
     $this->db->query(array(
       'SELECT b.id, b.uri, b.seo, b.title, b.description, b.thumb, ABS(b.published) AS published, ABS(b.updated) AS updated, b.content,',
       '  a.id AS author_id, a.uri AS author_uri, a.author AS author_name,',
+      '  (SELECT p.uri || "," || p.title FROM blog AS p WHERE p.published > b.published AND p.published < 0 ORDER BY p.published ASC LIMIT 1) AS previous,',
+      '  (SELECT n.uri || "," || n.title FROM blog AS n WHERE n.published < b.published AND n.published < 0 ORDER BY n.published DESC LIMIT 1) AS next,',
+      '  (SELECT GROUP_CONCAT(p.uri) FROM categories AS c INNER JOIN categories AS p WHERE c.lft BETWEEN p.lft AND p.rgt AND c.id = b.category_id ORDER BY c.lft) AS category_uris,',
+      '  (SELECT GROUP_CONCAT(p.category) FROM categories AS c INNER JOIN categories AS p WHERE c.lft BETWEEN p.lft AND p.rgt AND c.id = b.category_id ORDER BY c.lft) AS category_names,',
       '  (SELECT GROUP_CONCAT(t.uri) FROM tagged INNER JOIN tags AS t ON tagged.tag_id = t.id WHERE tagged.blog_id = b.id) AS tag_uris,',
       '  (SELECT GROUP_CONCAT(t.tag) FROM tagged INNER JOIN tags AS t ON tagged.tag_id = t.id WHERE tagged.blog_id = b.id) AS tag_names',
       'FROM blog AS b',
@@ -223,16 +400,28 @@ class Blog extends CI_Driver_Library {
     $posts = array_flip($ids);
     while ($row = $this->db->fetch('assoc')) {
       $row['url'] = BASE_URL . $row['uri'];
+      $row['uri'] = $row['seo'];
       $row['page'] = true;
       if ($row['published'] > 1) {
         $row['page'] = false;
-        $row['tags'] = (!empty($row['tag_uris'])) ? array_combine(explode(',', $row['tag_names']), explode(',', $row['tag_uris'])) : array();
-        foreach ($row['tags'] as $tag => $url) $row['tags'][$tag] = $this->listings . 'tags/' . $url;
+        $row['archive'] = $page->url('blog', 'archives', date('Y/m/d', $row['published']));
         $row['author'] = (!empty($row['author_id'])) ? $this->authors($row['author_uri'], $row['author_name']) : array();
-        $row['archive'] = $this->listings . 'archives/' . date('Y/m/d', $row['published']);
+        if ($row['previous']) {
+          $previous = explode(',', $row['previous']);
+          $row['previous'] = array('url'=>$page->url('base', array_shift($previous)), 'title'=>implode(',', $previous));
+        }
+        if ($row['next']) {
+          $next = explode(',', $row['next']);
+          $row['next'] = array('url'=>$page->url('base', array_shift($next)), 'title'=>implode(',', $next));
+        }
+      } else {
+        unset($row['previous'], $row['next']);
       }
-      $row['uri'] = $row['seo']; // we are just swapping out the uri for a more practical value now
-      unset($row['seo'], $row['author_id'], $row['author_uri'], $row['author_name'], $row['tag_uris'], $row['tag_names']);
+      $row['categories'] = (!empty($row['category_uris'])) ? array_combine(explode(',', $row['category_names']), explode(',', $row['category_uris'])) : array();
+      foreach ($row['categories'] as $category => $url) $row['categories'][$category] = $page->url('blog', $url);
+      $row['tags'] = (!empty($row['tag_uris'])) ? array_combine(explode(',', $row['tag_names']), explode(',', $row['tag_uris'])) : array();
+      foreach ($row['tags'] as $tag => $url) $row['tags'][$tag] = $page->url('blog', 'tags', $url);
+      unset($row['seo'], $row['author_id'], $row['author_uri'], $row['author_name'], $row['category_uris'], $row['category_names'], $row['tag_uris'], $row['tag_names']);
       $posts[$row['id']] = $row;
     }
     return ($single) ? array_shift($posts) : $posts;
@@ -311,7 +500,7 @@ class Blog extends CI_Driver_Library {
       if (is_array($info)) $author = $info;
     }
     $author['uri'] = $uri;
-    $author['url'] = $this->listings . 'authors/' . $uri;
+    $author['url'] = $page->url('blog', 'authors', $uri);
     if (!isset($author['name'])) $author['name'] = $name;
     if ($author['name'] != $name) $this->db->update('authors', 'uri', array($uri => array('author'=>$author['name'])));
     $author['thumb'] = (isset($author['thumb']) && is_file($this->authors . $author['thumb'])) ? str_replace(BASE_URI, BASE_URL, $this->authors . $author['thumb']) : '';
@@ -324,6 +513,84 @@ class Blog extends CI_Driver_Library {
     if (!$this->db->value('SELECT id FROM authors WHERE uri = ?', array($seo))) {
       $this->db->insert('authors', array('uri'=>$seo, 'author'=>$author));
     }
+  }
+  
+  private function category ($blog, $uri) {
+    global $page;
+    $path = (($slash = strrpos($uri, '/')) !== false) ? substr($uri, 0, $slash) : '';
+    $matches = ($blog && $blog['path'] == $path) ? true : false;
+    if ($matches) {
+      if (empty($path) && $blog['category'] == 0) {
+        return 0;
+      } elseif (!empty($path) && $blog['category'] > 0) {
+        return $blog['category']; // we assume it is correct
+      }
+    }
+    $refresh = false;
+    $categories = array(''=>0);
+    $this->db->query('SELECT id, uri FROM categories');
+    while (list($id, $uri) = $this->db->fetch('row')) $categories[$uri] = $id;
+    if (!isset($categories[$path])) {
+      $parent = 0;
+      $previous = '';
+      foreach (explode('/', $path) as $uri) {
+        if (!isset($categories[$previous . $uri])) {
+          $categories[$previous . $uri] = $this->db->insert('categories', array(
+            'uri' => $previous . $uri,
+            'category' => ucwords(str_replace('-', ' ', $uri)),
+            'parent' => $parent
+          ));
+          $refresh = true;
+        }
+        $parent = $categories[$previous . $uri];
+        $previous .= $uri . '/';
+      }
+    }
+    if ($blog) $this->db->update('blog', 'id', array($blog['id'] => array('category_id' => $categories[$path])));
+    $delete = array();
+    foreach ($categories as $uri => $id) if (!is_dir($this->post . $uri)) $delete[] = $id;
+    if (!empty($delete)) $this->db->delete('categories', 'id', $delete);
+    if (!empty($delete) || $refresh) {
+      $hier = $page->plugin('Hierarchy', 'categories', $this->db);
+      $hier->refresh('category');
+    }
+    return $categories[$path];
+    
+    /*
+    if (($pos = strrpos($uri, '/')) === false) return 0;
+    $path = substr($uri, 0, $pos);
+    if ($blog && $blog['path'] == $path) return $blog['category'];
+    $refresh = false;
+    $categories = array();
+    $this->db->query('SELECT id, uri FROM categories');
+    while (list($id, $uri) = $this->db->fetch('row')) $categories[$uri] = $id;
+    if (!isset($categories[$path])) {
+      $parent = 0;
+      $previous = '';
+      foreach (explode('/', $path) as $uri) {
+        if (!isset($categories[$previous . $uri])) {
+          $categories[$previous . $uri] = $this->db->insert('categories', array(
+            'uri' => $previous . $uri,
+            'category' => ucwords(str_replace('-', ' ', $uri)),
+            'parent' => $parent
+          ));
+          $refresh = true;
+        }
+        $parent = $categories[$previous . $uri];
+        $previous .= $uri . '/';
+      }
+    }
+    if ($blog) $this->db->update('blog', 'id', array($blog['id'] => array('category_id' => $categories[$path])));
+    $delete = array();
+    foreach ($categories as $uri => $id) if (!is_dir($this->post . $uri)) $delete[] = $id;
+    if (!empty($delete)) $this->db->delete('categories', 'id', $delete);
+    if (!empty($delete) || $refresh) {
+      $hier = $page->plugin('Hierarchy', 'categories', $this->db);
+      $hier->refresh('category');
+    }
+    return $categories[$path];
+    */
+    
   }
   
   private function tag ($blog_id, $keywords, $former='') {

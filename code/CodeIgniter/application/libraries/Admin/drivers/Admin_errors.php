@@ -11,9 +11,9 @@ class Admin_errors extends CI_Driver {
   public function btn () {
     global $bp, $page;
     $btn = '';
-    if (is_admin(1) && $page->get('uri') != ADMIN . '/errors') {
+    if (is_admin(1)) {
       $logs = $this->logs();
-      $url = $page->url('add', BASE_URL . ADMIN . '/errors', 'redirect', $page->url());
+      $url = $page->url('add', $page->url('admin', 'errors'), 'redirect', $page->url());
       if (!empty($logs)) $btn = '<p>' . $bp->button('danger block', 'View Errors', array('href'=>$url)) . '</p>';
     }
     return $btn;

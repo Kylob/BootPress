@@ -86,7 +86,7 @@ class Admin_sitemap extends CI_Driver {
     $agents = $ci->analytics->db->fetch('row', 'all');
     foreach ($agents as $row) {
       list($ids, $hits, $view, $agent, $robot) = $row;
-      $link = '<a href="' . BASE_URL . ADMIN . '/sitemap?agent=' . $view . '">' . (!empty($robot) ? $robot : $agent) . '</a>';
+      $link = '<a href="' . $page->url('admin', 'sitemap?agent=' . $view) . '">' . (!empty($robot) ? $robot : $agent) . '</a>';
       $txt = ($robots) ? $ci->analytics->db->value('SELECT COUNT(*) AS hits FROM hits WHERE time > ' . $month . ' AND uri_id = ' . $robots . ' AND session_id IN(' . $ids . ')') : false;
       $xml = ($sitemaps) ? $ci->analytics->db->row('SELECT COUNT(*) AS hits, MAX(time) AS checked FROM hits WHERE time > ' . $month . ' AND uri_id IN(' . $sitemaps . ') AND session_id IN(' . $ids . ')') : false;
       $html .= $bp->table->row();

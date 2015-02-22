@@ -4,45 +4,32 @@ class Blog_pages extends CI_Driver {
   
   public function index () {
     global $ci, $page;
-    $page->enforce($ci->blog->blog['url']['listings']);
+    $page->enforce($page->url('blog'));
     $breadcrumbs = $this->breadcrumbs();
-    $count = 'SELECT COUNT(*) FROM blog WHERE published < 0';
-    $query = 'SELECT id FROM blog WHERE published < 0 ORDER BY published ASC';
-    $posts = $this->posts($count, $query);
-    return $this->export('index', array('breadcrumbs'=>$breadcrumbs, 'posts'=>$this->info($posts)));
+    $posts = $this->query('listings');
+    return $this->export('index', array('breadcrumbs'=>$breadcrumbs, 'posts'=>$posts));
   }
   
   public function search () {
     global $bp, $ci, $page;
-    $page->enforce($ci->blog->blog['url']['listings']);
-    $term = urldecode($_GET['search']);
-    $breadcrumbs = $this->breadcrumbs(array('Search'=>$ci->blog->blog['url']['listings'] . '?search=' . urlencode($term)));
-    if (!$bp->listings->set) $bp->listings->count($ci->sitemap->count($term, 'blog'));
-    $search = $ci->sitemap->search($term, 'blog', $bp->listings->limit());
-    $posts = $snippets = array();
-    foreach ($search as $blog) {
-      $posts[] = $blog['id'];
-      $snippets[$blog['id']] = $blog['snippet'];
-    }
-    $posts = $this->info($posts);
-    foreach ($posts as $id => $value) $posts[$id]['snippet'] = $snippets[$id];
-    return $this->export('search', array('search'=>$term, 'breadcrumbs'=>$breadcrumbs, 'posts'=>$posts));
+    $page->enforce($page->url('blog'));
+    $search = urldecode($ci->input->get('search'));
+    $breadcrumbs = $this->breadcrumbs(array('Search'=>$page->url('blog') . '?search=' . urlencode($search)));
+    $posts = $this->query('search', $search);
+    return $this->export('search', array('search'=>$search, 'breadcrumbs'=>$breadcrumbs, 'posts'=>$posts));
   }
   
   public function atom () {
     global $ci, $page;
-    $page->enforce($ci->blog->listings . 'atom.xml');
-    $atom = $page->plugin('Feed', 'Atom', array($ci->blog->name, $ci->blog->blog['url']['listings'], array(
-      'link' => array('title'=>$ci->blog->name, 'href'=>$ci->blog->blog['url']['listings'], 'rel'=>'alternate'),
+    $page->enforce($page->url('blog', 'atom.xml'));
+    $atom = $page->plugin('Feed', 'Atom', array($ci->blog->name, $page->url('blog'), array(
+      'link' => array('title'=>$ci->blog->name, 'href'=>$page->url('blog'), 'rel'=>'alternate'),
       'subtitle' => $ci->blog->slogan
     )));
-    $this->db->query('SELECT id FROM blog WHERE published < 0 ORDER BY published ASC LIMIT 10');
-    while (list($id) = $this->db->fetch('row')) $posts[] = $id;
-    $posts = $this->info($posts);
-    foreach ($posts as $post) {
+    foreach ($this->query('listings') as $post) {
       $atom->entry($post['title'], $post['url'], $post['updated'], array(
         'link' => array('rel'=>'alternate', 'href'=>$post['url']),
-        'summary' => $post['summary'],
+        'summary' => $post['description'],
         'published' => $post['published']
       ));
     }
@@ -51,7 +38,7 @@ class Blog_pages extends CI_Driver {
   
   public function rss () {
     global $ci, $page;
-    $page->enforce($ci->blog->listings . 'rss.xml');
+    $page->enforce($page->url('blog', 'rss.xml'));
     if ($ci->blog->slogan != '') {
       $description = $ci->blog->slogan;
     } elseif ($ci->blog->summary != '') {
@@ -59,16 +46,13 @@ class Blog_pages extends CI_Driver {
     } else {
       $description = 'The latest posts from ' . $ci->blog->name;
     }
-    $rss = $page->plugin('Feed', 'RSS', array($ci->blog->name, $ci->blog->blog['url']['listings'], $description, array(
-      'atom:link' => array('href'=>$ci->blog->listings . 'rss.xml', 'rel'=>'self', 'type'=>'application/rss+xml')
+    $rss = $page->plugin('Feed', 'RSS', array($ci->blog->name, $page->url('blog'), $description, array(
+      'atom:link' => array('href'=>$page->url('blog', 'rss.xml'), 'rel'=>'self', 'type'=>'application/rss+xml')
     )));
-    $this->db->query('SELECT id FROM blog WHERE published < 0 ORDER BY published ASC LIMIT 10');
-    while (list($id) = $this->db->fetch('row')) $posts[] = $id;
-    $posts = $this->info($posts);
-    foreach ($posts as $post) {
+    foreach ($this->query('listings') as $post) {
       $rss->item($post['title'], array(
         'link' => $post['url'],
-        'description' => $post['summary'],
+        'description' => $post['description'],
         'guid' => array('isPermaLink'=>'true', 'value'=>$post['url']),
         'pubDate' => $post['published'],
         'lastBuildDate' => $post['updated']
@@ -82,42 +66,24 @@ class Blog_pages extends CI_Driver {
     list($uri, $Y, $m, $d) = array_pad(array_values($params), 4, '');
     if (!empty($d)) {
       list($from, $to) = $this->range($Y, $m, $d);
-      $page->enforce($ci->blog->listings .  $uri . date('/Y/m/d', $from));
+      $page->enforce($page->url('blog', $uri, date('/Y/m/d', $from)));
       $archive = array_combine(array('date', 'year', 'month', 'day'), explode(' ', date($from . ' Y F j', $from)));
-      $breadcrumbs = $this->breadcrumbs(array('Archives'=>$uri, $archive['year']=>$Y, $archive['month']=>$m, $archive['day']));
+      $breadcrumbs = $this->breadcrumbs(array('Archives'=>$uri, $archive['year']=>$Y, $archive['month']=>$m, $archive['day']=>$d));
     } elseif (!empty($m)) {
       list($from, $to) = $this->range($Y, $m);
-      $page->enforce($ci->blog->listings . $uri . date('/Y/m', $from));
+      $page->enforce($page->url('blog', $uri, date('/Y/m', $from)));
       $archive = array_combine(array('date', 'year', 'month'), explode(' ', date($from . ' Y F', $from)));
-      $breadcrumbs = $this->breadcrumbs(array('Archives'=>$uri, $archive['year']=>$Y, $archive['month']));
+      $breadcrumbs = $this->breadcrumbs(array('Archives'=>$uri, $archive['year']=>$Y, $archive['month']=>$m));
     } elseif (!empty($Y)) {
       list($from, $to) = $this->range($Y);
-      $page->enforce($ci->blog->listings . $uri . date('/Y', $from));
+      $page->enforce($page->url('blog', $uri, date('/Y', $from)));
       $archive = array_combine(array('date', 'year'), explode(' ', date($from . ' Y', $from)));
-      $breadcrumbs = $this->breadcrumbs(array('Archives'=>$uri, $archive['year']));
+      $breadcrumbs = $this->breadcrumbs(array('Archives'=>$uri, $archive['year']=>$Y));
     } else {
-      $page->enforce($ci->blog->listings . 'archives');
-      $breadcrumbs = $this->breadcrumbs(array('Archives'=>'archives'));
-      $first = date('Y', $this->db->value('SELECT ABS(published) FROM blog WHERE published < 0 ORDER BY published DESC LIMIT 1'));
-      $last = date('Y', $this->db->value('SELECT ABS(published) FROM blog WHERE published < 0 ORDER BY published ASC LIMIT 1'));
-      $years = range($last, $first); // ie. Gentiles / Jews
-      $months = range(1, 12);
-      $archives = array();
-      foreach ($years as $Y) {
-        $total = 0;
-        foreach ($months as $m) {
-          list($from, $to) = $this->range($Y, $m);
-          $month = date('M', $from);
-          $count = $this->db->value('SELECT COUNT(*) FROM blog WHERE published >= ? AND published <= ?', array(-$to, -$from));
-          $archives[$Y]['months'][$month]['count'] = $count;
-          $archives[$Y]['months'][$month]['url'] = $ci->blog->listings . 'archives/' . $Y . '/' . str_pad($m, 2, 0, STR_PAD_LEFT);
-          $archives[$Y]['months'][$month]['time'] = $from;
-          $total += $count;
-        }
-        $archives[$Y]['count'] = $total;
-        $archives[$Y]['url'] = $ci->blog->listings . 'archives/' . $Y;
-      }
-      return $this->export('archives', array('archives'=>$archives, 'breadcrumbs'=>$breadcrumbs));
+      $page->enforce($page->url('blog', $uri));
+      $breadcrumbs = $this->breadcrumbs(array('Archives'=>$uri));
+      $archives = $this->query('archives');
+      return $this->export('archives', array('breadcrumbs'=>$breadcrumbs, 'archives'=>$archives));
     }
     $count = 'SELECT COUNT(*) FROM blog WHERE published >= ? AND published <= ?';
     $query = 'SELECT id FROM blog WHERE published >= ? AND published <= ? ORDER BY published ASC';
@@ -135,7 +101,7 @@ class Blog_pages extends CI_Driver {
         'INNER JOIN authors AS a ON b.author = a.uri',
         'WHERE b.published < 0 AND b.updated < 0 AND b.author = ?',
         'GROUP BY b.author'
-      ), array($params['uri']))) $page->eject($ci->blog->listings . $uri);
+      ), array($params['uri']))) $page->eject($page->url('blog', $uri));
       $author = $ci->blog->authors($row['uri'], $row['name']);
       $author['count'] = $row['count'];
       $breadcrumbs = $this->breadcrumbs(array('Authors'=>$uri, $author['name']=>$author['url']));
@@ -144,23 +110,10 @@ class Blog_pages extends CI_Driver {
       $posts = $this->posts($author['count'], $query, array($row['uri']));
       return $this->export('author', array('author'=>$author, 'breadcrumbs'=>$breadcrumbs, 'posts'=>$this->info($posts)));
     } else { // all authors and no posts
-      $page->enforce($ci->blog->listings . $uri);
+      $page->enforce($page->url('blog', $uri));
       $breadcrumbs = $this->breadcrumbs(array('Authors'=>$uri));
-      $authors = array();
-      $this->db->query(array(
-        'SELECT COUNT(*) AS count, a.id, a.uri, a.author AS name',
-        'FROM blog AS b',
-        'INNER JOIN authors AS a ON b.author = a.uri',
-        'WHERE b.published < 0 AND b.updated < 0 AND b.author != ""',
-        'GROUP BY b.author',
-        'ORDER BY a.author ASC'
-      ));
-      while ($row = $this->db->fetch('assoc')) {
-        $author = $ci->blog->authors($row['uri'], $row['name']);
-        $author['count'] = $row['count'];
-        $authors[] = $author;
-      }
-      return $this->export('authors', array('authors'=>$authors, 'breadcrumbs'=>$breadcrumbs));
+      $authors = $this->query('authors');
+      return $this->export('authors', array('breadcrumbs'=>$breadcrumbs, 'authors'=>$authors));
     }
   }
   
@@ -175,7 +128,7 @@ class Blog_pages extends CI_Driver {
         'INNER JOIN tags on t.tag_id = tags.id',
         'WHERE b.published != 0 AND tags.uri = ?',
         'GROUP BY t.blog_id'
-      ), array($params['uri']))) $page->eject($ci->blog->listings . $uri);
+      ), array($params['uri']))) $page->eject($page->url('blog', $uri));
       $breadcrumbs = $this->breadcrumbs(array('Tags'=>'tags', $tag['name']=>$tag['uri']));
       $query = array(
         'SELECT b.id FROM tagged AS t',
@@ -186,87 +139,46 @@ class Blog_pages extends CI_Driver {
       $posts = $this->posts($tag['count'], $query, array($tag['id']));
       return $this->export('tag', array('tag'=>$tag['name'], 'breadcrumbs'=>$breadcrumbs, 'posts'=>$this->info($posts)));
     } else { // search all tags and get a frequency count
-      $page->enforce($ci->blog->listings . 'tags');
+      $page->enforce($page->url('blog', 'tags'));
       $breadcrumbs = $this->breadcrumbs(array('Tags'=>'tags'));
-      $tags = $increment = array();
-      $this->db->query(array(
-        'SELECT COUNT(t.blog_id), tags.uri, tags.tag',
-        'FROM tagged AS t',
-        'INNER JOIN blog AS b ON t.blog_id = b.id',
-        'INNER JOIN tags ON t.tag_id = tags.id',
-        'WHERE b.published != 0',
-        'GROUP BY tags.id',
-        'ORDER BY tags.tag ASC'
-      ));
-      while (list($count, $uri, $tag) = $this->db->fetch('row')) {
-        $tags[$tag]['url'] = $ci->blog->listings . 'tags/' . $uri;
-        $tags[$tag]['count'] = $count;
-        $increment[] = $count;
-      }
-      if (count($increment) > 0) {
-        $min = min($increment);
-        $increment = (max($increment) - $min) / 5;
-        if ($increment == 0) $increment++;
-        foreach ($tags as $tag => $links) {
-          if ($links['count'] < $min + $increment) {
-            $tags[$tag]['rank'] = 1;
-          } elseif ($links['count'] < $min + ($increment * 2)) {
-            $tags[$tag]['rank'] = 2;
-          } elseif ($links['count'] < $min + ($increment * 3)) {
-            $tags[$tag]['rank'] = 3;
-          } elseif ($links['count'] < $min + ($increment * 4)) {
-            $tags[$tag]['rank'] = 4;
-          } else {
-            $tags[$tag]['rank'] = 5;
-          }
-        }
-      }
-      return $this->export('tags', array('tags'=>$tags, 'breadcrumbs'=>$breadcrumbs));
+      $tags = $this->query('tags');
+      return $this->export('tags', array('breadcrumbs'=>$breadcrumbs, 'tags'=>$tags));
     }
   }
   
-  public function category ($row) { // 'id', 'uri', 'category', and 'tags'
+  public function category ($uri) {
     global $ci, $page;
-    $page->enforce($ci->blog->listings . $row['uri']);
-    $breadcrumbs = $this->breadcrumbs(array($row['category'] => $row['uri']));
-    $count = array(
-      'SELECT COUNT(*) FROM tagged AS t',
-      'INNER JOIN blog AS b ON t.blog_id = b.id',
-      'WHERE b.published != 0 AND t.blog_id > 0 AND t.tag_id IN(' . $row['tags'] . ')'
-    );
-    $query = array(
-      'SELECT b.id FROM tagged AS t',
-      'INNER JOIN blog AS b ON t.blog_id = b.id',
-      'WHERE b.published != 0 AND t.blog_id > 0 AND t.tag_id IN(' . $row['tags'] . ')',
-      'ORDER BY b.published ASC'
-    );
-    $posts = $this->posts($count, $query);
-    return $this->export('category', array('category'=>$row['category'], 'breadcrumbs'=>$breadcrumbs, 'posts'=>$this->info($posts)));
+    $page->enforce($page->url('blog', $uri));
+    $hier = $page->plugin('Hierarchy', 'categories', $this->db);
+    $path = $hier->path(array('uri', 'category'), array('where'=>'uri = ' . $uri));
+    $tree = $hier->tree(array('uri', 'category'), array('where'=>'uri = ' . $uri));
+    $counts = $hier->counts('blog', 'category_id');
+    foreach ($tree as $id => $fields) $tree[$id]['count'] = $counts[$id];
+    $category = array();
+    $breadcrumbs = array($ci->blog->name => $page->url('blog'));
+    foreach ($path as $path) {
+      $category[] = $path['category'];
+      $breadcrumbs[$path['category']] = $page->url('blog', $path['uri']);
+    }
+    $categories = array_keys($tree);
+    $count = 'SELECT COUNT(*) FROM blog WHERE category_id IN(' . implode(', ', $categories) . ') AND published != 0';
+    $query = 'SELECT id FROM blog WHERE category_id IN(' . implode(', ', $categories) . ') AND published != 0 ORDER BY published ASC';
+    $posts = $this->info($this->posts($count, $query));
+    $categories = $this->query('categories', array('nest'=>$hier->nestify($tree), 'tree'=>$tree));
+    return $this->export('category', array('category'=>$category, 'breadcrumbs'=>$breadcrumbs, 'posts'=>$posts, 'categories'=>$categories));
   }
   
   public function post ($row) { // 'id', 'uri', and 'content'
     global $ci, $page;
     if ($row['uri'] != 'index') $page->enforce($row['uri']);
     $post = $this->info($row['id']);
-    $breadcrumbs = array(
-      $ci->blog->name => $ci->blog->blog['url']['listings'],
-      $post['title'] => $post['url'],
-    );
-    if ($post['page']) {
-      $vars = array('post'=>$post, 'breadcrumbs'=>$breadcrumbs);
-    } else {
-      $vars = array('post'=>$post, 'breadcrumbs'=>$breadcrumbs, 'previous'=>array(), 'next'=>array());
-      if ($previous = $this->db->row('SELECT uri, title FROM blog WHERE published > ? AND published < 0 ORDER BY published ASC LIMIT 1', array(-$post['published']))) {
-        $previous['url'] = BASE_URL . $previous['uri'];
-        $vars['previous'] = $previous;
-      }
-      if ($next = $this->db->row('SELECT uri, title FROM blog WHERE published < ? AND published < 0 ORDER BY published DESC LIMIT 1', array(-$post['published']))) {
-        $next['url'] = BASE_URL . $next['uri'];
-        $vars['next'] = $next;
-      }
+    $breadcrumbs = array($ci->blog->name => $page->url('blog'));
+    if (!empty($post['categories'])) {
+      foreach ($post['categories'] as $category => $url) $breadcrumbs[$category] = $url;
     }
+    $breadcrumbs[$post['title']] = $post['url'];
     if ($page->robots && $post['published'] != 0) $ci->sitemap->save('blog', $post['id'], $post['content']);
-    return $this->export('post', $vars);
+    return $this->export('post', array('breadcrumbs'=>$breadcrumbs, 'post'=>$post));
   }
   
   private function range ($Y, $m=false, $d=false) {
@@ -293,18 +205,10 @@ class Blog_pages extends CI_Driver {
     return $posts;
   }
   
-  private function seo_str ($seo) {
-    return str_replace('-', ' ', ucwords($seo)); // str
-  }
-  
-  private function str_seo ($string) {
-    return str_replace(' ', '-', strtolower($string)); // seo
-  }
-  
   private function breadcrumbs ($links=array()) {
-    global $ci;
-    $breadcrumbs = array($ci->blog->name => $ci->blog->blog['url']['listings']);
-    $url = trim($ci->blog->listings, '/');
+    global $ci, $page;
+    $breadcrumbs = array($ci->blog->name => $page->url('blog'));
+    $url = trim($page->url('blog'), '/');
     if (!empty($links)) {
       foreach ($links as $name => $uri) {
         $url .= '/' . $uri;

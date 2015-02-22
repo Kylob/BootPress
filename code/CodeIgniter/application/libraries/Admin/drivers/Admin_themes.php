@@ -66,9 +66,9 @@ class Admin_themes extends CI_Driver {
     }
     $html = '';
     $form = $page->plugin('Form', 'name', 'admin_theme_manager');
-    $themes = array(BASE_URL . ADMIN . '/themes/default'=>'default');
+    $themes = array($page->url('admin', 'themes/default') => 'default');
     list($dirs) = $ci->blog->folder($this->dir, 'false', 'false');
-    foreach ($dirs as $theme) $themes[BASE_URL . ADMIN . '/themes/' . $theme] = $theme;
+    foreach ($dirs as $theme) $themes[$page->url('admin', 'themes', $theme)] = $theme;
     $form->menu('theme', $themes);
     $form->menu('preview', array('Y'=>'Preview the selected theme'));
     $form->menu('action', array(
@@ -87,7 +87,7 @@ class Admin_themes extends CI_Driver {
     $form->values($files);
     $form->values(array(
       'preview' => ($preview) ? 'Y' : 'N',
-      'theme' => BASE_URL . ADMIN . '/themes/' . $this->theme,
+      'theme' => $page->url('admin', 'themes', $this->theme),
       'action' => 'copy'
     ));
     if ($form->submitted() && empty($form->errors)) {
@@ -173,7 +173,7 @@ class Admin_themes extends CI_Driver {
       $page->eject($form->eject);
     }
     $html .= $form->header();
-    $html .= $form->fieldset('Bootstrap ' . $bp->button('link', 'Preview Theme ' . $bp->icon('new-window'), array('href'=>BASE_URL . ADMIN . '/themes/preview/' . $this->theme, 'target'=>'bootstrap')),
+    $html .= $form->fieldset('Bootstrap ' . $bp->button('link', 'Preview Theme ' . $bp->icon('new-window'), array('href'=>$page->url('admin', 'themes/preview', $this->theme), 'target'=>'bootstrap')),
       $form->field('bootstrap', 'textarea', array('class'=>'wyciwyg less input-sm', 'data-file'=>'variables.less')),
       $form->field('custom', 'textarea', array('class'=>'wyciwyg less input-sm', 'data-file'=>'custom.less'))
     );
@@ -189,7 +189,7 @@ class Admin_themes extends CI_Driver {
     $page->title = 'Bootstrap Preview';
     $page->link('<script>var less = { env:"development" };</script>');
     $page->link('<script src="' . $page->plugin('CDN', 'url', 'less/2.2.0/less.min.js') . '"></script>');
-    $page->link('<link rel="stylesheet/less" type="text/css" href="' . BASE_URL . ADMIN . '/themes/preview/' . $this->theme . '/bootstrap.less">');
+    $page->link('<link rel="stylesheet/less" type="text/css" href="' . $page->url('admin', 'themes/preview', $this->theme, 'bootstrap.less') . '">');
     return $page->outreach($this->bootstrap . 'preview.php');
   }
   

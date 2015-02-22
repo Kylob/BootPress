@@ -97,15 +97,13 @@ class Controller extends CI_Controller {
             BLOG . '/[atom|rss:method].xml',
             BLOG . '/[archives:method]/[i:year]?/[i:month]?/[i:day]?',
             BLOG . '/[authors|tags:method]/[:uri]?',
-            BLOG . '/[:method]' => 'category'
+            BLOG . '/[**:method]' => 'category'
           ))) {
             $method = (isset($route['params']['method'])) ? $route['params']['method'] : ($this->input->get('search') ? 'search' : 'index');
             if ($route['target'] == 'category') {
-              if ($route['params'] = $this->blog->db->row('SELECT id, uri, category, tags FROM categories WHERE uri = ?', array($route['params']['method']))) {
-                $method = 'category';
-              } else {
-                show_404($page->url());
-              }
+              $method = 'category';
+              $route['params'] = array_shift($route['params']);
+              if (!is_dir($this->blog->post . $route['params'])) show_404($page->url());
             }
             $html = $this->blog->pages->$method($route['params']);
           } else {
