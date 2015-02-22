@@ -555,42 +555,6 @@ class Blog extends CI_Driver_Library {
       $hier->refresh('category');
     }
     return $categories[$path];
-    
-    /*
-    if (($pos = strrpos($uri, '/')) === false) return 0;
-    $path = substr($uri, 0, $pos);
-    if ($blog && $blog['path'] == $path) return $blog['category'];
-    $refresh = false;
-    $categories = array();
-    $this->db->query('SELECT id, uri FROM categories');
-    while (list($id, $uri) = $this->db->fetch('row')) $categories[$uri] = $id;
-    if (!isset($categories[$path])) {
-      $parent = 0;
-      $previous = '';
-      foreach (explode('/', $path) as $uri) {
-        if (!isset($categories[$previous . $uri])) {
-          $categories[$previous . $uri] = $this->db->insert('categories', array(
-            'uri' => $previous . $uri,
-            'category' => ucwords(str_replace('-', ' ', $uri)),
-            'parent' => $parent
-          ));
-          $refresh = true;
-        }
-        $parent = $categories[$previous . $uri];
-        $previous .= $uri . '/';
-      }
-    }
-    if ($blog) $this->db->update('blog', 'id', array($blog['id'] => array('category_id' => $categories[$path])));
-    $delete = array();
-    foreach ($categories as $uri => $id) if (!is_dir($this->post . $uri)) $delete[] = $id;
-    if (!empty($delete)) $this->db->delete('categories', 'id', $delete);
-    if (!empty($delete) || $refresh) {
-      $hier = $page->plugin('Hierarchy', 'categories', $this->db);
-      $hier->refresh('category');
-    }
-    return $categories[$path];
-    */
-    
   }
   
   private function tag ($blog_id, $keywords, $former='') {
