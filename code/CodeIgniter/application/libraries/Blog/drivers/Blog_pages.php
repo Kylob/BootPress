@@ -85,8 +85,8 @@ class Blog_pages extends CI_Driver {
       $archives = $this->query('archives');
       return $this->export('archives', array('breadcrumbs'=>$breadcrumbs, 'archives'=>$archives));
     }
-    $count = 'SELECT COUNT(*) FROM blog WHERE published >= ? AND published <= ?';
-    $query = 'SELECT id FROM blog WHERE published >= ? AND published <= ? ORDER BY published ASC';
+    $count = 'SELECT COUNT(*) FROM blog WHERE featured <= 0 AND published >= ? AND published <= ?';
+    $query = 'SELECT id FROM blog WHERE featured <= 0 AND published >= ? AND published <= ? ORDER BY featured, published ASC';
     $posts = $this->posts($count, $query, array(-$to, -$from));
     return $this->export('archive', array('archive'=>$archive, 'breadcrumbs'=>$breadcrumbs, 'posts'=>$this->info($posts)));
   }
@@ -99,14 +99,14 @@ class Blog_pages extends CI_Driver {
         'SELECT COUNT(b.author) AS count, a.id, a.uri, a.author AS name',
         'FROM blog AS b',
         'INNER JOIN authors AS a ON b.author = a.uri',
-        'WHERE b.published < 0 AND b.updated < 0 AND b.author = ?',
+        'WHERE b.featured <= 0 AND b.published < 0 AND b.updated < 0 AND b.author = ?',
         'GROUP BY b.author'
       ), array($params['uri']))) $page->eject($page->url('blog', $uri));
       $author = $ci->blog->authors($row['uri'], $row['name']);
       $author['count'] = $row['count'];
       $breadcrumbs = $this->breadcrumbs(array('Authors'=>$uri, $author['name']=>$author['url']));
-      $count = 'SELECT COUNT(*) FROM blog WHERE published < 0 AND author = ?';
-      $query = 'SELECT id FROM blog WHERE published < 0 AND updated < 0 AND author = ? ORDER BY published ASC';
+      $count = 'SELECT COUNT(*) FROM blog WHERE featured <= 0 AND published < 0 AND updated < 0 AND author = ?';
+      $query = 'SELECT id FROM blog WHERE featured <= 0 AND published < 0 AND updated < 0 AND author = ? ORDER BY featured, published ASC';
       $posts = $this->posts($author['count'], $query, array($row['uri']));
       return $this->export('author', array('author'=>$author, 'breadcrumbs'=>$breadcrumbs, 'posts'=>$this->info($posts)));
     } else { // all authors and no posts
@@ -126,15 +126,15 @@ class Blog_pages extends CI_Driver {
         'FROM tagged AS t',
         'INNER JOIN blog AS b ON t.blog_id = b.id',
         'INNER JOIN tags on t.tag_id = tags.id',
-        'WHERE b.published != 0 AND tags.uri = ?',
+        'WHERE b.featured <= 0 AND b.published != 0 AND tags.uri = ?',
         'GROUP BY t.blog_id'
       ), array($params['uri']))) $page->eject($page->url('blog', $uri));
       $breadcrumbs = $this->breadcrumbs(array('Tags'=>'tags', $tag['name']=>$tag['uri']));
       $query = array(
         'SELECT b.id FROM tagged AS t',
         'INNER JOIN blog AS b ON t.blog_id = b.id',
-        'WHERE b.published != 0 AND t.tag_id = ?',
-        'ORDER BY b.published, b.updated ASC'
+        'WHERE b.featured <= 0 AND b.published != 0 AND t.tag_id = ?',
+        'ORDER BY b.featured, b.published, b.updated ASC'
       );
       $posts = $this->posts($tag['count'], $query, array($tag['id']));
       return $this->export('tag', array('tag'=>$tag['name'], 'breadcrumbs'=>$breadcrumbs, 'posts'=>$this->info($posts)));
@@ -161,8 +161,8 @@ class Blog_pages extends CI_Driver {
       $breadcrumbs[$path['category']] = $page->url('blog', $path['uri']);
     }
     $categories = array_keys($tree);
-    $count = 'SELECT COUNT(*) FROM blog WHERE category_id IN(' . implode(', ', $categories) . ') AND published != 0';
-    $query = 'SELECT id FROM blog WHERE category_id IN(' . implode(', ', $categories) . ') AND published != 0 ORDER BY published ASC';
+    $count = 'SELECT COUNT(*) FROM blog WHERE category_id IN(' . implode(', ', $categories) . ') AND featured <= 0 AND published != 0';
+    $query = 'SELECT id FROM blog WHERE category_id IN(' . implode(', ', $categories) . ') AND featured <= 0 AND published != 0 ORDER BY featured, published ASC';
     $posts = $this->info($this->posts($count, $query));
     $categories = $this->query('categories', array('nest'=>$hier->nestify($tree), 'tree'=>$tree));
     return $this->export('category', array('category'=>$category, 'breadcrumbs'=>$breadcrumbs, 'posts'=>$posts, 'categories'=>$categories));
@@ -233,7 +233,6 @@ class Blog_pages extends CI_Driver {
         $content = 'listings';
         break;
       case 'post':
-      case 'page':
       case 'tags':
       case 'authors':
       case 'archives':
@@ -242,12 +241,16 @@ class Blog_pages extends CI_Driver {
         break;
     }
     $ci->blog->set($blog);
-    if (is_file($ci->blog->post . $content . '.tpl')) {
-      $content = $ci->blog->smarty($ci->blog->post . $content . '.tpl', $vars);
+    if ($content == 'post' && $page->theme !== false && is_file(BASE_URI . 'themes/' . $page->theme . '/post.tpl')) {
+      $template = BASE_URI . 'themes/' . $page->theme . '/post.tpl';
+    } elseif ($content != 'post' && is_file(BASE_URI . 'themes/default/' . $content . '.tpl')) {
+      $template = BASE_URI . 'themes/default/' . $content . '.tpl';
+    } elseif (is_file($ci->blog->post . $content . '.tpl')) {
+      $template = $ci->blog->post . $content . '.tpl';
     } else {
-      $content = $ci->blog->smarty($ci->blog->templates . $content . '.tpl', $vars);
+      $template = $ci->blog->templates . $content . '.tpl';
     }
-    return $content;
+    return $ci->blog->smarty($template, $vars);
   }
   
 }

@@ -21,13 +21,13 @@ class Admin_blog extends CI_Driver {
     }
     $page->link('<style>.nav.nav-tabs > li { white-space: nowrap; }</style>');
     $menu = array();
-    if ($unpublished = $ci->blog->db->value('SELECT COUNT(*) FROM blog WHERE published = 0')) {
+    if ($unpublished = $ci->blog->db->value('SELECT COUNT(*) FROM blog WHERE featured <= 0 AND published = 0')) {
       $menu['<span class="text-danger"><b>Unpublished</b> ' . $bp->badge($unpublished) . '</span>'] = $page->url('admin', 'blog/unpublished');
     }
-    if ($posts = $ci->blog->db->value('SELECT COUNT(*) FROM blog WHERE published < 0')) {
+    if ($posts = $ci->blog->db->value('SELECT COUNT(*) FROM blog WHERE featured <= 0 AND published < 0')) {
       $menu[$bp->icon('thumb-tack', 'fa') . ' Posts ' . $bp->badge($posts)] = $page->url('admin', 'blog/posts');
     }
-    if ($pages = $ci->blog->db->value('SELECT COUNT(*) FROM blog WHERE published = 1')) {
+    if ($pages = $ci->blog->db->value('SELECT COUNT(*) FROM blog WHERE featured <= 0 AND published = 1')) {
       $menu[$bp->icon('file', 'fa') . ' Pages ' . $bp->badge($pages)] = $page->url('admin', 'blog/pages');
     }
     if (is_admin(1)) {
@@ -76,14 +76,14 @@ class Admin_blog extends CI_Driver {
       return (!empty($posts)) ? $this->listings('WHERE id IN (' . implode(', ', $posts) . ')' . $ci->blog->db->order_in('id', $posts), $alt) : '';
     }
     $page->title = 'Published Posts and Pages at ' . $ci->blog->name;
-    if (!$bp->listings->set) $bp->listings->count($ci->blog->db->value('SELECT COUNT(*) FROM blog WHERE published = 1'));
-    return $this->listings('WHERE published != 0 ORDER BY published, updated ASC' . $bp->listings->limit());
+    if (!$bp->listings->set) $bp->listings->count($ci->blog->db->value('SELECT COUNT(*) FROM blog WHERE featured <= 0 AND published != 0'));
+    return $this->listings('WHERE featured <= 0 AND published != 0 ORDER BY published, updated ASC' . $bp->listings->limit());
   }
   
   private function unpublished () {
     global $ci, $page;
     $page->title = 'Unpublished Posts and Pages at ' . $ci->blog->name;
-    return $this->listings('WHERE published = 0 ORDER BY published, updated ASC');
+    return $this->listings('WHERE featured <= 0 AND published = 0 ORDER BY featured, published, updated ASC');
   }
   
   private function posts () {
@@ -91,8 +91,8 @@ class Admin_blog extends CI_Driver {
     $html = '';
     $page->title = 'Published Posts at ' . $ci->blog->name;
     $bp->listings->display(20);
-    if (!$bp->listings->set) $bp->listings->count($ci->blog->db->value('SELECT COUNT(*) FROM blog WHERE published < 0'));
-    $html .= $this->listings('WHERE published < 0 ORDER BY published, updated ASC' . $bp->listings->limit());
+    if (!$bp->listings->set) $bp->listings->count($ci->blog->db->value('SELECT COUNT(*) FROM blog WHERE featured <= 0 AND published < 0'));
+    $html .= $this->listings('WHERE featured <= 0 AND published < 0 ORDER BY featured, published, updated ASC' . $bp->listings->limit());
     return $html;
   }
   
@@ -100,8 +100,8 @@ class Admin_blog extends CI_Driver {
     global $bp, $ci, $page;
     $page->title = 'Published Pages at ' . $ci->blog->name;
     $bp->listings->display(20);
-    if (!$bp->listings->set) $bp->listings->count($ci->blog->db->value('SELECT COUNT(*) FROM blog WHERE published = 1'));
-    return $this->listings('WHERE published = 1 ORDER BY published, updated ASC' . $bp->listings->limit());
+    if (!$bp->listings->set) $bp->listings->count($ci->blog->db->value('SELECT COUNT(*) FROM blog WHERE featured <= 0 AND published = 1'));
+    return $this->listings('WHERE featured <= 0 AND published = 1 ORDER BY featured, published, updated ASC' . $bp->listings->limit());
   }
   
   private function authors () {
@@ -301,27 +301,16 @@ class Admin_blog extends CI_Driver {
         });
       '));
     }
-    /*
-    $slash = ($edit) ? strrpos($post['uri'], '/') : false;
-    $suffix = ($edit) ? ($slash ? substr($post['uri'], $slash + 1) : $post['uri']) : ''; // edit uri without the categories (if any)
-    $select = ($edit) ? ($slash ? substr($post['uri'], 0, $slash + 1) : $post['uri']) : '&nbsp;'; // first the key
-    $select = ($edit) ? array($select => $post['uri'] . ' (original url)') : array($select => ''); // then the value
-    */
-    
     $select = array();
     $suffix = ($edit) ? (($slash = strrpos($post['uri'], '/')) ? substr($post['uri'], $slash) : '/' . $post['uri']) : '/';
     $ci->blog->db->query('SELECT uri FROM categories ORDER BY uri ASC');
     while (list($uri) = $ci->blog->db->fetch('row')) $select[$uri . $suffix] = $uri . $suffix;
     if (!empty($select)) {
-      
       $default = ($edit) ? $post['uri'] : '&nbsp;';
       if ($edit && isset($select[$post['uri']])) {
         $default = '&nbsp;';
         $select[$post['uri']] .= ' (current url)';
       }
-      
-      // exit('<pre>' . print_r($select, true) . '</pre>');
-      
       $form->menu('category', $select, '&nbsp;');
       $form->validate('category', 'Category', '', 'You may select a category among those already in use.');
       $html .= $form->field('category', 'select');
@@ -362,7 +351,7 @@ class Admin_blog extends CI_Driver {
         'FROM tagged AS t',
         'INNER JOIN blog AS b ON t.blog_id = b.id',
         'INNER JOIN tags ON t.tag_id = tags.id',
-        'WHERE b.published != 0',
+        'WHERE b.featured <= 0 AND b.published != 0',
         'GROUP BY tags.id',
         'ORDER BY tags.uri ASC'
       ));
@@ -382,7 +371,7 @@ class Admin_blog extends CI_Driver {
         'SELECT COUNT(*) AS count, a.id, a.uri, a.author AS name',
         'FROM blog AS b',
         'INNER JOIN authors AS a ON b.author = a.uri',
-        'WHERE b.published < 0 AND b.updated < 0 AND b.author != ""',
+        'WHERE b.featured <= 0 AND b.published < 0 AND b.updated < 0 AND b.author != ""',
         'GROUP BY b.author',
         'ORDER BY a.author ASC'
       ));
