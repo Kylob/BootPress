@@ -37,7 +37,7 @@ class Blog extends CI_Driver_Library {
     $page->load(BASE, 'bootstrap/' . $version . '/BootPress.php');
     $bp = new BootPress;
     $this->blog['page'] = ''; // This is established in the $ci->blog->pages class
-    $this->blog['url'] = array(
+    $this->blog['url'] = array( // deprecated and not used at BootPress so far as I am aware except in $this->set()
       'listings' => BASE_URL . BLOG, // may or may not have trailing slash
       'base' => BASE_URL, // with trailing slash
       'media' => '' // with trailing slash
@@ -51,7 +51,7 @@ class Blog extends CI_Driver_Library {
       case 'db':
         if (!isset($this->db)) {
           $this->db = $page->plugin('Database', 'sqlite', BASE_URI . 'databases/blog.db');
-          if ($this->db->created || version_compare('1.0', $this->db->settings('version'))) {
+          if ($this->db->created || version_compare('1.0.1', $this->db->settings('version'))) {
             $this->db->settings('version', '1.0');
             
             $this->db->create('blog', array(
@@ -64,11 +64,12 @@ class Blog extends CI_Driver_Library {
               'keywords' => 'TEXT NOT NULL DEFAULT ""',
               'theme' => 'TEXT NOT NULL DEFAULT ""',
               'thumb' => 'TEXT NOT NULL DEFAULT ""',
+              'featured' => 'INTEGER NOT NULL DEFAULT 0',
               'published' => 'INTEGER NOT NULL DEFAULT 0',
               'updated' => 'INTEGER NOT NULL DEFAULT 0',
               'author' => 'TEXT NOT NULL DEFAULT ""',
               'content' => 'TEXT NOT NULL DEFAULT ""'
-            ), array('category_id', 'published, updated, author'));
+            ), array('category_id', 'featured, published, updated, author'));
             
             $this->db->create('authors', array(
               'id' => 'INTEGER PRIMARY KEY',
@@ -132,7 +133,10 @@ class Blog extends CI_Driver_Library {
         'page' => new PageClone($page, array('url', 'set', 'meta', 'link', 'plugin', 'filter'))
       ));
       $security = new Smarty_Security($smarty);
-      $security->php_functions = $this->config['php_functions'];
+      $security->php_functions = array_merge(
+        array('isset', 'empty', 'count', 'sizeof', 'in_array', 'is_array', 'time', 'nl2br'), // Smarty defaults
+        array('number_format', 'implode', 'explode', 'array_keys', 'array_values', 'array_flip', 'array_reverse', 'array_shift', 'array_unshift', 'array_pop', 'array_push', 'array_combine', 'array_merge')
+      );
       $smarty->enableSecurity($security);
     }
     unset($vars['page'], $vars['bp']);
@@ -191,8 +195,8 @@ class Blog extends CI_Driver_Library {
         break;
         
       case 'listings': // limit config (order by published ~DESC) - same as index page
-        if (!$bp->listings->set) $bp->listings->count($this->db->value('SELECT COUNT(*) FROM blog WHERE published < 0'));
-        $this->db->query('SELECT id FROM blog WHERE published < 0 ORDER BY published ASC' . $bp->listings->limit());
+        if (!$bp->listings->set) $bp->listings->count($this->db->value('SELECT COUNT(*) FROM blog WHERE featured <= 0 AND published < 0'));
+        $this->db->query('SELECT id FROM blog WHERE featured <= 0 AND published < 0 ORDER BY featured, published ASC' . $bp->listings->limit());
         while (list($id) = $this->db->fetch('row')) $posts[] = $id;
         $posts = $this->info($posts);
         break;
@@ -202,7 +206,7 @@ class Blog extends CI_Driver_Library {
       case 'archives': // no limit (order by month DESC, and only start if count > 0) - include empty months?
         $years = (is_array($params)) ? $params : array();
         if (empty($years)) {
-          $times = $this->db->row('SELECT ABS(MAX(published)) AS begin, ABS(MIN(published)) AS end FROM blog WHERE published < 0');
+          $times = $this->db->row('SELECT ABS(MAX(published)) AS begin, ABS(MIN(published)) AS end FROM blog WHERE featured <= 0 AND published < 0');
           if (!is_null($times['end'])) $years = range(date('Y', $times['begin']), date('Y', $times['end']));
         }
         $months = array('Jan'=>1, 'Feb'=>2, 'Mar'=>3, 'Apr'=>4, 'May'=>5, 'Jun'=>6, 'Jul'=>7, 'Aug'=>8, 'Sep'=>9, 'Oct'=>10, 'Nov'=>11, 'Dec'=>12);
@@ -211,7 +215,7 @@ class Blog extends CI_Driver_Library {
           foreach ($months as $M => $n) {
             $to = mktime(23, 59, 59, $n + 1, 0, $Y) * -1;
             $from = mktime(0, 0, 0, $n, 1, $Y) * -1;
-            $archives[] = "SUM(CASE WHEN published >= {$to} AND published <= {$from} THEN 1 ELSE 0 END) AS {$M}{$Y}";
+            $archives[] = "SUM(CASE WHEN featured <= 0 AND published >= {$to} AND published <= {$from} THEN 1 ELSE 0 END) AS {$M}{$Y}";
           }
         }
         if (!empty($archives)) {
@@ -232,7 +236,7 @@ class Blog extends CI_Driver_Library {
           'SELECT COUNT(*) AS count, a.id, a.uri, a.author AS name',
           'FROM blog AS b',
           'INNER JOIN authors AS a ON b.author = a.uri',
-          'WHERE b.published < 0 AND b.updated < 0 AND b.author != ""',
+          'WHERE b.featured <= 0 AND b.published < 0 AND b.updated < 0 AND b.author != ""',
           'GROUP BY b.author',
           'ORDER BY a.author ASC'
         ));
@@ -282,7 +286,7 @@ class Blog extends CI_Driver_Library {
           'FROM tagged AS t',
           'INNER JOIN blog AS b ON t.blog_id = b.id',
           'INNER JOIN tags ON t.tag_id = tags.id',
-          'WHERE b.published != 0',
+          'WHERE b.featured <= 0 AND b.published != 0',
           'GROUP BY tags.id',
           'ORDER BY tags.tag ASC'
         ));
@@ -355,6 +359,7 @@ class Blog extends CI_Driver_Library {
         'theme' => $page->theme,
         'thumb' => (string) $page->thumb,
         'author' => (!empty($author)) ? $page->seo($author) : '',
+        'featured' => ($page->featured === true) ? -1 : 0,
         'published' => $published,
         'updated' => filemtime($file) * -1,
         'content' => $content
@@ -385,10 +390,10 @@ class Blog extends CI_Driver_Library {
     if (empty($ids)) return array();
     $ids = (array) $ids;
     $this->db->query(array(
-      'SELECT b.id, b.uri, b.seo, b.title, b.description, b.thumb, ABS(b.published) AS published, ABS(b.updated) AS updated, b.content,',
+      'SELECT b.id, b.uri, b.seo, b.title, b.description, b.thumb, ABS(b.featured) AS featured, ABS(b.published) AS published, ABS(b.updated) AS updated, b.content,',
       '  a.id AS author_id, a.uri AS author_uri, a.author AS author_name,',
-      '  (SELECT p.uri || "," || p.title FROM blog AS p WHERE p.published > b.published AND p.published < 0 ORDER BY p.published ASC LIMIT 1) AS previous,',
-      '  (SELECT n.uri || "," || n.title FROM blog AS n WHERE n.published < b.published AND n.published < 0 ORDER BY n.published DESC LIMIT 1) AS next,',
+      '  (SELECT p.uri || "," || p.title FROM blog AS p WHERE p.featured = b.featured AND p.published > b.published AND p.published < 0 ORDER BY p.featured, p.published ASC LIMIT 1) AS previous,',
+      '  (SELECT n.uri || "," || n.title FROM blog AS n WHERE n.featured = b.featured AND n.published < b.published AND n.published < 0 ORDER BY n.featured, n.published DESC LIMIT 1) AS next,',
       '  (SELECT GROUP_CONCAT(p.uri) FROM categories AS c INNER JOIN categories AS p WHERE c.lft BETWEEN p.lft AND p.rgt AND c.id = b.category_id ORDER BY c.lft) AS category_uris,',
       '  (SELECT GROUP_CONCAT(p.category) FROM categories AS c INNER JOIN categories AS p WHERE c.lft BETWEEN p.lft AND p.rgt AND c.id = b.category_id ORDER BY c.lft) AS category_names,',
       '  (SELECT GROUP_CONCAT(t.uri) FROM tagged INNER JOIN tags AS t ON tagged.tag_id = t.id WHERE tagged.blog_id = b.id) AS tag_uris,',
@@ -417,6 +422,7 @@ class Blog extends CI_Driver_Library {
       } else {
         unset($row['previous'], $row['next']);
       }
+      $row['featured'] = (!empty($row['featured'])) ? true : false;
       $row['categories'] = (!empty($row['category_uris'])) ? array_combine(explode(',', $row['category_names']), explode(',', $row['category_uris'])) : array();
       foreach ($row['categories'] as $category => $url) $row['categories'][$category] = $page->url('blog', $url);
       $row['tags'] = (!empty($row['tag_uris'])) ? array_combine(explode(',', $row['tag_names']), explode(',', $row['tag_uris'])) : array();
