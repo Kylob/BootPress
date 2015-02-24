@@ -306,7 +306,9 @@ class Controller extends CI_Controller {
       $config['profile'] = false;
       $config['query_builder'] = true;
       $db = $page->plugin('Database', $config);
-      if (isset($config['sqlite']) && $db->created) {
+      if (isset($config['mysql'])) {
+        $db->query('SET time_zone = "+00:00"');
+      } elseif (isset($config['sqlite']) && $db->created) {
         $db->create('ci_sessions', array(
           'session_id' => 'TEXT NOT NULL DEFAULT ""',
           'ip_address' => 'TEXT NOT NULL DEFAULT ""',
