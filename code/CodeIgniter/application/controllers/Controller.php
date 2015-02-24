@@ -4,24 +4,30 @@ class Controller extends CI_Controller {
 
   public $poster;
   private $model;
+  private $bp_admin;
   
   public function _remap ($model) {
     global $admin, $ci, $page;
     $this->benchmark->mark('page_setup_start');
-    $admin = array_merge(array('name'=>'', 'email'=>'', 'password'=>'', 'folder'=>''), (array) $admin);
-    define('ADMIN', !empty($admin['folder']) ? $admin['folder'] : 'admin');
     if (!defined('BLOG')) define('BLOG', '');
     define('BASE_URL', $this->config->base_url());
-    
-    $uri = $this->uri->uri_string();
-    $protocol = (is_https()) ? 'https' : 'http';
-    $actual_url = $protocol . '://' . $_SERVER['HTTP_HOST'] . $_SERVER['REQUEST_URI'];
-    if ($model != '#cache#') {
-      $protocol = substr(BASE_URL, 0, strpos(BASE_URL, '://'));
-      if ($model != ADMIN) {
-        $uri = str_replace('_', '-', $uri);
+    $this->poster = md5(BASE_URL);
+    $this->model = $model;
+    $admin = array_merge(array('name'=>'', 'email'=>'', 'password'=>'', 'folder'=>''), (array) $admin);
+    $ci = $this; // $ci =& get_instance(); doesn't cut it so ...
+    if (strpos($admin['folder'], '://')) {
+      if (strpos($admin['folder'], BASE_URL) === 0) {
+        $folder = trim(substr($admin['folder'], strlen(BASE_URL)), '/');
       }
+    } elseif (!empty($admin['folder'])) {
+      $folder = trim($admin['folder'], '/');
+    } else {
+      $folder = 'admin';
     }
+    define('ADMIN', isset($folder) ? $folder.'/' : '');
+    $uri = $this->uri->uri_string();
+    $this->bp_admin = (ADMIN != '' && strpos($uri, ADMIN) === 0) ? true : false;
+    if (!$this->bp_admin && $this->model != '#cache#') $uri = str_replace('_', '-', $uri);
     $paths = array();
     foreach (explode('/', $uri) as $value) {
       if (($extension = strpos($value, '.')) !== false) $value = substr($value, 0, $extension); // remove file extensions
@@ -35,14 +41,11 @@ class Controller extends CI_Controller {
       $desired_url = $this->config->site_url($paths);
     }
     $desired_url .= strstr($_SERVER['REQUEST_URI'], '?');
+    $actual_url = (is_https() ? 'https' : 'http') . '://' . $_SERVER['HTTP_HOST'] . $_SERVER['REQUEST_URI'];
     if ($actual_url != $desired_url) {
       header('Location: ' . $desired_url, true, 301);
       exit;
     }
-    
-    $ci = $this; // $ci =& get_instance(); doesn't cut it so ...
-    $this->poster = md5(BASE_URL);
-    $this->model = $model;
     $errors = '';
     do { $errors .= ob_get_clean(); } while (ob_get_level());
     ob_start();
@@ -96,22 +99,22 @@ class Controller extends CI_Controller {
         $method = array_shift($params); // Either 'robots' or 'xml'
         $html = $this->sitemap->$method(array_shift($params));
       } else {
-        if ($this->model == ADMIN) {
+        if ($this->bp_admin) {
           $this->load->driver('blog', array('role'=>'#admin#'));
           if ($route = $page->routes(array(
             ADMIN,
-            ADMIN . '/[blog:view]/[published|unpublished|posts|pages' . (is_admin(1) ? '|authors|categories|tags|templates' : null) . ':folder]?',
-            ADMIN . '/[sitemap|image' . (is_admin(1) ? '|setup|errors|plugins|folders|databases' : null) . ':view]',
-            ADMIN . '/[users:view]/[logout' . (is_admin(1) ? '|register|edit|list' : null) . ':action]?',
-            ADMIN . '/[themes:view]/[preview:action]?/[:theme]?/[bootstrap\.less:less]?',
-            ADMIN . '/[analytics:view]/[users|pages|referrers:method]?'
+            ADMIN . '[blog:view]/[published|unpublished|posts|pages' . (is_admin(1) ? '|authors|categories|tags|templates' : null) . ':folder]?',
+            ADMIN . '[sitemap|image' . (is_admin(1) ? '|setup|errors|plugins|folders|databases' : null) . ':view]',
+            ADMIN . '[users:view]/[logout' . (is_admin(1) ? '|register|edit|list' : null) . ':action]?',
+            ADMIN . '[themes:view]/[preview:action]?/[:theme]?/[bootstrap\.less:less]?',
+            ADMIN . '[analytics:view]/[users|pages|referrers:method]?'
           ))) {
-            if (!isset($route['params']['view'])) $page->eject(ADMIN . '/blog');
+            if (!isset($route['params']['view'])) $page->eject(ADMIN . 'blog');
             $view = $route['params']['view'];
             $this->load->driver('admin', array('file'=>$view));
             $html = $this->admin->$view->view($route['params']);
           } else {
-            $page->eject(BASE_URL . ADMIN . '/users');
+            $page->eject(BASE_URL . ADMIN . 'users');
           }
         } elseif ($folder = $page->folder(BASE_URI . 'folders/')) {
           $this->load->driver('blog', array('role'=>'#folder#'));
@@ -370,7 +373,7 @@ class Controller extends CI_Controller {
   
   private function layout ($content) {
     global $ci, $page;
-    if ($this->model == ADMIN) {
+    if ($this->bp_admin) {
       $page->plugin('CDN', array('prepend', 'links'=>array(
         'bootstrap/' . $ci->blog->bootstrap . '/css/bootstrap.min.css',
         'bootstrap/' . $ci->blog->bootstrap . '/js/bootstrap.min.js',
