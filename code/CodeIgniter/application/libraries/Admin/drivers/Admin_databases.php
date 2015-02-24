@@ -6,13 +6,11 @@ class Admin_databases extends CI_Driver {
     global $bp, $ci, $page;
     if (!is_admin(1)) $page->eject();
     if ( isset($_GET['file']) ||
-         (isset($_GET['db']) && (isset($_GET['server']) || isset($_GET['sqlite']) || isset($_GET['sqlite2']) || isset($_GET['pgsql']) || isset($_GET['oracle']) || isset($_GET['mssql']))) ) {
-         
+         (isset($_GET['db']) && (isset($_GET['server']) || isset($_GET['sqlite']) || isset($_GET['sqlite2']) || isset($_GET['pgsql']) || isset($_GET['oracle']) || isset($_GET['mssql'])))
+    ) {
       $errors =& load_class('Exceptions', 'core');
       $errors->log = false;
-      include APPPATH . 'libraries/Admin/adminer-3.6.2.php';
-      
-      // include APPPATH . 'libraries/Admin/adminer-4.1.0.php';
+      include APPPATH . 'libraries/Admin/adminer-4.2.0.php';
       exit;
     }
     $ci->load->driver('resources');

@@ -3,7 +3,7 @@
 {if $blog.page == 'index'}
   
   {$page->set([
-    'title' => "{$blog.name} {if !empty($blog.slogan)} - {$blog.slogan} {/if}",
+    'title' => "{$blog.name}",
     'description' => "{if !empty($blog.summary)} {$blog.summary} {else} View all of the posts at {$blog.name} {/if}"
   ])}
   
