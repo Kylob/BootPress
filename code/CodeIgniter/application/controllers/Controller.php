@@ -10,8 +10,36 @@ class Controller extends CI_Controller {
     $this->benchmark->mark('page_setup_start');
     $admin = array_merge(array('name'=>'', 'email'=>'', 'password'=>'', 'folder'=>''), (array) $admin);
     define('ADMIN', !empty($admin['folder']) ? $admin['folder'] : 'admin');
-    define('BASE_URL', $this->config->base_url());
     if (!defined('BLOG')) define('BLOG', '');
+    define('BASE_URL', $this->config->base_url());
+    
+    $uri = $this->uri->uri_string();
+    $protocol = (is_https()) ? 'https' : 'http';
+    $actual_url = $protocol . '://' . $_SERVER['HTTP_HOST'] . $_SERVER['REQUEST_URI'];
+    if ($model != '#cache#') {
+      $protocol = substr(BASE_URL, 0, strpos(BASE_URL, '://'));
+      if ($model != ADMIN) {
+        $uri = str_replace('_', '-', $uri);
+      }
+    }
+    $paths = array();
+    foreach (explode('/', $uri) as $value) {
+      if (($extension = strpos($value, '.')) !== false) $value = substr($value, 0, $extension); // remove file extensions
+      if (!empty($value)) $paths[] = $value; // remove empty "folders"
+    }
+    $paths = array_diff($paths, array('index')); // remove any reference to 'index'
+    $type = pathinfo($uri, PATHINFO_EXTENSION);
+    if (!empty($type)) {
+      $desired_url = $this->config->base_url(implode('/', $paths) . '.' . $type);
+    } else {
+      $desired_url = $this->config->site_url($paths);
+    }
+    $desired_url .= strstr($_SERVER['REQUEST_URI'], '?');
+    if ($actual_url != $desired_url) {
+      header('Location: ' . $desired_url, true, 301);
+      exit;
+    }
+    
     $ci = $this; // $ci =& get_instance(); doesn't cut it so ...
     $this->poster = md5(BASE_URL);
     $this->model = $model;

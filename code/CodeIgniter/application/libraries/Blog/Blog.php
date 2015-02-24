@@ -22,12 +22,12 @@ class Blog extends CI_Driver_Library {
     $this->post = BASE_URI . 'blog/content/';
     if (!is_dir($this->post)) mkdir($this->post, 0755, true);
     #-- Blog --#
-    $this->blog = array('name'=>'', 'slogan'=>'', 'summary'=>'');
+    $this->blog = array('name'=>'', 'summary'=>'');
     if (!is_file($this->post . 'setup.php')) file_put_contents($this->post . 'setup.php', file_get_contents($this->templates . 'setup.php'));
     include($this->post . 'setup.php');
     if (isset($config['blog'])) $this->blog = array_merge($this->blog, $config['blog']);
     unset($config['blog']);
-    $this->config = array_merge(array('pagination'=>10, 'php_functions'=>null, 'page_plugins'=>null), $config);
+    $this->config = array_merge(array('pagination'=>10, 'page_plugins'=>null), $config);
     if (isset($config['bootstrap']) && is_dir(BASE . 'bootstrap/' . $config['bootstrap'])) {
       $this->blog['bootstrap'] = $config['bootstrap'];
     } else {

@@ -34,31 +34,16 @@ class Page {
     $this->charset = $ci->config->item('charset');
   }
   
-  public function folder ($folders='', $allow=array('xml', 'txt', 'less')) {
+  public function folder ($folders='') {
     global $ci;
     if (is_null($this->folder) && !empty($folders)) {
       $this->folder = false;
-      $actual_url = (is_https() ? 'https' : 'http') . '://' . $_SERVER['HTTP_HOST'] . $_SERVER['REQUEST_URI'];
-      $paths = array();
-      foreach (explode('/', str_replace('_', '-', $this->uri)) as $value) {
-        if (($extension = strpos($value, '.')) !== false) $value = substr($value, 0, $extension); // remove file extensions
-        if (!empty($value)) $paths[] = $value; // remove empty "folders"
-      }
-      $paths = array_diff($paths, array('index')); // remove any reference to 'index'
-      if (in_array($this->type, $allow)) {
-        $desired_url = $ci->config->base_url(implode('/', $paths) . '.' . $this->type);
-      } else {
-        $desired_url = $ci->config->site_url($paths) . $this->query;
-      }
-      if ($actual_url != $desired_url) {
-        header('Location: ' . $desired_url, true, 301);
-        exit;
-      }
       if (empty($this->uri) && is_file($folders . 'index/index.php')) {
         $this->folder = $folders . 'index/';
       } elseif (($folder = $ci->input->get('page')) && !preg_match('/(\?|&)page=/i', $this->query) && is_file($folders . $folder . '/index.php')) {
         $this->folder = $folders . $folder . '/';
       } else {
+        $paths = explode('/', $this->uri);
         for ($count = count($paths); $count > 0; $count--) {
           $path = implode('/', $paths);
           if (is_file($folders . $path . '/index.php')) {
