@@ -94,6 +94,8 @@ function display_wyciwyg (classes, data, retrieve, file, line, col) {
   editor.getSession().setValue(data, line);
   if (classes.hasClass("php")) {
     editor.getSession().setMode("ace/mode/php");
+  } else if (classes.hasClass("ini")) {
+    editor.getSession().setMode("ace/mode/ini");
   } else if (classes.hasClass("tpl")) {
     editor.getSession().setMode("ace/mode/smarty");
   } else if (classes.hasClass("html")) {

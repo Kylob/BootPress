@@ -23,7 +23,7 @@ class Admin_plugins extends CI_Driver {
     }
     $form = $page->plugin('Form', 'name', 'admin_plugins');
     list($dirs) = $ci->blog->folder($this->plugins, false, false);
-    $form->menu('plugin', array_combine($dirs, $dirs), '&nbsp;');
+    if (!empty($dirs)) $form->menu('plugin', array_combine($dirs, $dirs), '&nbsp;');
     if ($plugin) $form->values(array('plugin'=>$plugin, 'edit'=>$plugin));
     $form->validate('plugin', 'Plugin', '', 'Select a plugin that you would like to edit.');
     if ($plugin) {
@@ -52,7 +52,7 @@ class Admin_plugins extends CI_Driver {
     $docs = $bp->button('sm info pull-right', 'Documentation ' . $bp->icon('new-window'), array('href'=>'http://bootpress.org/getting-started#plugins', 'target'=>'_blank'));
     $html .= '<div class="page-header"><p class="lead">' . $bp->icon('plug', 'fa') . ' ' . ($plugin ? 'Edit' : 'Select') . ' ' . $delete . '&nbsp;' . $docs . '</p></div>';
     $html .= $form->header();
-    $html .= $form->field('plugin', 'select');
+    $html .= $form->field('plugin', !empty($dirs) ? 'select' : 'hidden');
     $html .= $form->field('edit', 'text', array('append'=>$bp->button('primary', 'Submit', array('type'=>'submit', 'data-loading-text'=>'Submitting...'))));
     if ($plugin) $html .= $form->field('index', 'textarea', array('class'=>'wyciwyg php input-sm', 'data-file'=>'index.php'));
     $html .= $form->close();

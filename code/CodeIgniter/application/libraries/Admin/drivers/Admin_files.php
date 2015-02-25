@@ -104,6 +104,19 @@ class Admin_files extends CI_Driver {
               }
             }
             break;
+          case '.ini':
+            // http://stackoverflow.com/questions/1241728/can-i-try-catch-a-warning
+            set_error_handler(function($errno, $errstr){throw new Exception($errstr);});
+            $linter = BASE_URI . 'blog/' . md5($file) . '.ini';
+            file_put_contents($linter, $code);
+            try {
+              $output = parse_ini_file($linter);
+              unlink($linter);
+            } catch (Exception $e) {
+              exit(preg_replace('#' . str_replace('/', '[\\\\//]{1}', preg_quote($linter)) . '#', str_replace('.ini', '', $save) . '.ini', $e->getMessage()));
+            }
+            restore_error_handler();
+            break;
           case '.tpl':
             $linter = BASE_URI . 'blog/' . md5($file) . '.tpl';
             file_put_contents($linter, $code);

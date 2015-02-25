@@ -13,8 +13,18 @@ class Controller extends CI_Controller {
     define('BASE_URL', $this->config->base_url());
     $this->poster = md5(BASE_URL);
     $this->model = $model;
-    $admin = array_merge(array('name'=>'', 'email'=>'', 'password'=>'', 'folder'=>''), (array) $admin);
     $ci = $this; // $ci =& get_instance(); doesn't cut it so ...
+    $errors = '';
+    do { $errors .= ob_get_clean(); } while (ob_get_level());
+    ob_start();
+    session_cache_limiter('');
+    if ($this->model == '#cache#') {
+      $file = func_get_arg(1);
+      $type = array_pop($file);
+      $this->load->driver('resources');
+      return $this->resources->deliverer->view(implode('/', $file), $type);
+    }
+    $admin = array_merge(array('name'=>'', 'email'=>'', 'password'=>'', 'folder'=>''), (array) $admin);
     if (strpos($admin['folder'], '://')) {
       if (strpos($admin['folder'], BASE_URL) === 0) {
         $folder = trim(substr($admin['folder'], strlen(BASE_URL)), '/');
@@ -26,8 +36,8 @@ class Controller extends CI_Controller {
     }
     define('ADMIN', isset($folder) ? $folder.'/' : '');
     $uri = $this->uri->uri_string();
-    $this->bp_admin = (ADMIN != '' && strpos($uri, ADMIN) === 0) ? true : false;
-    if (!$this->bp_admin && $this->model != '#cache#') $uri = str_replace('_', '-', $uri);
+    $this->bp_admin = (ADMIN != '' && strpos($uri.'/', ADMIN) === 0) ? true : false;
+    if (!$this->bp_admin && $this->poster != $this->model) $uri = str_replace('_', '-', $uri);
     $paths = array();
     foreach (explode('/', $uri) as $value) {
       if (($extension = strpos($value, '.')) !== false) $value = substr($value, 0, $extension); // remove file extensions
@@ -45,16 +55,6 @@ class Controller extends CI_Controller {
     if ($actual_url != $desired_url) {
       header('Location: ' . $desired_url, true, 301);
       exit;
-    }
-    $errors = '';
-    do { $errors .= ob_get_clean(); } while (ob_get_level());
-    ob_start();
-    session_cache_limiter('');
-    if ($this->model == '#cache#') {
-      $file = func_get_arg(1);
-      $type = array_pop($file);
-      $this->load->driver('resources');
-      return $this->resources->deliverer->view(implode('/', $file), $type);
     }
     $this->load->driver(array('session', 'sitemap'));
     if ($html = $this->sitemap->cached()) {
@@ -369,6 +369,47 @@ class Controller extends CI_Controller {
       $this->db = $db->ci;
     }
     return $db;
+  }
+  
+  public function ini ($settings, $comments=array()) { // This is only here temporarily
+    $content = '';
+    if (is_array($settings)) {
+      $reserved = array('null', 'yes', 'no', 'true', 'false', 'on', 'off', 'none');
+      $characters = array('{', '}', '|', '&', '~', '!', '[', '(', ')', '^', '"');
+      foreach ($settings as $name => $param) {
+        $name = str_replace($characters, '', $name);
+        if (in_array($name, $reserved)) continue; // don't do that
+        if (isset($comments[$name])) $content .= '; ' . implode("\n; ", (array) $comments[$name]) . "\n";
+        if (is_array($param)) {
+          $params = array();
+          foreach ($param as $key => $value) {
+            if (!is_numeric($key)) $key = str_replace($characters, '', $key);
+            if (is_numeric($key) || in_array($key, $reserved)) {
+              $params[] = $value;
+            } else {
+              $params["{$name}[{$key}]"] = $value;
+            }
+          }
+          $pad = max(array_map('strlen', array_keys($params)));
+          foreach ($params as $key => $value) {
+            if (is_numeric($key)) $key = $name . '[]';
+            $content .= str_pad($key, $pad) . ' = ' . $this->ini((string) $value) . "\n";
+          }
+        } else {
+          $content .= $name . ' = ' . $this->ini($param) . "\n";
+        }
+        $content .= "\n";
+      }
+    } elseif (is_null($settings)) {
+      $content .= 'null';
+    } elseif (is_bool($settings)) {
+      $content .= ($settings) ? 'true' : 'false';
+    } elseif (is_numeric($settings)) {
+      $content .= $settings;
+    } else {
+      $content .= '"' . $settings . '"';
+    }
+    return $content;
   }
   
   private function layout ($content) {

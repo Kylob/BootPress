@@ -7,7 +7,7 @@ class Admin extends CI_Driver_Library {
   
   public function __construct ($params) {
     global $ci, $page;
-    if ($ci->blog->controller != '#admin#') {
+    if ($ci->blog->controller != '#admin#' && ADMIN != '') {
       $this->valid_drivers = array('files');
       return;
     }
@@ -47,7 +47,7 @@ class Admin extends CI_Driver_Library {
   public function display ($content='') {
     global $bp, $ci, $page;
     $html = '';
-    if ($ci->blog->controller != '#admin#') {
+    if ($ci->blog->controller != '#admin#' && ADMIN != '') {
       $page->filter('layout', 'prepend', '<div id="adminForms">');
       $page->filter('layout', 'append', '</div>' . $this->wyciwyg());
       $page->link('<style>textarea.input-sm { font-family: Menlo, Monaco, Consolas, "Courier New", monospace; }</style>');
@@ -111,8 +111,8 @@ class Admin extends CI_Driver_Library {
           $search = (count($links) > 1) ? $bp->search($page->url('admin', 'blog/published')) . '<br>' : '';
           $errors = ($this->view != 'setup' && in_array('errors', $this->valid_drivers)) ? $ci->admin->errors->btn() : '';
           $sidebar = $bp->pills($links, array('active'=>$page->url('admin', $this->view), 'align'=>'stacked'));
-          $sidebar = str_replace('<a href="#">Setup</a>', '<a href="#" class="wyciwyg php" data-retrieve="setup.php" data-file="setup.php">' . $bp->icon('cog', 'fa') . ' Setup</a>', $sidebar);
-          $ci->admin->files->save(array('setup.php' => array($ci->blog->post . 'setup.php', $ci->blog->templates . 'setup.php')));
+          $sidebar = str_replace('<a href="#">Setup</a>', '<a href="#" class="wyciwyg ini" data-retrieve="setup.ini" data-file="setup.ini">' . $bp->icon('cog', 'fa') . ' Setup</a>', $sidebar);
+          $ci->admin->files->save(array('setup.ini' => array($ci->blog->post . 'setup.ini', $ci->blog->templates . 'setup.ini')));
           $html .= $bp->row('md', array(
             $bp->col(2, $search . $errors . $sidebar . '<br>'),
             $bp->col(10, $content)

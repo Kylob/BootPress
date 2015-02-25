@@ -7,7 +7,7 @@ class Admin_setup extends CI_Driver {
     $page->plugin('jQuery', 'code', '
       $("#toolbar button.return").removeClass("return").addClass("refresh").click(function(){ window.location = location.href; });
     ');
-    return $this->display('<p style="margin-top:10px;">Click on Setup and enter your website\'s name in the <code>$config[\'blog\']</code> array to begin.</p>');
+    return $this->display('<p style="margin-top:10px;">Click on Setup and enter the <code>blog[name]</code> of your website to begin.</p>');
   }
   
 }

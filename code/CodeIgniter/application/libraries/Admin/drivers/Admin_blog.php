@@ -115,7 +115,7 @@ class Admin_blog extends CI_Driver {
     $html .= $form->header();
     foreach ($this->set_authors() as $row) {
       list($count, $id, $uri, $name) = $row;
-      $ci->admin->files->save(array($uri => $ci->blog->authors . $uri . '.php'), array($uri), array($this, 'update'));
+      $ci->admin->files->save(array($uri => $ci->blog->authors . $uri . '.ini'), array($uri), array($this, 'update'));
       $author = $ci->blog->authors($uri, $name);
       $label = '<a href="' . $page->url('blog', 'authors', $uri) . '">' . $author['name'] . '</a> ' . $bp->badge($count);
       if (!empty($author['thumb'])) {
@@ -123,13 +123,8 @@ class Admin_blog extends CI_Driver {
         $author['thumb'] = substr($author['thumb'], strrpos($author['thumb'], '/') + 1);
       }
       unset($author['uri'], $author['url']);
-      $form->values($uri, implode("\n\n", array(
-        '<?php',
-        '$author = ' . var_export($author, true) . ';',
-        'return $author;',
-        '?>'        
-      )));
-      $html .= $form->field($uri, 'textarea', array('label'=>$label, 'class'=>'wyciwyg php input-sm', 'data-file'=>$uri . '.php', 'spellcheck'=>'false')) . '<br>';
+      $form->values($uri, $ci->ini($author));
+      $html .= $form->field($uri, 'textarea', array('label'=>$label, 'class'=>'wyciwyg ini input-sm', 'data-file'=>$uri . '.ini', 'spellcheck'=>'false', 'rows'=>5)) . '<br>';
     }
     $html .= $form->close();
     unset($form);

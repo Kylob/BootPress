@@ -58,7 +58,7 @@ class Admin_sitemap extends CI_Driver {
   }
   
   private function robots () {
-    global $bp, $ci;
+    global $bp, $ci, $page;
     if (!$updated = $ci->analytics->db->value('SELECT MAX(time) FROM hits')) return;
     $ci->admin->files->save(array('robots.txt' => BASE_URI . 'blog/content/robots.txt'));
     $month = $updated - 2592000; // last 30 days

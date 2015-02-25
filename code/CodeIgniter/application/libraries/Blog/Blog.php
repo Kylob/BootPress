@@ -13,7 +13,7 @@ class Blog extends CI_Driver_Library {
   private $url = '';
   
   public function __construct ($blog) {
-    global $admin, $bp, $page;
+    global $admin, $bp, $ci, $page;
     $this->admin = $admin; // An array of values we pass to the $ci->auth class
     unset($admin); // We do not want these values accessible anywhere else
     $this->controller = $blog['role']; // Either '#admin#', '#folder#', '#blog#', or '#post#'
@@ -22,12 +22,27 @@ class Blog extends CI_Driver_Library {
     $this->post = BASE_URI . 'blog/content/';
     if (!is_dir($this->post)) mkdir($this->post, 0755, true);
     #-- Blog --#
+    if (is_file($this->post . 'setup.php') && !is_file($this->post . 'setup.ini')) { // this is slated for removal ... Soon!
+      include($this->post . 'setup.php');
+      if (isset($config['page_plugins'])) $config['plugins'] = $config['page_plugins'];
+      unset($config['page_plugins']);
+      file_put_contents($this->post . 'setup.ini', $ci->ini($config, array(
+        'blog' => array(
+          'The blog[name] is the one and only parameter that we absolutely require.',
+          'Anything else you want to add here will be available in your Smarty template\'s {$blog} array.'
+        ),
+        'bootstrap' => 'The Twitter Bootstrap version you want to work with.',
+        'pagination' => 'The number of listings to show per page.',
+        'plugins' => 'These will be accessible within Smarty templates.'
+      )));
+      unlink($this->post . 'setup.php');
+    }
+    if (!is_file($this->post . 'setup.ini')) file_put_contents($this->post . 'setup.ini', file_get_contents($this->templates . 'setup.ini'));
+    $config = parse_ini_file($this->post . 'setup.ini');
     $this->blog = array('name'=>'', 'summary'=>'');
-    if (!is_file($this->post . 'setup.php')) file_put_contents($this->post . 'setup.php', file_get_contents($this->templates . 'setup.php'));
-    include($this->post . 'setup.php');
     if (isset($config['blog'])) $this->blog = array_merge($this->blog, $config['blog']);
     unset($config['blog']);
-    $this->config = array_merge(array('pagination'=>10, 'page_plugins'=>null), $config);
+    $this->config = array_merge(array('pagination'=>10, 'plugins'=>null), $config);
     if (isset($config['bootstrap']) && is_dir(BASE . 'bootstrap/' . $config['bootstrap'])) {
       $this->blog['bootstrap'] = $config['bootstrap'];
     } else {
@@ -242,7 +257,7 @@ class Blog extends CI_Driver_Library {
         ));
         $authors = $this->db->fetch('assoc', 'all');
         $authored = array();
-        foreach ($authors as $author) $authored[$authors['uri']] = $authors['count'];
+        foreach ($authors as $author) $authored[$author['uri']] = $author['count'];
         arsort($authored);
         if (is_int($params)) $authored = array_slice($authored, 0, $params, true);
         foreach ($authors as $author) {
@@ -500,11 +515,9 @@ class Blog extends CI_Driver_Library {
   }
   
   public function authors ($uri, $name) {
-    $author = array();
-    if (is_file($this->authors . $uri . '.php')) {
-      $info = include $this->authors . $uri . '.php';
-      if (is_array($info)) $author = $info;
-    }
+    global $page;
+    $file = $this->authors . $uri . '.ini';
+    $author = (is_file($file) && $info = parse_ini_file($file)) ? $info : array();
     $author['uri'] = $uri;
     $author['url'] = $page->url('blog', 'authors', $uri);
     if (!isset($author['name'])) $author['name'] = $name;
@@ -605,7 +618,7 @@ class PageClone {
   public function __call ($name, $arguments) {
     global $ci;
     if ($name == 'filter' && !in_array($arguments[1], array('prepend', 'append'))) return null;
-    if ($name == 'plugin' && !in_array($arguments[0], (array) $ci->blog->config['page_plugins'])) return null;
+    if ($name == 'plugin' && !in_array($arguments[0], (array) $ci->blog->config['plugins'])) return null;
     $result = (in_array($name, $this->methods)) ? call_user_func_array(array($this->class, $name), $arguments) : null;
     return (is_object($result)) ? null : $result;
   }
