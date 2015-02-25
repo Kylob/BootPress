@@ -150,7 +150,7 @@ class Blog extends CI_Driver_Library {
       $security = new Smarty_Security($smarty);
       $security->php_functions = array_merge(
         array('isset', 'empty', 'count', 'sizeof', 'in_array', 'is_array', 'time', 'nl2br'), // Smarty defaults
-        array('number_format', 'implode', 'explode', 'array_keys', 'array_values', 'array_flip', 'array_reverse', 'array_shift', 'array_unshift', 'array_pop', 'array_push', 'array_combine', 'array_merge')
+        array('preg_replace', 'number_format', 'implode', 'explode', 'array_keys', 'array_values', 'array_flip', 'array_reverse', 'array_shift', 'array_unshift', 'array_pop', 'array_push', 'array_combine', 'array_merge')
       );
       $smarty->enableSecurity($security);
     }
