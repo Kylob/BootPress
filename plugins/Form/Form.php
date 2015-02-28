@@ -27,6 +27,7 @@ class Form {
   private $rules = array();
   private $validate = array();
   private $required = array();
+  private $messages = array();
   
   // Populated in $this->submitted()
   public $vars = array();
@@ -177,12 +178,16 @@ class Form {
     }
     $validate = array();
     $rules = explode('|', $rules);
+    $this->messages[$name] = array();
+    if (!is_array($info)) $info = (!empty($info)) ? array($info) : array();
+    if (isset($info[0])) $this->info[$name] = $info[0];
     foreach ($rules as $key => $rule) {
       $param = '';
       if (preg_match("/(.*?)\[(.*)\]/", $rule, $match)) {
         $rule	= $match[1];
         $param	= $match[2];
       }
+      if (isset($info[$rule])) $this->messages[$name][$rule] = $info[$rule];
       switch ($rule) {
         case 'required':            $validate['required'] = 'true'; $this->required[$name] = true; break;
         // Numbers:
@@ -231,7 +236,6 @@ class Form {
     array_unshift($rules, 'trim');
     $this->rules[$name] = $rules;
     if (!empty($validate)) $this->validate[$name] = $validate;
-    if (!empty($info)) $this->info[$name] = $info;
     $this->ids[$name] = $this->id($name);
     $this->labels[$name] = $label;
   }
@@ -247,9 +251,9 @@ class Form {
       $field = $this->base($name);
       $label = strip_tags($this->labels[$name]);
       if (isset($process[$field])) {
-        foreach ($ids as $id) $this->form_validation->set_rules($field . '[' . $id . ']', $label, $validate);
+        foreach ($ids as $id) $this->form_validation->set_rules($field . '[' . $id . ']', $label, $validate, $this->messages[$name]);
       } else {
-        $this->form_validation->set_rules($name, $label, $validate);
+        $this->form_validation->set_rules($name, $label, $validate, $this->messages[$name]);
       }
     }
     $this->form_validation->set_message('', ''); // This is stupid, but we don't like meaningless error messages either
@@ -385,16 +389,24 @@ class Form {
         'onkeyup' => 'false'
       ), $validate);
       $rules = array();
+      $messages = array();
       foreach ($this->validate as $name => $check) {
         if (strpos($name, '[') === false) { // otherwise we will get it in $this->field()
           foreach ($check as $key => $value) {
             $value = (is_numeric($value) || $value == 'true') ? $value : '"' . $value . '"';
             $check[$key] = $key . ':' . $value;
           }
-          $rules[$name] = $name . ':{' . implode(',', $check) . '}';
+          $rules[] = $name . ':{' . implode(',', $check) . '}';
+          if (!empty($this->messages[$name])) {
+            foreach ($this->messages[$name] as $key => $value) {
+              $this->messages[$name][$key] = $key . ':"' . $value . '"';
+            }
+            $messages[] = $name . ':{' . implode(',', $this->messages[$name]) . '}';
+          }
         }
       }
       $validate['rules'] = '{' . implode(',', $rules) . '}';
+      if (!empty($messages)) $validate['messages'] = '{' . implode(',', $messages) . '}';
       foreach ($validate as $key => $value) $validate[$key] = $key . ':' . $value;
       $page->plugin('jQuery', 'code', '$("#' . $this->name . '").validate({' . implode(',', $validate) . '});');
     }
@@ -469,6 +481,11 @@ class Form {
         if (isset($this->validate[$name]) && strpos($name, '[') !== false) {
           foreach ($this->validate[$name] as $validate => $param) {
             if (!isset($options["data-rule-{$validate}"])) $options["data-rule-{$validate}"] = $param;
+          }
+          if (!empty($this->messages[$name])) {
+            foreach ($this->messages[$name] as $rule => $message) {
+              if (!isset($options["data-msg-{$rule}"])) $options["data-msg-{$rule}"] = $message;
+            }
           }
         }
         $field = $this->$field($name, $options);

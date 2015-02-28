@@ -32,8 +32,10 @@ jQuery.validator.addMethod("ip", function(value, element, param) {
 	}
 }, jQuery.validator.format("Please enter a valid IP{0} address."));
 
-jQuery.validator.addMethod("regex", function(value, element, regexp) {
-	return this.optional(element) || regexp.test(value);
+jQuery.validator.addMethod("regex", function(value, element, regex) {
+	regex = regex.match(/^\/([\S\s]+)\/([gim]{0,3})$/);
+	regex = new RegExp(regex[1], regex[2]);
+	return this.optional(element) || value.match(regex);
 }, jQuery.validator.format("Enter the correct format please."));
 
 jQuery.validator.addMethod("nowhitespace", function(value, element) {
