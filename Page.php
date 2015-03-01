@@ -44,7 +44,7 @@ class Page {
         $this->folder = $folders . $folder . '/';
       } else {
         $paths = explode('/', $this->uri);
-        for ($count = count($paths); $count > 0; $count--) {
+        for ($count=count($paths); $count>0; $count--) {
           $path = implode('/', $paths);
           if (is_file($folders . $path . '/index.php')) {
             $this->url .= $path . '/';
@@ -52,6 +52,7 @@ class Page {
             $this->folder = $folders . $path . '/';
             break;
           }
+          array_pop($paths);
         }
       }
     }
