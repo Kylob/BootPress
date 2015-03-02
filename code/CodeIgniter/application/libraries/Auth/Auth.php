@@ -87,6 +87,7 @@ class Auth extends CI_Driver_Library {
   }
   
   public function update ($user_id, $user=array()) {
+    global $ci;
     $update = array();
     foreach ($user as $key => $value) {
       switch ($key) {
