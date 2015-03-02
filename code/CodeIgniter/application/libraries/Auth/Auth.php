@@ -110,7 +110,7 @@ class Auth extends CI_Driver_Library {
     global $ci, $page;
     $this->logout(($single !== false) ? $user_id : false);
     if ($user = $this->db->row('SELECT id AS user_id, name, admin FROM ci_users WHERE id = ? AND approved = ?', array($user_id, 'Y'))) {
-      if (in_array($user['admin'], array(1,2)) && !$this->admin) $page->eject(ADMIN . '/users');
+      if (in_array($user['admin'], array(1,2)) && $single === false) $page->eject($page->url('admin', 'users'));
       if ($expires) {
         $seconds = $ci->config->item('sess_expiration');
         if (empty($seconds)) $seconds = 60 * 60 * 24 * 365 * 2; // ie. 2 years
