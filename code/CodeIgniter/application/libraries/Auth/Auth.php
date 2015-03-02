@@ -31,9 +31,10 @@ class Auth extends CI_Driver_Library {
     $users = array();
     foreach ((array) $user_id as $id) $users[$id] = array();
     $groups = $this->get_users_groups(array_keys($users));
-    $this->db->query('SELECT id, name, email, admin, approved, strftime("%s", registered) AS registered FROM ci_users WHERE id IN(' . implode(', ', array_keys($users)) . ')');
+    $this->db->query('SELECT id, name, email, admin, approved, registered FROM ci_users WHERE id IN(' . implode(', ', array_keys($users)) . ')');
     while ($row = $this->db->fetch('assoc')) {
       $users[$row['id']] = $row;
+      $users[$row['id']]['registered'] = strtotime($row['registered']);
       $users[$row['id']]['last_activity'] = 0;
       $users[$row['id']]['groups'] = $groups[$row['id']];
     }
