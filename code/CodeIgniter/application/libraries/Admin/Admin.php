@@ -134,7 +134,7 @@ class Admin extends CI_Driver_Library {
     global $bp, $page;
     $page->plugin('CDN', 'link', 'ace/1.1.8/min/ace.js');
     $page->link(BASE_URL . 'code/CodeIgniter/application/libraries/Admin/wyciwyg.js');
-    $html = '<div id="wyciwyg" style="padding-top:5px; display:none;">';
+    $html = '<div id="wyciwyg" style="display:none;">';
       $html .= '<div class="container">';
         $html .= '<div id="toolbar" class="btn-toolbar">';
         
