@@ -100,6 +100,7 @@ class Auth extends CI_Driver_Library {
     }
     if (!empty($update)) {
       $this->db->update('ci_users', 'id', array($user_id => $update));
+      if (is_user($user_id) && isset($update['name'])) $ci->session->cookie->set_userdata('name', $update['name']);
       if (isset($update['approved']) && $update['approved'] == 'N') $this->logout($user_id);
     }
   }
