@@ -4,7 +4,6 @@ class Controller extends CI_Controller {
 
   public $poster;
   private $model;
-  private $bp_admin;
   
   public function _remap ($model) {
     global $admin, $ci, $page;
@@ -36,8 +35,8 @@ class Controller extends CI_Controller {
     }
     define('ADMIN', isset($folder) ? $folder.'/' : '');
     $uri = $this->uri->uri_string();
-    $this->bp_admin = (ADMIN != '' && strpos($uri.'/', ADMIN) === 0) ? true : false;
-    if (!$this->bp_admin && $this->poster != $this->model) $uri = str_replace('_', '-', $uri);
+    $bp_admin = (ADMIN != '' && strpos($uri.'/', ADMIN) === 0) ? true : false;
+    if (!$bp_admin && $this->poster != $this->model) $uri = str_replace('_', '-', $uri);
     $paths = array();
     foreach (explode('/', $uri) as $value) {
       if (($extension = strpos($value, '.')) !== false) $value = substr($value, 0, $extension); // remove file extensions
@@ -99,12 +98,12 @@ class Controller extends CI_Controller {
         $method = array_shift($params); // Either 'robots' or 'xml'
         $html = $this->sitemap->$method(array_shift($params));
       } else {
-        if ($this->bp_admin) {
+        if ($bp_admin) {
           $this->load->driver('blog', array('role'=>'#admin#'));
           if ($route = $page->routes(array(
             ADMIN,
             ADMIN . '[blog:view]/[published|unpublished|posts|pages' . (is_admin(1) ? '|authors|categories|tags|templates' : null) . ':folder]?',
-            ADMIN . '[sitemap|image' . (is_admin(1) ? '|setup|errors|plugins|folders|databases' : null) . ':view]',
+            ADMIN . '[sitemap' . (is_admin(1) ? '|setup|errors|plugins|folders|databases' : null) . ':view]',
             ADMIN . '[users:view]/[logout' . (is_admin(1) ? '|register|edit|list' : null) . ':action]?',
             ADMIN . '[themes:view]/[preview:action]?/[:theme]?/[bootstrap\.less:less]?',
             ADMIN . '[analytics:view]/[users|pages|referrers:method]?'
@@ -414,7 +413,7 @@ class Controller extends CI_Controller {
   
   private function layout ($content) {
     global $ci, $page;
-    if ($this->bp_admin) {
+    if ($page->theme == 'admin') {
       $page->plugin('CDN', array('prepend', 'links'=>array(
         'bootstrap/' . $ci->blog->bootstrap . '/css/bootstrap.min.css',
         'bootstrap/' . $ci->blog->bootstrap . '/js/bootstrap.min.js',

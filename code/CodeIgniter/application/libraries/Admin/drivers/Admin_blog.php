@@ -22,21 +22,19 @@ class Admin_blog extends CI_Driver {
     $page->link('<style>.nav.nav-tabs > li { white-space: nowrap; }</style>');
     $menu = array();
     if ($unpublished = $ci->blog->db->value('SELECT COUNT(*) FROM blog WHERE featured <= 0 AND published = 0')) {
-      $menu['<span class="text-danger"><b>Unpublished</b> ' . $bp->badge($unpublished) . '</span>'] = $page->url('admin', 'blog/unpublished');
+      $menu['<span class="text-danger"><b>Unpublished</b> ' . $bp->badge($unpublished) . '</span>'] = $page->url($this->url, 'blog/unpublished');
     }
     if ($posts = $ci->blog->db->value('SELECT COUNT(*) FROM blog WHERE featured <= 0 AND published < 0')) {
-      $menu[$bp->icon('thumb-tack', 'fa') . ' Posts ' . $bp->badge($posts)] = $page->url('admin', 'blog/posts');
+      $menu[$bp->icon('thumb-tack', 'fa') . ' Posts ' . $bp->badge($posts)] = $page->url($this->url, 'blog/posts');
     }
     if ($pages = $ci->blog->db->value('SELECT COUNT(*) FROM blog WHERE featured <= 0 AND published = 1')) {
-      $menu[$bp->icon('file', 'fa') . ' Pages ' . $bp->badge($pages)] = $page->url('admin', 'blog/pages');
+      $menu[$bp->icon('file', 'fa') . ' Pages ' . $bp->badge($pages)] = $page->url($this->url, 'blog/pages');
     }
     if (is_admin(1)) {
-      if (count($this->set_authors()) > 0) $menu['Authors'] = $page->url('admin', 'blog/authors');
-      if (count($this->set_tags()) > 0) {
-        $menu['Categories'] = $page->url('admin', 'blog/categories');
-        $menu['Tags'] = $page->url('admin', 'blog/tags');
-      }
-      if ($posts || $pages) $menu['Templates'] = $page->url('admin', 'blog/templates');
+      if ($posts || $pages) $menu['Templates'] = $page->url($this->url, 'blog/templates');
+      if (count($this->set_tags()) > 0) $menu['Tags'] = $page->url($this->url, 'blog/tags');
+      if ($ci->blog->db->value('SELECT COUNT(*) FROM categories')) $menu['Categories'] = $page->url($this->url, 'blog/categories');
+      if (count($this->set_authors()) > 0) $menu['Authors'] = $page->url($this->url, 'blog/authors');
     }
     $options = array('active'=>'url');
     if (count($menu > 2)) $options['align'] = 'justified';
@@ -62,7 +60,7 @@ class Admin_blog extends CI_Driver {
   
   private function published ($params) {
     global $bp, $ci, $page;
-    if ($search = $ci->input->post('search')) $page->eject($page->url('admin', 'blog/published?search=' . trim($search, "'")));
+    if ($search = $ci->input->post('search')) $page->eject($page->url($this->url, 'blog/published?search=' . trim($search, "'")));
     $bp->listings->display(20);
     if ($search = $ci->input->get('search')) {
       $page->title = 'Search Published Posts and Pages at ' . $ci->blog->name;
@@ -389,7 +387,7 @@ class Admin_blog extends CI_Driver {
         $reference = $bp->icon('tack', 'fa') . ' ' . date('M j, Y', $published);
       }
       $html .= $bp->row('sm', array(
-        $bp->col(1, '<p>' . $bp->button('xs warning', $bp->icon('pencil') . ' edit', array('href'=>$page->url('admin', 'blog?edit=' . $id))) . '</p>'),
+        $bp->col(1, '<p>' . $bp->button('xs warning', $bp->icon('pencil') . ' edit', array('href'=>$page->url($this->url, 'blog?edit=' . $id))) . '</p>'),
         $bp->col(8, $bp->media(array($thumb, '<h4><a href="' . $page->url('base', $uri) . '">' . (!empty($title) ? $title : 'Untitled') . '</a></h4><p>' . (isset($alt[$id]) ? $alt[$id] : $description) . '</p>'))),
         $bp->col(3, '<p>' . $reference . '</p>')
       )) . '<br>';

@@ -28,10 +28,10 @@ class Admin_analytics extends CI_Driver {
     ));
     $html .= '<p>Last updated <span class="timeago" title="' . date('c', $this->end) . '">' . $this->end . '</span> ' . $button . '</p><br>';
     $html .= $bp->tabs(array(
-      'Visitors' => $page->url('admin', 'analytics'),
-      'Users' => $page->url('admin', 'analytics/users'),
-      'Pages' => $page->url('admin', 'analytics/pages'),
-      'Referrers' => $page->url('admin', 'analytics/referrers'),
+      'Visitors' => $page->url($this->url, 'analytics'),
+      'Users' => $page->url($this->url, 'analytics/users'),
+      'Pages' => $page->url($this->url, 'analytics/pages'),
+      'Referrers' => $page->url($this->url, 'analytics/referrers'),
     ), array('active'=>'url', 'align'=>'justified')) . '<br>';
     $method = (isset($params['method'])) ? $params['method'] : 'visitors';
     $html .= $this->$method();

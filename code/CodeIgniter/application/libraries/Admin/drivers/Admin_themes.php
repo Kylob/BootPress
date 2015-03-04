@@ -8,7 +8,7 @@ class Admin_themes extends CI_Driver {
   
   public function view ($params) {
     global $ci, $page;
-    if (!isset($params['theme'])) $page->eject(ADMIN . '/themes/default');
+    if (!isset($params['theme'])) $page->eject($page->url($this->url, 'themes/default'));
     $this->dir = BASE_URI . 'themes/';
     $this->theme = $page->seo($params['theme']);
     $this->bootstrap = BASE . 'bootstrap/' . $ci->blog->bootstrap . '/';
@@ -51,7 +51,7 @@ class Admin_themes extends CI_Driver {
         foreach ($dirs as $dir) rmdir($this->dir . $this->theme . $dir);
         rmdir($this->dir . $this->theme);
       }
-      $page->eject(ADMIN . '/themes/default');
+      $page->eject($page->url($this->url, 'themes/default'));
     }
     if ($preview = $ci->input->post('preview') && $ci->input->is_ajax_request()) {
       if ($preview == 'true') {
@@ -66,9 +66,9 @@ class Admin_themes extends CI_Driver {
     }
     $html = '';
     $form = $page->plugin('Form', 'name', 'admin_theme_manager');
-    $themes = array($page->url('admin', 'themes/default') => 'default');
+    $themes = array($page->url($this->url, 'themes/default') => 'default');
     list($dirs) = $ci->blog->folder($this->dir, 'false', 'false');
-    foreach ($dirs as $theme) $themes[$page->url('admin', 'themes', $theme)] = $theme;
+    foreach ($dirs as $theme) $themes[$page->url($this->url, 'themes', $theme)] = $theme;
     $form->menu('theme', $themes);
     $form->menu('preview', array('Y'=>'Preview the selected theme'));
     $form->menu('action', array(
@@ -87,7 +87,7 @@ class Admin_themes extends CI_Driver {
     $form->values($files);
     $form->values(array(
       'preview' => ($preview) ? 'Y' : 'N',
-      'theme' => $page->url('admin', 'themes', $this->theme),
+      'theme' => $page->url($this->url, 'themes', $this->theme),
       'action' => 'copy'
     ));
     if ($form->submitted() && empty($form->errors)) {
@@ -122,7 +122,7 @@ class Admin_themes extends CI_Driver {
               $form->errors['action'] = 'The <b>Save As</b> theme you are <b>Swap</b>ping with does not exist.';
             }
         }
-        if (empty($form->errors)) $page->eject(ADMIN . '/themes/' . $new_theme); // $page->url('add', $form->eject, 'theme', $new_theme));
+        if (empty($form->errors)) $page->eject($page->url($this->url, 'themes', $new_theme)); // $page->url('add', $form->eject, 'theme', $new_theme));
       } else { // $form->vars['save'] is empty
         $this->update();
         $page->eject($form->eject);
@@ -173,7 +173,7 @@ class Admin_themes extends CI_Driver {
       $page->eject($form->eject);
     }
     $html .= $form->header();
-    $html .= $form->fieldset('Bootstrap ' . $bp->button('link', 'Preview Theme ' . $bp->icon('new-window'), array('href'=>$page->url('admin', 'themes/preview', $this->theme), 'target'=>'bootstrap')),
+    $html .= $form->fieldset('Bootstrap ' . $bp->button('link', 'Preview Theme ' . $bp->icon('new-window'), array('href'=>$page->url($this->url, 'themes/preview', $this->theme), 'target'=>'bootstrap')),
       $form->field('bootstrap', 'textarea', array('class'=>'wyciwyg less input-sm', 'data-file'=>'variables.less')),
       $form->field('custom', 'textarea', array('class'=>'wyciwyg less input-sm', 'data-file'=>'custom.less'))
     );
@@ -189,7 +189,7 @@ class Admin_themes extends CI_Driver {
     $page->title = 'Bootstrap Preview';
     $page->link('<script>var less = { env:"development" };</script>');
     $page->link('<script src="' . $page->plugin('CDN', 'url', 'less/2.2.0/less.min.js') . '"></script>');
-    $page->link('<link rel="stylesheet/less" type="text/css" href="' . $page->url('admin', 'themes/preview', $this->theme, 'bootstrap.less') . '">');
+    $page->link('<link rel="stylesheet/less" type="text/css" href="' . $page->url($this->url, 'themes/preview', $this->theme, 'bootstrap.less') . '">');
     return $page->outreach($this->bootstrap . 'preview.php');
   }
   

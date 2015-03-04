@@ -117,7 +117,10 @@ class Blog extends CI_Driver_Library {
         }
         return $this->db;
         break;
-      case 'admin': return ($this->controller == '#admin#') ? $this->admin : false; break;
+      case 'admin':
+        list(, $caller) = debug_backtrace(false);
+        return ($caller['class'] == 'Auth') ? $this->admin : false;
+        break;
       default:
         if (isset($this->$name)) {
           return $this->$name;

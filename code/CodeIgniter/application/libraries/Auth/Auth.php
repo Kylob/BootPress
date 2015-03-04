@@ -10,7 +10,8 @@ class Auth extends CI_Driver_Library {
     $this->db = $ci->load_database();
     if (!isset($ci->blog) || !$this->admin = $ci->blog->admin) return;
     foreach (array('name', 'email', 'password') as $value) if (empty($this->admin[$value])) exit('Admin params are not set in the root bootpress folder');
-    $admin = array('name'=>$this->admin['name'], 'email'=>$this->admin['email'], 'password'=>sha1($this->admin['password']), 'admin'=>1, 'approved'=>'Y');
+    $password = (strlen($this->admin['password']) == 40) ? $this->admin['password'] : sha1($this->admin['password']);
+    $admin = array('name'=>$this->admin['name'], 'email'=>$this->admin['email'], 'password'=>$password, 'admin'=>1, 'approved'=>'Y');
     $user = $this->db->row('SELECT * FROM ci_users WHERE email = ?', array($this->admin['email']));
     if (empty($user)) { // insert
       $this->db->insert('ci_users', $admin);

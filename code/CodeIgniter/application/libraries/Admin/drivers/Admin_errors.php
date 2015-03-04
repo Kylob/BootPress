@@ -13,7 +13,7 @@ class Admin_errors extends CI_Driver {
     $btn = '';
     if (is_admin(1)) {
       $logs = $this->logs();
-      $url = $page->url('add', $page->url('admin', 'errors'), 'redirect', $page->url());
+      $url = $page->url('add', $page->url($this->url, 'errors'), 'redirect', $page->url());
       if (!empty($logs)) $btn = '<p>' . $bp->button('danger block', 'View Errors', array('href'=>$url)) . '</p>';
     }
     return $btn;
