@@ -11,7 +11,7 @@ class Resources_deliverer extends CI_Driver {
       $image = $type;
     } elseif (preg_match('/^(js|css|pdf|ttf|otf|svg)$/', $type)) {
       $compress = $type;
-    } elseif (preg_match('/^(eot|woff|swf)$/', $type)) {
+    } elseif (preg_match('/^(eot|woff2?|swf)$/', $type)) {
       $deliver = $type;
     } elseif (preg_match('/^(tar|t?gz|zip|csv|xls?x?|word|docx?|ppt|psd)$/', $type)) {
       $download = $type;
@@ -68,6 +68,7 @@ class Resources_deliverer extends CI_Driver {
       case 'svg': header('Content-Type: image/svg+xml'); break;
       case 'eot': header('Content-Type: application/vnd.ms-fontobject'); break;
       case 'woff': header('Content-Type: font/x-woff'); break;
+      case 'woff2': header('Content-Type: font/woff2'); break; // http://lists.w3.org/Archives/Public/public-webfonts-wg/2014Jun/0024.html
       case 'swf': header('Content-Type: application/x-shockwave-flash'); break;
       case 'tar':
       case 'tgz': header('Content-Type: application/x-tar'); break;

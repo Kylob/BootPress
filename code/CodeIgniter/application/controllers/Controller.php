@@ -266,7 +266,7 @@ class Controller extends CI_Controller {
     $url = preg_quote(BASE_URL, '/');
     $chars = $this->config->item('permitted_uri_chars');
     preg_match_all('/(' . $url . ')([' . $chars . '\/]+)(#[' . $chars . '\/]+)?/i', $html, $matches);
-    $cache = array_flip(array('jpeg', 'jpg', 'gif', 'png', 'ico', 'js', 'css', 'pdf', 'ttf', 'otf', 'svg', 'eot', 'woff', 'swf', 'tar', 'tgz', 'gz', 'zip', 'csv', 'xlsx', 'xls', 'xl', 'word', 'docx', 'doc', 'ppt', 'mp3', 'ogg', 'wav', 'mpeg', 'mpe', 'mpg', 'mov', 'qt', 'psd'));
+    $cache = array_flip(array('jpeg', 'jpg', 'gif', 'png', 'ico', 'js', 'css', 'pdf', 'ttf', 'otf', 'svg', 'eot', 'woff2', 'woff', 'swf', 'tar', 'tgz', 'gz', 'zip', 'csv', 'xlsx', 'xls', 'xl', 'word', 'docx', 'doc', 'ppt', 'mp3', 'ogg', 'wav', 'mpeg', 'mpe', 'mpg', 'mov', 'qt', 'psd'));
     $resources = array(); // we'll run these through the cache machine
     $types = array(); // $resources['uri'] = '.ext';
     $links = array(); // improperly suffixed uri's
