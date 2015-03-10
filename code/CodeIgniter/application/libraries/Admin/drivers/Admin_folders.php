@@ -15,7 +15,12 @@ class Admin_folders extends CI_Driver {
     if ($edit && is_dir($this->dir . $edit)) {
       $form->values($ci->admin->files->save(array('index'=>$this->dir . $edit . '/index.php')));
       $media = $ci->admin->files->view('folders', $this->dir . $edit);
-      if ($ci->input->get('image')) return $this->display($media);
+      if ($ci->input->get('image')) {
+        return $this->display($this->box('default', array(
+          'head with-border' => $bp->icon('image', 'fa') . ' Image',
+          'body' => $media
+        )));
+      }
       if ($ci->input->get('delete') == 'folder') {
         list($dirs, $files) = $ci->blog->folder($this->dir . $edit);
         foreach ($files as $file) unlink($this->dir . $edit . $file);
@@ -33,8 +38,8 @@ class Admin_folders extends CI_Driver {
     if (!empty($folders)) $form->menu('edit', $folders, $edit ? null : '&nbsp;');
     if ($edit) $form->values(array('folder'=>$edit, 'edit'=>$edit));
     $form->validate(
-      array('folder', ($edit ? 'Save As' : 'Folder'), 'required', ($edit ? 'Use only lowercase letters, dashes (-), and slashes (/).' : 'Use only lowercase letters, dashes (-), and slashes (/).  The folder you create here will be directly accessible at: ' . BASE_URL . '[folder]/...  You, of course, will have to deal with the dot dot dot\'s.  Alternatively, you can create any url rule structure that you like in the .htaccess file, and direct it to the main index.php file with the additional parameter: ?page=[folder]')),
-      array('edit', ($edit ? 'Folder' : 'Edit'), '', 'Select a folder that you would like to edit.'),
+      array('folder', ($edit ? 'Save As' : 'Create'), 'required', ($edit ? 'Use only lowercase letters, dashes (-), and slashes (/).' : 'Use only lowercase letters, dashes (-), and slashes (/).  The folder you create here will be directly accessible at: ' . BASE_URL . '[folder]/...  You, of course, will have to deal with the dot dot dot\'s.  Alternatively, you can create any url rule structure that you like in the .htaccess file, and direct it to the main index.php file with the additional parameter: ?page=[folder]')),
+      array('edit', ($edit ? 'Edit' : 'Select'), '', 'Select a folder that you would like to edit.'),
       array('index', 'index.php', '', 'This is the main file where you can manage the content of your folder.')
     );
     #-- Submitted --#
@@ -63,8 +68,6 @@ class Admin_folders extends CI_Driver {
       }
       if (empty($form->errors)) $page->eject($form->eject);
     }
-    $docs = $bp->button('sm info pull-right', 'Documentation ' . $bp->icon('new-window'), array('href'=>'http://bootpress.org/getting-started#folders', 'target'=>'_blank'));
-    $html .= '<div class="page-header"><p class="lead">' . $bp->icon('folder', 'fa') . ' ' . ($edit ? 'Edit' : 'New') . ' ' . $docs . '</p></div>';
     $html .= $form->header();
     if ($edit) {
       $delete = $bp->button('sm danger delete pull-right', $bp->icon('trash'), array('title'=>'Click to delete this folder', 'style'=>'margin-left:20px;'));
@@ -73,7 +76,7 @@ class Admin_folders extends CI_Driver {
     $html .= (!empty($folders)) ? $form->field('edit', 'select') : '';
     $html .= $form->field('folder', 'text', array(
       'prepend' => BASE_URL,
-      'append' => array('/', $bp->button('primary', $edit ? 'Submit' : 'Create', array('type'=>'submit', 'data-loading-text'=>'Submitting...')))
+      'append' => array('/', $bp->button('primary', 'Submit', array('type'=>'submit', 'data-loading-text'=>'Submitting...')))
     ));
     if ($edit) $html .= $form->field('index', 'textarea', array('class'=>'wyciwyg php input-sm', 'data-file'=>'index.php'));
     $html .= $form->close();
@@ -88,7 +91,13 @@ class Admin_folders extends CI_Driver {
       });
     ');
     unset($form);
-    return $this->display($html . $media);
+    return $this->display($this->box('default', array(
+      'head with-border' => array(
+        $bp->icon('folder', 'fa') . ' Folders',
+        $bp->button('md link', 'Documentation ' . $bp->icon('new-window'), array('href'=>'http://bootpress.org/getting-started#folders', 'target'=>'_blank'))
+      ),
+      'body' => $html . $media
+    )));
   }
   
 }

@@ -342,6 +342,15 @@ class Page {
     }
   }
   
+  public function style ($code) {
+    if (is_array($code)) foreach ($code as $key => $css) if (is_array($css)) $code[$key] = "{$key} {\n\t\t" . implode("\n\t\t", $css) . "\n\t}";
+    $this->link('<style>' . (is_array($code) ? "\n\t" . implode("\n\t", $code) . "\n  " : trim($code)) . '</style>');
+  }
+  
+  public function script ($code) {
+    $this->link('<script>' . (is_array($code) ? "\n\t" . implode("\n\t", $code) . "\n  " : trim($code)) . '</script>');
+  }
+  
   public function id ($prefix='') {
     static $id = 0;
     $id++;

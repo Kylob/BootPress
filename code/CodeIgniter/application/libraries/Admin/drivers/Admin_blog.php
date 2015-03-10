@@ -7,45 +7,63 @@ class Admin_blog extends CI_Driver {
   
   public function view ($params) {
     global $bp, $ci, $page;
+    $bp->listings->display(20);
     $view = (isset($params['folder']) && in_array($params['folder'], array('published', 'unpublished', 'posts', 'pages', 'authors', 'categories', 'tags', 'templates'))) ? $params['folder'] : 'form';
     $html = $this->$view($params);
-    if ($ci->input->get('image')) return $this->display($html);
+    if ($ci->input->get('image')) {
+      return $this->display($this->box('default', array(
+        'head with-border' => $bp->icon('image', 'fa') . ' Image',
+        'body' => $html
+      )));
+    }
     switch ($view) {
+      case 'unpublished': $header = $bp->icon('exclamation-triangle', 'fa', 'i style="margin-right:10px;"') . ' ' . ucwords($view); break;
       case 'published':
-        if ($search = $ci->input->get('search')) {
-          $header = "Search for '{$search}'";
-          break;
-        }
-      case 'form': $header = ($edit = $ci->input->get('edit')) ? 'Edit' : 'New'; break;
-      default: $header = ucwords($view); break;
+        $header = $bp->icon('search', 'fa', 'i style="margin-right:10px;"');
+        $header .= ($search = $ci->input->get('search')) ? " Search for '{$search}'" : ' Published';
+        break;
+      case 'form': 
+        $header = $bp->icon('pencil-square-o', 'fa', 'i style="margin-right:10px;"');
+        $header .= ($edit = $ci->input->get('edit')) ? ' Edit' : ' New';
+        break;
+      case 'posts': $header = $bp->icon('thumb-tack', 'fa', 'i style="margin-right:10px;"') . ' ' . ucwords($view); break;
+      case 'pages': $header = $bp->icon('file-o', 'fa', 'i style="margin-right:10px;"') . ' ' . ucwords($view); break;
+      case 'templates': $header = $bp->icon('files-o', 'fa', 'i style="margin-right:10px;"') . ' ' . ucwords($view); break;
+      case 'tags': $header = $bp->icon('tags', 'fa', 'i style="margin-right:10px;"') . ' ' . ucwords($view); break;
+      case 'categories': $header = $bp->icon('share-alt', 'fa', 'i style="margin-right:10px;"') . ' ' . ucwords($view); break;
+      case 'authors': $header = $bp->icon('user', 'glyphicon', 'span style="margin-right:10px;"') . ' ' . ucwords($view); break;
     }
-    $page->link('<style>.nav.nav-tabs > li { white-space: nowrap; }</style>');
-    $menu = array();
-    if ($unpublished = $ci->blog->db->value('SELECT COUNT(*) FROM blog WHERE featured <= 0 AND published = 0')) {
-      $menu['<span class="text-danger"><b>Unpublished</b> ' . $bp->badge($unpublished) . '</span>'] = $page->url($this->url, 'blog/unpublished');
-    }
-    if ($posts = $ci->blog->db->value('SELECT COUNT(*) FROM blog WHERE featured <= 0 AND published < 0')) {
-      $menu[$bp->icon('thumb-tack', 'fa') . ' Posts ' . $bp->badge($posts)] = $page->url($this->url, 'blog/posts');
-    }
-    if ($pages = $ci->blog->db->value('SELECT COUNT(*) FROM blog WHERE featured <= 0 AND published = 1')) {
-      $menu[$bp->icon('file', 'fa') . ' Pages ' . $bp->badge($pages)] = $page->url($this->url, 'blog/pages');
-    }
-    if (is_admin(1)) {
-      if ($posts || $pages) $menu['Templates'] = $page->url($this->url, 'blog/templates');
-      if (count($this->set_tags()) > 0) $menu['Tags'] = $page->url($this->url, 'blog/tags');
-      if ($ci->blog->db->value('SELECT COUNT(*) FROM categories')) $menu['Categories'] = $page->url($this->url, 'blog/categories');
-      if (count($this->set_authors()) > 0) $menu['Authors'] = $page->url($this->url, 'blog/authors');
-    }
-    $options = array('active'=>'url');
-    if (count($menu > 2)) $options['align'] = 'justified';
-    $menu = (!empty($menu)) ? $bp->tabs($menu, $options) : '';
     $docs = '';
     if (!in_array($view, array('authors', 'categories', 'tags'))) {
       $tab = ($view == 'templates') ? 'templates' : 'blog';
-      $docs = $bp->button('sm info pull-right', 'Documentation ' . $bp->icon('new-window'), array('href'=>'http://bootpress.org/getting-started#' . $tab, 'target'=>'_blank'));
+      $docs = $bp->button('md link', 'Documentation ' . $bp->icon('new-window'), array('href'=>'http://bootpress.org/getting-started#' . $tab, 'target'=>'_blank'));
     }
-    $header = '<div class="page-header"><p class="lead">' . $bp->icon('globe', 'fa') . ' ' . $header . ' ' . $docs . '</p></div>';
-    return $this->display($menu . $header . $html);
+    return $this->display($this->box('default', array(
+      'head with-border' => array($header, $docs),
+      'body' => $html,
+      'foot clearfix' => $bp->listings->pagination('sm no-margin')
+    )));
+  }
+  
+  public function links () {
+    global $bp, $ci, $page;
+    $links = array($bp->icon('pencil-square-o', 'fa') . ' Create' => $page->url($this->url, 'blog'));
+    if ($unpublished = $ci->blog->db->value('SELECT COUNT(*) FROM blog WHERE featured <= 0 AND published = 0')) {
+      $links['<span class="text-danger">' . $bp->icon('exclamation-triangle', 'fa') . ' <b>Unpublished</b> ' . $bp->badge($unpublished, 'right') . '</span>'] = $page->url($this->url, 'blog/unpublished');
+    }
+    if ($posts = $ci->blog->db->value('SELECT COUNT(*) FROM blog WHERE featured <= 0 AND published < 0')) {
+      $links[$bp->icon('thumb-tack', 'fa') . ' Posts ' . $bp->badge($posts, 'right')] = $page->url($this->url, 'blog/posts');
+    }
+    if ($pages = $ci->blog->db->value('SELECT COUNT(*) FROM blog WHERE featured <= 0 AND published = 1')) {
+      $links[$bp->icon('file-o', 'fa') . ' Pages ' . $bp->badge($pages, 'right')] = $page->url($this->url, 'blog/pages');
+    }
+    if (is_admin(1)) {
+      if ($posts || $pages) $links[$bp->icon('files-o', 'fa') . ' Templates'] = $page->url($this->url, 'blog/templates');
+      if (count($this->set_tags()) > 0) $links[$bp->icon('tags', 'fa') . ' Tags'] = $page->url($this->url, 'blog/tags');
+      if ($ci->blog->db->value('SELECT COUNT(*) FROM categories')) $links[$bp->icon('share-alt', 'fa') . ' Categories'] = $page->url($this->url, 'blog/categories');
+      if (count($this->set_authors()) > 0) $links[$bp->icon('user') . ' Authors'] = $page->url($this->url, 'blog/authors');
+    }
+    return $links;
   }
   
   public function update ($uri=null) {
@@ -61,7 +79,6 @@ class Admin_blog extends CI_Driver {
   private function published ($params) {
     global $bp, $ci, $page;
     if ($search = $ci->input->post('search')) $page->eject($page->url($this->url, 'blog/published?search=' . trim($search, "'")));
-    $bp->listings->display(20);
     if ($search = $ci->input->get('search')) {
       $page->title = 'Search Published Posts and Pages at ' . $ci->blog->name;
       if (!$bp->listings->set) $bp->listings->count($ci->sitemap->count($search, 'blog'));
@@ -88,7 +105,6 @@ class Admin_blog extends CI_Driver {
     global $bp, $ci, $page;
     $html = '';
     $page->title = 'Published Posts at ' . $ci->blog->name;
-    $bp->listings->display(20);
     if (!$bp->listings->set) $bp->listings->count($ci->blog->db->value('SELECT COUNT(*) FROM blog WHERE featured <= 0 AND published < 0'));
     $html .= $this->listings('WHERE featured <= 0 AND published < 0 ORDER BY featured, published, updated ASC' . $bp->listings->limit());
     return $html;
@@ -97,7 +113,6 @@ class Admin_blog extends CI_Driver {
   private function pages () {
     global $bp, $ci, $page;
     $page->title = 'Published Pages at ' . $ci->blog->name;
-    $bp->listings->display(20);
     if (!$bp->listings->set) $bp->listings->count($ci->blog->db->value('SELECT COUNT(*) FROM blog WHERE featured <= 0 AND published = 1'));
     return $this->listings('WHERE featured <= 0 AND published = 1 ORDER BY featured, published, updated ASC' . $bp->listings->limit());
   }
@@ -388,15 +403,17 @@ class Admin_blog extends CI_Driver {
       }
       $html .= $bp->row('sm', array(
         $bp->col(1, '<p>' . $bp->button('xs warning', $bp->icon('pencil') . ' edit', array('href'=>$page->url($this->url, 'blog?edit=' . $id))) . '</p>'),
-        $bp->col(8, $bp->media(array($thumb, '<h4><a href="' . $page->url('base', $uri) . '">' . (!empty($title) ? $title : 'Untitled') . '</a></h4><p>' . (isset($alt[$id]) ? $alt[$id] : $description) . '</p>'))),
-        $bp->col(3, '<p>' . $reference . '</p>')
+        $bp->col(11, $bp->media(array($thumb, '
+          <h4><a href="' . $page->url('base', $uri) . '">' . (!empty($title) ? $title : 'Untitled') . '</a> <small class="pull-right">' . $reference . '</small></h4>
+          <p><span class="text-danger"><small>' . BASE_URL . $uri . '</small></span><br>' . (isset($alt[$id]) ? $alt[$id] : $description) . '</p>
+        ')))
       )) . '<br>';
     }
     if (strpos($html, 'class="timeago"')) {
       $page->plugin('CDN', 'link', 'jquery.timeago/1.3.0/jquery.timeago.min.js');
       $page->plugin('jQuery', 'code', '$("span.timeago").timeago();');
     }
-    return $html . '<div class="text-center">' . $bp->listings->pagination() . '</div>';
+    return $html; // . '<div class="text-center">' . $bp->listings->pagination() . '</div>';
   }
   
 }

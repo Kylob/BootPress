@@ -148,7 +148,7 @@ class Blog extends CI_Driver_Library {
       $smarty = $page->plugin('Smarty', 'class');
       $smarty->assign(array(
         'bp' => $bp,
-        'page' => new PageClone($page, array('url', 'set', 'meta', 'link', 'plugin', 'filter'))
+        'page' => new PageClone($page, array('url', 'set', 'meta', 'link', 'style', 'script', 'plugin', 'filter'))
       ));
       $security = new Smarty_Security($smarty);
       $security->php_functions = array_merge(

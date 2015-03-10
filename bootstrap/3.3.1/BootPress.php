@@ -136,13 +136,13 @@ class BootPress {
   }
   
   public function icon ($symbol, $prefix='glyphicon', $tag='i') {
-    $params = ' ';
+    $params = '';
     if ($space = strpos($tag, ' ')) {
-      $params = ' ' . trim(substr($tag, $space)) . ' ';
+      $params = ' ' . trim(substr($tag, $space));
       $tag = substr($tag, 0, $space);
     }
     if ($prefix == 'glyphicon') $tag = 'span';
-    return '<' . $tag . $params . 'class="' . $this->classes($prefix, $symbol) . '"></' . $tag . '>';
+    return $this->add_class(array($tag => $this->classes($prefix, $symbol)), '<' . $tag . $params . '></' . $tag . '>');
   }
   
   public function button ($class, $name, $options=array()) {
@@ -193,9 +193,9 @@ class BootPress {
   public function links ($tag, $links, $options=array()) {
     global $page;
     $html = '';
-    $class = '';
+    $class = null;
     if ($space = strpos($tag, ' ')) {
-      $class = trim(substr($tag, $space));
+      $class = ' ' . trim(substr($tag, $space));
       $tag = substr($tag, 0, $space);
     }
     if ($tag != 'li') $tag = 'a';
@@ -210,7 +210,6 @@ class BootPress {
         $active = (strpos($dropdown, 'class="active"') !== false) ? ' active' : null;
         $attributes = array(
           'id' => $id,
-          'class' => $class,
           'data-target' => '#',
           'href' => '#', // $page->url(),
           'data-toggle' => 'dropdown',
@@ -220,16 +219,16 @@ class BootPress {
         );
         $link = '<a ' . $this->attributes($attributes) . '>' . $name . ' <span class="caret"></span></a>';
         if ($tag == 'li') {
-          $html .= '<li class="dropdown' . $active . '">' . $link . $dropdown . '</li>';
+          $html .= '<li class="dropdown' . $active . $class . '">' . $link . $dropdown . '</li>';
         } else {
-          if ($active) $link = $this->add_class(array('a'=>'active'), $link);
+          if ($active || $class) $link = $this->add_class(array('a'=>$active . $class), $link);
           $html .= '<span class="dropdown' . $active . '">' . $link . $dropdown . '</span>';
         }
       } else {
         if (is_numeric($name)) {
           $link = $href;
         } else {
-          $attributes = array('class'=>$class, 'href'=>$href);
+          $attributes = array('href'=>$href);
           if (isset($options['toggle'])) {
             $attributes['role'] = $options['toggle'];
             $attributes['data-toggle'] = $options['toggle'];
@@ -238,6 +237,7 @@ class BootPress {
           $link = '<a ' . $this->attributes($attributes) . '>' . $name . '</a>';
         }
         $li = $this->list_item($link, $options, $name, $href, $count);
+        if ($class) $li = $this->add_class(array($tag=>$class), $li);
         if ($tag == 'li') {
           $html .= $li;
         } elseif (strpos($li, 'class="active"') !== false) {
@@ -353,7 +353,7 @@ class BootPress {
       list($left, $body, $right) = array_pad($parent, 3, '');
       $html .= '<div' . $id . 'class="' . $class . '">';
         if (!empty($left)) $html .= '<span class="media-left">' . $this->add_class(array('img'=>'media-object'), $left) . '</span>';
-        $html .= '<div class="media-body" style="width:100%">';
+        $html .= '<div class="media-body">';
           if (!empty($body)) $html .= $this->add_class(array('h([1-6]){1}'=>'media-heading'), $body);
           if (!empty($children)) $html .= call_user_func_array(array($this, 'media'), $children);
         $html .= '</div>';
@@ -567,7 +567,7 @@ class BootPress {
   
   protected function add_class ($add, $string) {
     $rnr = array();
-    foreach ($add as $tag => $class) {
+    foreach (array_map('trim', $add) as $tag => $class) {
       preg_match_all('/(\<' . $tag . '([^\>]*)\>)/i', $string, $matches);
       foreach ($matches[0] as $match) {
         if ($begin = strpos($match, 'class="')) {

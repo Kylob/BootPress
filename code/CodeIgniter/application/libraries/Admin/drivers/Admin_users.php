@@ -41,8 +41,8 @@ class Admin_users extends CI_Driver {
     $form->captcha(3, 2, 50, 'email');
     $form->values('remember', 'N');
     $form->menu('remember', array('Y'=>'Keep me signed in at this computer for 30 days'));
-    $form->validate('email', 'Email', 'required|email');
-    $form->validate('password', 'Password', 'required|nowhitespace|minlength[6]');
+    $form->validate('email', 'Email', 'required|email', 'Please enter your email address.');
+    $form->validate('password', 'Password', 'required|nowhitespace|minlength[6]', 'Please enter your password.');
     $form->validate('remember', '', 'YN');
     if ($form->submitted() && empty($form->errors)) {
       if ($id = $ci->auth->check($form->vars['email'], $form->vars['password'])) {
@@ -58,7 +58,6 @@ class Admin_users extends CI_Driver {
         $form->errors['email'] = 'The email address provided has not been registered.';
       }
     }
-    $html .= '<div class="page-header"><p class="lead">' . $bp->icon('user') . ' Sign In</p></div>';
     $html .= $form->header();
     $html .= $form->field('email', 'text', array('prepend'=>$bp->icon('envelope')));
     $html .= $form->field('password', 'password', array('prepend'=>$bp->icon('lock')));
@@ -66,7 +65,10 @@ class Admin_users extends CI_Driver {
     $html .= $form->submit('Sign In');
     $html .= $form->close();
     unset($form);
-    return $html;
+    return $this->box('default', array(
+      'head with-border' => $bp->icon('user') . ' Sign In',
+      'body' => $html
+    ));
   }
   
   private function edit_profile () {
@@ -76,9 +78,10 @@ class Admin_users extends CI_Driver {
     if (!$edit = is_user()) return $html;
     $form = $page->plugin('Form', 'name', 'edit_profile');
     $form->values($ci->auth->info($edit));
-    $form->validate('name', 'Name', 'required');
-    $form->validate('password', 'Password', 'nowhitespace|minlength[6]');
-    $form->validate('confirm', 'Confirm', 'matches[password]');
+    $form->validate('email', 'Email', '', 'Your email address for signing into the site.');
+    $form->validate('name', 'Name', 'required', 'Please enter your name.');
+    $form->validate('password', 'Password', 'nowhitespace|minlength[6]', 'Please enter your desired password.');
+    $form->validate('confirm', 'Confirm', 'matches[password]', 'Please confirm the password entered above.');
     if ($form->submitted() && empty($form->errors)) {
       $update = array();
       if (!empty($form->vars['password'])) {
@@ -92,16 +95,18 @@ class Admin_users extends CI_Driver {
       if (!empty($update)) $ci->auth->update($edit, $update);
       $page->eject($form->eject);
     }
-    $html .= '<div class="page-header"><p class="lead">' . $bp->icon('user') . ' Edit Your Profile</p></div>';
     $html .= $form->header();
-    $html .= $form->field('Email', '<p class="help-block">' . $form->values('email') . '</p>');
+    $html .= $form->field('email', '<p class="help-block">' . $form->values('email') . '</p>') . $form->field('email', 'hidden');
     $html .= $form->field('name', 'text');
     $html .= $form->field('password', 'password');
     $html .= $form->field('confirm', 'password');
     $html .= $form->submit('Edit Profile');
     $html .= $form->close();
     unset($form);
-    return $html;
+    return $this->box('default', array(
+      'head with-border' => $bp->icon('user') . ' Edit Your Profile',
+      'body' => $html
+    ));
   }
   
   private function list_users ($view='') {
@@ -116,22 +121,18 @@ class Admin_users extends CI_Driver {
     $ci->auth->db->query('SELECT g.id, g.name, COUNT(*) FROM ci_user_groups AS u INNER JOIN ci_groups AS g ON u.group_id = g.id GROUP BY u.group_id ORDER BY g.name ASC');
     while (list($id, $group, $count) = $ci->auth->db->fetch('row')) $groups[$id] = array('name'=>$group, 'count'=>$count);
     $links = array();
-    $links[$bp->icon('user') . ' View Users ' . $bp->badge($total)] = $page->url('add', '', 'view', 'all');
-    $links['Active ' . $bp->badge($active)] = $page->url('add', '', 'view', 'active');
-    $links['Admin ' . $bp->badge($admin)] = $page->url('add', '', 'view', 'admin');
+    $url = $page->url('delete', '', '?');
+    $links[$bp->icon('user') . ' View Users ' . $bp->badge($total)] = $page->url('add', $url, 'view', 'all');
+    $links['Active ' . $bp->badge($active)] = $page->url('add', $url, 'view', 'active');
+    $links['Admin ' . $bp->badge($admin)] = $page->url('add', $url, 'view', 'admin');
     if (!empty($groups)) {
       foreach ($groups as $id => $group) {
-        $links['Groups'][$group['name'] . ' ' . $bp->badge($group['count'])] = $page->url('add', '', 'view', $id);
+        $links['Groups'][$group['name'] . ' ' . $bp->badge($group['count'])] = $page->url('add', $url, 'view', $id);
       }
     }
-    $html .= '<div class="page-header">';
-      $html .= $bp->row('md', 'sm', array(
-        $bp->col(9, 8, $bp->pills($links, array('align'=>'horizontal', 'active'=>$page->url()))),
-        $bp->col(3, 4, $bp->search($page->url(), array('name'=>'users', 'placeholder'=>'Users')))
-      ));
-    $html .= '</div>';
     $bp->listings->display(100);
     $ids = array();
+    $group = '';
     if (isset($_GET['users'])) {
       $where = 'WHERE email LIKE ? OR name LIKE ?';
       $params = array('%' . $_GET['users'] . '%', '%' . $_GET['users'] . '%');
@@ -152,10 +153,12 @@ class Admin_users extends CI_Driver {
         $form->validate('group', 'Group', 'required', 'The only thing you should edit here is capitalization.  If you rename this group to something else, then you will also need to manually change the hard-coded values that created this group in the first place, as all assigned users will be transferred over as well.');
         $form->values('group', $groups[$view]['name']);
         if ($form->submitted() && empty($form->errors)) {
-          $group_id = $ci->auth->db->value('SELECT id FROM ci_groups WHERE name = ?', array($form->vars['group']));
-          $ci->auth->db->update('ci_groups', 'id', array($group_id => array('name'=>$form->vars['group'])));
+          if ($group_id = $ci->auth->db->value('SELECT id FROM ci_groups WHERE name = ?', array($form->vars['group']))) {
+            $ci->auth->db->update('ci_groups', 'id', array($group_id => array('name'=>$form->vars['group'])));
+          } else {
+            $group_id = $ci->auth->db->insert('ci_groups', array('name' => $form->vars['group']));
+          }
           if ($group_id != $view) {
-            $html .= 'view: ' . $view;
             $users = $ci->auth->get_groups_users($view);
             $ci->auth->remove_from_group($users, $view);
             $ci->auth->add_to_group($users, $group_id);
@@ -163,9 +166,9 @@ class Admin_users extends CI_Driver {
           }
           $page->eject($form->eject);
         }
-        $html .= $form->header();
-        $html .= $form->field('group', 'text', array('append'=>$bp->button('warning', 'Edit', array('type'=>'submit', 'data-loading-text'=>'Submitting...'))));
-        $html .= $form->close();
+        $group .= $form->header() . '<br>';
+        $group .= $form->field('group', 'text', array('append'=>$bp->button('warning', 'Edit', array('type'=>'submit', 'data-loading-text'=>'Submitting...'))));
+        $group .= $form->close();
         unset($form);
         if (!$bp->listings->set) $bp->listings->count($groups[$view]['count']);
         $ci->auth->db->query('SELECT user_id FROM ci_user_groups WHERE user_id > ? AND group_id = ? ORDER BY user_id ASC', array(0, $view));
@@ -176,9 +179,8 @@ class Admin_users extends CI_Driver {
       $ci->auth->db->query('SELECT id FROM ci_users ORDER BY id DESC' . $bp->listings->limit());
       while (list($id) = $ci->auth->db->fetch('row')) $ids[] = $id;
     }
-    $html .= $bp->table->open('class=condensed striped');
+    $html .= $bp->table->open('class=hover');
     $html .= $bp->table->head();
-    $html .= $bp->table->cell('', '&nbsp;');
     $html .= $bp->table->cell('', 'ID');
     $html .= $bp->table->cell('', 'Name');
     $html .= $bp->table->cell('', 'Email');
@@ -191,20 +193,31 @@ class Admin_users extends CI_Driver {
       $info = $ci->auth->info($ids);
       foreach ($info as $id => $user) {
         $html .= $bp->table->row();
-        $html .= $bp->table->cell('', '<a href="' . $page->url($this->url, 'users/edit?id=' . $id) . '" title="Edit User">' . $bp->icon('pencil') . '</a>');
-        $html .= $bp->table->cell('', $user['id']);
+        $html .= $bp->table->cell('', $bp->button('xs warning', $bp->icon('pencil') . ' ' . $user['id'], array('href'=>$page->url($this->url, 'users/edit?id=' . $id), 'title'=>'Edit User')));
         $html .= $bp->table->cell('', $user['name']);
         $html .= $bp->table->cell('', $user['email']);
         $html .= $bp->table->cell('align=center', date('M d Y', $user['registered'] - $analytics['offset']));
         $html .= $bp->table->cell('align=center', $user['admin']);
-        $html .= $bp->table->cell('align=center', $user['approved']);
+        $html .= $bp->table->cell('align=center', $bp->label(($user['approved'] == 'Y' ? 'success' : 'danger'), $user['approved']));
         $html .= $bp->table->cell('align=right', ($user['last_activity'] > 0) ? '<span class="timeago" title="' . date('c', $user['last_activity']) . '"></span>' : '');
       }
     }
     $html .= $bp->table->close();
-    $html .= '<div class="text-center">' . $bp->listings->pagination() . '</div>';
     $page->plugin('CDN', 'link', 'jquery.timeago/1.3.0/jquery.timeago.min.js');
     $page->plugin('jQuery', 'code', '$("span.timeago").timeago();');
+    return $this->box('default', array(
+      implode('', array(
+        '<div class="box-header with-border no-padding">',
+          $bp->pills($links, array('align'=>'horizontal', 'active'=>$page->url())),
+          '<div class="box-tools">',
+            $bp->search($url, array('name'=>'users', 'placeholder'=>'Users')),
+          '</div>',
+        '</div>'
+      )),
+      'body' => $group,
+      'body no-padding table-responsive' => $html,
+      'foot clearfix' => $bp->listings->pagination('sm no-margin')
+    ));
     return $html;
   }
   
@@ -218,12 +231,12 @@ class Admin_users extends CI_Driver {
     $form->values($edit);
     $form->menu('admin', range(0, 10));
     $form->menu('approved', array('Y'=>$edit['name'] . ' is authorized to sign in at ' . $ci->blog->name));
-    $form->validate('name', 'Name', 'required');
-    $form->validate('email', 'Email', 'required|email');
-    $form->validate('password', 'Password', 'nowhitespace|minlength[6]');
-    $form->validate('admin', 'Admin', 'inarray[menu]');
-    $form->validate('groups', 'Groups');
-    $form->validate('approved', 'Approved', 'YN');
+    $form->validate('name', 'Name', 'required', 'Your users name.');
+    $form->validate('email', 'Email', 'required|email', 'Your users email address.');
+    $form->validate('password', 'Password', 'nowhitespace|minlength[6]', 'Enter a new password if you want to change it.');
+    $form->validate('admin', 'Admin', 'inarray[menu]', 'Level 1 (like you) has complete access, and level 2 will have limited access to this Admin section.');
+    $form->validate('groups', 'Groups', '', 'To further segregate your users into stereotypes.');
+    $form->validate('approved', 'Approved', 'YN', 'Uncheck if you never want them to log in again.');
     if ($form->submitted() && empty($form->errors)) {
       if ($edit['email'] != $form->vars['email'] && $ci->auth->check($form->vars['email'])) {
         $form->errors['email'] = 'Sorry, the email submitted has already been registered.';
@@ -237,7 +250,6 @@ class Admin_users extends CI_Driver {
         $page->eject($form->eject);
       }
     }
-    $html .= '<div class="page-header"><p class="lead">' . $bp->icon('user') . ' Edit User</p></div>';
     $html .= $form->header();
     $html .= $form->field('name', 'text', array('prepend'=>$bp->icon('user')));
     $html .= $form->field('email', 'text', array('prepend'=>$bp->icon('envelope')));
@@ -248,7 +260,10 @@ class Admin_users extends CI_Driver {
     $html .= $form->submit('Edit User');
     $html .= $form->close();
     unset($form);
-    return $html;
+    return $this->box('default', array(
+      'head with-border' => $bp->icon('user') . ' Edit User',
+      'body' => $html
+    ));
   }
   
   private function register_user () {
@@ -257,9 +272,9 @@ class Admin_users extends CI_Driver {
     $html = '';
     $form = $page->plugin('Form', 'name', 'edit_user'); // so that our status message show up when we eject to edit user
     $form->values('password', $ci->auth->random_password());
-    $form->validate('name', 'Name', 'required');
-    $form->validate('email', 'Email', 'required|email');
-    $form->validate('password', 'Password', 'required|nowhitespace|minlength[6]');
+    $form->validate('name', 'Name', 'required', 'The name of your user.');
+    $form->validate('email', 'Email', 'required|email', 'Your users email address.');
+    $form->validate('password', 'Password', 'required|nowhitespace|minlength[6]', 'A random password to get them started.');
     if ($form->submitted() && empty($form->errors)) {
       list($new_user, $user_id) = $ci->auth->register($form->vars['name'], $form->vars['email'], $form->vars['password']);
       if ($new_user) {
@@ -269,7 +284,6 @@ class Admin_users extends CI_Driver {
       }
       $page->eject($page->url($this->url, 'users/edit?id=' . $user_id));
     }
-    $html .= '<div class="page-header"><p class="lead">' . $bp->icon('user') . ' Register User</p></div>';
     $html .= $form->header();
     $html .= $form->field('name', 'text', array('prepend'=>$bp->icon('user')));
     $html .= $form->field('email', 'text', array('prepend'=>$bp->icon('envelope')));
@@ -277,7 +291,10 @@ class Admin_users extends CI_Driver {
     $html .= $form->submit('Register User');
     $html .= $form->close();
     unset($form);
-    return $html;
+    return $this->box('default', array(
+      'head with-border' => $bp->icon('user') . ' Register User',
+      'body' => $html
+    ));
   }
   
 }

@@ -34,6 +34,7 @@ class Admin_themes extends CI_Driver {
   
   private function theme () {
     global $bp, $ci, $page;
+    $html = '';
     $files = $ci->admin->files->save(array(
       'index' => array($this->dir . $this->theme . '/index.tpl', $ci->blog->templates . 'layout.tpl')
     ), array('index'), array($this, 'update'));
@@ -43,10 +44,16 @@ class Admin_themes extends CI_Driver {
       'post' => $this->dir . $this->theme . '/post.php'
     ), array('bootstrap', 'custom', 'post')));
     $media = $ci->admin->files->view('themes', $this->dir . $this->theme);
-    if ($ci->input->get('image')) return $media;
+    if ($ci->input->get('image')) {
+      return $this->box('default', array(
+        'head with-border' => $bp->icon('image', 'fa') . ' Image',
+        'body' => $media
+      ));
+    }
     if ($ci->input->get('delete') == 'theme') {
       if (is_dir($this->dir . $this->theme)) {
         list($dirs, $files) = $ci->blog->folder($this->dir . $this->theme, 'recursive');
+        arsort($dirs);
         foreach ($files as $file) unlink($this->dir . $this->theme . $file);
         foreach ($dirs as $dir) rmdir($this->dir . $this->theme . $dir);
         rmdir($this->dir . $this->theme);
@@ -64,10 +71,9 @@ class Admin_themes extends CI_Driver {
     } elseif ($preview = $ci->session->native->tempdata('preview_layout')) {
       if ($preview != $this->theme) $ci->session->native->set_tempdata('preview_layout', $this->theme, 3000);
     }
-    $html = '';
     $form = $page->plugin('Form', 'name', 'admin_theme_manager');
     $themes = array($page->url($this->url, 'themes/default') => 'default');
-    list($dirs) = $ci->blog->folder($this->dir, 'false', 'false');
+    list($dirs) = $ci->blog->folder($this->dir, false, false);
     foreach ($dirs as $theme) $themes[$page->url($this->url, 'themes', $theme)] = $theme;
     $form->menu('theme', $themes);
     $form->menu('preview', array('Y'=>'Preview the selected theme'));
@@ -128,9 +134,6 @@ class Admin_themes extends CI_Driver {
         $page->eject($form->eject);
       }
     }
-    $delete = $bp->button('sm danger delete pull-right', $bp->icon('trash'), array('title'=>'Click to delete this theme', 'style'=>'margin-left:20px;'));
-    $docs = $bp->button('sm info pull-right', 'Documentation ' . $bp->icon('new-window'), array('href'=>'http://bootpress.org/getting-started#themes', 'target'=>'_blank'));
-    $html .= '<div class="page-header"><p class="lead">' . $bp->icon('desktop', 'fa') . ' Edit ' . $delete . '&nbsp;' . $docs . '</p></div>';
     $page->plugin('jQuery', 'code', '
       $("#' . $form->id('theme') . '").change(function(){ window.location = $(this).val(); });
       $("input[name=preview]").change(function(){
@@ -144,14 +147,29 @@ class Admin_themes extends CI_Driver {
       });
     ');
     $html .= $form->header();
-    $html .= $form->field('theme', 'select');
-    $html .= $form->field('preview', 'checkbox');
-    $html .= $form->field('index', 'textarea', array('class'=>'wyciwyg tpl input-sm', 'data-file'=>'index.tpl'));
-    $html .= $form->field('post', 'textarea', array('class'=>'wyciwyg php input-sm', 'data-file'=>'post.php'));
-    $html .= $form->field('save', 'text');
-    $html .= $form->field('action', 'radio');
-    $html .= $form->submit();
-    $html .= $form->close() . '<br>';
+    $html .= $this->box('default', array(
+      'head with-border' => array(
+        $bp->icon('desktop', 'fa') . ' ' . ucwords($this->theme) . ' Theme',
+        $bp->button('md link', 'Documentation ' . $bp->icon('new-window'), array('href'=>'http://bootpress.org/getting-started#themes', 'target'=>'_blank'))
+      ),
+      'body' => implode('', array(
+        $form->field('preview', 'checkbox'),
+        $form->field('theme', 'select'),
+        $form->field('save', 'text'),
+        $form->field('action', 'radio'),
+        $form->submit('Submit', $bp->button('danger delete pull-right', $bp->icon('trash'), array('title'=>'Click to delete this theme')))
+      ))
+    ));
+    $form->align('collapse');
+    $html .= $this->box('default', array(
+      'head with-border' => array('index.tpl', 'collapse'),
+      'body' => $form->field('index', 'textarea', array('class'=>'wyciwyg tpl input-sm', 'data-file'=>'index.tpl', 'label'=>false))
+    ));
+    $html .= $this->box('default', array(
+      'head with-border' => array('post.php', 'collapse'),
+      'body' => $form->field('post', 'textarea', array('class'=>'wyciwyg php input-sm', 'data-file'=>'post.php', 'label'=>false))
+    ));
+    $html .= $form->close();
     unset($form);
     $form = $page->plugin('Form', 'name', 'admin_bootstrap');
     $form->values($files);
@@ -172,15 +190,26 @@ class Admin_themes extends CI_Driver {
       }
       $page->eject($form->eject);
     }
-    $html .= $form->header();
-    $html .= $form->fieldset('Bootstrap ' . $bp->button('link', 'Preview Theme ' . $bp->icon('new-window'), array('href'=>$page->url($this->url, 'themes/preview', $this->theme), 'target'=>'bootstrap')),
-      $form->field('bootstrap', 'textarea', array('class'=>'wyciwyg less input-sm', 'data-file'=>'variables.less')),
-      $form->field('custom', 'textarea', array('class'=>'wyciwyg less input-sm', 'data-file'=>'custom.less'))
-    );
-    $html .= $form->submit('Compile');
-    $html .= $form->close();
+    $html .= $this->box('default', array(
+      'head with-border' => array(
+        'Bootstrap',
+        $bp->button('md link', 'Preview Theme ' . $bp->icon('new-window'), array('href'=>$page->url($this->url, 'themes/preview', $this->theme), 'target'=>'_bootstrap')),
+        'collapse'
+      ),
+      'body' => implode('', array(
+        $form->header(),
+        $form->field('bootstrap', 'textarea', array('class'=>'wyciwyg less input-sm', 'data-file'=>'variables.less')),
+        $form->field('custom', 'textarea', array('class'=>'wyciwyg less input-sm', 'data-file'=>'custom.less')),
+        $form->submit('Compile'),
+        $form->close()
+      ))
+    ));
     unset($form);
-    return $html . $media;
+    $html .= $this->box('default', array(
+      'head with-border' => array('Files', 'collapse'),
+      'body' => $media
+    ));
+    return $html;
   }
   
   private function preview () {

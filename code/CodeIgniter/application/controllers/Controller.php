@@ -152,7 +152,7 @@ class Controller extends CI_Controller {
       if (trim($errors) == '') $this->sitemap->update($html);
     }
     $this->log('hits');
-    if ($this->session->native->userdata('profiler') && $this->output->get_content_type() == 'text/html') { // && $this->model != ADMIN
+    if ($this->session->native->userdata('profiler') && $this->output->get_content_type() == 'text/html') {
       $this->session->select_driver('native');
       $this->output->enable_profiler(true);
     } elseif (trim($errors) == '') {
@@ -414,14 +414,11 @@ class Controller extends CI_Controller {
   private function layout ($content) {
     global $ci, $page;
     if ($page->theme == 'admin') {
-      $page->plugin('CDN', array('prepend', 'links'=>array(
-        'bootstrap/' . $ci->blog->bootstrap . '/css/bootstrap.min.css',
-        'bootstrap/' . $ci->blog->bootstrap . '/js/bootstrap.min.js',
-        'fontawesome/4.2.0/css/font-awesome.min.css'
-      )));
-      $page->plugin('jQuery');
       $this->analytics();
-      return $content;
+      $lte = 'code/CodeIgniter/application/libraries/Admin/LTE/2.0/';
+      $this->blog->set('admin', BASE_URL . $lte);
+      $content = $this->blog->smarty(BASE . $lte . 'index.tpl', array('content'=>$content));
+      return $page->customize('layout', $content);
     }
     $content = $page->customize('content', $content);
     if (($preview = $this->session->native->tempdata('preview_layout')) && is_admin(2)) $page->theme = $preview;

@@ -8,15 +8,9 @@ class Admin_errors extends CI_Driver {
     $this->logs = APPPATH . 'logs/';
   }
   
-  public function btn () {
-    global $bp, $page;
-    $btn = '';
-    if (is_admin(1)) {
-      $logs = $this->logs();
-      $url = $page->url('add', $page->url($this->url, 'errors'), 'redirect', $page->url());
-      if (!empty($logs)) $btn = '<p>' . $bp->button('danger block', 'View Errors', array('href'=>$url)) . '</p>';
-    }
-    return $btn;
+  public function link () {
+    global $page;
+    return  (is_admin(1) && ($logs = $this->logs()) && !empty($logs)) ? $page->url('add', $page->url($this->url, 'errors'), 'redirect', $page->url()) : null;
   }
   
   public function view () {
@@ -30,11 +24,8 @@ class Admin_errors extends CI_Driver {
       if ($redirect = $ci->input->get('redirect')) $page->eject($redirect);
       $page->eject($page->url('delete', '', 'delete'));
     }
-    if (empty($logs)) return $this->display('<div class="page-header" style="margin-top:20px;"><h3>View Errors</h3></div>');
+    if (empty($logs)) return $this->display($html);
     $display = $this->errors($logs);
-    $delete = $bp->button('primary', 'Delete Errors', array('href'=>$page->url('add', '', 'delete', 'errors')));
-    $count = '<span class="label label-danger pull-right">' . count($display) . '</span>';
-    $html .= '<div class="page-header" style="margin-top:20px;"><h3>View Errors ' . $delete . $count . '</h3></div>';
     if (isset($display[404])) {
       $li = array();
       foreach ($display[404] as $link => $info) {
@@ -66,9 +57,13 @@ class Admin_errors extends CI_Driver {
       $media .= $bp->lister('ul list-unstyled', $li);
       $html .= $bp->media(array($left, $media, $right));
     }
-    $html .= '<hr><p>' . $delete . '</p>';
     $page->plugin('CDN', 'link', 'jquery.timeago/1.3.0/jquery.timeago.min.js');
     $page->plugin('jQuery', 'code', '$("span.timeago").timeago();');
+    $delete = $bp->button('primary', 'Delete Errors&nbsp;&nbsp;' . $bp->badge(count($display)), array('href'=>$page->url('add', '', 'delete', 'errors')));
+    $html = $this->box('default', array(
+      'head' => array($delete),
+      'body' => '<div style="margin:20px auto;">' . $html . '</div>' . $delete
+    ));
     return $this->display($html);
   }
   

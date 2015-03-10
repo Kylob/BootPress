@@ -164,7 +164,7 @@ $(document).ready(function(){
   $("#toolbar").click(function(e){
     $("#wyciwyg").css({height:($(window).height() - 20) + "px"});
     $("#editor").css({height:($("#wyciwyg").height() - 35) + "px"});
-  $("#wyciwyg").center();
+    $("#wyciwyg").center();
     $(window).scrollTop(0);
     editor.resize();
   });

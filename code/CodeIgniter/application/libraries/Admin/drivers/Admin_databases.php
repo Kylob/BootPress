@@ -4,6 +4,7 @@ class Admin_databases extends CI_Driver {
 
   public function view () {
     global $bp, $ci, $page;
+    $html = '';
     if (!is_admin(1)) $page->eject();
     if ( isset($_GET['file']) ||
          (isset($_GET['db']) && (isset($_GET['server']) || isset($_GET['sqlite']) || isset($_GET['sqlite2']) || isset($_GET['pgsql']) || isset($_GET['oracle']) || isset($_GET['mssql'])))
@@ -27,10 +28,7 @@ class Admin_databases extends CI_Driver {
         return false;
       });
     ');
-    $html = '<div class="page-header" style="margin-top:20px;"><p class="lead">' . $bp->icon('database', 'fa') . ' Adminer</p></div>';
-    
     $url = $page->url('delete', '', '?');
-    
     #-- Databases --#
     $query = $ci->resources->db->query('SELECT id, driver, database, config FROM databases ORDER BY driver, database ASC');
     if ($query->num_rows() > 0) {
@@ -76,8 +74,10 @@ class Admin_databases extends CI_Driver {
         $html .= $bp->lister('dl dl-horizontal', $dl);
       }
     }
-    
-    return $this->display($html);
+    return $this->display($this->box('default', array(
+      'head with-border' => $bp->icon('database', 'fa') . ' Databases',
+      'body' => $html
+    )));
   }
   
 }

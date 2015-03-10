@@ -9,7 +9,6 @@ class Admin_analytics extends CI_Driver {
   
   public function view ($params) {
     global $bp, $ci, $page;
-    $html = '';
     $ci->load->library('analytics');
     if ($ci->input->get('process') == 'hits') {
       $ci->analytics->process_hits();
@@ -23,29 +22,62 @@ class Admin_analytics extends CI_Driver {
     $this->offset = (isset($analytics['offset'])) ? (int) $analytics['offset'] : 0;
     $page->plugin('CDN', 'link', 'jquery.timeago/1.3.0/jquery.timeago.min.js');
     $page->plugin('jQuery', 'code', '$("span.timeago").timeago();');
-    $button = $bp->button('sm default pull-right', $bp->icon('refresh') . ' Process Hits', array(
-      'href' => $page->url('add', '', 'process', 'hits')
-    ));
-    $html .= '<p>Last updated <span class="timeago" title="' . date('c', $this->end) . '">' . $this->end . '</span> ' . $button . '</p><br>';
-    $html .= $bp->tabs(array(
-      'Visitors' => $page->url($this->url, 'analytics'),
-      'Users' => $page->url($this->url, 'analytics/users'),
-      'Pages' => $page->url($this->url, 'analytics/pages'),
-      'Referrers' => $page->url($this->url, 'analytics/referrers'),
-    ), array('active'=>'url', 'align'=>'justified')) . '<br>';
     $method = (isset($params['method'])) ? $params['method'] : 'visitors';
-    $html .= $this->$method();
-    return $this->display($html);
+    $chart = '';
+    $html = $this->$method();
+    if (is_array($html)) {
+      $chart = array_shift($html);
+      $html = array_shift($html);
+    }
+    return $this->display($this->box('default', array(
+      'head with-border' => array(
+        $bp->icon('line-chart', 'fa') . ' ' . ucwords($method),
+        $bp->label('info', 'Last updated <span class="timeago" title="' . date('c', $this->end) . '">' . $this->end . '</span>'),
+        $bp->button('sm warning', $bp->icon('refresh') . ' Process Hits', array('href' => $page->url('add', '', 'process', 'hits')))
+      ),
+      'body' => $chart,
+      'body no-padding table-responsive' => $html,
+      'foot clearfix' => $bp->listings->pagination('sm no-margin')
+    )));
   }
   
   private function visitors () {
-    global $bp, $ci;
+    global $bp, $ci, $page;
+    $page->plugin('CDN', 'links', array(
+      'morris.js/0.5.1/morris.min.js',
+      'morris.js/0.5.1/morris.css'
+    ));
+    $page->link('//cdnjs.cloudflare.com/ajax/libs/raphael/2.1.0/raphael-min.js', 'prepend');
+    $chart = '<div id="visitors-chart" style="height:300px;"></div>';
+    $data = array();
+    foreach ($this->start_stop(31, 'day', 'Y-m-d') as $x => $info) { // D M j
+      list($start, $stop) = $info;
+      list($user, $hits) = $ci->analytics->user_hits($start, $stop);
+      $data[] = '{x:"' . $x . '", hits:' . $hits . ', users:' . $user . ', avg:' . ($user > 0 ? round($hits / $user, 1) : 0) . '}';
+    }
+    $data = '[' . implode(',', $data) . ']';
+    $page->plugin('jQuery', 'code', '
+      new Morris.Area({
+        behaveLikeLine: true,
+        element: "visitors-chart",
+        resize: true,
+        data: ' . $data . ',
+        xkey: "x",
+        xLabels: "month",
+        xLabelFormat: function(x){ var str = x.toDateString(); return str.substr(4,4) + str.substr(-4); },
+        dateFormat: function(x){ return new Date(x).toDateString().slice(0,-5); },
+        ykeys: ["hits", "users", "avg"],
+        labels: ["Pageviews", "Number of Users", "Avg Views per User"],
+        lineColors: ["#3C8DBC", "#00A65A", "#F56954"],
+        hideHover: "auto"
+      });
+    ');
     $visits = array();
     $visits['Since'] = array(date("M Y", $this->begin) => array($this->begin, $this->end));
     $visits['Past Day'] = $this->start_stop(24, 'hour', 'g:00a', array('This Hour', 'Last Hour'));
     $visits['Past Week'] = $this->start_stop(7, 'day', 'l', array('Today', 'Yesterday'));
     $visits['Past Month'] = $this->start_stop(5, 'week', '', array('This Week', 'Last Week', '2 weeks ago', '3 weeks ago', '4 weeks ago'));
-    $visits['Past Year'] = $this->start_stop(12, 'month', "M 'y", array('This Month', 'Last Month'));
+    $visits['Past Year'] = $this->start_stop(12, 'month', "M Y", array('This Month', 'Last Month'));
     foreach ($visits as $header => $values) {
       foreach ($values as $value => $info) {
         list($start, $stop) = $info;
@@ -55,8 +87,7 @@ class Admin_analytics extends CI_Driver {
         $visits[$header][$value][] = $ci->analytics->avg_session_duration($start, $stop, '-', ' minutes');
       }
     }
-    $html = '<h3>' . $bp->icon('line-chart', 'fa') . ' Visitors</h3><br>';
-    $html .= $bp->table->open('class=table responsive bordered striped condensed');
+    $html = $bp->table->open('class=hover');
     foreach ($visits as $header => $values) {
       if (empty($values)) continue;
       $html .= $bp->table->head();
@@ -80,78 +111,37 @@ class Admin_analytics extends CI_Driver {
       }
     }
     $html .= $bp->table->close();
-    return $html;
+    return array($chart, $html);
   }
   
-  private function users () {
+  private function referrers () {
     global $bp, $ci;
-    $html = '<h3>' . $bp->icon('line-chart', 'fa') . ' Users <small>Last 30 Days</small></h3><br>';
-    $total = 0;
-    $platforms = array();
-    $browsers = array();
-    $versions = array();
-    $phones = array();
-    $ci->analytics->db->query(array(
-      'SELECT s.hits, a.platform, a.browser, a.version, a.mobile',
-      'FROM sessions AS s',
-      'INNER JOIN agents AS a ON s.agent_id = a.id',
-      'WHERE s.time > ' . ($this->end - 2592000) . ' AND s.bot = 0 AND s.admin != 1'
+    $bp->listings->display(100);
+    if (!$bp->listings->set) $bp->listings->count($ci->analytics->db->value(
+      'SELECT COUNT(*) FROM sessions WHERE referrer != "" AND admin != 1'
     ));
-    while (list($hits, $platform, $browser, $version, $mobile) = $ci->analytics->db->fetch('row')) {
-      $version = (int) $version;
-      $total += $hits;
-      if (!isset($platforms[$platform])) $platforms[$platform] = 0;
-      $platforms[$platform] += $hits;
-      if (!isset($browsers[$browser])) $browsers[$browser] = 0;
-      $browsers[$browser] += $hits;
-      if (!isset($versions[$browser][$version])) $versions[$browser][$version] = 0;
-      $versions[$browser][$version] += $hits;
-      if (!empty($mobile)) {
-        if (!isset($phones[$mobile])) $phones[$mobile] = 0;
-        $phones[$mobile] += $hits;
-      }
-    }
-    foreach ($platforms as $platform => $hits) $platforms[$platform] = ($hits / $total) * 100;
-    arsort($platforms);
-    foreach ($browsers as $browser => $hits) {
-      $browsers[$browser] = ($hits / $total) * 100;
-      foreach ($versions[$browser] as $version => $hits) $versions[$browser][$version] = ($hits / $total) * 100;
-      arsort($versions[$browser]);
-    }
-    arsort($browsers);
-    foreach ($phones as $mobile => $hits) $phones[$mobile] = ($hits / $total) * 100;
-    arsort($phones);
-    $html .= $bp->table->open('class=table responsive bordered striped condensed');
+    $query = $ci->analytics->db->query(array(
+      'SELECT s.bot, s.hits, s.duration, s.time, s.referrer, u.uri, s.query',
+      'FROM sessions AS s INNER JOIN uris AS u ON s.uri_id = u.id',
+      'WHERE s.referrer != "" AND s.admin != 1 ORDER BY s.id DESC' . $bp->listings->limit()
+    ));
+    $rows = $ci->analytics->db->fetch('row', 'all');
+    if (empty($rows)) return $html;
+    $html = $bp->table->open('class=hover');
     $html .= $bp->table->head();
-    $html .= $bp->table->cell('colspan=3', 'Platforms');
-    $html .= $bp->table->cell('style=text-align:center;', '% of Total');
-    foreach ($platforms as $platform => $percent) {
+    $html .= $bp->table->cell('', 'Referrer');
+    $html .= $bp->table->cell('', 'Page');
+    $html .= $bp->table->cell('style=text-align:center;', 'Hits');
+    $html .= $bp->table->cell('style=text-align:center;', 'Date');
+    foreach ($rows as $row) {
+      list($bot, $hits, $duration, $time, $referrer, $uri, $query) = $row;
+      preg_match('/\/\/([\S]+\.[a-z]{2,4})\//i', $referrer, $matches);
+      $website = array_pop($matches);
       $html .= $bp->table->row();
-      $html .= $bp->table->cell('colspan=3', $platform);
-      $html .= $bp->table->cell('align=center', round($percent) . '%');
-    }
-    $html .= $bp->table->head();
-    $html .= $bp->table->cell('colspan=3', 'Browsers <span class="pull-right">Version</span>');
-    $html .= $bp->table->cell('style=text-align:center;', '% of Total');
-    foreach ($browsers as $browser => $percent) {
-      $html .= $bp->table->row();
-      $html .= $bp->table->cell('colspan=3', $browser);
-      $html .= $bp->table->cell('align=center', round($percent) . '%');
-      foreach ($versions[$browser] as $version => $percent) {
-        $html .= $bp->table->row();
-        $html .= $bp->table->cell('colspan=3|align=right', $version);
-        $html .= $bp->table->cell('align=center', round($percent) . '%');
-      }
-    }
-    if (!empty($phones)) {
-      $html .= $bp->table->head();
-      $html .= $bp->table->cell('colspan=3', 'Mobile');
-      $html .= $bp->table->cell('style=text-align:center;', '% of Total');
-      foreach ($phones as $mobile => $percent) {
-        $html .= $bp->table->row();
-        $html .= $bp->table->cell('colspan=3', $mobile);
-        $html .= $bp->table->cell('align=center', round($percent) . '%');
-      }
+      $html .= $bp->table->cell('', '<a href="' . $referrer . '">' . $website . '</a>');
+      $html .= $bp->table->cell('', '<a href="' . BASE_URL . $uri . $query . '">' . $uri . '</a>');
+      $html .= $bp->table->cell('align=center', $hits);
+      $html .= $bp->table->cell('align=center', '<span class="timeago" title="' . date('c', $time) . '">' . $time . '</span>');
     }
     $html .= $bp->table->close();
     return $html;
@@ -159,8 +149,7 @@ class Admin_analytics extends CI_Driver {
   
   private function pages () {
     global $bp, $ci, $page;
-    $html = '<h3>' . $bp->icon('line-chart', 'fa') . ' Pages <small>Viewed By Users</small></h3><br>';
-    $html .= $bp->table->open('class=table responsive bordered striped condensed');
+    $html = $bp->table->open('class=hover');
     $html .= $bp->table->head();
     $html .= $bp->table->cell('', 'Most Popular (last 30 days)');
     $html .= $bp->table->cell('style=text-align:center;', 'Hits');
@@ -178,7 +167,7 @@ class Admin_analytics extends CI_Driver {
       $html .= $bp->table->cell('align=center', $hits);
     }
     $html .= $bp->table->close();
-    $html .= $bp->table->open('class=table responsive bordered striped condensed');
+    $html .= $bp->table->open('class=hover');
     $html .= $bp->table->head();
     $html .= $bp->table->cell('', 'Most Recent (per user)');
     $html .= $bp->table->cell('style=text-align:center;', 'Date');
@@ -202,42 +191,129 @@ class Admin_analytics extends CI_Driver {
     return $html;
   }
   
-  private function referrers () {
-    global $bp, $ci;
-    $html = '<h3>' . $bp->icon('line-chart', 'fa') . ' Referrers</h3><br>';
-    $bp->listings->display(100);
-    if (!$bp->listings->set) $bp->listings->count($ci->analytics->db->value(
-      'SELECT COUNT(*) FROM sessions WHERE referrer != ? AND admin != 1'
-    ), array(''));
-    $query = $ci->analytics->db->query(array(
-      'SELECT s.bot, s.hits, s.duration, s.time, s.referrer, u.uri, s.query',
-      'FROM sessions AS s INNER JOIN uris AS u ON s.uri_id = u.id',
-      'WHERE s.referrer != ? AND s.admin != 1 ORDER BY s.id DESC' . $bp->listings->limit()
-    ), array(''));
-    $rows = $ci->analytics->db->fetch('row', 'all');
-    if (empty($rows)) return $html;
-    $html .= $bp->table->open('class=table responsive bordered striped condensed');
-    $html .= $bp->table->head();
-    $html .= $bp->table->cell('', 'Referrer');
-    $html .= $bp->table->cell('', 'Page');
-    $html .= $bp->table->cell('style=text-align:center;', 'Hits');
-    $html .= $bp->table->cell('style=text-align:center;', 'Date');
-    foreach ($rows as $row) {
-      list($bot, $hits, $duration, $time, $referrer, $uri, $query) = $row;
-      preg_match('/\/\/([\S]+\.[a-z]{2,4})\//i', $referrer, $matches);
-      $website = array_pop($matches);
-      $html .= $bp->table->row();
-      $html .= $bp->table->cell('', '<a href="' . $referrer . '">' . $website . '</a>');
-      $html .= $bp->table->cell('', '<a href="' . BASE_URL . $uri . $query . '">' . $uri . '</a>');
-      $html .= $bp->table->cell('align=center', $hits);
-      $html .= $bp->table->cell('align=center', '<span class="timeago" title="' . date('c', $time) . '">' . $time . '</span>');
+  private function users ($data=null) {
+    global $bp, $ci, $page;
+    $page->plugin('CDN', 'link', 'chart.js/1.0.1/Chart.min.js');
+    if (is_array($data)) {
+      $colors = array('#F56954', '#00A65A', '#F39C12', '#00C0EF', '#3C8DBC', '#D2D6DE'); // red, green, orange, lt. blue, blue, lt. gray
+      foreach ($data as $key => $value) {
+        if (!empty($key) && ($percent = round($value)) > 0) {
+          $color = array_shift($colors);
+          $data[$key] = "{value:{$percent},color:\"{$color}\",label:\"{$key}\"}";
+          array_push($colors, $color);
+        } else {
+          unset($data[$key]);
+        }
+      }
+      return (!empty($data)) ? '[' . implode(', ', $data) . ']' : null;
     }
-    $html .= $bp->table->close();
-    $html .= '<div class="text-center">' . $bp->listings->pagination() . '</div>';
-    return $html;
+    $html = '';
+    $options = array(
+      'animation:false',
+      'legendTemplate:"<ul class=\"<%=name.toLowerCase()%>-legend list-unstyled\"><% for (var i=0; i<segments.length; i++){%><li><p><i class=\"fa fa-circle-o\" style=\"color:<%=segments[i].fillColor%>; margin-right:10px;\"></i><%=segments[i].value%>% - <%=segments[i].label%></p></li><%}%></ul>"',
+      'tooltipTemplate:"<%=value %>% - <%=label%>"'
+    );
+    $options = '{' . implode(', ', $options) . '}';
+    $total = 0;
+    $mobile = array();
+    $platforms = array();
+    $browsers = array();
+    $versions = array();
+    $ci->analytics->db->query(array(
+      'SELECT s.hits, a.platform, a.browser, a.version, a.mobile',
+      'FROM sessions AS s',
+      'INNER JOIN agents AS a ON s.agent_id = a.id',
+      'WHERE s.time > ' . ($this->end - 2592000) . ' AND s.bot = 0 AND s.admin != 1'
+    ));
+    while (list($hits, $platform, $browser, $version, $phone) = $ci->analytics->db->fetch('row')) {
+      $total += $hits;
+      if (!empty($phone)) {
+        if (!isset($mobile[$phone])) $mobile[$phone] = 0;
+        $mobile[$phone] += $hits;
+      }
+      if (!isset($platforms[$platform])) $platforms[$platform] = 0;
+      $platforms[$platform] += $hits;
+      if (!isset($browsers[$browser])) $browsers[$browser] = 0;
+      $browsers[$browser] += $hits;
+      $version = (int) $version;
+      if (!isset($versions[$browser][$version])) $versions[$browser][$version] = 0;
+      $versions[$browser][$version] += $hits;
+    }
+    #-- Mobile -#
+    foreach ($mobile as $phone => $hits) $mobile[$phone] = ($hits / $total) * 100;
+    arsort($mobile);
+    if ($data = $this->users($mobile)) {
+      $html .= '<br>' . $bp->row('sm', array(
+        $bp->col('6 vcenter', '<div class="canvas-container"><canvas id="mobileChart" height="250"></canvas></div>'),
+        $bp->col('5 vcenter', '<p class="lead">Mobile (' . round(array_sum($mobile)) . '% of Users)</p><div id="mobileChartLegend"></div>')
+      )) . '<br>';
+      $page->script(array(
+        'var mobileChartCanvas = document.getElementById("mobileChart").getContext("2d");',
+        'var mobileChart = new Chart(mobileChartCanvas).Doughnut(' . $data . ', ' . $options . ');',
+        'document.getElementById("mobileChartLegend").innerHTML = mobileChart.generateLegend();',
+      ));
+    }
+    #-- Platforms --#
+    foreach ($platforms as $platform => $hits) $platforms[$platform] = ($hits / $total) * 100;
+    arsort($platforms);
+    if ($data = $this->users($platforms)) {
+      $html .= '<br>' . $bp->row('sm', array(
+        $bp->col('6 vcenter', '<div class="canvas-container"><canvas id="platformsChart" height="250"></canvas></div>'),
+        $bp->col('5 vcenter', '<p class="lead">Platforms</p><div id="platformsChartLegend"></div>')
+      )) . '<br>';
+      $page->script(array(
+        'var platformsChartCanvas = document.getElementById("platformsChart").getContext("2d");',
+        'var platformsChart = new Chart(platformsChartCanvas).Doughnut(' . $data . ', ' . $options . ');',
+        'document.getElementById("platformsChartLegend").innerHTML = platformsChart.generateLegend();',
+      ));
+    }
+    #-- Browsers --#
+    foreach ($browsers as $browser => $hits) {
+      $browsers[$browser] = ($hits / $total) * 100;
+      foreach ($versions[$browser] as $version => $hits) $versions[$browser][$version] = ($hits / $total) * 100;
+      arsort($versions[$browser]);
+    }
+    arsort($browsers);
+    if ($data = $this->users($browsers)) {
+      $html .= '<br>' . $bp->row('sm', array(
+        $bp->col('6 vcenter', '<div class="canvas-container"><canvas id="browsersChart" height="250"></canvas></div>'),
+        $bp->col('5 vcenter', '<p class="lead">Browsers</p><div id="browsersChartLegend"></div>')
+      )) . '<br>';
+      $page->script(array(
+        'var browsersChartCanvas = document.getElementById("browsersChart").getContext("2d");',
+        'var browsersChart = new Chart(browsersChartCanvas).Doughnut(' . $data . ', ' . $options . ');',
+        'document.getElementById("browsersChartLegend").innerHTML = browsersChart.generateLegend();',
+      ));
+    }
+    #-- Versions --#
+    $options = str_replace(' - ', ' - version ', $options);
+    foreach ($browsers as $browser => $share) {
+      if (!empty($browser) && ($percent = round($share)) > 0 && isset($versions[$browser]) && ($data = $this->users($versions[$browser]))) {
+        $seo = $page->seo($browser);
+        $html .= '<br>' . $bp->row('sm', array(
+          $bp->col('6 vcenter', '<div class="canvas-container"><canvas id="' . $seo . 'Chart" height="250"></canvas></div>'),
+          $bp->col('5 vcenter', '<p class="lead">' . $browser . ' (' . $percent . '% of Users)</p><div id="' . $seo . 'ChartLegend"></div>')
+        )) . '<br>';
+        $page->script(array(
+          'var ' . $seo . 'ChartCanvas = document.getElementById("' . $seo . 'Chart").getContext("2d");',
+          'var ' . $seo . 'Chart = new Chart(' . $seo . 'ChartCanvas).Doughnut(' . $data . ', ' . $options . ');',
+          'document.getElementById("' . $seo . 'ChartLegend").innerHTML = ' . $seo . 'Chart.generateLegend();',
+        ));
+      }
+    }
+    $page->style(array(
+      'canvas { display:inline; }',
+      '.canvas-container { width:100%; text-align:center; }',
+      '.vcenter' => array(
+        'display: inline-block;',
+        'vertical-align: middle;',
+        'float: none;'
+      )
+    ));
+    return '<div style="margin:20px;">' . $html . '</div>';
   }
   
-  private function start_stop ($count, $range, $label, $values) {
+  private function start_stop ($count, $range, $label, $values=array()) {
     $array = array();
     for ($i = 0; $i < $count; $i++) {
       switch ($range) {

@@ -10,8 +10,8 @@ class Admin_files extends CI_Driver {
     if ($ci->blog->controller == '#admin#') {
       switch ($type) {
         case 'authors': $html .= $this->folder($path, false, array('images'=>'jpg|jpeg|gif|png', 'files'=>false, 'resources'=>false)); break;
-        case 'blog': $html .= $this->folder($path, false, array('exclude'=>'index.tpl', 'files'=>'tpl|css|js')); break;
-        case 'themes': $html .= $this->folder($path, true, array('exclude'=>'index.tpl', 'files'=>'tpl|css|js')); break;
+        case 'blog': $html .= $this->folder($path, false, array('exclude'=>'index.tpl', 'files'=>'tpl|js|css')); break;
+        case 'themes': $html .= $this->folder($path, true, array('exclude'=>array('index.tpl', 'variables.less', 'custom.less'), 'files'=>'tpl|js|css', 'resources'=>'less|ttf|otf|svg|eot|woff|swf|zip', 'unzip'=>BASE_URI . 'themes')); break;
         case 'plugins': $html .= $this->folder($path, 2, array('exclude'=>'index.php')); break;
         case 'folders': $html .= $this->folder($path, false, array('exclude'=>'index.php')); break;
       }
@@ -43,7 +43,7 @@ class Admin_files extends CI_Driver {
     $files = array_merge(array(
       'main' => array(), // The files we don't want to rename or delete
       'exclude' => array(), // The files we don't want to include at all
-      'files' => 'js|css|tpl' . (is_admin(1) ? '|php' : null),
+      'files' => 'tpl|js|css' . (is_admin(1) ? '|php' : null),
       'images' => 'jpg|jpeg|gif|png|ico',
       'resources' => 'pdf|ttf|otf|svg|eot|woff|swf|tar|gz|tgz|zip|csv|xl|xls|xlsx|word|doc|docx|ppt|mp3|ogg|wav|mpe|mpeg|mpg|mov|qt|psd',
     ), $types);
@@ -55,7 +55,7 @@ class Admin_files extends CI_Driver {
     if (empty($types)) return;
     $main = (array) $files['main'];
     $exclude = (array) $files['exclude'];
-    $form = array('files'=>$files['files'], 'images'=>$files['images'], 'resources'=>$files['resources'], 'types'=>$types);
+    $form = array('files'=>$files['files'], 'images'=>$files['images'], 'resources'=>$files['resources'], 'types'=>$types, 'unzip'=>isset($files['unzip']) ? $files['unzip'] : false);
     list($dirs, $files) = $ci->blog->folder($path, $recursive, $types);
     $files = array_diff($files, $exclude);
     return $this->manage($path, $files, $main, $form, $recursive);
@@ -305,7 +305,7 @@ class Admin_files extends CI_Driver {
     $url = str_replace(array(BASE_URI, BASE), BASE_URL, $path);
     foreach ($files as $file) {
       $ext = strtolower(pathinfo($file, PATHINFO_EXTENSION));
-      $view = $bp->button('xs primary link', 'view ' . $bp->icon('new-window'), array('href'=>$url . $file, 'target'=>'_blank'));
+      $view = $bp->button('xs link', 'view ' . $bp->icon('new-window'), array('href'=>$url . $file, 'target'=>'_blank'));
       $rename = '<a class="rename-file text-nowrap" href="#" data-name=".' . $ext . '">' . substr($file, 0, -(strlen($ext) + 1)) . '</a>.' . $ext;
       $size = (is_file($path . $file)) ? str_replace('Bytes', 'bytes', byte_format(filesize($path . $file), 1)) : '0 bytes';
       $delete = '<a class="delete-file pull-right" href="#" data-uri="' . $file . '">' . $bp->icon('trash') . '</a>';
@@ -398,6 +398,13 @@ class Admin_files extends CI_Driver {
           foreach ($form->vars['upload'] as $uploaded => $file) {
             $file = $this->filter($dir . $file, $recursive);
             rename($uploaded, $path . $file);
+            if ($ext['unzip'] && substr($file, -4) == '.zip') {
+              $ci->load->library('unzip');
+              $ci->unzip->allow(explode('|', $ext['types']));
+              $ci->unzip->extract($path . $file, $path . $dir);
+              $ci->unzip->close();
+              unlink($path . $file);
+            }
           }
         }
         $page->eject($form->eject);

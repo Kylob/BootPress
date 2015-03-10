@@ -6,15 +6,22 @@ class Admin_plugins extends CI_Driver {
   
   public function view () {
     global $bp, $ci, $page;
+    $html = '';
     $this->plugins = BASE_URI . 'plugins/';
     if (!is_dir($this->plugins)) mkdir($this->plugins, 0755, true);
     $plugin = trim($ci->input->get('plugin'), '/');
     if (empty($plugin) || !is_dir($this->plugins . $plugin)) $plugin = false;
     $media = ($plugin) ? $ci->admin->files->view('plugins', $this->plugins . $plugin) : '';
-    if ($ci->input->get('image')) return $this->display($media);
+    if ($ci->input->get('image')) {
+      return $this->display($this->box('default', array(
+        'head with-border' => $bp->icon('image', 'fa') . ' Image',
+        'body' => $media
+      )));
+    }
     if ($ci->input->get('delete') == 'plugin') {
       if ($plugin) {
         list($dirs, $files) = $ci->blog->folder($this->plugins . $plugin, true);
+        arsort($dirs);
         foreach ($files as $file) unlink($this->plugins . $plugin . $file);
         foreach ($dirs as $dir) rmdir($this->plugins . $plugin . $dir);
         rmdir($this->plugins . $plugin);
@@ -25,7 +32,7 @@ class Admin_plugins extends CI_Driver {
     list($dirs) = $ci->blog->folder($this->plugins, false, false);
     if (!empty($dirs)) $form->menu('plugin', array_combine($dirs, $dirs), '&nbsp;');
     if ($plugin) $form->values(array('plugin'=>$plugin, 'edit'=>$plugin));
-    $form->validate('plugin', 'Plugin', '', 'Select a plugin that you would like to edit.');
+    $form->validate('plugin', ($plugin ? 'Edit' : 'Select'), '', 'Select a plugin that you would like to edit.');
     if ($plugin) {
       $form->validate('edit', 'Save As', 'required', 'Enter the new name you would like for this plugin.  If it already exists then nothing will happen.');
       $form->validate('index', 'index.php', '', 'This page should $export the desired code, array, class, or whatever it is that your plugin is designed to do.');
@@ -47,10 +54,6 @@ class Admin_plugins extends CI_Driver {
       }
       $page->eject($form->eject);
     }
-    $html = '';
-    $delete = ($plugin) ? $bp->button('sm danger delete pull-right', $bp->icon('trash'), array('title'=>'Click to delete this plugin', 'style'=>'margin-left:20px;')) : '';
-    $docs = $bp->button('sm info pull-right', 'Documentation ' . $bp->icon('new-window'), array('href'=>'http://bootpress.org/getting-started#plugins', 'target'=>'_blank'));
-    $html .= '<div class="page-header"><p class="lead">' . $bp->icon('plug', 'fa') . ' ' . ($plugin ? 'Edit' : 'Select') . ' ' . $delete . '&nbsp;' . $docs . '</p></div>';
     $html .= $form->header();
     $html .= $form->field('plugin', !empty($dirs) ? 'select' : 'hidden');
     $html .= $form->field('edit', 'text', array('append'=>$bp->button('primary', 'Submit', array('type'=>'submit', 'data-loading-text'=>'Submitting...'))));
@@ -67,7 +70,14 @@ class Admin_plugins extends CI_Driver {
       });
     ');
     unset($form);
-    return $this->display($html . $media);
+    return $this->display($this->box('default', array(
+      'head with-border' => array(
+        $bp->icon('plug', 'fa') . ' Plugins',
+        $bp->button('md link', 'Documentation ' . $bp->icon('new-window'), array('href'=>'http://bootpress.org/getting-started#plugins', 'target'=>'_blank')),
+        ($plugin) ? $bp->button('sm danger delete', $bp->icon('trash'), array('title'=>'Click to delete this plugin')) : ''
+      ),
+      'body' => $html . $media
+    )));
   }
   
   private function plugin_filter ($file) {
