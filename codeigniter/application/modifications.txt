@@ -1,0 +1,39 @@
+config/config.php
+	$config['index_page'] = '';
+	$config['log_threshold'] = 1;
+
+config/mimes.php
+	Added:
+	'less'	=>	array('text/css', 'text/plain'),
+
+config/profiler.php
+	Added:
+	$config['get']             = FALSE;
+	$config['post']            = FALSE;
+	$config['uri_string']      = FALSE;
+	$config['controller_info'] = FALSE;
+	$config['http_headers']    = FALSE;
+	$config['config']          = FALSE;
+
+config/routes.php
+	$route['default_controller'] = 'controller';
+	Added:
+	$route['(.+)\.(?i)(jpe?g|gif|png|ico|js|css|pdf|ttf|otf|svg|eot|woff2?|swf|tar|t?gz|zip|csv|xls?x?|word|docx?|ppt|mp3|ogg|wav|mpeg?|mpg|mov|qt|psd)'] = 'controller/#cache#/$1/$2';
+	$route['sitemap([^\./]*)\.xml'] = 'controller/#sitemap#/xml/$1';
+	$route['robots\.txt'] = 'controller/#sitemap#/robots';
+	$route['(.+)'] = 'controller/$1';
+
+controllers/
+	Added:
+	Controller.php
+
+core/
+	Added:
+	My_Exceptions.php
+
+libraries/
+	Added: ... BootPress!
+
+view/
+	Added:
+	view.php
