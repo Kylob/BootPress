@@ -66,7 +66,7 @@ class Form {
   public function captcha ($after=0, $throttle=0, $limit=0, $name='') {
     global $ci, $page;
     if ($this->type != 'post') return;
-    $current = $ci->session->native->flashdata('captcha');
+    $current = $ci->session->captcha;
     if ($captcha = $ci->input->get('captcha')) {
       if ($captcha == 'image') {
         $ci->load->helper('captcha');
@@ -79,18 +79,19 @@ class Form {
           'word_length' => 8,
           'pool' => '2346789abcdefghjkmnpqrtuvwxyzABCDEFGHJKMNPQRTUVWXYZ'
         )); // image, time, and word
-        $ci->session->native->set_flashdata('captcha', $captcha['word']);
+        $ci->session->captcha = $captcha['word'];
+        $ci->session->mark_as_flash('captcha');
         exit($ci->filter_links($captcha['image']));
       } else {
         header('Content-Type: application/json');
         if (strtolower($captcha) === strtolower($current)) {
-          $ci->session->native->keep_flashdata('captcha');
+          $ci->session->mark_as_flash('captcha');
           exit('true');
         }
         exit(json_encode('The CAPTCHA entered was incorrect.  Please click on the image to generate a new one.'));
       }
     }
-    if ($current) $ci->session->native->keep_flashdata('captcha'); // we may be remote processing other items as well
+    if ($current) $ci->session->mark_as_flash('captcha'); // we may be remote processing other items as well
     $this->attempts($after, $throttle, $limit, $name);
     if ($this->captcha) {
       $this->validate('captcha', '', 'required|remote');
@@ -230,7 +231,6 @@ class Form {
         case 'single_space':        break;
         case 'prep_url':            break;
         case 'strip_image_tags':    break;
-        case 'xss_clean':           break;
       }
     }
     array_unshift($rules, 'trim');
@@ -285,7 +285,7 @@ class Form {
     if ($this->type == 'get') {
       $this->eject = $page->url('delete', '', array_keys($this->vars));
     } else {
-      if ($this->captcha && !isset($this->errors['captcha']) && strtolower($this->vars['captcha']) !== strtolower($ci->session->native->flashdata('captcha'))) {
+      if ($this->captcha && !isset($this->errors['captcha']) && strtolower($this->vars['captcha']) !== strtolower($ci->session->captcha)) {
         $this->errors['captcha'] = 'The CAPTCHA entered was incorrect.  Please try again.';
       }
       $this->eject = $page->url('delete', '', 'submitted');
@@ -331,7 +331,8 @@ class Form {
   
   public function message ($status, $message) { // will show on page refresh
     global $ci;
-    $ci->session->native->set_flashdata('form-messenger', array('status'=>$status, 'msg'=>$message, 'form'=>$this->name));
+    $ci->session->form_messenger = array('status'=>$status, 'msg'=>$message, 'form'=>$this->name);
+    $ci->session->mark_as_flash('form_messenger');
   }
   
   public function prompt ($place, $html, $required=false) {
@@ -411,8 +412,7 @@ class Form {
       $page->plugin('jQuery', 'code', '$("#' . $this->name . '").validate({' . implode(',', $validate) . '});');
     }
     if ($this->align == 'form-horizontal') $html .= '<div class="row"><div class="col-' . $this->size . '-12">';
-    $flash = $ci->session->native->flashdata('form-messenger');
-    if (!empty($flash) && $flash['form'] == $this->name) {
+    if (($flash = $ci->session->form_messenger) && $flash['form'] == $this->name) {
       $html .= ($flash['status'] == 'html') ? $flash['msg'] : $bp->alert($flash['status'], $flash['msg']);
     }
     if ($this->disabled) $page->link('<style type="text/css">#' . $this->name . ' { display:none; }</style>');
@@ -460,7 +460,7 @@ class Form {
       }
       if (isset($this->prompt['append'])) $prompt .= $this->prompt['append'];
       if (isset($this->info[$name])) {
-        $prompt .= ' <span class="glyphicon glyphicon-question-sign" style="cursor:pointer;" title="' . form_prep($this->info[$name]) . '"></span>';
+        $prompt .= ' <span class="glyphicon glyphicon-question-sign" style="cursor:pointer;" title="' . html_escape($this->info[$name]) . '"></span>';
       }
     }
     if (isset($options['value'])) $this->values($name, $options['value']); // to establish or override the default
@@ -538,7 +538,8 @@ class Form {
         'word_length' => 8,
         'pool' => '2346789abcdefghjkmnpqrtuvwxyzABCDEFGHJKMNPQRTUVWXYZ'
       )); // image, time, and word
-      $ci->session->native->set_flashdata('captcha', $captcha['word']);
+      $ci->session->captcha = $captcha['word'];
+      $ci->session->mark_as_flash('captcha');
       $html .= $this->field('captcha', $bp->media(array(
         '<div id="captchaimage">' . $captcha['image'] . '</div>',
         form_input('captcha', '', 'class="form-control"')

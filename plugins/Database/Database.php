@@ -2,7 +2,7 @@
 
 function ci_load_database ($driver, $database, $query_builder=false, $profile=true) {
   global $ci;
-  $ci->load->driver('resources');
+  $ci->load->library('resources');
   $config = '';
   $insert = false;
   if (is_string($database)) {

@@ -3,19 +3,15 @@
 
 # Except for these:
 !bootstrap/
-!code/
+!codeigniter/
 !plugins/
+!smarty/
 !.gitignore
 !.gitmodules
 !license.txt
 !Page.php
 !params_blank.php
 !README.md
-
-# This code:
-code/*
-!code/CodeIgniter/
-!code/Smarty/
 
 # And only these plugins:
 plugins/*

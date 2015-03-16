@@ -2,9 +2,9 @@
 
 extract($page->get('params'));
 
-$smarty = BASE . 'code/Smarty/';
+$smarty = BASE . 'smarty/';
 
-$page->load($smarty, 'Smarty-3.1.21/libs/Smarty.class.php');
+$page->load($smarty, '3.1.21/libs/Smarty.class.php');
 
 if (isset($class)) {
 

@@ -18,13 +18,8 @@ function add_jquery_code ($html, $plugin) {
   $plugin = $page->get('info', $plugin);
   if (!isset($plugin['code'])) return $html;
   $code = array_unique($plugin['code']);
-  if (!isset($plugin['debug'])) {
-    foreach ($code as $key => $value) $code[$key] = $ci->output->minify($value, 'text/javascript');
-    $code = "\n\t" . implode("\n\t", $code) . "\n  ";
-  } else {
-    $code = "\n" . implode("\n\n", $code) . "\n  ";
-  }
-  return $html . "\n  " . '<script>$(document).ready(function(){' . $code . '})</script>';
+  foreach ($code as $key => $value) $code[$key] = $page->indent($value);
+  return $html . "\n  <script>" . '$(document).ready(function(){' . "\n" . implode("\n", $code) . "\n  });</script>";
 }
 
 $page->filter('javascript', 'add_jquery_scripts', array('this', $plugin['name']));

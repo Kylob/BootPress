@@ -343,12 +343,28 @@ class Page {
   }
   
   public function style ($code) {
-    if (is_array($code)) foreach ($code as $key => $css) if (is_array($css)) $code[$key] = "{$key} {\n\t\t" . implode("\n\t\t", $css) . "\n\t}";
-    $this->link('<style>' . (is_array($code) ? "\n\t" . implode("\n\t", $code) . "\n  " : trim($code)) . '</style>');
+    if (is_array($code)) {
+      foreach ($code as $css => $rules) if (is_array($rules)) $code[$css] = $css . ' {' . implode(' ', $rules) . '}';
+      $code = implode("\n", $code);
+    }
+    $this->link('<style>' . (strpos($code, "\n") ? "\n" . $this->indent($code) . "\n  " : trim($code)) . '</style>');
   }
   
   public function script ($code) {
-    $this->link('<script>' . (is_array($code) ? "\n\t" . implode("\n\t", $code) . "\n  " : trim($code)) . '</script>');
+    if (is_array($code)) $code = implode("\n", $code);
+    $this->link('<script>' . (strpos($code, "\n") ? "\n" . $this->indent($code) . "\n  " : trim($code)) . '</script>');
+  }
+  
+  public function indent ($string, $tab="\t") {
+    $array = preg_split("/\r\n|\n|\r/", trim($string));
+    $first = $tab . trim(array_shift($array));
+    if (empty($array)) return $first; // ie. no indentation at all
+    $spaces = array();
+    foreach ($array as $value) $spaces[] = strspn($value, " \t");
+    $spaces = min($spaces);
+    foreach ($array as $key => $value) $array[$key] = $tab . substr($value, $spaces);
+    array_unshift($array, $first);
+    return implode("\n", $array);
   }
   
   public function id ($prefix='') {
@@ -387,16 +403,18 @@ class Page {
         unset($params[$key]);
       }
     }
+    $script = 'index.php';
+    if (is_array($name)) list($name, $script) = each($name);
     $params['plugin']['params'] = array_keys($params); // so we check if in_array()
     $path = 'plugins/' . $name . '/';
     $params['plugin']['name'] = $name;
     $params['plugin']['url'] = BASE_URL . $path;
-    if (is_file(BASE_URI . $path . 'index.php')) {
+    if (is_file(BASE_URI . $path . $script)) {
       $params['plugin']['uri'] = BASE_URI . $path;
-      $file = BASE_URI . $path . 'index.php';
-    } elseif (is_file(BASE . $path . 'index.php')) {
+      $file = BASE_URI . $path . $script;
+    } elseif (is_file(BASE . $path . $script)) {
       $params['plugin']['uri'] = BASE . $path;
-      $file = BASE . $path . 'index.php';
+      $file = BASE . $path . $script;
     }
     return (isset($file)) ? $this->outreach($file, $params) : false;
   }
@@ -571,9 +589,8 @@ function in_session ($reset=false) {
   global $ci;
   static $session = null;
   if (is_null($session) || $reset) {
-    if ($ci->input->cookie('ci_session')) {
-      $ci->load->driver('auth');
-      $ci->session->load_driver('cookie');
+    if ($ci->input->cookie('bootpress')) {
+      $ci->load->library('auth');
       $session = true;
     } else {
       $session = false;
@@ -582,10 +599,10 @@ function in_session ($reset=false) {
   return $session;
 }
 
-function is_user ($user_id='') {
+function is_user ($user_id=null) {
   global $ci;
   if (!in_session()) return false;
-  $user = $ci->session->cookie->userdata('user_id');
+  $user = $ci->auth->user('id');
   if (empty($user_id)) return (!empty($user)) ? $user : false; // an id > 0 or false
   return (!empty($user) && $user === $user_id) ? $user : false;
 }
@@ -593,7 +610,7 @@ function is_user ($user_id='') {
 function is_admin ($level=1) {
   global $ci;
   if (!in_session()) return false;
-  $admin = $ci->session->cookie->userdata('admin');
+  $admin = $ci->auth->user('admin');
   return (!empty($admin) && $admin <= $level) ? $admin : false;
 }
 
