@@ -207,7 +207,7 @@ class Admin_users extends CI_Driver {
         '<div class="box-header with-border no-padding">',
           $bp->pills($links, array('align'=>'horizontal', 'active'=>$page->url())),
           '<div class="box-tools">',
-            $bp->search($url, array('name'=>'users', 'placeholder'=>'Users')),
+            '<div style="width:250px;">' . $bp->search($url, array('name'=>'users', 'placeholder'=>'Users', 'class'=>'form-collapse')) . '</div>',
           '</div>',
         '</div>'
       )),

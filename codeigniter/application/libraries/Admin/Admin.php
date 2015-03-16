@@ -221,7 +221,7 @@ class Admin extends CI_Driver_Library {
   private function wyciwyg () {
     global $bp, $page;
     $page->plugin('CDN', 'link', 'ace/1.1.8/min/ace.js');
-    $page->link(BASE_URL . 'code/CodeIgniter/application/libraries/Admin/wyciwyg.js');
+    $page->link(BASE_URL . 'codeigniter/application/libraries/Admin/wyciwyg.js');
     $html = '<div id="wyciwyg" style="display:none; width:100%; padding:0 10px;">';
       $html .= '<div id="toolbar" class="btn-toolbar">';
       
