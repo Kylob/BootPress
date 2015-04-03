@@ -37,24 +37,31 @@ class Admin_errors extends CI_Driver {
       unset($display[404]);
     }
     foreach ($display as $row) {
-      list($date, $severity, $error) = $row;
-      list($msg, $file) = $this->msg_file($error);
-      $count = array_pop($row);
-      $backtraces = array_slice($row, 3);
-      $left = '<span class="label label-danger">' . $count . '</span>';
-      $right = '<span class="timeago" title="' . date('c', strtotime($date)) . '">' . $date . '</span>';
-      $media = '<p><b>' . $this->severity(substr($severity, 10)) . '</b></p>';
-      $media .= '<p>' . $msg . '</p>';
-      $li = array();
-      if (empty($backtraces)) {
-        $li[] = $file;
-      } else {
-        foreach ($backtraces as $error) {
-          list($msg, $file) = $this->msg_file($error);
-          $li[] = '<b>' . $msg . '</b> ' . $file;
+      if (substr($row[2], 0, 10) == 'Severity: ') {
+        list($type, $date, $severity, $error) = $row;
+        list($msg, $file) = $this->msg_file($error);
+        $count = array_pop($row);
+        $backtraces = array_slice($row, 4);
+        $left = '<span class="label label-danger">' . $count . '</span>';
+        $right = '<span class="timeago" title="' . date('c', strtotime($date)) . '">' . $date . '</span>';
+        $media = '<p><b>' . $this->severity(substr($severity, 10)) . '</b></p>';
+        $media .= '<p>' . $msg . '</p>';
+        $li = array();
+        if (empty($backtraces)) {
+          $li[] = $file;
+        } else {
+          foreach ($backtraces as $error) {
+            list($msg, $file) = $this->msg_file($error);
+            $li[] = '<b>' . $msg . '</b> ' . $file;
+          }
         }
+        $media .= $bp->lister('ul list-unstyled', $li);
+      } else {
+        list($type, $date, $error, $count) = $row;
+        $left = '<span class="label label-danger">' . $count . '</span>';
+        $right = '<span class="timeago" title="' . date('c', strtotime($date)) . '">' . $date . '</span>';
+        $media = '<p><b>' . $type . '</b></p><p>' . nl2br($error) . '</p>';
       }
-      $media .= $bp->lister('ul list-unstyled', $li);
       $html .= $bp->media(array($left, $media, $right));
     }
     $page->plugin('CDN', 'link', 'jquery.timeago/1.3.0/jquery.timeago.min.js');
@@ -78,21 +85,26 @@ class Admin_errors extends CI_Driver {
     $errors = array();
     foreach ($logs as $path) {
       $file = file_get_contents($this->logs . $path);
-      $file = preg_split('/\n(error|debug|info)\s-/i', $file);
+      $file = preg_split('/\n(error|debug|info)\s-/i', $file, -1, PREG_SPLIT_DELIM_CAPTURE);
       foreach ($file as $num => $line) {
+        if (!empty($line) && strpos($line, '-->') === false) {
+          $type = ucwords(strtolower($line));
+          continue;
+        }
         $line = array_map('trim', explode('-->', $line));
         if (isset($line[1])) {
-          if (strpos($line[1], 'Severity:') !== false) {
-            $key = md5(substr($line[2], 0, strrpos($line[2], ' '))); // without the file line number
-            $count = (isset($errors[$key])) ? array_pop($errors[$key]) : 0;
-            $errors[$key] = $line;
-            $errors[$key][] = $count + 1;
-          } elseif (substr($line[1], 0, 3) == 404) {
+          if (substr($line[1], 0, 3) == 404) {
             if (isset($errors[404][$line[2]][$line[3]])) {
               $errors[404][$line[2]][$line[3]]++;
             } else {
               $errors[404][$line[2]][$line[3]] = 1;
             }
+          } else {
+            $key = (strpos($line[1], 'Severity:') === false) ? md5($line[1]) : md5(substr($line[2], 0, strrpos($line[2], ' '))); // without the file line number
+            $count = (isset($errors[$key])) ? array_pop($errors[$key]) : 0;
+            $errors[$key] = $line;
+            $errors[$key][] = $count + 1;
+            array_unshift($errors[$key], $type);
           }
         }
       }
