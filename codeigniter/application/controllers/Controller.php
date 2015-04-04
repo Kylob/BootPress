@@ -109,7 +109,7 @@ class Controller extends CI_Controller {
           $this->load->driver('blog', array('role'=>'#admin#'));
           if ($route = $page->routes(array(
             ADMIN,
-            ADMIN . '[blog:view]/[published|unpublished|posts|pages' . (is_admin(1) ? '|authors|categories|tags|templates' : null) . ':folder]?',
+            ADMIN . '[blog:view]/[published|unpublished|posts|pages' . (is_admin(1) ? '|authors|categories|tags|templates|backup|restore' : null) . ':folder]?',
             ADMIN . '[sitemap' . (is_admin(1) ? '|setup|errors|plugins|folders|databases' : null) . ':view]',
             ADMIN . '[users:view]/[logout' . (is_admin(1) ? '|register|edit|list' : null) . ':action]?',
             ADMIN . '[themes:view]/[preview:action]?/[:theme]?/[bootstrap\.less:less]?',

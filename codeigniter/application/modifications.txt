@@ -37,3 +37,7 @@ libraries/
 view/
 	Added:
 	view.php
+
+codeigniter/3.0/system/libraries/Zip.php on line 355
+	Modified:
+	$root_path = str_replace(array('\\', '/'), DIRECTORY_SEPARATOR, dirname($path)).DIRECTORY_SEPARATOR;

@@ -8,7 +8,7 @@ class Admin_blog extends CI_Driver {
   public function view ($params) {
     global $bp, $ci, $page;
     $bp->listings->display(20);
-    $view = (isset($params['folder']) && in_array($params['folder'], array('published', 'unpublished', 'posts', 'pages', 'authors', 'categories', 'tags', 'templates'))) ? $params['folder'] : 'form';
+    $view = (isset($params['folder']) && in_array($params['folder'], array('published', 'unpublished', 'posts', 'pages', 'authors', 'categories', 'tags', 'templates', 'backup', 'restore'))) ? $params['folder'] : 'form';
     $html = $this->$view($params);
     if ($ci->input->get('image')) {
       return $this->display($this->box('default', array(
@@ -17,24 +17,26 @@ class Admin_blog extends CI_Driver {
       )));
     }
     switch ($view) {
-      case 'unpublished': $header = $bp->icon('exclamation-triangle', 'fa', 'i style="margin-right:10px;"') . ' ' . ucwords($view); break;
       case 'published':
         $header = $bp->icon('search', 'fa', 'i style="margin-right:10px;"');
         $header .= ($search = $ci->input->get('search')) ? " Search for '{$search}'" : ' Published';
         break;
+      case 'unpublished': $header = $bp->icon('exclamation-triangle', 'fa', 'i style="margin-right:10px;"') . ' ' . ucwords($view); break;
+      case 'posts': $header = $bp->icon('thumb-tack', 'fa', 'i style="margin-right:10px;"') . ' ' . ucwords($view); break;
+      case 'pages': $header = $bp->icon('file-o', 'fa', 'i style="margin-right:10px;"') . ' ' . ucwords($view); break;
+      case 'authors': $header = $bp->icon('user', 'glyphicon', 'span style="margin-right:10px;"') . ' ' . ucwords($view); break;
+      case 'categories': $header = $bp->icon('share-alt', 'fa', 'i style="margin-right:10px;"') . ' ' . ucwords($view); break;
+      case 'tags': $header = $bp->icon('tags', 'fa', 'i style="margin-right:10px;"') . ' ' . ucwords($view); break;
+      case 'templates': $header = $bp->icon('files-o', 'fa', 'i style="margin-right:10px;"') . ' ' . ucwords($view); break;
+      case 'backup': $header = $bp->icon('download', 'glyphicon', 'span style="margin-right:10px;"') . ' ' . ucwords($view); break;
+      case 'restore': $header = $bp->icon('upload', 'glyphicon', 'span style="margin-right:10px;"') . ' ' . ucwords($view); break;
       case 'form': 
         $header = $bp->icon('pencil-square-o', 'fa', 'i style="margin-right:10px;"');
         $header .= ($edit = $ci->input->get('edit')) ? ' Edit' : ' New';
         break;
-      case 'posts': $header = $bp->icon('thumb-tack', 'fa', 'i style="margin-right:10px;"') . ' ' . ucwords($view); break;
-      case 'pages': $header = $bp->icon('file-o', 'fa', 'i style="margin-right:10px;"') . ' ' . ucwords($view); break;
-      case 'templates': $header = $bp->icon('files-o', 'fa', 'i style="margin-right:10px;"') . ' ' . ucwords($view); break;
-      case 'tags': $header = $bp->icon('tags', 'fa', 'i style="margin-right:10px;"') . ' ' . ucwords($view); break;
-      case 'categories': $header = $bp->icon('share-alt', 'fa', 'i style="margin-right:10px;"') . ' ' . ucwords($view); break;
-      case 'authors': $header = $bp->icon('user', 'glyphicon', 'span style="margin-right:10px;"') . ' ' . ucwords($view); break;
     }
     $docs = '';
-    if (!in_array($view, array('authors', 'categories', 'tags'))) {
+    if (!in_array($view, array('authors', 'categories', 'tags', 'backup', 'restore'))) {
       $tab = ($view == 'templates') ? 'templates' : 'blog';
       $docs = $bp->button('md link', 'Documentation ' . $bp->icon('new-window'), array('href'=>'http://bootpress.org/getting-started#' . $tab, 'target'=>'_blank'));
     }
@@ -62,6 +64,8 @@ class Admin_blog extends CI_Driver {
       if (count($this->set_tags()) > 0) $links[$bp->icon('tags', 'fa') . ' Tags'] = $page->url($this->url, 'blog/tags');
       if ($ci->blog->db->value('SELECT COUNT(*) FROM categories')) $links[$bp->icon('share-alt', 'fa') . ' Categories'] = $page->url($this->url, 'blog/categories');
       if (count($this->set_authors()) > 0) $links[$bp->icon('user') . ' Authors'] = $page->url($this->url, 'blog/authors');
+      $links[$bp->icon('download') . ' Backup'] = $page->url($this->url, 'blog/backup');
+      $links[$bp->icon('upload') . ' Restore'] = $page->url($this->url, 'blog/restore');
     }
     return $links;
   }
@@ -243,6 +247,19 @@ class Admin_blog extends CI_Driver {
     $html .= $form->close();
     unset($form);
     return $html;
+  }
+  
+  private function backup () {
+    global $ci, $page;
+    $ci->load->library('zip');
+    $ci->zip->compression_level = 9;
+    if (is_dir($ci->blog->post)) $ci->zip->read_dir($ci->blog->post, false);
+    if (is_dir($ci->blog->authors)) $ci->zip->read_dir($ci->blog->authors, false);
+    $ci->zip->download('backup-blog-' . $page->get('domain') . '-' . date('Y-m-d') . '.zip');
+  }
+  
+  private function restore () {
+  
   }
   
   private function form () {
