@@ -250,7 +250,7 @@ class Admin_blog extends CI_Driver {
   }
   
   private function backup () {
-    global $ci;
+    global $ci, $page;
     $ci->load->library('zip');
     $ci->zip->compression_level = 9;
     if (is_dir($ci->blog->post)) $ci->zip->read_dir($ci->blog->post, false);
