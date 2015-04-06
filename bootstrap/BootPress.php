@@ -237,14 +237,16 @@ class BootPress {
           $link = '<a ' . $this->attributes($attributes) . '>' . $name . '</a>';
         }
         $li = $this->list_item($link, $options, $name, $href, $count);
-        if ($class) $li = $this->add_class(array($tag=>$class), $li);
         if ($tag == 'li') {
+          if ($class) $li = $this->add_class(array('li'=>$class), $li);
           $html .= $li;
-        } elseif (strpos($li, 'class="active"') !== false) {
-          $html .= $this->add_class(array('a'=>'active'), $link);
-        } elseif (strpos($li, 'class="disabled"') !== false) {
-          $html .= $this->add_class(array('a'=>'disabled'), $link);
         } else {
+          if ($class) $link = $this->add_class(array('a'=>$class), $link);
+          if (strpos($li, 'class="active"') !== false) {
+            $link = $this->add_class(array('a'=>'active'), $link);
+          } elseif (strpos($li, 'class="disabled"') !== false) {
+            $link = $this->add_class(array('a'=>'disabled'), $link);
+          }
           $html .= $link;
         }
         $count++;
