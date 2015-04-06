@@ -21,6 +21,7 @@ function ImageMagick ($command, $params, $dir='') {
   $cmd = implode(' ', $cmd);
   exec($cmd . ' 2>&1', $output, $return);
   chdir($current);
+  if ($return != 0) log_message('error', "ImageMagick command failed:\n\n" . $cmd . "\n\n" . implode("\n", $output));
   return array('cmd'=>$cmd, 'output'=>$output, 'return'=>$return);
 }
 

@@ -359,10 +359,9 @@ class Blog extends CI_Driver_Library {
       );
       if (empty($blog)) {
         $update['seo'] = $page->seo($update['title']);
-        $id = $this->db->insert('blog', $update);
-        if (!empty($update['author'])) $this->author($id, $author, $update['author']);
-        if (!empty($update['keywords'])) $this->tag($id, $update['keywords']);
-        return array('id'=>$id, 'uri'=>$uri, 'content'=>$content);
+        $blog = array('id' => $this->db->insert('blog', $update));
+        if (!empty($update['author'])) $this->author($blog['id'], $author, $update['author']);
+        if (!empty($update['keywords'])) $this->tag($blog['id'], $update['keywords']);
       } elseif ($update['updated'] != $blog['updated']) {
         $ci->sitemap->modify('uri', $uri);
         $update['seo'] = $page->seo($update['title']);

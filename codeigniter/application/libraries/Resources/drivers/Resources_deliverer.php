@@ -51,6 +51,9 @@ class Resources_deliverer extends CI_Driver {
     } elseif (strpos($file, 'CDN') !== false && is_file(BASE . $file)) {
       $cache = BASE . $file;
       $this->never_expires(filemtime($cache));
+    } elseif ($file == 'favicon.ico') {
+      $cache = dirname(__DIR__) . DIRECTORY_SEPARATOR . $file;
+      $this->never_expires(filemtime($cache));
     } else {
       exit(header('HTTP/1.1 404 Not Found'));
     }

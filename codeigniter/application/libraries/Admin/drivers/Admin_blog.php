@@ -49,7 +49,7 @@ class Admin_blog extends CI_Driver {
   
   public function links () {
     global $bp, $ci, $page;
-    $links = array($bp->icon('pencil-square-o', 'fa') . ' Create' => $page->url($this->url, 'blog'));
+    $links = array($bp->icon('pencil-square-o', 'fa') . ' New' => $page->url($this->url, 'blog'));
     if ($unpublished = $ci->blog->db->value('SELECT COUNT(*) FROM blog WHERE featured <= 0 AND published = 0')) {
       $links['<span class="text-danger">' . $bp->icon('exclamation-triangle', 'fa') . ' <b>Unpublished</b> ' . $bp->badge($unpublished, 'right') . '</span>'] = $page->url($this->url, 'blog/unpublished');
     }
@@ -64,7 +64,7 @@ class Admin_blog extends CI_Driver {
       if (count($this->set_tags()) > 0) $links[$bp->icon('tags', 'fa') . ' Tags'] = $page->url($this->url, 'blog/tags');
       if ($ci->blog->db->value('SELECT COUNT(*) FROM categories')) $links[$bp->icon('share-alt', 'fa') . ' Categories'] = $page->url($this->url, 'blog/categories');
       if (count($this->set_authors()) > 0) $links[$bp->icon('user') . ' Authors'] = $page->url($this->url, 'blog/authors');
-      $links[$bp->icon('download') . ' Backup'] = $page->url($this->url, 'blog/backup');
+      if ($unpublished || $posts || $pages) $links[$bp->icon('download') . ' Backup'] = $page->url($this->url, 'blog/backup');
       $links[$bp->icon('upload') . ' Restore'] = $page->url($this->url, 'blog/restore');
     }
     return $links;
@@ -250,7 +250,7 @@ class Admin_blog extends CI_Driver {
   }
   
   private function backup () {
-    global $ci, $page;
+    global $ci;
     $ci->load->library('zip');
     $ci->zip->compression_level = 9;
     if (is_dir($ci->blog->post)) $ci->zip->read_dir($ci->blog->post, false);
@@ -259,7 +259,33 @@ class Admin_blog extends CI_Driver {
   }
   
   private function restore () {
-  
+    global $ci, $page;
+    $form = $page->plugin('Form', 'name', 'restore_blog');
+    $html = '';
+    $form->upload('upload', 'Backup', 'zip', array('filesize'=>10, 'info'=>''));
+    if ($form->submitted() && empty($form->errros)) {
+      if (!empty($form->vars['upload'])) {
+        list($zip, $name) = each($form->vars['upload']);
+        $ci->load->library('unzip');
+        $ci->unzip->files($zip, BASE_URI . 'blog', 0755);
+        $uris = $ci->unzip->extract_folders(array('authors', 'content'), 'ini|tpl|js|css|jpg|jpeg|gif|png|ico|pdf|ttf|otf|svg|eot|woff|swf|tar|gz|tgz|zip|csv|xl|xls|xlsx|word|doc|docx|ppt|mp3|ogg|wav|mpe|mpeg|mpg|mov|qt|psd');
+        $ci->unzip->close();
+        unlink($zip);
+        if (isset($uris['content'])) {
+          foreach ($uris['content'] as $file => $location) {
+            if (substr($file, -9) != 'index.tpl') continue;
+            $ci->blog->file(substr($file, 0, -10));
+            $html .= substr($file, 0, -10) . '<br>';
+          }
+        }
+      }
+      $page->eject($page->url('admin', 'blog'));
+    }
+    $html .= $form->header();
+    $html .= $form->field('upload', 'file');
+    $html .= $form->submit();
+    $html .= $form->close();
+    return $html;
   }
   
   private function form () {
@@ -409,6 +435,7 @@ class Admin_blog extends CI_Driver {
     $html = '';
     $ci->blog->db->query(array('SELECT id, uri, seo, title, description, thumb, ABS(published), ABS(updated) FROM blog', $query));
     while (list($id, $uri, $seo, $title, $description, $thumb, $published, $updated) = $ci->blog->db->fetch('row')) {
+      if ($uri == 'index') $uri = '';
       $thumb = $bp->img($thumb, 'width="75" height="75"', '', '75x75/' . $seo);
       if ($published == 0) { // unpublished
         $reference = '<span class="timeago" title="' . date('c', $updated) . '">' . $updated . '</span>';

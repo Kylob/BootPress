@@ -4,7 +4,7 @@ class Admin_files extends CI_Driver {
   
   private $folder;
   
-  public function ini ($settings, $comments=array()) { // This is only here temporarily
+  public function ini ($settings, $comments=array()) {
     $content = '';
     if (is_array($settings)) {
       $reserved = array('null', 'yes', 'no', 'true', 'false', 'on', 'off', 'none');
@@ -442,8 +442,8 @@ class Admin_files extends CI_Driver {
             rename($uploaded, $path . $file);
             if ($ext['unzip'] && substr($file, -4) == '.zip') {
               $ci->load->library('unzip');
-              $ci->unzip->allow(explode('|', $ext['types']));
-              $ci->unzip->extract($path . $file, $path . $dir);
+              $ci->unzip->files($path . $file, $path . $dir, 0755);
+              $ci->unzip->extract($ext['types'], $ci->unzip->common_dir());
               $ci->unzip->close();
               unlink($path . $file);
             }

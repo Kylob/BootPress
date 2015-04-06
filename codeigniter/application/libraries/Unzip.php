@@ -1,4 +1,5 @@
 <?php defined('BASEPATH') or exit('No direct script access allowed');
+
 /**
  * UnZip Class
  *
@@ -8,90 +9,91 @@
  * The original library is a little rough around the edges so I
  * refactored it and added several additional methods -- Phil Sturgeon
  *
- * I added Unzip::common_dir() and modified Unzip::extract() to remove the common_dir if a 
- * $target_dir is specified so that the zipped files go exactly where you would like them
- * -- Kyle Gadd
+ * Then I carried the torch a little bit further -- Kyle Gadd
  *
  * This class requires extension ZLib Enabled.
  *
  * @package		CodeIgniter
- * @subpackage	Libraries
- * @category	Encryption
+ * @subpackage		Libraries
+ * @category		Encryption
  * @author		Alexandre Tedeschi
  * @author		Phil Sturgeon
  * @author		Don Myers
  * @link		http://bitbucket.org/philsturgeon/codeigniter-unzip
- * @license     
- * @version     1.0.0
+ * @license     	
+ * @version     	1.0.0
  */
+ 
 class Unzip {
 
-	private $compressed_list = array();
-
-	// List of files in the ZIP
-	private $central_dir_list = array();
-
-	// Central dir list... It's a kind of 'extra attributes' for a set of files
-	private $end_of_central = array();
-
-	// End of central dir, contains ZIP Comments
+	private $fh;
+	private $dir;
+	private $chmod;
 	private $info = array();
 	private $error = array();
-	private $_zip_file = '';
-	private $_target_dir = FALSE;
-	private $apply_chmod = 0777;
-	private $fh;
-	private $zip_signature = "\x50\x4b\x03\x04";
-
-	// local file header signature
-	private $dir_signature = "\x50\x4b\x01\x02";
-
-	// central dir header signature
-	private $central_signature_end = "\x50\x4b\x05\x06";
-
-	// ignore these directories (useless meta data)
-	private $_skip_dirs = array('__MACOSX');
-
-	private $_allow_extensions = NULL; // What is allowed out of the zip
-
+	private $compressed_list = array();
+	private $central_dir_list = array();
+	private $end_of_central = array();
+	
 	// --------------------------------------------------------------------
 
 	/**
-	 * Constructor
+	 * Establish the file to be unzipped, and where.
 	 *
-	 * @access    Public
-	 * @param     string
-	 * @return    none
+	 * @access    public
+	 * @param     string, string, int
+	 * @return    array
 	 */
-	function __construct()
+	public function files ($zip_file, $target_dir = NULL, $chmod = 0777)
 	{
-		log_message('debug', 'Unzip Class Initialized');
-	}
-
-	// --------------------------------------------------------------------
-
-	/**
-	 * re inizilize all variables
-	 * @access	Private
-	 * @param		none
-	 * @return	none
-	 */
-	private function _reinit()
-	{
-		$this->compressed_list = array();
-		$this->central_dir_list = array();
-		$this->end_of_central = array();
-		$this->info = array();
-		$this->error = array();
+		foreach (array('info', 'error', 'compressed_list', 'central_dir_list', 'end_of_central') as $var) $this->$var = array();
+		if ($this->fh = fopen($zip_file, 'r'))
+		{
+			if ( ! $this->load_file_list_by_eof())
+			{
+				$this->load_files_by_signatures();
+			}
+		}
+		$this->dir = $target_dir ? $target_dir : dirname($zip_file);
+		$this->dir = rtrim(str_replace('\\', '/', $this->dir), '/') . '/';
+		$this->chmod = $chmod;
 	}
 	
-	// http://stackoverflow.com/questions/1336207/finding-common-prefix-of-array-of-strings
-	private function common_dir (array $files)
+	// --------------------------------------------------------------------
+
+	/**
+	 * Retrieve all of the zipped files FYI.  Used internally as needed.
+	 *
+	 * @access    public
+	 * @param     none
+	 * @return    array
+	 */
+	public function zipped ()
 	{
+		$files = array_keys($this->compressed_list);
+		sort($files);
+		return $files;
+	}
+	
+	// --------------------------------------------------------------------
+
+	/**
+	 * Retrieve the common directory (if any) to remove for $this->extract().
+	 * http://stackoverflow.com/questions/1336207/finding-common-prefix-of-array-of-strings
+	 *
+	 * @access    public
+	 * @param     none
+	 * @return    string
+	 */
+	public function common_dir ()
+	{
+		$files = $this->zipped();
 		$dir = array_shift($files);
 		$length = strlen($dir);
-		foreach ($files as $common) {
-			while ($length && substr($common, 0, $length) !== $dir) {
+		foreach ($files as $common)
+		{
+			while ($length && substr($common, 0, $length) !== $dir)
+			{
 				$dir = substr($dir, 0, -1);
 				$length--;
 			}
@@ -99,108 +101,121 @@ class Unzip {
 		}
 		return ($slash = strrpos($dir, '/')) ? substr($dir, 0, $slash + 1) : '';
         }
+        
+	// --------------------------------------------------------------------
 
 	/**
 	 * Unzip all files in archive.
 	 *
-	 * @access    Public
-	 * @param     none
-	 * @return    none
+	 * @access    public
+	 * @param     mixed, string
+	 * @return    array
 	 */
-	public function extract($zip_file, $target_dir = NULL, $preserve_filepath = TRUE)
+	public function extract ($allow_extensions = NULL, $remove_from_path = '')
 	{
-		$this->_reinit();
-		$this->_zip_file = $zip_file;
-		$this->_target_dir = $target_dir ? $target_dir : dirname($this->_zip_file);
-
-		if ( ! $files = $this->_list_files())
-		{
-			$this->set_error('ZIP folder was empty.');
-			return FALSE;
-		}
-		
-		$common = ($target_dir) ? $this->common_dir(array_keys($files)) : ''; // Added
-		
 		$file_locations = array();
-		foreach ($files as $file => $trash)
+		foreach ($this->zipped() as $file)
 		{
-			$file = str_replace($common, '', $file); // Added
-			$dirname = pathinfo($file, PATHINFO_DIRNAME);
-			$extension = pathinfo($file, PATHINFO_EXTENSION);
-
-			$folders = explode('/', $dirname);
-			$out_dn = $this->_target_dir . '/' . $dirname;
-
-			// Skip stuff in stupid folders
-			if (in_array(current($folders), $this->_skip_dirs))
-			{
-				continue;
-			}
-
-			// Skip any files that are not allowed
-			if (is_array($this->_allow_extensions) AND $extension AND ! in_array($extension, $this->_allow_extensions))
-			{
-				continue;
-			}
-
-			if ( ! is_dir($out_dn) AND $preserve_filepath)
-			{
-				$str = "";
-				foreach ($folders as $folder)
-				{
-					$str = $str ? $str . '/' . $folder : $folder;
-					if ( ! is_dir($this->_target_dir . '/' . $str))
-					{
-						$this->set_debug('Creating folder: ' . $this->_target_dir . '/' . $str);
-
-						if ( ! @mkdir($this->_target_dir . '/' . $str))
-						{
-							$this->set_error('Desitnation path is not writable.');
-							return FALSE;
-						}
-
-						// Apply chmod if configured to do so
-						$this->apply_chmod AND chmod($this->_target_dir . '/' . $str, $this->apply_chmod);
-					}
-				}
-			}
-
-			if (empty($file) || substr($file, -1, 1) == '/') continue; // Added empty
-
-			$file_locations[] = $file_location = $this->_target_dir . '/' . ($preserve_filepath ? $file : basename($file));
-
-			$this->_extract_file($common . $file, $file_location); // Added $common
+			$path = str_replace($remove_from_path, '', $file);
+			if (empty($path) || substr($file, -1, 1) == '/') continue;
+			if ( ! $this->allowed($path, $allow_extensions)) continue;
+			$file_locations[$path] = $file_location = $this->dir . $path;
+			$this->mkpath(pathinfo($path, PATHINFO_DIRNAME));
+			$this->extract_file($file, $file_location);
 		}
-
-		$this->compressed_list = array();
-
 		return $file_locations;
 	}
+	
+	// --------------------------------------------------------------------
+
+	/**
+	 * Unzip all files from specified folders in archive.
+	 *
+	 * @access    public
+	 * @param     array, mixed
+	 * @return    array
+	 */
+        public function extract_folders (array $folders, $allow_extensions = NULL)
+        {
+        	$file_locations = array();
+        	foreach ($folders as $folder)
+        	{
+        		foreach ($this->zipped() as $file)
+        		{
+        			if (strpos($file, $folder . '/') !== 0) continue;
+        			if ( ! $this->allowed($file, $allow_extensions)) continue;
+        			$file_locations[$folder][substr($file, strlen($folder) + 1)] = $file_location = $this->dir . $file;
+        			$this->mkpath(pathinfo($file, PATHINFO_DIRNAME));
+        			$this->extract_file($file, $file_location);
+        		}
+        	}
+        	return $file_locations;
+        }
 
 	// --------------------------------------------------------------------
 
 	/**
-	 * What extensions do we want out of this ZIP
+	 * Unzip specified files in archive.
 	 *
-	 * @access    Public
+	 * @access    public
+	 * @param     array
+	 * @return    array
+	 */
+        public function extract_files (array $files)
+        {
+        	$file_locations = array();
+        	foreach ($files as $extract)
+        	{
+        		foreach ($this->zipped() as $file)
+        		{
+        			if ($extract != $file) continue;
+        			$file_locations[$file] = $file_location = $this->dir . $file;
+        			$this->mkpath(pathinfo($file, PATHINFO_DIRNAME));
+        			$this->extract_file($file, $file_location);
+        			break;
+        		}
+        	}
+        	return $file_locations;
+        }
+        
+	// --------------------------------------------------------------------
+
+	/**
+	 * Free the file resource.
+	 *
+	 * @access    public
 	 * @param     none
 	 * @return    none
 	 */
-	public function allow($ext = NULL)
+	public function close ()
 	{
-		$this->_allow_extensions = $ext;
+		if ($this->fh) fclose($this->fh);
 	}
 
 	// --------------------------------------------------------------------
 
 	/**
-	 * Show error messages
+	 * Free the file resource automatically.
 	 *
 	 * @access    public
-	 * @param    string
+	 * @param     none
+	 * @return    none
+	 */
+	public function __destroy ()
+	{
+		$this->close();
+	}
+
+	// --------------------------------------------------------------------
+
+	/**
+	 * Show error messages.
+	 *
+	 * @access    public
+	 * @param     string, string
 	 * @return    string
 	 */
-	public function error_string($open = '<p>', $close = '</p>')
+	public function error_string ($open = '<p>', $close = '</p>')
 	{
 		return $open . implode($close . $open, $this->error) . $close;
 	}
@@ -208,13 +223,13 @@ class Unzip {
 	// --------------------------------------------------------------------
 
 	/**
-	 * Show debug messages
+	 * Show debug messages.
 	 *
 	 * @access    public
-	 * @param    string
+	 * @param     string, string
 	 * @return    string
 	 */
-	public function debug_string($open = '<p>', $close = '</p>')
+	public function debug_string ($open = '<p>', $close = '</p>')
 	{
 		return $open . implode($close . $open, $this->info) . $close;
 	}
@@ -222,13 +237,13 @@ class Unzip {
 	// --------------------------------------------------------------------
 
 	/**
-	 * Save errors
+	 * Save errors.
 	 *
-	 * @access    Private
-	 * @param    string
+	 * @access    private
+	 * @param     string
 	 * @return    none
 	 */
-	function set_error($string)
+	private function set_error ($string)
 	{
 		$this->error[] = $string;
 	}
@@ -236,13 +251,13 @@ class Unzip {
 	// --------------------------------------------------------------------
 
 	/**
-	 * Save debug data
+	 * Save debug data.
 	 *
-	 * @access    Private
-	 * @param    string
+	 * @access    private
+	 * @param     string
 	 * @return    none
 	 */
-	function set_debug($string)
+	private function set_debug ($string)
 	{
 		$this->info[] = $string;
 	}
@@ -250,65 +265,14 @@ class Unzip {
 	// --------------------------------------------------------------------
 
 	/**
-	 * List all files in archive.
-	 *
-	 * @access    Public
-	 * @param     boolean
-	 * @return    mixed
-	 */
-	private function _list_files($stop_on_file = FALSE)
-	{
-		if (sizeof($this->compressed_list))
-		{
-			$this->set_debug('Returning already loaded file list.');
-			return $this->compressed_list;
-		}
-
-		// Open file, and set file handler
-		$fh = fopen($this->_zip_file, 'r');
-		$this->fh = &$fh;
-
-		if ( ! $fh)
-		{
-			$this->set_error('Failed to load file: ' . $this->_zip_file);
-			return FALSE;
-		}
-
-		$this->set_debug('Loading list from "End of Central Dir" index list...');
-
-		if ( ! $this->_load_file_list_by_eof($fh, $stop_on_file))
-		{
-			$this->set_debug('Failed! Trying to load list looking for signatures...');
-
-			if ( ! $this->_load_files_by_signatures($fh, $stop_on_file))
-			{
-				$this->set_debug('Failed! Could not find any valid header.');
-				$this->set_error('ZIP File is corrupted or empty');
-
-				return FALSE;
-			}
-		}
-
-		return $this->compressed_list;
-	}
-
-	// --------------------------------------------------------------------
-
-	/**
 	 * Unzip file in archive.
 	 *
-	 * @access    Public
+	 * @access    public
 	 * @param     string, boolean
-	 * @return    Unziped file.
+	 * @return    Unziped file
 	 */
-	private function _extract_file($compressed_file_name, $target_file_name = FALSE)
+	private function extract_file ($compressed_file_name, $target_file_name)
 	{
-		if ( ! sizeof($this->compressed_list))
-		{
-			$this->set_debug('Trying to unzip before loading file list... Loading it!');
-			$this->_list_files(FALSE, $compressed_file_name);
-		}
-
 		$fdetails = &$this->compressed_list[$compressed_file_name];
 
 		if ( ! isset($this->compressed_list[$compressed_file_name]))
@@ -326,22 +290,18 @@ class Unzip {
 		if ( ! $fdetails['uncompressed_size'])
 		{
 			$this->set_debug('File "<strong>$compressed_file_name</strong>" is empty.');
-
 			return $target_file_name ? file_put_contents($target_file_name, '') : '';
 		}
 
 		fseek($this->fh, $fdetails['contents_start_offset']);
-		$ret = $this->_uncompress(
+		$ret = $this->uncompress(
 			fread($this->fh, $fdetails['compressed_size']),
 			$fdetails['compression_method'],
 			$fdetails['uncompressed_size'],
 			$target_file_name
 		);
 
-		if ($this->apply_chmod AND $target_file_name)
-		{
-			chmod($target_file_name, FILE_READ_MODE);
-		}
+		chmod($target_file_name, FILE_READ_MODE);
 
 		return $ret;
 	}
@@ -349,45 +309,13 @@ class Unzip {
 	// --------------------------------------------------------------------
 
 	/**
-	 * Free the file resource.
+	 * Uncompress file, and save it to the target file.
 	 *
-	 * @access    Public
-	 * @param     none
+	 * @access    private
+	 * @param     file content, int, int, boolean
 	 * @return    none
 	 */
-	public function close()
-	{
-		// Free the file resource
-		if ($this->fh)
-		{
-			fclose($this->fh);
-		}
-	}
-
-	// --------------------------------------------------------------------
-
-	/**
-	 * Free the file resource Automatic destroy.
-	 *
-	 * @access    Public
-	 * @param     none
-	 * @return    none
-	 */
-	public function __destroy()
-	{
-		$this->close();
-	}
-
-	// --------------------------------------------------------------------
-
-	/**
-	 * Uncompress file. And save it to the targetFile.
-	 *
-	 * @access    Private
-	 * @param     Filecontent, int, int, boolean
-	 * @return    none
-	 */
-	private function _uncompress($content, $mode, $uncompressed_size, $target_file_name = FALSE)
+	private function uncompress ($content, $mode, $uncompressed_size, $target_file_name)
 	{
 		switch ($mode)
 		{
@@ -433,7 +361,7 @@ class Unzip {
 		}
 	}
 
-	private function _load_file_list_by_eof(&$fh, $stop_on_file = FALSE)
+	private function load_file_list_by_eof ()
 	{
 		// Check if there's a valid Central Dir signature.
 		// Let's consider a file comment smaller than 1024 characters...
@@ -441,21 +369,21 @@ class Unzip {
 
 		for ($x = 0; $x < 1024; $x++)
 		{
-			fseek($fh, -22 - $x, SEEK_END);
+			fseek($this->fh, -22 - $x, SEEK_END);
 
-			$signature = fread($fh, 4);
+			$signature = fread($this->fh, 4);
 
-			if ($signature == $this->central_signature_end)
+			if ($signature == "\x50\x4b\x05\x06")
 			{
 				// If found EOF Central Dir
-				$eodir['disk_number_this'] = unpack("v", fread($fh, 2)); // number of this disk
-				$eodir['disk_number'] = unpack("v", fread($fh, 2)); // number of the disk with the start of the central directory
-				$eodir['total_entries_this'] = unpack("v", fread($fh, 2)); // total number of entries in the central dir on this disk
-				$eodir['total_entries'] = unpack("v", fread($fh, 2)); // total number of entries in
-				$eodir['size_of_cd'] = unpack("V", fread($fh, 4)); // size of the central directory
-				$eodir['offset_start_cd'] = unpack("V", fread($fh, 4)); // offset of start of central directory with respect to the starting disk number
-				$zip_comment_lenght = unpack("v", fread($fh, 2)); // zipfile comment length
-				$eodir['zipfile_comment'] = $zip_comment_lenght[1] ? fread($fh, $zip_comment_lenght[1]) : ''; // zipfile comment
+				$eodir['disk_number_this'] = unpack("v", fread($this->fh, 2)); // number of this disk
+				$eodir['disk_number'] = unpack("v", fread($this->fh, 2)); // number of the disk with the start of the central directory
+				$eodir['total_entries_this'] = unpack("v", fread($this->fh, 2)); // total number of entries in the central dir on this disk
+				$eodir['total_entries'] = unpack("v", fread($this->fh, 2)); // total number of entries in
+				$eodir['size_of_cd'] = unpack("V", fread($this->fh, 4)); // size of the central directory
+				$eodir['offset_start_cd'] = unpack("V", fread($this->fh, 4)); // offset of start of central directory with respect to the starting disk number
+				$zip_comment_lenght = unpack("v", fread($this->fh, 2)); // zipfile comment length
+				$eodir['zipfile_comment'] = $zip_comment_lenght[1] ? fread($this->fh, $zip_comment_lenght[1]) : ''; // zipfile comment
 
 				$this->end_of_central = array(
 					'disk_number_this' => $eodir['disk_number_this'][1],
@@ -468,31 +396,31 @@ class Unzip {
 				);
 
 				// Then, load file list
-				fseek($fh, $this->end_of_central['offset_start_cd']);
-				$signature = fread($fh, 4);
+				fseek($this->fh, $this->end_of_central['offset_start_cd']);
+				$signature = fread($this->fh, 4);
 
-				while ($signature == $this->dir_signature)
+				while ($signature == "\x50\x4b\x01\x02")
 				{
-					$dir['version_madeby'] = unpack("v", fread($fh, 2)); // version made by
-					$dir['version_needed'] = unpack("v", fread($fh, 2)); // version needed to extract
-					$dir['general_bit_flag'] = unpack("v", fread($fh, 2)); // general purpose bit flag
-					$dir['compression_method'] = unpack("v", fread($fh, 2)); // compression method
-					$dir['lastmod_time'] = unpack("v", fread($fh, 2)); // last mod file time
-					$dir['lastmod_date'] = unpack("v", fread($fh, 2)); // last mod file date
-					$dir['crc-32'] = fread($fh, 4);			  // crc-32
-					$dir['compressed_size'] = unpack("V", fread($fh, 4)); // compressed size
-					$dir['uncompressed_size'] = unpack("V", fread($fh, 4)); // uncompressed size
-					$zip_file_length = unpack("v", fread($fh, 2)); // filename length
-					$extra_field_length = unpack("v", fread($fh, 2)); // extra field length
-					$fileCommentLength = unpack("v", fread($fh, 2)); // file comment length
-					$dir['disk_number_start'] = unpack("v", fread($fh, 2)); // disk number start
-					$dir['internal_attributes'] = unpack("v", fread($fh, 2)); // internal file attributes-byte1
-					$dir['external_attributes1'] = unpack("v", fread($fh, 2)); // external file attributes-byte2
-					$dir['external_attributes2'] = unpack("v", fread($fh, 2)); // external file attributes
-					$dir['relative_offset'] = unpack("V", fread($fh, 4)); // relative offset of local header
-					$dir['file_name'] = fread($fh, $zip_file_length[1]);							 // filename
-					$dir['extra_field'] = $extra_field_length[1] ? fread($fh, $extra_field_length[1]) : ''; // extra field
-					$dir['file_comment'] = $fileCommentLength[1] ? fread($fh, $fileCommentLength[1]) : ''; // file comment
+					$dir['version_madeby'] = unpack("v", fread($this->fh, 2)); // version made by
+					$dir['version_needed'] = unpack("v", fread($this->fh, 2)); // version needed to extract
+					$dir['general_bit_flag'] = unpack("v", fread($this->fh, 2)); // general purpose bit flag
+					$dir['compression_method'] = unpack("v", fread($this->fh, 2)); // compression method
+					$dir['lastmod_time'] = unpack("v", fread($this->fh, 2)); // last mod file time
+					$dir['lastmod_date'] = unpack("v", fread($this->fh, 2)); // last mod file date
+					$dir['crc-32'] = fread($this->fh, 4);			  // crc-32
+					$dir['compressed_size'] = unpack("V", fread($this->fh, 4)); // compressed size
+					$dir['uncompressed_size'] = unpack("V", fread($this->fh, 4)); // uncompressed size
+					$zip_file_length = unpack("v", fread($this->fh, 2)); // filename length
+					$extra_field_length = unpack("v", fread($this->fh, 2)); // extra field length
+					$fileCommentLength = unpack("v", fread($this->fh, 2)); // file comment length
+					$dir['disk_number_start'] = unpack("v", fread($this->fh, 2)); // disk number start
+					$dir['internal_attributes'] = unpack("v", fread($this->fh, 2)); // internal file attributes-byte1
+					$dir['external_attributes1'] = unpack("v", fread($this->fh, 2)); // external file attributes-byte2
+					$dir['external_attributes2'] = unpack("v", fread($this->fh, 2)); // external file attributes
+					$dir['relative_offset'] = unpack("V", fread($this->fh, 4)); // relative offset of local header
+					$dir['file_name'] = fread($this->fh, $zip_file_length[1]);							 // filename
+					$dir['extra_field'] = $extra_field_length[1] ? fread($this->fh, $extra_field_length[1]) : ''; // extra field
+					$dir['file_comment'] = $fileCommentLength[1] ? fread($this->fh, $fileCommentLength[1]) : ''; // file comment
 
 					// Convert the date and time, from MS-DOS format to UNIX Timestamp
 					$binary_mod_date = str_pad(decbin($dir['lastmod_date'][1]), 16, '0', STR_PAD_LEFT);
@@ -526,7 +454,7 @@ class Unzip {
 						'file_comment' => $dir['file_comment'],
 					);
 
-					$signature = fread($fh, 4);
+					$signature = fread($this->fh, 4);
 				}
 
 				// If loaded centralDirs, then try to identify the offsetPosition of the compressed data.
@@ -534,7 +462,7 @@ class Unzip {
 				{
 					foreach ($this->central_dir_list as $filename => $details)
 					{
-						$i = $this->_get_file_header($fh, $details['relative_offset']);
+						$i = $this->get_file_header($details['relative_offset']);
 						
 						$this->compressed_list[$filename]['file_name'] = $filename;
 						$this->compressed_list[$filename]['compression_method'] = $details['compression_method'];
@@ -546,11 +474,6 @@ class Unzip {
 						$this->compressed_list[$filename]['lastmod_datetime'] = $details['lastmod_datetime'];
 						$this->compressed_list[$filename]['extra_field'] = $i['extra_field'];
 						$this->compressed_list[$filename]['contents_start_offset'] = $i['contents_start_offset'];
-
-						if (strtolower($stop_on_file) == strtolower($filename))
-						{
-							break;
-						}
 					}
 				}
 
@@ -560,20 +483,20 @@ class Unzip {
 		return FALSE;
 	}
 
-	private function _load_files_by_signatures(&$fh, $stop_on_file = FALSE)
+	private function load_files_by_signatures ()
 	{
-		fseek($fh, 0);
+		fseek($this->fh, 0);
 
 		$return = FALSE;
 		for (;;)
 		{
-			$details = $this->_get_file_header($fh);
+			$details = $this->get_file_header();
 
 			if ( ! $details)
 			{
 				$this->set_debug('Invalid signature. Trying to verify if is old style Data Descriptor...');
-				fseek($fh, 12 - 4, SEEK_CUR); // 12: Data descriptor - 4: Signature (that will be read again)
-				$details = $this->_get_file_header($fh);
+				fseek($this->fh, 12 - 4, SEEK_CUR); // 12: Data descriptor - 4: Signature (that will be read again)
+				$details = $this->get_file_header();
 			}
 
 			if ( ! $details)
@@ -585,44 +508,39 @@ class Unzip {
 			$filename = $details['file_name'];
 			$this->compressed_list[$filename] = $details;
 			$return = true;
-
-			if (strtolower($stop_on_file) == strtolower($filename))
-			{
-				break;
-			}
 		}
 
 		return $return;
 	}
 
-	private function _get_file_header(&$fh, $start_offset = FALSE)
+	private function get_file_header ($start_offset = FALSE)
 	{
 		if ($start_offset !== FALSE)
 		{
-			fseek($fh, $start_offset);
+			fseek($this->fh, $start_offset);
 		}
 
-		$signature = fread($fh, 4);
+		$signature = fread($this->fh, 4);
 
-		if ($signature == $this->zip_signature)
+		if ($signature == "\x50\x4b\x03\x04")
 		{
 			// Get information about the zipped file
-			$file['version_needed'] = unpack("v", fread($fh, 2)); // version needed to extract
-			$file['general_bit_flag'] = unpack("v", fread($fh, 2)); // general purpose bit flag
-			$file['compression_method'] = unpack("v", fread($fh, 2)); // compression method
-			$file['lastmod_time'] = unpack("v", fread($fh, 2)); // last mod file time
-			$file['lastmod_date'] = unpack("v", fread($fh, 2)); // last mod file date
-			$file['crc-32'] = fread($fh, 4);			  // crc-32
-			$file['compressed_size'] = unpack("V", fread($fh, 4)); // compressed size
-			$file['uncompressed_size'] = unpack("V", fread($fh, 4)); // uncompressed size
-			$zip_file_length = unpack("v", fread($fh, 2)); // filename length
-			$extra_field_length = unpack("v", fread($fh, 2)); // extra field length
-			$file['file_name'] = fread($fh, $zip_file_length[1]); // filename
-			$file['extra_field'] = $extra_field_length[1] ? fread($fh, $extra_field_length[1]) : ''; // extra field
-			$file['contents_start_offset'] = ftell($fh);
+			$file['version_needed'] = unpack("v", fread($this->fh, 2)); // version needed to extract
+			$file['general_bit_flag'] = unpack("v", fread($this->fh, 2)); // general purpose bit flag
+			$file['compression_method'] = unpack("v", fread($this->fh, 2)); // compression method
+			$file['lastmod_time'] = unpack("v", fread($this->fh, 2)); // last mod file time
+			$file['lastmod_date'] = unpack("v", fread($this->fh, 2)); // last mod file date
+			$file['crc-32'] = fread($this->fh, 4);			  // crc-32
+			$file['compressed_size'] = unpack("V", fread($this->fh, 4)); // compressed size
+			$file['uncompressed_size'] = unpack("V", fread($this->fh, 4)); // uncompressed size
+			$zip_file_length = unpack("v", fread($this->fh, 2)); // filename length
+			$extra_field_length = unpack("v", fread($this->fh, 2)); // extra field length
+			$file['file_name'] = fread($this->fh, $zip_file_length[1]); // filename
+			$file['extra_field'] = $extra_field_length[1] ? fread($this->fh, $extra_field_length[1]) : ''; // extra field
+			$file['contents_start_offset'] = ftell($this->fh);
 
 			// Bypass the whole compressed contents, and look for the next file
-			fseek($fh, $file['compressed_size'][1], SEEK_CUR);
+			fseek($this->fh, $file['compressed_size'][1], SEEK_CUR);
 
 			// Convert the date and time, from MS-DOS format to UNIX Timestamp
 			$binary_mod_date = str_pad(decbin($file['lastmod_date'][1]), 16, '0', STR_PAD_LEFT);
@@ -657,7 +575,55 @@ class Unzip {
 
 		return FALSE;
 	}
+	
+	// --------------------------------------------------------------------
+
+	/**
+	 * Determine whether the file extension is allowed or not.
+	 *
+	 * @access    private
+	 * @param     string, mixed
+	 * @return    bool
+	 */
+	private function allowed ($file, $extensions)
+	{
+		if (empty($extensions)) return true;
+		$check = pathinfo($file, PATHINFO_EXTENSION);
+		return (is_array($extensions)) ? in_array($check, $extensions) : strpos("||{$extensions}||", "|{$check}|");
+	}
+	
+	// --------------------------------------------------------------------
+
+	/**
+	 * Create the directory structure.
+	 *
+	 * @access    private
+	 * @param     string
+	 * @return    none
+	 */
+	private function mkpath ($dir)
+	{
+		$path = $this->dir . $dir;
+		if ( ! is_dir($path))
+		{
+			$str = '';
+			foreach (explode('/', $dir) as $folder)
+			{
+				$str = $str ? $str . '/' . $folder : $folder;
+				if ( ! is_dir($this->dir . $str))
+				{
+					$this->set_debug('Creating folder: ' . $this->dir . $str);
+					if ( ! @mkdir($this->dir . $str, $this->chmod))
+					{
+						$this->set_error('Destination path is not writable.');
+						return FALSE;
+					}
+				}
+			}
+		}
+	}
+	
 }
 
 /* End of file Unzip.php */
-/* Location: ./system/libraries/Unzip.php */
+/* Location: ./application/libraries/Unzip.php */
