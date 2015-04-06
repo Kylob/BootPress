@@ -30,7 +30,7 @@ class Page {
     $this->type = pathinfo($this->uri, PATHINFO_EXTENSION);
     if (empty($this->type)) $this->type = 'html';
     $this->query = strstr($_SERVER['REQUEST_URI'], '?');
-    $this->domain = substr(BASE_URI, strrpos(trim(BASE_URI, '/'), '/') + 1, -1);
+    $this->domain = substr(BASE_URI, strrpos(rtrim(BASE_URI, '/'), '/') + 1, -1);
     $this->charset = $ci->config->item('charset');
   }
   
