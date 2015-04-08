@@ -23,7 +23,12 @@ class Admin_themes extends CI_Driver {
       header('Content-Length: ' . strlen($less));
       exit($less);
     };
-    if (isset($params['action']) && $params['action'] == 'preview') return $this->preview();
+    if (isset($params['action'])) {
+      switch ($params['action']) {
+        case 'download': return $this->download(); break;
+        case 'preview': return $this->preview(); break;
+      }
+    }
     return $this->display($this->theme());
   }
   
@@ -60,7 +65,7 @@ class Admin_themes extends CI_Driver {
       }
       $page->eject($page->url($this->url, 'themes/default'));
     }
-    if ($preview = $ci->input->post('preview') && $ci->input->is_ajax_request()) {
+    if (($preview = $ci->input->post('preview')) && $ci->input->is_ajax_request()) {
       if ($preview == 'true') {
         $ci->sitemap->suspend_caching(60);
         $ci->session->preview_layout = $this->theme;
@@ -94,7 +99,7 @@ class Admin_themes extends CI_Driver {
     );
     $form->values($files);
     $form->values(array(
-      'preview' => ($preview) ? 'Y' : 'N',
+      'preview' => ($ci->session->preview_layout) ? 'Y' : 'N',
       'theme' => $page->url($this->url, 'themes', $this->theme),
       'action' => 'copy'
     ));
@@ -148,34 +153,27 @@ class Admin_themes extends CI_Driver {
         }
       });
     ');
-    $html .= $form->header();
-    $html .= $this->box('default', array(
+    #-- Theme --#
+    $theme = $this->box('default', array(
       'head with-border' => array(
         $bp->icon('desktop', 'fa') . ' ' . ucwords($this->theme) . ' Theme',
         $bp->button('md link', 'Documentation ' . $bp->icon('new-window'), array('href'=>'http://bootpress.org/getting-started#themes', 'target'=>'_blank'))
       ),
       'body' => implode('', array(
-        $form->field('preview', 'checkbox'),
+        $form->header(),
+        $form->field(false,
+          str_replace('class="checkbox"', 'class="checkbox pull-left"', $form->field('preview', 'checkbox', array('label'=>false))) .
+          $bp->button('danger delete pull-right', $bp->icon('trash'), array('title'=>'Click to delete this theme'))
+        ),
         $form->field('theme', 'select'),
         $form->field('save', 'text'),
         $form->field('action', 'radio'),
-        $form->submit('Submit', $bp->button('danger delete pull-right', $bp->icon('trash'), array('title'=>'Click to delete this theme')))
+        $form->submit('Submit', $bp->button('info pull-right', 'Download ' . $bp->icon('download'), array('href'=>$page->url($this->url, 'themes/download', $this->theme)))),
+        $form->field('index', 'textarea', array('class'=>'wyciwyg tpl input-sm', 'data-file'=>'index.tpl')),
+        $form->field('post', 'textarea', array('class'=>'wyciwyg php input-sm', 'data-file'=>'post.tpl')),
+        $form->close()
       ))
     ));
-    $form->align('collapse');
-    $index = $this->box('default', array(
-      'head with-border' => array('index.tpl'),
-      'body' => $form->field('index', 'textarea', array('class'=>'wyciwyg tpl input-sm', 'data-file'=>'index.tpl', 'label'=>false))
-    ));
-    $post = $this->box('default', array(
-      'head with-border' => array('post.tpl'),
-      'body' => $form->field('post', 'textarea', array('class'=>'wyciwyg php input-sm', 'data-file'=>'post.tpl', 'label'=>false))
-    ));
-    $html .= $bp->row('sm', array(
-      $bp->col(6, $index),
-      $bp->col(6, $post)
-    ));
-    $html .= $form->close();
     unset($form);
     $form = $page->plugin('Form', 'name', 'admin_bootstrap');
     $form->values($files);
@@ -196,32 +194,45 @@ class Admin_themes extends CI_Driver {
       }
       $page->eject($form->eject);
     }
-    $html .= $this->box('default', array(
-      'head with-border' => array(
-        'Bootstrap',
-        $bp->button('md link', 'Preview Theme ' . $bp->icon('new-window'), array('href'=>$page->url($this->url, 'themes/preview', $this->theme), 'target'=>'_bootstrap')),
-        'collapse'
-      ),
+    #-- Bootstrap --#
+    $bootstrap = $this->box('default', array(
+      'head with-border' => array('Bootstrap'),
       'body' => implode('', array(
         $form->header(),
-        $form->field('bootstrap', 'textarea', array('class'=>'wyciwyg less input-sm', 'data-file'=>'variables.less')),
+        $form->field(false,
+          $bp->button('info pull-left', 'Preview Less Variables ' . $bp->icon('new-window'), array('href'=>$page->url($this->url, 'themes/preview', $this->theme), 'target'=>'_bootstrap')) .
+          $bp->button('primary pull-right', 'Compile', array('type'=>'submit', 'data-loading-text'=>'Submitting...'))
+        ),
+        $form->field('bootstrap', 'textarea', array('class'=>'wyciwyg less input-sm', 'data-file'=>'variables.less', 'rows'=>23, 'style'=>'padding-bottom:14px;')),
         $form->field('custom', 'textarea', array('class'=>'wyciwyg less input-sm', 'data-file'=>'custom.less')),
-        $form->submit('Compile'),
         $form->close()
       ))
     ));
     unset($form);
+    $html .= $bp->row('lg', array(
+      $bp->col(6, $theme),
+      $bp->col(6, $bootstrap)
+    ));
     $html .= $this->box('default', array(
-      'head with-border' => array('Files', 'collapse'),
+      'head with-border' => array('Files'),
       'body' => $media
     ));
     return $html;
   }
   
+  private function download () {
+    global $ci, $page;
+    $user = $ci->session->analytics;
+    $ci->load->library('zip');
+    $ci->zip->compression_level = 9;
+    $ci->zip->read_dir($this->dir . $this->theme, false);
+    $ci->zip->download('backup-theme-' . $page->get('domain') . '-' . $this->theme . '-' . date('Y-m-d_H-i-s', time() - $user['offset']) . '.zip');
+  }
+  
   private function preview () {
     global $ci, $page;
-    $page->template = false;
-    $page->title = 'Bootstrap Preview';
+    $page->theme = false;
+    $page->title = 'Bootstrap Variables Preview';
     $page->link('<script>var less = { env:"development" };</script>');
     $page->link('<script src="' . $page->plugin('CDN', 'url', 'less/2.2.0/less.min.js') . '"></script>');
     $page->link('<link rel="stylesheet/less" type="text/css" href="' . $page->url($this->url, 'themes/preview', $this->theme, 'bootstrap.less') . '">');

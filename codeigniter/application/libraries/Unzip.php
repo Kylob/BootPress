@@ -135,10 +135,10 @@ class Unzip {
 	 * @param     array, mixed
 	 * @return    array
 	 */
-        public function extract_folders (array $folders, $allow_extensions = NULL)
+        public function extract_folders ($folders, $allow_extensions = NULL)
         {
         	$file_locations = array();
-        	foreach ($folders as $folder)
+        	foreach ((array) $folders as $folder)
         	{
         		foreach ($this->zipped() as $file)
         		{
@@ -161,10 +161,10 @@ class Unzip {
 	 * @param     array
 	 * @return    array
 	 */
-        public function extract_files (array $files)
+        public function extract_files ($files)
         {
         	$file_locations = array();
-        	foreach ($files as $extract)
+        	foreach ((array) $files as $extract)
         	{
         		foreach ($this->zipped() as $file)
         		{

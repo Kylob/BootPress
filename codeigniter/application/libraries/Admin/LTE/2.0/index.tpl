@@ -6,7 +6,7 @@
   'fontawesome/4.3.0/css/font-awesome.min.css'
 ])}
 
-{$logo = ($page->logo) ? $page->logo : '<a href="http://www.bootpress.org">BootPress</a>'}
+{$logo = ($page->logo) ? $page->logo : '<a href="http://www.bootpress.org">'|cat:$bp->img($page->url('theme', 'bootpress.png'), 'height="30" style="margin-top:-3px;" alt="BootPress"', 'BootPress')|cat:'</a>'}
 {$skin = ($page->skin) ? $page->skin : 'blue'}
 
 {$page->link([
@@ -24,10 +24,8 @@
 {$page->meta('content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" name="viewport"')}
 
 {$page->style([
-  '.navbar-text { margin-bottom:12px; margin-top:11px; }',
-  'ul.sidebar-menu, div.navbar-custom-menu { font-size:16px; }',
-  'ul.sidebar-menu .fa, ul.sidebar-menu .glyphicon { margin-right:10px; }',
-  'ul.sidebar-menu > li { padding-left:5px; }'
+  'ul.sidebar-menu, div.navbar-custom-menu { font-size:15px; }',
+  'ul.sidebar-menu .fa, ul.sidebar-menu .glyphicon { margin-right:10px; }'
 ])}
 {$page->set('body', 'class="fixed skin-'|cat:$skin|cat:{($page->collapse == 'sidebar') ? ' sidebar-collapse"' : '"'})}
 

@@ -268,7 +268,8 @@ class Admin_blog extends CI_Driver {
         list($zip, $name) = each($form->vars['upload']);
         $ci->load->library('unzip');
         $ci->unzip->files($zip, BASE_URI . 'blog', 0755);
-        $uris = $ci->unzip->extract_folders(array('authors', 'content'), 'ini|tpl|js|css|jpg|jpeg|gif|png|ico|pdf|ttf|otf|svg|eot|woff|swf|tar|gz|tgz|zip|csv|xl|xls|xlsx|word|doc|docx|ppt|mp3|ogg|wav|mpe|mpeg|mpg|mov|qt|psd');
+        $uris = $ci->unzip->extract_folders('authors', 'ini|jpg|jpeg|gif|png');
+        $uris = $ci->unzip->extract_folders('content', 'tpl|js|css|jpg|jpeg|gif|png|ico|pdf|ttf|otf|svg|eot|woff|swf|tar|gz|tgz|zip|csv|xl|xls|xlsx|word|doc|docx|ppt|mp3|ogg|wav|mpe|mpeg|mpg|mov|qt|psd');
         $ci->unzip->close();
         unlink($zip);
         if (isset($uris['content'])) {

@@ -25,9 +25,7 @@ class Controller extends CI_Controller {
     }
     $admin = array_merge(array('name'=>'', 'email'=>'', 'password'=>'', 'folder'=>''), (array) $admin);
     if (strpos($admin['folder'], '://')) {
-      if (strpos($admin['folder'], BASE_URL) === 0) {
-        $folder = trim(substr($admin['folder'], strlen(BASE_URL)), '/');
-      }
+      define('ALTMIN', trim($admin['folder'], '/') . '/');
     } elseif (!empty($admin['folder'])) {
       $folder = trim($admin['folder'], '/');
     } else {
@@ -112,7 +110,7 @@ class Controller extends CI_Controller {
             ADMIN . '[blog:view]/[published|unpublished|posts|pages' . (is_admin(1) ? '|authors|categories|tags|templates|backup|restore' : null) . ':folder]?',
             ADMIN . '[sitemap' . (is_admin(1) ? '|setup|errors|plugins|folders|databases' : null) . ':view]',
             ADMIN . '[users:view]/[logout' . (is_admin(1) ? '|register|edit|list' : null) . ':action]?',
-            ADMIN . '[themes:view]/[preview:action]?/[:theme]?/[bootstrap\.less:less]?',
+            ADMIN . '[themes:view]/[download|preview:action]?/[:theme]?/[bootstrap\.less:less]?',
             ADMIN . '[analytics:view]/[users|pages|referrers:method]?'
           ))) {
             if (!isset($route['params']['view'])) $page->eject(ADMIN . 'blog');

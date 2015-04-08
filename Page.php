@@ -249,7 +249,7 @@ class Page {
         switch ($action) {
           case 'base': $href = BASE_URL; break;
           case 'blog': $href = BASE_URL . BLOG; break;
-          case 'admin': $href = BASE_URL . ADMIN; break;
+          case 'admin': $href = (defined('ALTMIN')) ? ALTMIN : BASE_URL . ADMIN; break;
           case 'folder': $href = $this->url; break;
           case 'post':
           case 'theme': $href = $ci->blog->url; break;
