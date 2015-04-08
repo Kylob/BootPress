@@ -2,7 +2,7 @@
 
 A PHP Framework with a Built in Blog and Flat File CMS
 
-See http://bootpress.org for more info.
+See http://www.bootpress.org for more info.
 
 ## License
 
