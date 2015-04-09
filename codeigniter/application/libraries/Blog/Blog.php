@@ -427,7 +427,7 @@ class Blog extends CI_Driver_Library {
   
   public function create ($uri, $content='') {
     if (!is_dir($this->post . $uri)) mkdir($this->post . $uri, 0755, true);
-    if (empty($content)) $content = file_get_contents($this->templates . 'blog.tpl');
+    if (empty($content)) $content = file_get_contents($this->templates . 'index.tpl');
     if (!is_file($this->post . $uri . '/index.tpl')) file_put_contents($this->post . $uri . '/index.tpl', $content);
     return $this->file($uri);
   }

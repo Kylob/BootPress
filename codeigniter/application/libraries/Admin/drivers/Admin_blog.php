@@ -276,7 +276,6 @@ class Admin_blog extends CI_Driver {
           foreach ($uris['content'] as $file => $location) {
             if (substr($file, -9) != 'index.tpl') continue;
             $ci->blog->file(substr($file, 0, -10));
-            $html .= substr($file, 0, -10) . '<br>';
           }
         }
       }
