@@ -1,5 +1,8 @@
 <?php
 
+$page->title = 'Bootstrap Variables Preview';
+
+$page->theme = false;
 $page->plugin('CDN', array('prepend', 'links'=>array(
   'bootstrap/' . $ci->blog->bootstrap . '/css/bootstrap.min.css',
   'bootstrap/' . $ci->blog->bootstrap . '/js/bootstrap.min.js',
@@ -21,12 +24,10 @@ $page->plugin('jQuery', 'code', '
   });
 ');
 
-##
-# Header
-##
+$page->body = 'style="margin-top:45px;"';
+$page->filter('layout', 'prepend', '<div class="jumbotron"><div class="container"><h1>Sandbox</h1><p>A preview of changes in this swatch.</p></div></div>');
 
-$header = '<h1>Sandbox</h1><p class="lead">A preview of changes in this swatch.</p>';
-$header .= $bp->pills(array(
+$html .= $bp->pills(array(
   'Viewport' => '#viewport',
   'Navigation' => '#navigation',
   'Buttons' => '#buttons',
@@ -39,9 +40,6 @@ $header .= $bp->pills(array(
   'Forms' => '#forms',
   'Icons' => '#icons'
 ));
-$html .= '<header>' . $bp->row('sm', array(
-  $bp->col(12, $header)
-)) . '</header>';
 
 ##
 # Viewport
@@ -703,6 +701,6 @@ $icons .= $bp->row('sm', array(
 ));
 $html .= '<section id="icons">' . $icons . '</section><hr>';
 
-echo '<div class="container" style="margin-top:50px;">' . $html . '</div><br>';
+echo '<div class="container">' . $html . '</div><br>';
 
 ?>

@@ -231,8 +231,6 @@ class Admin_themes extends CI_Driver {
   
   private function preview () {
     global $ci, $page;
-    $page->theme = false;
-    $page->title = 'Bootstrap Variables Preview';
     $page->link('<script>var less = { env:"development" };</script>');
     $page->link('<script src="' . $page->plugin('CDN', 'url', 'less/2.2.0/less.min.js') . '"></script>');
     $page->link('<link rel="stylesheet/less" type="text/css" href="' . $page->url($this->url, 'themes/preview', $this->theme, 'bootstrap.less') . '">');
