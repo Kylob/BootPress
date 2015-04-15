@@ -136,13 +136,16 @@ class BootPress {
   }
   
   public function icon ($symbol, $prefix='glyphicon', $tag='i') {
+    $base = $prefix;
+    $names = explode(' ', $symbol);
+    $prefix = array($names[0]); // ie. only prefix the first class
     $params = '';
     if ($space = strpos($tag, ' ')) {
       $params = ' ' . trim(substr($tag, $space));
       $tag = substr($tag, 0, $space);
     }
     if ($prefix == 'glyphicon') $tag = 'span';
-    return $this->add_class(array($tag => $this->classes($prefix, $symbol)), '<' . $tag . $params . '></' . $tag . '>');
+    return $this->add_class(array($tag => $this->classes($base, $names, $prefix)), '<' . $tag . $params . '></' . $tag . '>');
   }
   
   public function button ($class, $name, $options=array()) {
@@ -395,7 +398,7 @@ class BootPress {
     $html = '<div class="' . $this->classes('panel', $class, array('default', 'primary', 'success', 'info', 'warning', 'danger')) . '">';
     foreach ($sections as $panel => $content) {
       if (!is_numeric($panel)) $panel = substr($panel, 0, 4);
-      switch ($panel) {
+      switch ((string) $panel) {
         case 'head': $html .= '<div class="panel-heading">' . $this->add_class(array('h([1-6]){1}'=>'panel-title'), $content) . '</div>'; break;
         case 'body': $html .= '<div class="panel-body">' . $content . '</div>'; break;
         case 'foot': $html .= '<div class="panel-footer">' . $content . '</div>'; break;
@@ -489,7 +492,7 @@ class BootPress {
       $head = substr($this->panel($class, array('head'=>$head)), 0, -6); // </div>
       $html .= substr_replace($head, ' role="tab" id="' . $heading . '"', strpos($head, 'class="panel-heading"') + 21, 0);
         $html .= '<div id="' . $collapse . '" class="panel-collapse collapse' . $in . '" role="tabpanel" aria-labelledby="' . $heading . '">';
-          $html .= '<div class="panel-body">' . $body . '</div>';
+          $html .= (strpos($body, 'class="list-group"')) ? $body : '<div class="panel-body">' . $body . '</div>';
         $html .= '</div>';
       $html .= '</div>'; // the one we removed from the $head up top
     }
