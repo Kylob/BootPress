@@ -345,6 +345,7 @@ class Admin_files extends CI_Driver {
     $ci->load->helper('number');
     $images = $links = array();
     $url = str_replace(array(BASE_URI, BASE), BASE_URL, $path);
+    sort($files);
     foreach ($files as $file) {
       $ext = strtolower(pathinfo($file, PATHINFO_EXTENSION));
       $view = $bp->button('xs link', 'view ' . $bp->icon('new-window'), array('href'=>$url . $file, 'target'=>'_blank'));
