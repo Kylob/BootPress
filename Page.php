@@ -190,7 +190,8 @@ class Page {
         return array(
           'target' => $target,
           'params' => $params,
-          'method' => ($method = $ci->input->server('REQUEST_METHOD')) ? $method : 'GET'
+          'method' => ($method = $ci->input->server('REQUEST_METHOD')) ? $method : 'GET',
+          'uri' => $uri
         );
       }
     }
