@@ -80,10 +80,10 @@ class Controller extends CI_Controller {
         if (is_file($file)) {
           $this->load->driver('blog', array('role'=>'#post#'));
           $this->load->library('auth');
-          $vars = array('user'=>$ci->auth->user(), 'uri'=>array(
-            'id' => $ci->sitemap->uri('id'),
-            'type' => $ci->sitemap->uri('type'),
-            'views' => $ci->sitemap->uri('views')
+          $vars = array('user'=>$this->auth->user(), 'uri'=>array(
+            'id' => $this->sitemap->uri('id'),
+            'type' => $this->sitemap->uri('type'),
+            'views' => $this->sitemap->uri('views')
           ));
           $this->blog->smarty($file, $vars);
           $data = $this->compile($page->post);
@@ -379,7 +379,7 @@ class Controller extends CI_Controller {
   }
   
   private function layout ($content) {
-    global $ci, $page;
+    global $page;
     if ($page->theme == 'admin') {
       $this->analytics();
       $lte = 'codeigniter/application/libraries/Admin/LTE/2.0/';
@@ -406,7 +406,7 @@ class Controller extends CI_Controller {
           $layout = $this->blog->templates . '/theme/index.tpl';
         }
         if (is_file(BASE_URI . 'themes/' . $page->theme . '/post.tpl')) {
-          $page->plugin('jQuery', 'code', '$.ajax({type:"POST", url:location.href, data:{"' . md5(BASE_URL) . '":"' . $page->theme . '"}, cache:false, success:function(data){ $.each(data,function(key,value){ if(key=="css")$("<style/>").html(value).appendTo("head"); else if(key=="javascript")eval(value); else $("<span/>").html(value).prependTo(key) })}, dataType:"json"});');
+          $page->plugin('jQuery', 'code', '$.ajax({type:"POST", url:location.href, data:{"' . md5(BASE_URL) . '":"' . $page->theme . '"}, cache:false, success:function(data){ $.each(data,function(key,value){ if(key=="css")$("<style/>").html(value).appendTo("head"); else if(key=="javascript")eval(value); else $("<span/>").html(value).appendTo(key) })}, dataType:"json"});');
         }
         $content = $this->blog->smarty($layout, array('content'=>$content));
       }

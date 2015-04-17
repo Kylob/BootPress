@@ -1,6 +1,6 @@
 <?php
 
-class BootPressNavbar extends BootPress {
+class BootstrapNavbar extends Bootstrap {
   
   public function open ($brand, $align='', $inverse=false) {
     global $page;

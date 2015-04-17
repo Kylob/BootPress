@@ -1,6 +1,6 @@
 <?php
 
-class BootPressListings extends BootPress {
+class BootstrapListings extends Bootstrap {
 
   private $set = false;
   private $start = 0;

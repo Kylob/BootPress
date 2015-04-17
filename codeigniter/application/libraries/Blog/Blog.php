@@ -29,8 +29,8 @@ class Blog extends CI_Driver_Library {
     unset($config['blog']);
     $this->config = array_merge(array('pagination'=>10), $config);
     $this->blog['bootstrap'] = '3.3.2';
-    $page->load(BASE, 'bootstrap/BootPress.php');
-    $bp = new BootPress;
+    $page->load(BASE, 'bootstrap/Bootstrap.php');
+    $bp = new Bootstrap;
     $this->blog['page'] = ''; // This is established in the $ci->blog->pages class
     $this->blog['url'] = array( // deprecated and not used at BootPress so far as I am aware except in $this->set()
       'listings' => BASE_URL . BLOG, // may or may not have trailing slash
@@ -120,10 +120,10 @@ class Blog extends CI_Driver_Library {
     static $smarty = null;
     if (is_null($smarty)) {
       $functions = array('preg_replace', 'number_format', 'implode', 'explode', 'array_keys', 'array_values', 'array_flip', 'array_reverse', 'array_shift', 'array_unshift', 'array_pop', 'array_push', 'array_combine', 'array_merge');
-      if ($this->controller == '#post#') $functions = array_merge(array('is_user', 'is_admin', 'in_group'), $functions);
+      if ($testing || $this->controller == '#post#') $functions = array_merge(array('is_user', 'is_admin', 'in_group'), $functions);
       $smarty = $page->plugin('Smarty', 'class');
       $smarty->assign(array(
-        'bp' => new BootPressClone($bp),
+        'bp' => new BootstrapClone($bp),
         'page' => new PageClone($page, ($this->controller == '#post#' ? 'post' : 'blog'))
       ));
       $security = new Smarty_Security($smarty);
@@ -617,7 +617,7 @@ class PageClone {
   
 }
 
-class BootPressClone {
+class BootstrapClone {
   
   private $class;
   

@@ -1,6 +1,6 @@
 <?php
 
-class BootPressTable extends BootPress {
+class BootstrapTable extends Bootstrap {
   
   private $head = false; // or true
   private $foot = false; // or true

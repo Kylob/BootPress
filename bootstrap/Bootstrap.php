@@ -1,6 +1,6 @@
 <?php
 
-class BootPress {
+class Bootstrap {
   
   private $table = null;
   private $navbar = null;
@@ -13,7 +13,7 @@ class BootPress {
       case 'listings':
         if (is_null($this->$name)) {
           $file = ucfirst($name) . '.php';
-          $class = 'BootPress' . ucfirst($name);
+          $class = 'Bootstrap' . ucfirst($name);
           include_once $file;
           $this->$name = new $class;
         }
