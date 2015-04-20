@@ -6,7 +6,7 @@ class Page {
   private $uri = ''; // Between $this->url and '?'
   private $type = ''; // $this->uri's file extension (if any)
   private $query = ''; // A string beginning with '?' (if any params)
-  private $domain = ''; // As defined in the main index.php page
+  private $domain = ''; // The $website as defined in the main index.php page. 
   private $folder = null; // A "folder" (directory) that shifts the relative context of the $this->url and $this->uri
   public $language = 'en';
   public $charset = 'UTF-8';
@@ -30,7 +30,8 @@ class Page {
     $this->type = pathinfo($this->uri, PATHINFO_EXTENSION);
     if (empty($this->type)) $this->type = 'html';
     $this->query = strstr($_SERVER['REQUEST_URI'], '?');
-    $this->domain = substr(BASE_URI, strrpos(rtrim(BASE_URI, '/'), '/') + 1, -1);
+    $path = $ci->config->item('cache_path');
+    $this->domain = substr($path, strrpos(rtrim($path, '/'), '/') + 1, -1);
     $this->charset = $ci->config->item('charset');
   }
   

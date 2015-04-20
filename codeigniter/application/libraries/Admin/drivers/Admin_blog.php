@@ -279,6 +279,7 @@ class Admin_blog extends CI_Driver {
           }
         }
       }
+      $ci->blog->decache();
       $page->eject($page->url('admin', 'blog'));
     }
     $html .= $form->header();

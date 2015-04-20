@@ -122,6 +122,7 @@ class Blog extends CI_Driver_Library {
       $functions = array('preg_replace', 'number_format', 'implode', 'explode', 'array_keys', 'array_values', 'array_flip', 'array_reverse', 'array_shift', 'array_unshift', 'array_pop', 'array_push', 'array_combine', 'array_merge');
       if ($testing || $this->controller == '#post#') $functions = array_merge(array('is_user', 'is_admin', 'in_group'), $functions);
       $smarty = $page->plugin('Smarty', 'class');
+      $smarty->setCompileDir($smarty->getCompileDir() . $page->get('domain'));
       $smarty->assign(array(
         'bp' => new BootstrapClone($bp),
         'page' => new PageClone($page, ($this->controller == '#post#' ? 'post' : 'blog'))
@@ -145,6 +146,15 @@ class Blog extends CI_Driver_Library {
       $html = '<p>' . $error . '</p>';
     }
     return ($testing) ? true : $html;
+  }
+  
+  public function decache () {
+    global $ci, $page;
+    $cache = $ci->config->item('cache_path') . 'proceed.txt';
+    if (is_file($cache)) unlink($cache);
+    $smarty = $page->plugin('Smarty', 'class');
+    $smarty->setCompileDir($smarty->getCompileDir() . $page->get('domain'));
+    $smarty->clearCompiledTemplate();
   }
   
   public function query ($type, $params=null) {

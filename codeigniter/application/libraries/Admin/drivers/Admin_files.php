@@ -48,7 +48,7 @@ class Admin_files extends CI_Driver {
   public function view ($type, $path) {
     global $ci;
     $html = '';
-    if ($ci->blog->controller == '#admin#') {
+    if ($ci->blog->controller == '#admin#' || ADMIN == '') {
       switch ($type) {
         case 'authors': $html .= $this->folder($path, false, array('images'=>'jpg|jpeg|gif|png', 'files'=>false, 'resources'=>false)); break;
         case 'blog': $html .= $this->folder($path, false, array('exclude'=>'index.tpl', 'files'=>'tpl|js|css')); break;
