@@ -148,13 +148,15 @@ class Blog extends CI_Driver_Library {
     return ($testing) ? true : $html;
   }
   
-  public function decache () {
-    global $ci, $page;
-    $cache = $ci->config->item('cache_path') . 'proceed.txt';
+  public function decache ($domain=null) {
+    global $page;
+    if (empty($domain)) $domain = $page->get('domain');
+    $cache = APPPATH . 'cache/' . $domain . '/proceed.txt';
     if (is_file($cache)) unlink($cache);
     $smarty = $page->plugin('Smarty', 'class');
-    $smarty->setCompileDir($smarty->getCompileDir() . $page->get('domain'));
+    $smarty->setCompileDir($smarty->getCompileDir() . $domain);
     $smarty->clearCompiledTemplate();
+    unset($smarty);
   }
   
   public function query ($type, $params=null) {
@@ -329,7 +331,7 @@ class Blog extends CI_Driver_Library {
     }
     if (empty($uri)) $uri = 'index';
     $blog = $this->db->row(array(
-      'SELECT b.id, b.category_id AS category, c.uri AS path, b.keywords, b.author, b.updated',
+      'SELECT b.id, b.category_id AS category, c.uri, b.content AS path, b.keywords, b.author, b.updated',
       'FROM blog AS b LEFT JOIN categories AS c ON b.category_id = c.id',
       'WHERE b.uri = ?'
     ), array($uri));
@@ -343,7 +345,7 @@ class Blog extends CI_Driver_Library {
       $page->body = '';
       $page->theme = 'default';
       $page->vars = array();
-      $content = $this->smarty($file);
+      $content = trim($this->smarty($file));
       $published = $page->published;
       if (is_string($published) && ($date = strtotime($published))) {
         $published = $date * -1; // a post
@@ -372,12 +374,17 @@ class Blog extends CI_Driver_Library {
         $blog = array('id' => $this->db->insert('blog', $update));
         if (!empty($update['author'])) $this->author($blog['id'], $author, $update['author']);
         if (!empty($update['keywords'])) $this->tag($blog['id'], $update['keywords']);
-      } elseif ($update['updated'] != $blog['updated']) {
-        $ci->sitemap->modify('uri', $uri);
-        $update['seo'] = $page->seo($update['title']);
-        $this->db->update('blog', 'id', array($blog['id']=>$update));
-        $this->author($blog['id'], $author, $update['author'], $blog['author']);
-        $this->tag($blog['id'], $update['keywords'], $blog['keywords']);
+      } else {
+        foreach (array('updated', 'content') as $check) {
+          if ($update[$check] != $blog[$check]) {
+            $ci->sitemap->modify('uri', $uri);
+            $update['seo'] = $page->seo($update['title']);
+            $this->db->update('blog', 'id', array($blog['id']=>$update));
+            $this->author($blog['id'], $author, $update['author'], $blog['author']);
+            $this->tag($blog['id'], $update['keywords'], $blog['keywords']);
+            break;
+          }
+        }
       }
       return array('id'=>$blog['id'], 'uri'=>$uri, 'content'=>$content);
     } elseif ($blog) { // then remove
