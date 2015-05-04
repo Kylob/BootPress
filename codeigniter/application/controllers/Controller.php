@@ -42,14 +42,13 @@ class Controller extends CI_Controller {
     }
     $paths = array_diff($paths, array('index')); // remove any reference to 'index'
     $type = pathinfo($uri, PATHINFO_EXTENSION);
-    if (!empty($type)) {
+    if (!empty($type) && in_array($type, array('xml', 'txt', 'less'))) {
       $desired_url = $this->config->base_url(implode('/', $paths) . '.' . $type);
     } else {
-      $desired_url = $this->config->site_url($paths);
+      $desired_url = $this->config->site_url($paths) . strstr($_SERVER['REQUEST_URI'], '?');
     }
-    $desired_url .= strstr($_SERVER['REQUEST_URI'], '?');
     $actual_url = (is_https() ? 'https' : 'http') . '://' . $_SERVER['HTTP_HOST'] . $_SERVER['REQUEST_URI'];
-    if ($actual_url != $desired_url) {
+    if ($desired_url != $actual_url) {
       header('Location: ' . $desired_url, true, 301);
       exit;
     }
@@ -87,12 +86,6 @@ class Controller extends CI_Controller {
           ));
           $this->blog->smarty($file, $vars);
           $data = $this->compile($page->post);
-          if (isset($data['css'])) $data = array('css'=>$data['css']) + $data; // move css to the beginning
-          if (isset($data['javascript'])) { // move javascript to the end
-            $javascript = $data['javascript'];
-            unset($data['javascript']);
-            $data['javascript'] = $javascript;
-          }
         }
         $data = json_encode($this->filter_links($data));
         header('Content-Type: application/json');
@@ -434,6 +427,12 @@ class Controller extends CI_Controller {
     foreach ($data as $key => $value) {
       if (empty($value)) unset($data[$key]);
       else $data[$key] = "\n\t" . implode("\n\t", $data[$key]);
+    }
+    if (isset($data['css'])) $data = array('css'=>$data['css']) + $data; // move css to the beginning
+    if (isset($data['javascript'])) { // move javascript to the end
+      $javascript = $data['javascript'];
+      unset($data['javascript']);
+      $data['javascript'] = $javascript;
     }
     return $data;
   }

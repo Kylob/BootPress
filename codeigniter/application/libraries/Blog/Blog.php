@@ -154,8 +154,11 @@ class Blog extends CI_Driver_Library {
     $cache = APPPATH . 'cache/' . $domain . '/proceed.txt';
     if (is_file($cache)) unlink($cache);
     $smarty = $page->plugin('Smarty', 'class');
-    $smarty->setCompileDir($smarty->getCompileDir() . $domain);
-    $smarty->clearCompiledTemplate();
+    $path = $smarty->getCompileDir() . $domain;
+    list($dirs, $files) = $this->folder($path, 'recursive');
+    arsort($dirs);
+    foreach ($files as $file) unlink($path . $file);
+    foreach ($dirs as $dir) rmdir($path . $dir);
     unset($smarty);
   }
   
