@@ -94,7 +94,7 @@ class Admin_folders extends CI_Driver {
     return $this->display($this->box('default', array(
       'head with-border' => array(
         $bp->icon('folder', 'fa') . ' Folders',
-        $bp->button('md link', 'Documentation ' . $bp->icon('new-window'), array('href'=>'http://bootpress.org/getting-started#folders', 'target'=>'_blank'))
+        $bp->button('md link', 'Documentation ' . $bp->icon('new-window'), array('href'=>'https://www.bootpress.org/docs/folders/', 'target'=>'_blank'))
       ),
       'body' => $html . $media
     )));

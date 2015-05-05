@@ -38,7 +38,7 @@ class Admin_blog extends CI_Driver {
     $docs = '';
     if (!in_array($view, array('authors', 'categories', 'tags', 'backup', 'restore'))) {
       $tab = ($view == 'templates') ? 'templates' : 'blog';
-      $docs = $bp->button('md link', 'Documentation ' . $bp->icon('new-window'), array('href'=>'http://bootpress.org/getting-started#' . $tab, 'target'=>'_blank'));
+      $docs = $bp->button('md link', 'Documentation ' . $bp->icon('new-window'), array('href'=>'https://www.bootpress.org/docs/' . $tab . '/', 'target'=>'_blank'));
     }
     return $this->display($this->box('default', array(
       'head with-border' => array($header, $docs),

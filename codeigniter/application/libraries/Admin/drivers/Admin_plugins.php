@@ -73,7 +73,7 @@ class Admin_plugins extends CI_Driver {
     return $this->display($this->box('default', array(
       'head with-border' => array(
         $bp->icon('plug', 'fa') . ' Plugins',
-        $bp->button('md link', 'Documentation ' . $bp->icon('new-window'), array('href'=>'http://bootpress.org/getting-started#plugins', 'target'=>'_blank')),
+        $bp->button('md link', 'Documentation ' . $bp->icon('new-window'), array('href'=>'https://www.bootpress.org/docs/plugins/', 'target'=>'_blank')),
         ($plugin) ? $bp->button('sm danger delete', $bp->icon('trash'), array('title'=>'Click to delete this plugin')) : ''
       ),
       'body' => $html . $media

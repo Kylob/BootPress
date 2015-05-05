@@ -157,7 +157,7 @@ class Admin_themes extends CI_Driver {
     $theme = $this->box('default', array(
       'head with-border' => array(
         $bp->icon('desktop', 'fa') . ' ' . ucwords($this->theme) . ' Theme',
-        $bp->button('md link', 'Documentation ' . $bp->icon('new-window'), array('href'=>'http://bootpress.org/getting-started#themes', 'target'=>'_blank'))
+        $bp->button('md link', 'Documentation ' . $bp->icon('new-window'), array('href'=>'https://www.bootpress.org/docs/themes/', 'target'=>'_blank'))
       ),
       'body' => implode('', array(
         $form->header(),
