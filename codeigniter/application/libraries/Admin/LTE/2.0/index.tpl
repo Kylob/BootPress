@@ -6,7 +6,7 @@
   'fontawesome/4.3.0/css/font-awesome.min.css'
 ])}
 
-{$logo = ($page->logo) ? $page->logo : '<a href="http://www.bootpress.org">'|cat:$bp->img($page->url('theme', 'bootpress.png'), 'height="30" style="margin-top:-3px;" alt="BootPress"', 'BootPress')|cat:'</a>'}
+{$logo = ($page->logo) ? $page->logo : '<a href="https://www.bootpress.org/">'|cat:$bp->img($page->url('theme', 'bootpress.png'), 'height="30" style="margin-top:-3px;" alt="BootPress"', 'BootPress')|cat:'</a>'}
 {$skin = ($page->skin) ? $page->skin : 'blue'}
 
 {$page->link([

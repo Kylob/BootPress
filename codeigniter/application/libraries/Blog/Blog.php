@@ -32,12 +32,7 @@ class Blog extends CI_Driver_Library {
     $page->load(BASE, 'bootstrap/Bootstrap.php');
     $bp = new Bootstrap;
     $this->blog['page'] = ''; // This is established in the $ci->blog->pages class
-    $this->blog['url'] = array( // deprecated and not used at BootPress so far as I am aware except in $this->set()
-      'listings' => BASE_URL . BLOG, // may or may not have trailing slash
-      'base' => BASE_URL, // with trailing slash
-      'media' => '' // with trailing slash
-    );
-    if (empty($this->blog['name']) && $this->controller != '#admin#') $page->eject(ADMIN);
+    if (empty($this->blog['name']) && $this->controller != '#admin#') $page->eject($page->url('admin'));
   }
   
   public function __get ($name) {
@@ -111,7 +106,6 @@ class Blog extends CI_Driver_Library {
   
   public function set ($page, $media='') {
     $this->blog['page'] = $page;
-    $this->blog['url']['media'] = $media;
     $this->url = $media;
   }
   

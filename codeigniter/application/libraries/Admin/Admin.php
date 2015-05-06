@@ -8,7 +8,7 @@ class Admin extends CI_Driver_Library {
   
   public function __construct ($params) {
     global $ci, $page;
-    if ($ci->blog->controller != '#admin#' && ADMIN != '') {
+    if ($ci->blog->controller != '#admin#') {
       $this->valid_drivers = array('files');
       return;
     }
@@ -18,7 +18,7 @@ class Admin extends CI_Driver_Library {
       }
     }
     $this->view = $params['file'];
-    $this->url = (ADMIN == '') ? 'folder' : 'admin';
+    $this->url = 'admin';
     if (!is_admin(2)) { // if not signed in, then they must be in the process of doing so
       if ($this->view != 'users') $page->eject($page->url($this->url, 'users'));
     } elseif ($ci->blog->name == '' && $this->view != 'setup') { // this blog is just getting started
@@ -62,7 +62,7 @@ class Admin extends CI_Driver_Library {
   public function display ($content='') {
     global $bp, $ci, $page;
     $html = '';
-    if ($ci->blog->controller != '#admin#' && ADMIN != '') {
+    if ($ci->blog->controller != '#admin#') {
       $page->filter('layout', 'prepend', '<div id="adminForms">');
       $page->filter('layout', 'append', '</div>' . $this->wyciwyg());
       $page->style('textarea.input-sm { font-family: Menlo, Monaco, Consolas, "Courier New", monospace; }');

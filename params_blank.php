@@ -11,8 +11,6 @@ $admin = array(
 
 $config['compress_output'] = false; // if you are getting compression errors (a blank page) then set this to false
 
-$config['encryption_key'] = md5(serialize($admin));
-
 define ('IMAGEMAGICK_PATH', ''); // (optional) to the command line
 
 define ('PHP_PATH', ''); // (optional) used to sanitary (lint) check PHP files before they are saved

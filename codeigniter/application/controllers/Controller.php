@@ -24,16 +24,9 @@ class Controller extends CI_Controller {
       return $this->resources->deliverer->view(implode('/', $file), $type);
     }
     $admin = array_merge(array('name'=>'', 'email'=>'', 'password'=>'', 'folder'=>''), (array) $admin);
-    if (strpos($admin['folder'], '://')) {
-      define('ALTMIN', trim($admin['folder'], '/') . '/');
-    } elseif (!empty($admin['folder'])) {
-      $folder = trim($admin['folder'], '/');
-    } else {
-      $folder = 'admin';
-    }
-    define('ADMIN', isset($folder) ? $folder.'/' : '');
+    define('ADMIN', !empty($admin['folder']) ? trim($admin['folder'], '/') . '/' : 'admin/');
     $uri = $this->uri->uri_string();
-    $bp_admin = (ADMIN != '' && strpos($uri.'/', ADMIN) === 0) ? true : false;
+    $bp_admin = (strpos($uri . '/', ADMIN) === 0) ? (isset($admin['function']) ? $admin['function'] : true) : false;
     if (!$bp_admin && $this->poster != $this->model) $uri = str_replace('_', '-', $uri);
     $paths = array();
     foreach (explode('/', $uri) as $value) {
@@ -98,7 +91,9 @@ class Controller extends CI_Controller {
       } else {
         if ($bp_admin) {
           $this->load->driver('blog', array('role'=>'#admin#'));
-          if ($route = $page->routes(array(
+          if (is_callable($bp_admin)) {
+            $html = $bp_admin();
+          } elseif ($route = $page->routes(array(
             ADMIN,
             ADMIN . '[blog:view]/[published|unpublished|posts|pages' . (is_admin(1) ? '|authors|categories|tags|templates|backup|restore' : null) . ':folder]?',
             ADMIN . '[sitemap' . (is_admin(1) ? '|setup|errors|plugins|folders|databases' : null) . ':view]',

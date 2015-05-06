@@ -141,7 +141,6 @@ class Auth {
     global $ci, $page;
     $this->logout(($single !== false) ? $user_id : null);
     if ($user = $this->db->row('SELECT id, name, email, admin FROM users WHERE id = ? AND approved = ?', array($user_id, 'Y'))) {
-      if (ADMIN != '' && in_array($user['admin'], array(1,2)) && $single === false) $page->eject($page->url('admin', 'users'));
       $this->session = array(
         'id' => '',
         'user_agent' => trim(substr($ci->input->user_agent(), 0, 120)),
