@@ -328,7 +328,7 @@ class Blog extends CI_Driver_Library {
     }
     if (empty($uri)) $uri = 'index';
     $blog = $this->db->row(array(
-      'SELECT b.id, b.category_id AS category, c.uri, b.content AS path, b.keywords, b.author, b.updated',
+      'SELECT b.id, b.category_id AS category, c.uri AS path, b.content, b.keywords, b.author, b.updated',
       'FROM blog AS b LEFT JOIN categories AS c ON b.category_id = c.id',
       'WHERE b.uri = ?'
     ), array($uri));

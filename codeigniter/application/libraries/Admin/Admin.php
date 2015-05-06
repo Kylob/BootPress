@@ -4,7 +4,6 @@ class Admin extends CI_Driver_Library {
   
   protected $valid_drivers = array('users', 'errors', 'files', 'setup', 'blog', 'themes', 'plugins', 'folders', 'databases', 'analytics', 'sitemap');
   private $view;
-  public $url;
   
   public function __construct ($params) {
     global $ci, $page;
@@ -18,13 +17,12 @@ class Admin extends CI_Driver_Library {
       }
     }
     $this->view = $params['file'];
-    $this->url = 'admin';
     if (!is_admin(2)) { // if not signed in, then they must be in the process of doing so
-      if ($this->view != 'users') $page->eject($page->url($this->url, 'users'));
+      if ($this->view != 'users') $page->eject($page->url('admin', 'users'));
     } elseif ($ci->blog->name == '' && $this->view != 'setup') { // this blog is just getting started
-      $page->eject($page->url($this->url, 'setup'));
+      $page->eject($page->url('admin', 'setup'));
     } elseif ($ci->blog->name != '' && $this->view == 'setup') { // there is no reason for them to be here anymore
-      $page->eject($page->url($this->url, 'blog'));
+      $page->eject($page->url('admin', 'blog'));
     }
     $page->robots = false;
     $blog = ($ci->blog->name != '') ? $ci->blog->name : 'Blog';
@@ -75,15 +73,15 @@ class Admin extends CI_Driver_Library {
     if (is_admin(2)) {
       if (isset($driver['setup']) && is_admin(1) && $this->view != 'errors') $links['Setup'] = '#';
       if ($ci->blog->name != '') {
-        if (isset($driver['blog'])) $links[$bp->icon('globe', 'fa') . ' Blog'] = $page->url($this->url, 'blog');
-        if (isset($driver['themes'])) $links[$bp->icon('desktop', 'fa') . ' Themes'] = $page->url($this->url, 'themes');
+        if (isset($driver['blog'])) $links[$bp->icon('globe', 'fa') . ' Blog'] = $page->url('admin', 'blog');
+        if (isset($driver['themes'])) $links[$bp->icon('desktop', 'fa') . ' Themes'] = $page->url('admin', 'themes');
         if (is_admin(1)) {
-          if (isset($driver['plugins'])) $links[$bp->icon('plug', 'fa') . ' Plugins'] = $page->url($this->url, 'plugins');
-          if (isset($driver['folders'])) $links[$bp->icon('folder', 'fa') . ' Folders'] = $page->url($this->url, 'folders');
-          if (isset($driver['databases'])) $links[$bp->icon('database', 'fa') . ' Databases'] = $page->url($this->url, 'databases');
+          if (isset($driver['plugins'])) $links[$bp->icon('plug', 'fa') . ' Plugins'] = $page->url('admin', 'plugins');
+          if (isset($driver['folders'])) $links[$bp->icon('folder', 'fa') . ' Folders'] = $page->url('admin', 'folders');
+          if (isset($driver['databases'])) $links[$bp->icon('database', 'fa') . ' Databases'] = $page->url('admin', 'databases');
         }
-        if (isset($driver['analytics'])) $links[$bp->icon('line-chart', 'fa') . ' Analytics'] = $page->url($this->url, 'analytics');
-        if (isset($driver['sitemap'])) $links[$bp->icon('sitemap', 'fa') . ' Sitemap'] = $page->url($this->url, 'sitemap');
+        if (isset($driver['analytics'])) $links[$bp->icon('line-chart', 'fa') . ' Analytics'] = $page->url('admin', 'analytics');
+        if (isset($driver['sitemap'])) $links[$bp->icon('sitemap', 'fa') . ' Sitemap'] = $page->url('admin', 'sitemap');
         $suspend = ($ci->sitemap->caching()) ? ' ' : ' checked="checked" ';
         $profiler = ($ci->session->profiler) ? ' checked="checked" ' : ' ';
         $page->header = '<span id="suspend-profiler" class="pull-right">' . implode('', array(
@@ -117,35 +115,35 @@ class Admin extends CI_Driver_Library {
       $user = $bp->icon('user', 'glyphicon', 'span style="margin-right:10px;"') . ' ';
       if (is_admin(1)) {
         $menu = array($user . $ci->auth->user('name') => ($this->view == 'setup' ? '#' : array(
-          'Edit Your Profile' => $page->url($this->url, 'users'),
-          'Register User' => $page->url($this->url, 'users/register'),
-          'View Users' => $page->url($this->url, 'users/list?view=all'),
-          'Logout' => $page->url($this->url, 'users/logout')
+          'Edit Your Profile' => $page->url('admin', 'users'),
+          'Register User' => $page->url('admin', 'users/register'),
+          'View Users' => $page->url('admin', 'users/list?view=all'),
+          'Logout' => $page->url('admin', 'users/logout')
         )));
       } elseif (is_admin(2)) {
         $menu = array($user . $ci->auth->user('name') => array(
-          'Edit Your Profile' => $page->url($this->url, 'users'),
-          'Logout' => $page->url($this->url, 'users/logout')
+          'Edit Your Profile' => $page->url('admin', 'users'),
+          'Logout' => $page->url('admin', 'users/logout')
         ));
       } else {
-        $menu = array($user . 'Sign In' => $page->url($this->url, 'users'));
+        $menu = array($user . 'Sign In' => $page->url('admin', 'users'));
       }
       $page->navbar = '<div class="navbar-custom-menu">' . $bp->navbar->menu($menu) . '</div>';
     }
-    $search = (isset($driver['blog']) && count($links) > 1) ? $bp->search($page->url($this->url, 'blog/published'), array(
+    $search = (isset($driver['blog']) && count($links) > 1) ? $bp->search($page->url('admin', 'blog/published'), array(
       'class' => 'sidebar-form',
       'button' => $bp->button('flat', $bp->icon('search', 'fa'), array('title'=>'Search', 'type'=>'submit'))
     )) : '';
     if (isset($driver['errors']) && $this->view != 'setup' && in_array('errors', $this->valid_drivers) && $link = $ci->admin->errors->link()) {
       $links = array_merge(array($bp->icon('exclamation-triangle', 'fa', 'i class="text-danger"') . ' <span class="text-danger"><b>View Errors</b></span>'=>$link), $links);
     }
-    $links = (!empty($links)) ? '<ul class="sidebar-menu">' . $bp->links('li treeview', $links, array('active'=>$page->url($this->url, $this->view))) . '</ul>' : '';
+    $links = (!empty($links)) ? '<ul class="sidebar-menu">' . $bp->links('li treeview', $links, array('active'=>$page->url('admin', $this->view))) . '</ul>' : '';
     if (isset($driver['blog'])) {
       $blog = 'Blog <i class="fa fa-angle-left pull-right"></i></a><ul class="treeview-menu">' . $bp->links('li', array(
-        $bp->icon('circle-o', 'fa') . ' Visitors' => $page->url($this->url, 'analytics'),
-        $bp->icon('circle-o', 'fa') . ' Referrers' => $page->url($this->url, 'analytics/referrers'),
-        $bp->icon('circle-o', 'fa') . ' Pages' => $page->url($this->url, 'analytics/pages'),
-        $bp->icon('circle-o', 'fa') . ' Users' => $page->url($this->url, 'analytics/users')
+        $bp->icon('circle-o', 'fa') . ' Visitors' => $page->url('admin', 'analytics'),
+        $bp->icon('circle-o', 'fa') . ' Referrers' => $page->url('admin', 'analytics/referrers'),
+        $bp->icon('circle-o', 'fa') . ' Pages' => $page->url('admin', 'analytics/pages'),
+        $bp->icon('circle-o', 'fa') . ' Users' => $page->url('admin', 'analytics/users')
       ), array('active'=>'url')) . '</ul>';
       $blog = 'Blog <i class="fa fa-angle-left pull-right"></i></a>';
       $blog .= '<ul class="treeview-menu">';
@@ -155,10 +153,10 @@ class Admin extends CI_Driver_Library {
     }
     if (isset($driver['analytics'])) {
       $analytics = 'Analytics <i class="fa fa-angle-left pull-right"></i></a><ul class="treeview-menu">' . $bp->links('li', array(
-        $bp->icon('circle-o', 'fa') . ' Visitors' => $page->url($this->url, 'analytics'),
-        $bp->icon('circle-o', 'fa') . ' Referrers' => $page->url($this->url, 'analytics/referrers'),
-        $bp->icon('circle-o', 'fa') . ' Pages' => $page->url($this->url, 'analytics/pages'),
-        $bp->icon('circle-o', 'fa') . ' Users' => $page->url($this->url, 'analytics/users')
+        $bp->icon('circle-o', 'fa') . ' Visitors' => $page->url('admin', 'analytics'),
+        $bp->icon('circle-o', 'fa') . ' Referrers' => $page->url('admin', 'analytics/referrers'),
+        $bp->icon('circle-o', 'fa') . ' Pages' => $page->url('admin', 'analytics/pages'),
+        $bp->icon('circle-o', 'fa') . ' Users' => $page->url('admin', 'analytics/users')
       ), array('active'=>'url')) . '</ul>';
       $links = str_replace('Analytics</a>', $analytics, $links);
     }

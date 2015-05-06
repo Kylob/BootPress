@@ -10,7 +10,7 @@ class Admin_errors extends CI_Driver {
   
   public function link () {
     global $page;
-    return  (is_admin(1) && ($logs = $this->logs()) && !empty($logs)) ? $page->url('add', $page->url($this->url, 'errors'), 'redirect', $page->url()) : null;
+    return  (is_admin(1) && ($logs = $this->logs()) && !empty($logs)) ? $page->url('add', $page->url('admin', 'errors'), 'redirect', $page->url()) : null;
   }
   
   public function view () {

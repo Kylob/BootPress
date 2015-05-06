@@ -11,7 +11,7 @@ class Admin_users extends CI_Driver {
     switch ($this->view) {
       case 'logout':
         $ci->auth->logout();
-        $page->eject($page->url($this->url, 'users'));
+        $page->eject($page->url('admin', 'users'));
         break;
       case 'register':
         if (is_admin(1)) $html = $this->register_user();
@@ -49,7 +49,7 @@ class Admin_users extends CI_Driver {
         if ($ci->auth->user_is_admin($id, 2)) {
           $form->reset_attempts();
           $ci->auth->login($id, ($form->vars['remember'] == 'Y') ? 30 : 1, 'single');
-          $page->eject($page->url($this->url));
+          $page->eject($page->url('admin'));
         }
         $form->errors['email'] = 'Only administrators may sign in here.';
       } elseif ($id = $ci->auth->check($form->vars['email'])) {
@@ -190,7 +190,7 @@ class Admin_users extends CI_Driver {
       $info = $ci->auth->info($ids);
       foreach ($info as $id => $user) {
         $html .= $bp->table->row();
-        $html .= $bp->table->cell('', $bp->button('xs warning', $bp->icon('pencil') . ' ' . $user['id'], array('href'=>$page->url($this->url, 'users/edit?id=' . $id), 'title'=>'Edit User')));
+        $html .= $bp->table->cell('', $bp->button('xs warning', $bp->icon('pencil') . ' ' . $user['id'], array('href'=>$page->url('admin', 'users/edit?id=' . $id), 'title'=>'Edit User')));
         $html .= $bp->table->cell('', $user['name']);
         $html .= $bp->table->cell('', $user['email']);
         $html .= $bp->table->cell('align=center', date('M d Y', $user['registered'] - $analytics['offset']));
@@ -279,7 +279,7 @@ class Admin_users extends CI_Driver {
       } else {
         $form->message('warning', 'The email "' . $form->vars['email'] . '" has already been registered.');
       }
-      $page->eject($page->url($this->url, 'users/edit?id=' . $user_id));
+      $page->eject($page->url('admin', 'users/edit?id=' . $user_id));
     }
     $html .= $form->header();
     $html .= $form->field('name', 'text', array('prepend'=>$bp->icon('user')));

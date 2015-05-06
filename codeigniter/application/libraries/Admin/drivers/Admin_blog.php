@@ -49,23 +49,23 @@ class Admin_blog extends CI_Driver {
   
   public function links () {
     global $bp, $ci, $page;
-    $links = array($bp->icon('pencil-square-o', 'fa') . ' New' => $page->url($this->url, 'blog'));
+    $links = array($bp->icon('pencil-square-o', 'fa') . ' New' => $page->url('admin', 'blog'));
     if ($unpublished = $ci->blog->db->value('SELECT COUNT(*) FROM blog WHERE featured <= 0 AND published = 0')) {
-      $links['<span class="text-danger">' . $bp->icon('exclamation-triangle', 'fa') . ' <b>Unpublished</b> ' . $bp->badge($unpublished, 'right') . '</span>'] = $page->url($this->url, 'blog/unpublished');
+      $links['<span class="text-danger">' . $bp->icon('exclamation-triangle', 'fa') . ' <b>Unpublished</b> ' . $bp->badge($unpublished, 'right') . '</span>'] = $page->url('admin', 'blog/unpublished');
     }
     if ($posts = $ci->blog->db->value('SELECT COUNT(*) FROM blog WHERE featured <= 0 AND published < 0')) {
-      $links[$bp->icon('thumb-tack', 'fa') . ' Posts ' . $bp->badge($posts, 'right')] = $page->url($this->url, 'blog/posts');
+      $links[$bp->icon('thumb-tack', 'fa') . ' Posts ' . $bp->badge($posts, 'right')] = $page->url('admin', 'blog/posts');
     }
     if ($pages = $ci->blog->db->value('SELECT COUNT(*) FROM blog WHERE featured <= 0 AND published = 1')) {
-      $links[$bp->icon('file-o', 'fa') . ' Pages ' . $bp->badge($pages, 'right')] = $page->url($this->url, 'blog/pages');
+      $links[$bp->icon('file-o', 'fa') . ' Pages ' . $bp->badge($pages, 'right')] = $page->url('admin', 'blog/pages');
     }
     if (is_admin(1)) {
-      if ($posts || $pages) $links[$bp->icon('files-o', 'fa') . ' Templates'] = $page->url($this->url, 'blog/templates');
-      if (count($this->set_tags()) > 0) $links[$bp->icon('tags', 'fa') . ' Tags'] = $page->url($this->url, 'blog/tags');
-      if ($ci->blog->db->value('SELECT COUNT(*) FROM categories')) $links[$bp->icon('share-alt', 'fa') . ' Categories'] = $page->url($this->url, 'blog/categories');
-      if (count($this->set_authors()) > 0) $links[$bp->icon('user') . ' Authors'] = $page->url($this->url, 'blog/authors');
-      if ($unpublished || $posts || $pages) $links[$bp->icon('download') . ' Backup'] = $page->url($this->url, 'blog/backup');
-      $links[$bp->icon('upload') . ' Restore'] = $page->url($this->url, 'blog/restore');
+      if ($posts || $pages) $links[$bp->icon('files-o', 'fa') . ' Templates'] = $page->url('admin', 'blog/templates');
+      if (count($this->set_tags()) > 0) $links[$bp->icon('tags', 'fa') . ' Tags'] = $page->url('admin', 'blog/tags');
+      if ($ci->blog->db->value('SELECT COUNT(*) FROM categories')) $links[$bp->icon('share-alt', 'fa') . ' Categories'] = $page->url('admin', 'blog/categories');
+      if (count($this->set_authors()) > 0) $links[$bp->icon('user') . ' Authors'] = $page->url('admin', 'blog/authors');
+      if ($unpublished || $posts || $pages) $links[$bp->icon('download') . ' Backup'] = $page->url('admin', 'blog/backup');
+      $links[$bp->icon('upload') . ' Restore'] = $page->url('admin', 'blog/restore');
     }
     return $links;
   }
@@ -82,7 +82,7 @@ class Admin_blog extends CI_Driver {
   
   private function published ($params) {
     global $bp, $ci, $page;
-    if ($search = $ci->input->post('search')) $page->eject($page->url($this->url, 'blog/published?search=' . trim($search, "'")));
+    if ($search = $ci->input->post('search')) $page->eject($page->url('admin', 'blog/published?search=' . trim($search, "'")));
     if ($search = $ci->input->get('search')) {
       $page->title = 'Search Published Posts and Pages at ' . $ci->blog->name;
       if (!$bp->listings->set) $bp->listings->count($ci->sitemap->count($search, 'blog'));
@@ -446,7 +446,7 @@ class Admin_blog extends CI_Driver {
         $reference = $bp->icon('tack', 'fa') . ' ' . date('M j, Y', $published);
       }
       $html .= $bp->row('sm', array(
-        $bp->col(1, '<p>' . $bp->button('xs warning', $bp->icon('pencil') . ' edit', array('href'=>$page->url($this->url, 'blog?edit=' . $id))) . '</p>'),
+        $bp->col(1, '<p>' . $bp->button('xs warning', $bp->icon('pencil') . ' edit', array('href'=>$page->url('admin', 'blog?edit=' . $id))) . '</p>'),
         $bp->col(11, $bp->media(array($thumb, '
           <h4><a href="' . $page->url('base', $uri) . '">' . (!empty($title) ? $title : 'Untitled') . '</a> <small class="pull-right">' . $reference . '</small></h4>
           <p><span class="text-danger"><small>' . BASE_URL . $uri . '</small></span><br>' . (isset($alt[$id]) ? $alt[$id] : $description) . '</p>
