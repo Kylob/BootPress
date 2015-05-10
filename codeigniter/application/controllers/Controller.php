@@ -58,7 +58,7 @@ class Controller extends CI_Controller {
       $this->benchmark->mark('page_content_start');
       if ($this->model == $this->poster) {
         $this->delay_flashdata();
-        $this->log('users');
+        $this->log_analytics('users');
         $image = base64_decode('R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7');
         header('Expires: Fri, 01 Jan 1990 00:00:00 GMT');
         header('Cache-Control: max-age=0, must-revalidate');
