@@ -47,7 +47,7 @@ class Admin extends CI_Driver_Library {
           break;
         case 'profiler':
           if ($checked == 'true') {
-            $ci->session->profiler = true;
+            $ci->session->enable_profiler = true;
           } else {
             unset($_SESSION['profiler']);
           }
@@ -83,7 +83,7 @@ class Admin extends CI_Driver_Library {
         if (isset($driver['analytics'])) $links[$bp->icon('line-chart', 'fa') . ' Analytics'] = $page->url('admin', 'analytics');
         if (isset($driver['sitemap'])) $links[$bp->icon('sitemap', 'fa') . ' Sitemap'] = $page->url('admin', 'sitemap');
         $suspend = ($ci->sitemap->caching()) ? ' ' : ' checked="checked" ';
-        $profiler = ($ci->session->profiler) ? ' checked="checked" ' : ' ';
+        $profiler = ($ci->session->enable_profiler) ? ' checked="checked" ' : ' ';
         $page->header = '<span id="suspend-profiler" class="pull-right">' . implode('', array(
           '<span class="pull-right"><input type="checkbox"' . $profiler . 'id="profiler" value="Y"><label>Enable Profiler</label></span>',
           '<span class="pull-right"><input type="checkbox"' . $suspend . 'id="suspend" value="Y"><label>Suspend Caching</label></span>'

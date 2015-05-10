@@ -145,6 +145,9 @@ class Smarty_Internal_Debug extends Smarty_Internal_Data
     {
         // prepare information of assigned variables
         $ptr = self::get_debug_vars($obj);
+        
+        return array('vars' => $ptr->tpl_vars);
+        
         if ($obj instanceof Smarty) {
             $smarty = clone $obj;
         } else {

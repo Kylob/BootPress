@@ -85,10 +85,13 @@ class Page {
     return (isset($this->vars[$name])) ? $this->vars[$name] : null;
   }
   
-  public function get ($var, $name='') {
-    $value = false;
+  public function get ($var, $name=null, $value=null) {
     switch ($var) {
-      case 'info': $value = (!empty($name) && isset($this->saved[$name])) ? $this->saved[$name] : array(); break;
+      case 'info':
+        if (!is_null($value)) return (isset($this->saved[$name][$value])) ? $this->saved[$name][$value] : null;
+        $value = (isset($this->saved[$name])) ? $this->saved[$name] : array();
+        foreach ($value as $key => $info) if (!is_numeric($key)) unset($value[$key]);
+        break;
       case 'params':
         $params = $this->params;
         $value = array_pop($params);
@@ -387,7 +390,7 @@ class Page {
   public function plugin ($name, $params=array(), $value=true) {
     if ($name == 'info') {
       $info = array();
-      $plugin = debug_backtrace(false);
+      $plugin = debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS, 1);
       $plugin = explode('/', str_replace('\\', '/', $plugin[0]['file']));
       $key = array_search('plugins', $plugin);
       if ($key !== false) {
@@ -439,11 +442,11 @@ class Page {
     }
   }
   
-  public function save ($name, $key, $value) {
-    if (is_array($value)) {
-      foreach ($value as $insert) $this->saved[$name][$key][] = $insert; // multiple values
+  public function save ($name, $info, $value=null) {
+    if (func_num_args() == 2 || is_array($info)) {
+      $this->saved[$name][] = $info;
     } else {
-      $this->saved[$name][$key] = $value; // one value
+      $this->saved[$name][$info] = $value;
     }
   }
   

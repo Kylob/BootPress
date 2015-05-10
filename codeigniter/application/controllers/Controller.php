@@ -2,6 +2,7 @@
 
 class Controller extends CI_Controller {
 
+  public $logs = array();
   public $poster;
   private $model;
   
@@ -144,8 +145,8 @@ class Controller extends CI_Controller {
       if ($this->output->get_content_type() == 'text/html') $this->output->set_content_type($page->get('type'));
       if (trim($errors) == '') $this->sitemap->update($html);
     }
-    $this->log('hits');
-    if ($this->session->profiler && $this->output->get_content_type() == 'text/html') {
+    $this->log_analytics('hits');
+    if ($this->session->enable_profiler && $this->output->get_content_type() == 'text/html' && $bp_admin === false) {
       $this->output->enable_profiler(true);
     } elseif (trim($errors) == '') {
       $this->sitemap->may_change();
@@ -155,7 +156,19 @@ class Controller extends CI_Controller {
     $this->benchmark->mark('page_display_end');
   }
   
-  public function log ($type, $resource=false) { // made public so that we can log resources
+  public function log ($var) { // for debugging with the CodeIgniter profiler console
+    $time = microtime(true) - $this->benchmark->marker['total_execution_time_start'];
+    $caller = debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS, 1);
+    $this->logs[] = array(
+      'memory' => memory_get_usage(),
+      'file' => $caller[0]['file'],
+      'line' => $caller[0]['line'],
+      'time' => $time,
+      'data' => $var
+    );
+  }
+  
+  public function log_analytics ($type, $resource=false) { // made public so that we can log resources
     global $page;
     $file = fopen(BASE_URI . 'databases/analytics.csv', 'ab');
     $analytics = $this->session->analytics;

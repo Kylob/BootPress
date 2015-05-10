@@ -116,6 +116,7 @@ class Admin_analytics extends CI_Driver {
   
   private function referrers () {
     global $bp, $ci;
+    $html = '';
     $ci->load->helper('text');
     $bp->listings->display(100);
     if (!$bp->listings->set) $bp->listings->count($ci->analytics->db->value(
@@ -128,7 +129,7 @@ class Admin_analytics extends CI_Driver {
     ));
     $rows = $ci->analytics->db->fetch('row', 'all');
     if (empty($rows)) return $html;
-    $html = $bp->table->open('class=hover');
+    $html .= $bp->table->open('class=hover');
     $html .= $bp->table->head();
     $html .= $bp->table->cell('', 'Referrer');
     $html .= $bp->table->cell('', 'Page');

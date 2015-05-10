@@ -8,9 +8,6 @@ config/mimes.php
 
 config/profiler.php
 	Added:
-	$config['get']             = FALSE;
-	$config['post']            = FALSE;
-	$config['uri_string']      = FALSE;
 	$config['controller_info'] = FALSE;
 	$config['http_headers']    = FALSE;
 	$config['config']          = FALSE;
@@ -38,6 +35,13 @@ view/
 	Added:
 	view.php
 
-codeigniter/3.0/system/libraries/Zip.php on line 355
-	Modified:
+codeigniter/3.0/system/libraries/
+	Modified: (Zip.php on line 355)
 	$root_path = str_replace(array('\\', '/'), DIRECTORY_SEPARATOR, dirname($path)).DIRECTORY_SEPARATOR;
+	Replaced:
+	Profiler.php
+	
+codeigniter/application/views/
+	Added:
+	profiler_custom.php
+	profiler_template.php

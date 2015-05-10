@@ -13,9 +13,6 @@ defined('BASEPATH') OR exit('No direct script access allowed');
 |
 */
 
-$config['get']             = FALSE;
-$config['post']            = FALSE;
-$config['uri_string']      = FALSE;
 $config['controller_info'] = FALSE;
 $config['http_headers']    = FALSE;
 $config['config']          = FALSE;

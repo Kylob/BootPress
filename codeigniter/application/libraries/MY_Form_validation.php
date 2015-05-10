@@ -1,6 +1,6 @@
 <?php  if ( ! defined('BASEPATH')) exit('No direct script access allowed');
 
-class My_Form_validation extends CI_Form_validation {
+class MY_Form_validation extends CI_Form_validation {
 
 	public function min_length ($str, $val) // This method is overridden to merge with the jQuery Validation method
 	{

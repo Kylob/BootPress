@@ -40,7 +40,8 @@ class My_Exceptions extends CI_Exceptions {
 	private function backtraces()
 	{
 		$errors = array();
-		foreach (array_slice(debug_backtrace(false), 2, -3) as $error) { // from original error to controller
+		$debug = debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS);
+		foreach (array_slice($debug, 2, -3) as $error) { // from original error to controller
 			if (isset($error['file']) && isset($error['line'])) {
 				$function = (isset($error['function'])) ? $error['function'] : '';
 				if (isset($error['class'])) $function = $error['class'] . '::' . $function;

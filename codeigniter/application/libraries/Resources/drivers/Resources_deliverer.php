@@ -46,7 +46,7 @@ class Resources_deliverer extends CI_Driver {
         $ci->load->driver('session');
         $resource = str_replace(array(BASE_URI, BASE), '', $cache);
         $resource .= '#' . substr(strstr($ci->uri->uri_string(), '/'), 1);
-        $ci->log('hits', $resource);
+        $ci->log_analytics('hits', $resource);
       }
     } elseif (strpos($file, 'CDN') !== false && is_file(BASE . $file)) {
       $cache = BASE . $file;

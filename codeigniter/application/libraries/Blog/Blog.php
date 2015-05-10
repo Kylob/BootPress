@@ -111,6 +111,12 @@ class Blog extends CI_Driver_Library {
   
   public function smarty ($file, $vars=array(), $testing=false) {
     global $bp, $ci, $page;
+    $debug = (!$testing && is_admin(2) && $ci->session->enable_profiler) ? true : false;
+    if ($debug) {
+      $memory = memory_get_usage();
+      $start = microtime(true);
+      $time = $start - $ci->benchmark->marker['total_execution_time_start'];
+    }
     static $smarty = null;
     if (is_null($smarty)) {
       $functions = array('preg_replace', 'number_format', 'implode', 'explode', 'array_keys', 'array_values', 'array_flip', 'array_reverse', 'array_shift', 'array_unshift', 'array_pop', 'array_push', 'array_combine', 'array_merge');
@@ -133,6 +139,25 @@ class Blog extends CI_Driver_Library {
     $smarty->setTemplateDir(dirname($file) . '/');
     try {
       $html = $smarty->fetch(basename($file));
+      if ($debug) {
+        $smarty->loadPlugin('Smarty_Internal_Debug');
+        $debug = Smarty_Internal_Debug::display_debug($smarty);
+        if (!is_callable('smarty_modifier_debug_print_var')) include SMARTY_PLUGINS_DIR . 'modifier.debug_print_var.php';
+        foreach ($debug['vars'] as $key => $obj) {
+          if (strtolower($obj->scope) == 'global') {
+            unset($debug['vars'][$key]);
+          } else {
+            $debug['vars'][$key] = smarty_modifier_debug_print_var($obj->value, 0, 80);
+          }
+        }
+        $page->save('Smarty', array(
+          'memory' => $memory,
+          'file' => $file,
+          'start' => $time,
+          'time' => microtime(true) - $start,
+          'vars' => $debug['vars']
+        ));
+      }
       if (!empty($vars)) $smarty->clearAssign(array_keys($vars));
     } catch (Exception $e) {
       $error = $e->getMessage();
