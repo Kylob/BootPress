@@ -9,7 +9,7 @@ $profiler_color = '#D51B20';
 ?>
 
 <style type="text/css">
-	#ci-profiler-menu-open{background-color:#141722;position:fixed;left:0;bottom:0;padding:5px 7px;}
+	#ci-profiler-menu-open{background-color:#141722;position:fixed;right:0;bottom:0;padding:5px 7px;}
 	#ci-profiler-menu-open img{display:block;}
 	#ci-profiler-menu-open:hover{background-color:<?php echo $profiler_color; ?>;}
 	#codeigniter-profiler{height:400px;background-color:#141722;clear:both;font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;position:fixed;bottom:0;left:0;width:100%;z-index:1000;}
@@ -142,7 +142,6 @@ $profiler_color = '#D51B20';
 			date.setTime(date.getTime() + (365*24*60*60*1000));
 			expires += date.toGMTString();
 			document.cookie = "Profiler=" + value.join(',') + expires + "; path=/";
-			console.log(value.join(','));
 		},
 
 		set_load_state: function() {	/** Set the load state */
@@ -156,7 +155,7 @@ $profiler_color = '#D51B20';
 			if (cookie[3]) this.toggle_data_table(cookie[3]);
 		},
 
-		toggle_data_table: function(obj, save=true) {	/** Toggle a data table */
+		toggle_data_table: function(obj, save) {	/** Toggle a data table */
 			if (typeof obj == 'string') {
 				var string = obj;
 				if (this.table && obj != this.table) this.toggle_data_table(this.table, false);
@@ -164,7 +163,7 @@ $profiler_color = '#D51B20';
 			}
 			if (obj) {
 				obj.style.display = (obj.style.display == 'none') ? '' : 'none';
-				if (save) {
+				if (save !== false) {
 					this.table = (obj.style.display == 'none') ? null : string;
 					this.set_cookie();
 				}
