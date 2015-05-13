@@ -52,7 +52,7 @@ defined('BASEPATH') OR exit('No direct script access allowed');
 $route['default_controller'] = 'controller';
 $route['404_override'] = '';
 $route['translate_uri_dashes'] = FALSE;
-$route['(.+)\.(?i)(jpe?g|gif|png|ico|js|css|pdf|ttf|otf|svg|eot|woff2?|swf|tar|t?gz|zip|csv|xls?x?|word|docx?|ppt|mp3|ogg|wav|mpeg?|mpg|mov|qt|psd)'] = 'controller/#cache#/$1/$2';
+$route['(.+)\.(?i)(jpe?g|gif|png|ico|js|css|pdf|ttf|otf|svg|eot|woff2?|swf|tar|t?gz|zip|csv|xls?x?|word|docx?|ppt|ogg|wav|mp3|mp4|mpeg?|mpg|mov|qt|psd)'] = 'controller/#cache#/$1/$2';
 $route['sitemap([^\./]*)\.xml'] = 'controller/#sitemap#/xml/$1';
 $route['robots\.txt'] = 'controller/#sitemap#/robots';
 $route['(.+)'] = 'controller/$1';

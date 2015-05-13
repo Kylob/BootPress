@@ -49,7 +49,7 @@ class Admin extends CI_Driver_Library {
           if ($checked == 'true') {
             $ci->session->enable_profiler = true;
           } else {
-            unset($_SESSION['profiler']);
+            unset($_SESSION['enable_profiler']);
           }
           break;
       }

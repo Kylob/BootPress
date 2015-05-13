@@ -69,15 +69,20 @@ class Controller extends CI_Controller {
       } elseif ($template = $this->input->post($this->poster)) {
         $this->delay_flashdata();
         $data = array();
-        $file = BASE_URI . 'themes/' . $page->seo($template) . '/post.tpl';
+        $file = BASE_URI . 'blog/content/post.tpl';
         if (is_file($file)) {
           $this->load->driver('blog', array('role'=>'#post#'));
+          $this->blog->set('post', BASE_URL . 'blog/content/');
           $this->load->library('auth');
-          $vars = array('user'=>$this->auth->user(), 'uri'=>array(
-            'id' => $this->sitemap->uri('id'),
-            'type' => $this->sitemap->uri('type'),
-            'views' => $this->sitemap->uri('views')
-          ));
+          $vars = array(
+            'template' => $template,
+            'user' => $this->auth->user(),
+            'uri'=>array(
+              'id' => $this->sitemap->uri('id'),
+              'type' => $this->sitemap->uri('type'),
+              'views' => $this->sitemap->uri('views')
+            )
+          );
           $this->blog->smarty($file, $vars);
           $data = $this->compile($page->post);
         }
@@ -270,7 +275,7 @@ class Controller extends CI_Controller {
     $url = preg_quote(BASE_URL, '/');
     $chars = $this->config->item('permitted_uri_chars');
     preg_match_all('/(' . $url . ')([' . $chars . '\/]+)(#[' . $chars . '\/]+)?/i', $html, $matches);
-    $cache = array_flip(array('jpeg', 'jpg', 'gif', 'png', 'ico', 'js', 'css', 'pdf', 'ttf', 'otf', 'svg', 'eot', 'woff2', 'woff', 'swf', 'tar', 'tgz', 'gz', 'zip', 'csv', 'xlsx', 'xls', 'xl', 'word', 'docx', 'doc', 'ppt', 'mp3', 'ogg', 'wav', 'mpeg', 'mpe', 'mpg', 'mov', 'qt', 'psd'));
+    $cache = array_flip(array('jpeg', 'jpg', 'gif', 'png', 'ico', 'js', 'css', 'pdf', 'ttf', 'otf', 'svg', 'eot', 'woff2', 'woff', 'swf', 'tar', 'tgz', 'gz', 'zip', 'csv', 'xlsx', 'xls', 'xl', 'word', 'docx', 'doc', 'ppt', 'ogg', 'wav', 'mp3', 'mp4', 'mpeg', 'mpe', 'mpg', 'mov', 'qt', 'psd'));
     $resources = array(); // we'll run these through the cache machine
     $types = array(); // $resources['uri'] = '.ext';
     $links = array(); // improperly suffixed uri's
@@ -406,7 +411,7 @@ class Controller extends CI_Controller {
           $this->blog->set('layout', str_replace(BASE, BASE_URL, $this->blog->templates . 'theme/'));
           $layout = $this->blog->templates . '/theme/index.tpl';
         }
-        if (is_file(BASE_URI . 'themes/' . $page->theme . '/post.tpl')) {
+        if (is_file($this->blog->post . 'post.tpl')) {
           $page->plugin('jQuery', 'code', '$.ajax({type:"POST", url:location.href, data:{"' . md5(BASE_URL) . '":"' . $page->theme . '"}, cache:false, success:function(data){ $.each(data,function(key,value){ if(key=="css")$("<style/>").html(value).appendTo("head"); else if(key=="javascript")eval(value); else $("<span/>").html(value).appendTo(key) })}, dataType:"json"});');
         }
         $content = $this->blog->smarty($layout, array('content'=>$content));

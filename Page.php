@@ -105,48 +105,6 @@ class Page {
     return $value;
   }
   
-  ##
-  # 
-  # kudos to: https://github.com/dannyvankooten/AltoRouter - we copied the complicated stuff from them verbatim
-  # 
-  # [ match_type : param_name ]
-  # 
-  # *                    // Match all request URIs
-  # [i]                  // Match an integer
-  # [i:id]               // Match an integer as 'id'
-  # [a:action]           // Match alphanumeric characters as 'action'
-  # [h:key]              // Match hexadecimal characters as 'key'
-  # [:action]            // Match anything up to the next / or end of the URI as 'action'
-  # [create|edit:action] // Match either 'create' or 'edit' as 'action'
-  # [*]                  // Catch all (lazy)
-  # [*:trailing]         // Catch all as 'trailing' (lazy)
-  # [**:trailing]        // Catch all (possessive - will match the rest of the URI)
-  # .[:format]?          // Match an optional parameter 'format' - a / or . before the block is also optional
-  # 
-  # posts/[*:title][i:id]      // Matches "posts/this-is-a-title-123"
-  # output.[xml|json:format]?  // Matches "output", "output.xml", "output.json"
-  # [:controller]?/[:action]?  // Matches the typical controller/action format
-  # @\.(json|csv)$             // Match all requests that end with '.json' or '.csv'
-  # !@^admin/                  // Match all requests that _don't_ start with admin/
-  # 
-  # if ($route = $page->routes(array(
-  #   '' => 'index.php',
-  #   'plans/[farout|groovy:future]' => 'plans.php', // matches "plans/farout", "plans/groovy"
-  #   'charge/[i:customer]' => 'charge.php', // matches "charge/4815162342"
-  #   'payment/[:status]' => 'payment.php', // matches "payment/[^/\.]+"
-  #   'api/[*:key]/[*:name]' => 'api.php', // matches "api/123/456/gadd" and name = "456/gadd"
-  #   'blog/[*:title]-[i:id]' => 'blog.php', // matches "blog/this-is-a-title-123"
-  #   'posts/[create|edit:action]?/[i:id]?' => 'posts.php', // matches "posts", "posts/123", "posts/create", "posts/create/123"
-  #   'report.[xml|csv|json:format]?' => 'report.php', // matches "report", "report.xml", "report.csv", "report.json"
-  #   '@\.(jpg|gif|png)$' => 'image.php', // matches anything that ends with ".jpg", ".gif", or ".png"
-  #   '[:controller]?/[:method]?/[**:uri]?' => 'class.php' // for everything else there is this
-  # ), 'argh/freak/out')) {
-  #   
-  #   $html .= '<pre>routes: ' . print_r($route, true) . '</pre>';
-  #   
-  # }
-  # 
-  ##
   public function routes ($routes, $uri=null, $types=array()) {
     global $ci;
     $uri = (is_null($uri)) ? $this->uri : trim($uri, '/');
@@ -250,13 +208,14 @@ class Page {
         $href = $action['url'];
       } elseif (substr($action, 0, 4) == 'http') {
         $href = $action;
-      } elseif (in_array($action, array('base', 'blog', 'admin', 'folder', 'post', 'theme'))) {
+      } elseif (in_array($action, array('base', 'blog', 'admin', 'folder', 'post', 'template', 'theme'))) {
         switch ($action) {
           case 'base': $href = BASE_URL; break;
           case 'blog': $href = BASE_URL . BLOG; break;
           case 'admin': $href = BASE_URL . ADMIN; break;
           case 'folder': $href = $this->url; break;
           case 'post':
+          case 'template':
           case 'theme': $href = $ci->blog->url; break;
         }
       }

@@ -223,16 +223,19 @@ class Admin_blog extends CI_Driver {
   private function templates () {
     global $bp, $ci, $page;
     $html = '';
+    $media = $ci->admin->files->view('templates', $ci->blog->post);
     $form = $page->plugin('Form', 'name', 'admin_blog_templates');
     $form->values($ci->admin->files->save(array(
       'blog' => array($ci->blog->post . 'blog.tpl', $ci->blog->templates . 'blog.tpl'),
+      'post' => array($ci->blog->post . 'post.tpl'),
       'listings' => array($ci->blog->post . 'listings.tpl', $ci->blog->templates . 'listings.tpl'),
       'tags' => array($ci->blog->post . 'tags.tpl', $ci->blog->templates . 'tags.tpl'),
       'authors' => array($ci->blog->post . 'authors.tpl', $ci->blog->templates . 'authors.tpl'),
       'archives' => array($ci->blog->post . 'archives.tpl', $ci->blog->templates . 'archives.tpl')
-    ), array('blog', 'listings', 'tags', 'authors', 'archives'), array($this, 'update')));
+    ), array('blog', 'post', 'listings', 'tags', 'authors', 'archives'), array($this, 'update')));
     $form->validate(
       array('blog', 'blog.tpl'),
+      array('post', 'post.tpl'),
       array('listings', 'listings.tpl'),
       array('tags', 'tags.tpl'),
       array('authors', 'authors.tpl'),
@@ -240,13 +243,14 @@ class Admin_blog extends CI_Driver {
     );
     $html .= $form->header();
     $html .= $form->field('blog', 'textarea', array('class'=>'wyciwyg tpl input-sm', 'data-file'=>'blog.tpl'));
+    $html .= $form->field('post', 'textarea', array('class'=>'wyciwyg tpl input-sm', 'data-file'=>'post.tpl'));
     $html .= $form->field('listings', 'textarea', array('class'=>'wyciwyg tpl input-sm', 'data-file'=>'listings.tpl'));
     $html .= $form->field('tags', 'textarea', array('class'=>'wyciwyg tpl input-sm', 'data-file'=>'tags.tpl'));
     $html .= $form->field('authors', 'textarea', array('class'=>'wyciwyg tpl input-sm', 'data-file'=>'authors.tpl'));
     $html .= $form->field('archives', 'textarea', array('class'=>'wyciwyg tpl input-sm', 'data-file'=>'archives.tpl'));
     $html .= $form->close();
     unset($form);
-    return $html;
+    return $html . $media;
   }
   
   private function backup () {

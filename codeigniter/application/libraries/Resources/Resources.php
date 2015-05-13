@@ -112,7 +112,7 @@ class Resources extends CI_Driver_Library {
   }
   
   public function cached ($path) { // public (instead of protected) for child's sake
-    return preg_match('/^([1-9a-z]{5}[0]?)+(\/.*)?\.(jpe?g|gif|png|ico|js|css|pdf|ttf|otf|svg|eot|woff2?|swf|tar|t?gz|zip|csv|xls?x?|word|docx?|ppt|mp3|ogg|wav|mpeg?|mpg|mov|qt|psd)(\?.*)?$/i', $path);
+    return preg_match('/^([1-9a-z]{5}[0]?)+(\/.*)?\.(jpe?g|gif|png|ico|js|css|pdf|ttf|otf|svg|eot|woff2?|swf|tar|t?gz|zip|csv|xls?x?|word|docx?|ppt|ogg|wav|mp3|mp4|mpeg?|mpg|mov|qt|psd)(\?.*)?$/i', $path);
   }
   
   public function convert_file ($path) { // public (instead of protected) for child's sake

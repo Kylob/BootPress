@@ -3,33 +3,44 @@
 class Admin_themes extends CI_Driver {
 
   private $dir;
-  private $theme;
+  private $docs;
+  private $theme = false;
   private $bootstrap;
+  private $files;
   
   public function view ($params) {
-    global $ci, $page;
-    if (!isset($params['theme'])) $page->eject($page->url('admin', 'themes/default'));
+    global $bp, $ci, $page;
+    $html = '';
     $this->dir = BASE_URI . 'themes/';
-    $this->theme = $page->seo($params['theme']);
-    $this->bootstrap = BASE . 'bootstrap/' . $ci->blog->bootstrap . '/';
-    if (!is_dir($this->dir . $this->theme)) mkdir($this->dir . $this->theme, 0755, true);
-    if (!is_file($this->dir . $this->theme . '/index.tpl')) {
-      file_put_contents($this->dir . $this->theme . '/index.tpl', file_get_contents($ci->blog->templates . 'theme/index.tpl'));
-      file_put_contents($this->dir . $this->theme . '/blog.css', file_get_contents($ci->blog->templates . 'theme/blog.css'));
-    }
-    if (isset($params['less'])) {
-      $less = $this->less($this->theme);
-      header('Content-Type: text/css');
-      header('Content-Length: ' . strlen($less));
-      exit($less);
-    };
-    if (isset($params['action'])) {
-      switch ($params['action']) {
-        case 'download': return $this->download(); break;
-        case 'preview': return $this->preview(); break;
+    $this->docs = $bp->button('md link', 'Documentation ' . $bp->icon('new-window'), array('href'=>'https://www.bootpress.org/docs/themes/', 'target'=>'_blank'));
+    if (isset($params['theme'])) {
+      $this->theme = $this->mktheme($params['theme']);
+      $this->bootstrap = BASE . 'bootstrap/' . $ci->blog->bootstrap . '/';
+      if (isset($params['less'])) {
+        $less = $this->less($this->theme);
+        header('Content-Type: text/css');
+        header('Content-Length: ' . strlen($less));
+        exit($less);
+      };
+      if (isset($params['action'])) {
+        switch ($params['action']) {
+          case 'download': return $this->download(); break;
+          case 'preview': return $this->preview(); break;
+        }
       }
+      $media = $this->files();
+      if ($ci->input->get('image')) {
+        $html .= $media;
+      } else {
+        $html .= $bp->row('lg', array(
+          $bp->col(6, $this->theme()),
+          $bp->col(6, $this->bootstrap())
+        )) . $media;
+      }
+    } else {
+      $html .= $this->create();
     }
-    return $this->display($this->theme());
+    return $this->display($html);
   }
   
   public function update () {
@@ -37,24 +48,92 @@ class Admin_themes extends CI_Driver {
     $ci->sitemap->suspend_caching(0);
   }
   
-  private function theme () {
+  private function mktheme ($theme, $unzip=null) {
+    global $ci, $page;
+    $theme = $page->seo($theme);
+    if (!is_dir($this->dir . $theme)) mkdir($this->dir . $theme, 0755, true);
+    if (!is_file($this->dir . $theme . '/index.tpl')) {
+      if ($unzip && is_file($unzip)) {
+        $ci->load->library('unzip');
+        $ci->unzip->files($unzip, $this->dir . $theme, 0755);
+        $ci->unzip->extract('tpl|js|css|less|ttf|otf|svg|eot|woff|swf|jpg|jpeg|gif|png|ico', $ci->unzip->common_dir());
+        $ci->unzip->close();
+      } else {
+        file_put_contents($this->dir . $theme . '/index.tpl', file_get_contents($ci->blog->templates . 'theme/index.tpl'));
+        file_put_contents($this->dir . $theme . '/blog.css', file_get_contents($ci->blog->templates . 'theme/blog.css'));
+      }
+    }
+    return $theme;
+  }
+  
+  private function files () {
     global $bp, $ci, $page;
-    $html = '';
-    $files = $ci->admin->files->save(array(
-      'index' => array($this->dir . $this->theme . '/index.tpl', $ci->blog->templates . 'layout.tpl')
+    $this->files = $ci->admin->files->save(array(
+      'index' => array($this->dir . $this->theme . '/index.tpl', $ci->blog->templates . 'theme/index.tpl')
     ), array('index'), array($this, 'update'));
-    $files = array_merge($files, $ci->admin->files->save(array(
+    $this->files = array_merge($this->files, $ci->admin->files->save(array(
       'bootstrap' => array($this->dir . $this->theme . '/variables.less', $this->bootstrap . 'less/variables.less'),
-      'custom' => $this->dir . $this->theme . '/custom.less',
-      'post' => $this->dir . $this->theme . '/post.tpl'
-    ), array('bootstrap', 'custom', 'post')));
+      'custom' => $this->dir . $this->theme . '/custom.less'
+    ), array('bootstrap', 'custom')));
     $media = $ci->admin->files->view('themes', $this->dir . $this->theme);
     if ($ci->input->get('image')) {
       return $this->box('default', array(
         'head with-border' => $bp->icon('image', 'fa') . ' Image',
         'body' => $media
       ));
+    } else {
+      return $this->box('default', array(
+        'head with-border' => array('Files'),
+        'body' => $media
+      ));
     }
+  }
+  
+  private function select () {
+    global $ci, $page;
+    $form = $page->plugin('Form', 'name', 'admin_theme_select');
+    $themes = array(
+      $page->url('admin', 'themes') => '',
+      $page->url('admin', 'themes', 'default') => 'default'
+    );
+    list($dirs) = $ci->blog->folder($this->dir, false, false);
+    foreach ($dirs as $theme) $themes[$page->url('admin', 'themes', $theme)] = $theme;
+    $form->menu('themes', $themes);
+    $form->values('themes', $page->url('admin', 'themes', $this->theme));
+    $form->validate('themes', ($this->theme ? 'Edit' : 'Select'), '', 'Select the theme you would like to edit.');
+    $page->plugin('jQuery', 'code', '$("#' . $form->id('themes') . '").change(function(){ window.location = $(this).val(); });');
+    return $form->field('themes', 'select');
+  }
+  
+  private function create () {
+    global $bp, $ci, $page;
+    $form = $page->plugin('Form', 'name', 'admin_theme_create');
+    $form->upload('upload', 'Upload', 'zip', array(
+      'info' => 'Submit a zipped file to extract for your theme.',
+      'filesize' => 10,
+      'limit' => 1
+    ));
+    $form->validate('create', 'Create', 'required', 'Enter the name of the theme you would like to create.');
+    if ($form->submitted() && empty($form->errors)) {
+      $theme = $form->vars['create'];
+      $unzip = (!empty($form->vars['upload'])) ? key($form->vars['upload']) : null;
+      $page->eject($page->url('admin', 'themes', $this->mktheme($theme, $unzip)));
+    }
+    return $this->box('default', array(
+      'head with-border' => array($bp->icon('desktop', 'fa') . ' Themes', $this->docs),
+      'body' => implode('', array(
+        $form->header(),
+        $this->select(),
+        $form->field('create', 'text'),
+        $form->field('upload', 'file'),
+        $form->submit(),
+        $form->close()
+      ))
+    ));
+  }
+  
+  private function theme () {
+    global $bp, $ci, $page;
     if ($ci->input->get('delete') == 'theme') {
       if (is_dir($this->dir . $this->theme)) {
         list($dirs, $files) = $ci->blog->folder($this->dir . $this->theme, 'recursive');
@@ -63,7 +142,7 @@ class Admin_themes extends CI_Driver {
         foreach ($dirs as $dir) rmdir($this->dir . $this->theme . $dir);
         rmdir($this->dir . $this->theme);
       }
-      $page->eject($page->url('admin', 'themes/default'));
+      $page->eject($page->url('admin', 'themes'));
     }
     if (($preview = $ci->input->post('preview')) && $ci->input->is_ajax_request()) {
       if ($preview == 'true') {
@@ -78,11 +157,7 @@ class Admin_themes extends CI_Driver {
       $ci->session->preview_layout = $this->theme;
       $ci->session->mark_as_temp('preview_layout', 3000);
     }
-    $form = $page->plugin('Form', 'name', 'admin_theme_manager');
-    $themes = array($page->url('admin', 'themes/default') => 'default');
-    list($dirs) = $ci->blog->folder($this->dir, false, false);
-    foreach ($dirs as $theme) $themes[$page->url('admin', 'themes', $theme)] = $theme;
-    $form->menu('theme', $themes);
+    $form = $page->plugin('Form', 'name', 'admin_theme_manage');
     $form->menu('preview', array('Y'=>'Preview the selected theme'));
     $form->menu('action', array(
       'copy' => '<b>Copy</b> will make a duplicate of this theme if it does not already exist',
@@ -91,16 +166,13 @@ class Admin_themes extends CI_Driver {
     ));
     $form->validate(
       array('preview', '', 'YN'),
-      array('theme', 'Theme', '', 'Select the theme you would like to edit.'),
       array('index', 'index.tpl', '', 'This file creates the layout for your content.'),
-      array('post', 'post.tpl', '', 'This script is called after the page has been loaded, and only if javascript is enabled.  You should $export an array where the keys may be \'css\', \'javascript\', or a jQuery selector (likely an \'#id\') where the html (value) should go.  This is useful for user links, banner ads, and the like.'),
       array('save', 'Save As', 'required', 'Enter the name of the theme for which you would like to Copy, Rename, or Swap.'),
       array('action', '', 'required|inarray[menu]')
     );
-    $form->values($files);
+    $form->values($this->files);
     $form->values(array(
       'preview' => ($ci->session->preview_layout) ? 'Y' : 'N',
-      'theme' => $page->url('admin', 'themes', $this->theme),
       'action' => 'copy'
     ));
     if ($form->submitted() && empty($form->errors)) {
@@ -135,14 +207,13 @@ class Admin_themes extends CI_Driver {
               $form->errors['action'] = 'The <b>Save As</b> theme you are <b>Swap</b>ping with does not exist.';
             }
         }
-        if (empty($form->errors)) $page->eject($page->url('admin', 'themes', $new_theme)); // $page->url('add', $form->eject, 'theme', $new_theme));
+        if (empty($form->errors)) $page->eject($page->url('admin', 'themes', $new_theme));
       } else { // $form->vars['save'] is empty
         $this->update();
         $page->eject($form->eject);
       }
     }
     $page->plugin('jQuery', 'code', '
-      $("#' . $form->id('theme') . '").change(function(){ window.location = $(this).val(); });
       $("input[name=preview]").change(function(){
         var checked = $(this).is(":checked") ? "true" : "false";
         $.post(location.href, {preview:checked});
@@ -153,30 +224,28 @@ class Admin_themes extends CI_Driver {
         }
       });
     ');
-    #-- Theme --#
-    $theme = $this->box('default', array(
-      'head with-border' => array(
-        $bp->icon('desktop', 'fa') . ' ' . ucwords($this->theme) . ' Theme',
-        $bp->button('md link', 'Documentation ' . $bp->icon('new-window'), array('href'=>'https://www.bootpress.org/docs/themes/', 'target'=>'_blank'))
-      ),
+    return $this->box('default', array(
+      'head with-border' => array($bp->icon('desktop', 'fa') . ' ' . ucwords($this->theme) . ' Theme', $this->docs),
       'body' => implode('', array(
         $form->header(),
         $form->field(false,
           str_replace('class="checkbox"', 'class="checkbox pull-left"', $form->field('preview', 'checkbox', array('label'=>false))) .
           $bp->button('danger delete pull-right', $bp->icon('trash'), array('title'=>'Click to delete this theme'))
         ),
-        $form->field('theme', 'select'),
+        $this->select(),
         $form->field('save', 'text'),
         $form->field('action', 'radio'),
         $form->submit('Submit', $bp->button('info pull-right', 'Download ' . $bp->icon('download'), array('href'=>$page->url('admin', 'themes/download', $this->theme)))),
-        $form->field('index', 'textarea', array('class'=>'wyciwyg tpl input-sm', 'data-file'=>'index.tpl')),
-        $form->field('post', 'textarea', array('class'=>'wyciwyg php input-sm', 'data-file'=>'post.tpl')),
+        $form->field('index', 'textarea', array('class'=>'wyciwyg tpl input-sm', 'data-file'=>'index.tpl', 'rows'=>22)),
         $form->close()
       ))
     ));
-    unset($form);
+  }
+  
+  private function bootstrap () {
+    global $bp, $ci, $page;
     $form = $page->plugin('Form', 'name', 'admin_bootstrap');
-    $form->values($files);
+    $form->values($this->files);
     $form->validate(
       array('bootstrap', 'variables.less', 'required', 'This is the Twitter Bootstrap variables.less file that you may edit to roll out your own theme.  Currently serving v' . $ci->blog->bootstrap . '.  When you compile below, just sit still and relax.  It will take a minute or so.'),
       array('custom', 'custom.less', '', 'This is LESS CSS that is processed with the <b>Variables</b> above, and placed in the compiled <b>bootstrap-' . $ci->blog->bootstrap . '.css</b> below.  You may use any of the same variables and mixins that Bootstrap uses, and / or create your own.')
@@ -194,8 +263,7 @@ class Admin_themes extends CI_Driver {
       }
       $page->eject($form->eject);
     }
-    #-- Bootstrap --#
-    $bootstrap = $this->box('default', array(
+    return $this->box('default', array(
       'head with-border' => array('Bootstrap'),
       'body' => implode('', array(
         $form->header(),
@@ -203,21 +271,11 @@ class Admin_themes extends CI_Driver {
           $bp->button('info pull-left', 'Preview Less Variables ' . $bp->icon('new-window'), array('href'=>$page->url('admin', 'themes/preview', $this->theme), 'target'=>'_bootstrap')) .
           $bp->button('primary pull-right', 'Compile', array('type'=>'submit', 'data-loading-text'=>'Submitting...'))
         ),
-        $form->field('bootstrap', 'textarea', array('class'=>'wyciwyg less input-sm', 'data-file'=>'variables.less', 'rows'=>23, 'style'=>'padding-bottom:14px;')),
+        $form->field('bootstrap', 'textarea', array('class'=>'wyciwyg less input-sm', 'data-file'=>'variables.less', 'rows'=>23, 'style'=>'padding-bottom:6px;')),
         $form->field('custom', 'textarea', array('class'=>'wyciwyg less input-sm', 'data-file'=>'custom.less')),
         $form->close()
       ))
     ));
-    unset($form);
-    $html .= $bp->row('lg', array(
-      $bp->col(6, $theme),
-      $bp->col(6, $bootstrap)
-    ));
-    $html .= $this->box('default', array(
-      'head with-border' => array('Files'),
-      'body' => $media
-    ));
-    return $html;
   }
   
   private function download () {

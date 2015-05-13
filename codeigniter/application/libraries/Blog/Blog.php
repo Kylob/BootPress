@@ -646,6 +646,8 @@ class PageClone {
     global $ci;
     if ($name == 'post' && $this->plugin == 'post.php') {
       $this->class->post[array_shift($arguments)] = array_shift($arguments);
+    } elseif ($name == 'query') {
+      return call_user_func_array(array($ci->blog, $name), $arguments);
     } else {
       if ($name == 'plugin') $arguments[0] = array($arguments[0] => $this->plugin);
       if ($name == 'filter' && !in_array($arguments[1], array('prepend', 'append'))) return null;

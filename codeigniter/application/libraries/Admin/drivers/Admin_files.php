@@ -51,8 +51,9 @@ class Admin_files extends CI_Driver {
     if ($ci->blog->controller == '#admin#') {
       switch ($type) {
         case 'authors': $html .= $this->folder($path, false, array('images'=>'jpg|jpeg|gif|png', 'files'=>false, 'resources'=>false)); break;
-        case 'blog': $html .= $this->folder($path, false, array('exclude'=>'index.tpl', 'files'=>'tpl|js|css')); break;
-        case 'themes': $html .= $this->folder($path, true, array('exclude'=>array('index.tpl', 'post.tpl', 'variables.less', 'custom.less'), 'files'=>'tpl|js|css', 'resources'=>'less|ttf|otf|svg|eot|woff|swf|zip', 'unzip'=>BASE_URI . 'themes')); break;
+        case 'templates': $html .= $this->folder($path, false, array('images'=>'jpg|jpeg|gif|png', 'files'=>'js|css', 'resources'=>false)); break;
+        case 'blog': $html .= $this->folder($path, false, array('exclude'=>'index.tpl', 'files'=>'tpl|js|css', 'resources'=>'pdf|zip|mp3|mp4')); break;
+        case 'themes': $html .= $this->folder($path, true, array('exclude'=>array('index.tpl', 'variables.less', 'custom.less'), 'files'=>'tpl|js|css', 'resources'=>'less|ttf|otf|svg|eot|woff|swf')); break;
         case 'plugins': $html .= $this->folder($path, 2, array('exclude'=>'index.php')); break;
         case 'folders': $html .= $this->folder($path, false, array('exclude'=>'index.php')); break;
       }
@@ -87,7 +88,7 @@ class Admin_files extends CI_Driver {
       'exclude' => array(), // The files we don't want to include at all
       'files' => 'tpl|js|css' . (is_admin(1) ? '|php' : null),
       'images' => 'jpg|jpeg|gif|png|ico',
-      'resources' => 'pdf|ttf|otf|svg|eot|woff|swf|tar|gz|tgz|zip|csv|xl|xls|xlsx|word|doc|docx|ppt|mp3|ogg|wav|mpe|mpeg|mpg|mov|qt|psd',
+      'resources' => 'pdf|ttf|otf|svg|eot|woff|swf|tar|gz|tgz|zip|csv|xl|xls|xlsx|word|doc|docx|ppt|ogg|wav|mp3|mp4|mpe|mpeg|mpg|mov|qt|psd',
     ), $types);
     $types = array();
     foreach (array('files', 'images', 'resources') as $type) {
@@ -504,4 +505,3 @@ class Admin_files extends CI_Driver {
 
 /* End of file Admin_files.php */
 /* Location: ./application/libraries/Admin/drivers/Admin_files.php */
-

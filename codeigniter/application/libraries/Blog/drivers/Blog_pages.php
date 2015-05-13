@@ -228,23 +228,19 @@ class Blog_pages extends CI_Driver {
       case 'author':
       case 'tag':
       case 'category':
-        $ci->sitemap->cache(.25); // 15 minutes
+        $ci->sitemap->cache();
         $content = 'listings';
         break;
       case 'archives':
       case 'authors':
       case 'tags':
       case 'blog':
-        $ci->sitemap->cache(); // 24 hours
+        $ci->sitemap->cache();
         $content = $blog;
         break;
     }
-    $ci->blog->set($blog);
-    if ($content == 'blog' && $page->theme !== false && is_file(BASE_URI . 'themes/' . $page->theme . '/blog.tpl')) {
-      $template = BASE_URI . 'themes/' . $page->theme . '/blog.tpl';
-    } elseif ($content != 'blog' && is_file(BASE_URI . 'themes/default/' . $content . '.tpl')) {
-      $template = BASE_URI . 'themes/default/' . $content . '.tpl';
-    } elseif (is_file($ci->blog->post . $content . '.tpl')) {
+    $ci->blog->set($blog, str_replace(BASE_URI, BASE_URL, $ci->blog->post));
+    if (is_file($ci->blog->post . $content . '.tpl')) {
       $template = $ci->blog->post . $content . '.tpl';
     } else {
       $template = $ci->blog->templates . $content . '.tpl';

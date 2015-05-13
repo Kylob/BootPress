@@ -132,10 +132,9 @@ class Form {
         $data = $ci->upload->data();
         $result['success'] = $this->uploaded_file($data['full_path'], $data['client_name']);
       } else {
-        $result['error'] = $ci->upload->display_errors('', '<br><br>');
+        $result['error'] = $ci->upload->display_errors('', '');
       }
-      echo json_encode($result);
-      exit;
+      exit(json_encode($result));
     }
     $this->validate($name, $label, 'default[]', $info);
   }
@@ -617,9 +616,9 @@ class Form {
     $html = '';
     $id = $this->id($name);
     // 'bootstrap.filestyle/1.0.3/js/bootstrap-filestyle.min.js' - $(":file").filestyle();
-    $page->plugin('CDN', 'links', array( // 9.5.7
-      'jquery.fileupload/9.5.7/js/jquery.iframe-transport.js',
-      'jquery.fileupload/9.5.7/js/jquery.fileupload.js'
+    $page->plugin('CDN', 'links', array( // 9.9.0
+      'jquery.fileupload/9.9.0/js/jquery.iframe-transport.js',
+      'jquery.fileupload/9.9.0/js/jquery.fileupload.js'
     ));
     $page->link($this->url . 'js/blueimpFileUploader.js');
     $page->plugin('jQuery', array('ui'=>'1.10.4', 'code'=>'

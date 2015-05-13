@@ -15,7 +15,7 @@ class Resources_deliverer extends CI_Driver {
       $deliver = $type;
     } elseif (preg_match('/^(tar|t?gz|zip|csv|xls?x?|word|docx?|ppt|psd)$/', $type)) {
       $download = $type;
-    } elseif (preg_match('/^(mp3|ogg|wav|mpeg?|mpg|mov|qt)$/', $type)) {
+    } elseif (preg_match('/^(ogg|wav|mp3|mp4|mpeg?|mpg|mov|qt)$/', $type)) {
       $stream = $type;
     } else {
       exit(header('HTTP/1.1 503 Not Implemented'));
@@ -85,9 +85,10 @@ class Resources_deliverer extends CI_Driver {
       case 'docx': header('Content-Type: application/vnd.openxmlformats-officedocument.wordprocessingml.document'); break;
       case 'doc': header('Content-Type: application/msword'); break;
       case 'ppt': header('Content-Type: application/powerpoint'); break;
-      case 'mp3': header('Content-Type: audio/mpeg'); break;
       case 'ogg': header('Content-Type: audio/ogg'); break;
       case 'wav': header('Content-Type: audio/wav'); break;
+      case 'mp3': header('Content-Type: audio/mpeg'); break;
+      case 'mp4': header('Content-Type: video/mp4'); break;
       case 'mpeg':
       case 'mpe':
       case 'mpg': header('Content-Type: video/mpeg'); break;
@@ -179,7 +180,7 @@ class Resources_deliverer extends CI_Driver {
     $relative_path = str_replace('/', '../', preg_replace('/[^\/]/', '', $path));
     $css = file_get_contents($file);
     $imports = (preg_match_all('/@import\s*[\'"](\S*\.(?:css))[\'"]/i', $css, $matches)) ? $matches[1] : array();
-    $urls = (preg_match_all('/url\s*\(\s*[\'"]?(\S*\.(?:css|jpe?g|gif|png|eot|ttf|otf|svg|woff))/i', $css, $matches)) ? $matches[1] : array();
+    $urls = (preg_match_all('/url\s*\(\s*[\'"]?(\S*\.(?:css|jpe?g|gif|png|eot|ttf|otf|svg|woff2?))/i', $css, $matches)) ? $matches[1] : array();
     $links = array_unique(array_merge($imports, $urls));
     $check = (array) $links;
     $links = array_flip($check); // relative => uri
