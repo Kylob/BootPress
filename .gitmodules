@@ -1,3 +1,4 @@
 [submodule "plugins/CDN/jsdelivr"]
 	path = plugins/CDN/jsdelivr
 	url = git://github.com/jsdelivr/jsdelivr.git
+	ignore = dirty
