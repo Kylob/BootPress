@@ -2,13 +2,7 @@
   'title' => '',
   'description' => '',
   'keywords' => '',
-  'published' => false
+  'published' => false,
+  'markdown' => true
 ])}
 
-{capture assign='markdown'}
-
-
-
-{/capture}
-
-{$bp->md($markdown)}

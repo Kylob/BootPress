@@ -128,7 +128,7 @@ class Blog extends CI_Driver_Library {
         'page' => new PageClone($page, ($this->controller == '#post#' ? 'post' : 'blog'))
       ));
       $security = new Smarty_Security($smarty);
-      $security->php_functions = array_merge(array('isset', 'empty', 'count', 'sizeof', 'in_array', 'is_array', 'time', 'nl2br'), $functions); // Smarty defaults
+      $security->php_functions = array_merge(array('isset', 'empty', 'count', 'in_array', 'is_array', 'time', 'nl2br'), $functions); // Smarty defaults
       $security->allow_super_globals = false;
       $security->allow_constants = false;
       $smarty->enableSecurity($security);
@@ -345,7 +345,7 @@ class Blog extends CI_Driver_Library {
   }
   
   public function file ($uri) {
-    global $ci, $page;
+    global $bp, $ci, $page;
     if (preg_match('/[^a-z0-9-\/]/', $uri)) {
       $seo = $page->seo($uri);
       if (is_dir($this->post . $uri)) rename($this->post . $uri, $this->post . $seo);
@@ -368,6 +368,8 @@ class Blog extends CI_Driver_Library {
       $page->theme = 'default';
       $page->vars = array();
       $content = trim($this->smarty($file));
+      if ($page->markdown === true) $content = $bp->md($content);
+      unset($page->vars['markdown']);
       $published = $page->published;
       if (is_string($published) && ($date = strtotime($published))) {
         $published = $date * -1; // a post

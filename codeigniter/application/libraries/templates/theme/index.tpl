@@ -35,5 +35,5 @@
 <br>
 
 <div id="footer">
-  <p>Built with <a href="http://bootpress.org">BootPress</a></p>
+  <p>Built with <a href="https://www.bootpress.org/">BootPress</a></p>
 </div>
