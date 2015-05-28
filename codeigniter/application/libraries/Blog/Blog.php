@@ -31,7 +31,7 @@ class Blog extends CI_Driver_Library {
     $this->blog['bootstrap'] = '3.3.2';
     $page->load(BASE, 'bootstrap/Bootstrap.php');
     $bp = new Bootstrap;
-    $this->blog['page'] = ''; // This is established in the $ci->blog->pages class
+    $this->blog['page'] = trim($this->controller, '#');
     if (empty($this->blog['name']) && $this->controller != '#admin#') $page->eject($page->url('admin'));
   }
   
@@ -104,9 +104,9 @@ class Blog extends CI_Driver_Library {
     }
   }
   
-  public function set ($page, $media='') {
-    $this->blog['page'] = $page;
+  public function resources ($media, $page=null) {
     $this->url = $media;
+    if ($page) $this->blog['page'] = $page;
   }
   
   public function smarty ($file, $vars=array(), $testing=false) {
@@ -359,7 +359,7 @@ class Blog extends CI_Driver_Library {
     ), array($uri));
     $file = $this->post . $uri . '/index.tpl';
     if (is_file($file)) {
-      $this->set('file', BASE_URL . 'blog/content/' . $uri . '/');
+      $this->resources(BASE_URL . 'blog/content/' . $uri . '/');
       $page->title = '';
       $page->description = '';
       $page->keywords = '';

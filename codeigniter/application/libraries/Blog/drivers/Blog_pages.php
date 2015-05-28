@@ -239,7 +239,7 @@ class Blog_pages extends CI_Driver {
         $content = $blog;
         break;
     }
-    $ci->blog->set($blog, str_replace(BASE_URI, BASE_URL, $ci->blog->post));
+    $ci->blog->resources(str_replace(BASE_URI, BASE_URL, $ci->blog->post), $blog);
     if (is_file($ci->blog->post . $content . '.tpl')) {
       $template = $ci->blog->post . $content . '.tpl';
     } else {

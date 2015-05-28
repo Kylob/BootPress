@@ -72,7 +72,7 @@ class Controller extends CI_Controller {
         $file = BASE_URI . 'blog/content/post.tpl';
         if (is_file($file)) {
           $this->load->driver('blog', array('role'=>'#post#'));
-          $this->blog->set('post', BASE_URL . 'blog/content/');
+          $this->blog->resources(BASE_URL . 'blog/content/');
           $this->load->library('auth');
           $vars = array(
             'template' => $template,
@@ -116,7 +116,11 @@ class Controller extends CI_Controller {
           }
         } elseif ($folder = $page->folder(BASE_URI . 'folders/')) {
           $this->load->driver('blog', array('role'=>'#folder#'));
-          $html = $page->outreach($folder . 'index.php');
+          $html = $page->outreach($folder . 'index.php', array('folder' => array(
+            'name' => trim(str_replace(BASE_URI . 'folders', '', $folder), '/'),
+            'url' => str_replace(BASE_URI, BASE_URL, $folder),
+            'uri' => $folder
+          )));
         } else {
           $this->load->driver('blog', array('role'=>'#blog#'));
           if ($file = $this->blog->file($page->get('uri'))) {
@@ -389,7 +393,7 @@ class Controller extends CI_Controller {
     if ($page->theme == 'admin') {
       $this->analytics();
       $lte = 'codeigniter/application/libraries/Admin/LTE/2.0/';
-      $this->blog->set('admin', BASE_URL . $lte);
+      $this->blog->resources(BASE_URL . $lte);
       $content = $this->blog->smarty(BASE . $lte . 'index.tpl', array('content'=>$content));
       return $page->customize('layout', $content);
     }
@@ -401,14 +405,14 @@ class Controller extends CI_Controller {
         if (is_file($page->theme)) $content = $page->outreach($page->theme, array('content'=>$content));
       } else {
         if (is_file(BASE_URI . 'themes/' . $page->theme . '/index.tpl')) {
-          $this->blog->set('layout', BASE_URL . 'themes/' . $page->theme . '/');
+          $this->blog->resources(BASE_URL . 'themes/' . $page->theme . '/');
           $layout = BASE_URI . 'themes/' . $page->theme . '/index.tpl';
         } elseif (is_file(BASE_URI . 'themes/default/index.tpl')) {
           $page->theme = 'default';
-          $this->blog->set('layout', BASE_URL . 'themes/' . $page->theme . '/');
+          $this->blog->resources(BASE_URL . 'themes/' . $page->theme . '/');
           $layout = BASE_URI . 'themes/' . $page->theme . '/index.tpl';
         } else {
-          $this->blog->set('layout', str_replace(BASE, BASE_URL, $this->blog->templates . 'theme/'));
+          $this->blog->resources(str_replace(BASE, BASE_URL, $this->blog->templates . 'theme/'));
           $layout = $this->blog->templates . '/theme/index.tpl';
         }
         if (is_file($this->blog->post . 'post.tpl')) {
