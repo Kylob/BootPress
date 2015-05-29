@@ -156,8 +156,8 @@ return array(
 	
 	'less'	=>	array('text/css', 'text/plain'),
 	'ico'	=> 	array('image/x-icon', 'image/vnd.microsoft.icon'),
-	'ttf'	=> 	array('application/font-sfnt', 'application/font-ttf', 'font/ttf', 'font/truetype', 'application/octet-stream'),
-	'otf'	=> 	array('application/font-sfnt', 'application/font-otf', 'font/opentype', 'application/octet-stream'),
+	'ttf'	=> 	array('application/font-sfnt', 'application/font-ttf', 'application/x-font-ttf', 'font/ttf', 'font/truetype', 'application/octet-stream'),
+	'otf'	=> 	array('application/font-sfnt', 'application/font-otf', 'application/x-font-otf', 'font/opentype', 'application/octet-stream'),
 	'eot'	=> 	array('application/vnd.ms-fontobject', 'application/octet-stream'),
 	'woff'	=> 	array('application/font-woff', 'application/x-woff', 'application/x-font-woff', 'font/x-woff', 'application/octet-stream'),
 	'woff2'	=> 	array('application/font-woff2', 'font/woff2', 'application/octet-stream')
