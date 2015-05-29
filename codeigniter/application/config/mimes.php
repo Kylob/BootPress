@@ -81,7 +81,6 @@ return array(
 	'png'	=>	array('image/png',  'image/x-png'),
 	'tiff'	=>	'image/tiff',
 	'tif'	=>	'image/tiff',
-	'less'	=>	array('text/css', 'text/plain'),
 	'css'	=>	array('text/css', 'text/plain'),
 	'html'	=>	array('text/html', 'text/plain'),
 	'htm'	=>	array('text/html', 'text/plain'),
@@ -153,5 +152,14 @@ return array(
 	'wma'	=>	array('audio/x-ms-wma', 'video/x-ms-asf'),
 	'jar'	=>	array('application/java-archive', 'application/x-java-application', 'application/x-jar', 'application/x-compressed'),
 	'svg'	=>	array('image/svg+xml', 'application/xml', 'text/xml'),
-	'vcf'	=>	'text/x-vcard'
+	'vcf'	=>	'text/x-vcard',
+	
+	'less'	=>	array('text/css', 'text/plain'),
+	'ico'	=> 	array('image/x-icon', 'image/vnd.microsoft.icon'),
+	'ttf'	=> 	array('application/font-sfnt', 'application/font-ttf', 'font/ttf', 'font/truetype', 'application/octet-stream'),
+	'otf'	=> 	array('application/font-sfnt', 'application/font-otf', 'font/opentype', 'application/octet-stream'),
+	'eot'	=> 	array('application/vnd.ms-fontobject', 'application/octet-stream'),
+	'woff'	=> 	array('application/font-woff', 'application/x-woff', 'application/x-font-woff', 'font/x-woff', 'application/octet-stream'),
+	'woff2'	=> 	array('application/font-woff2', 'font/woff2', 'application/octet-stream')
+	
 );

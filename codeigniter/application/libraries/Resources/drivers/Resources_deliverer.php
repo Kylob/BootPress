@@ -57,45 +57,8 @@ class Resources_deliverer extends CI_Driver {
     } else {
       exit(header('HTTP/1.1 404 Not Found'));
     }
-    switch ($type) {
-      case 'jpeg':
-      case 'jpg': header('Content-Type: image/jpeg'); break;
-      case 'gif': header('Content-Type: image/gif'); break;
-      case 'png': header('Content-Type: image/png'); break;
-      case 'ico': header('Content-Type: image/x-icon'); break;
-      case 'js': header('Content-Type: text/javascript; charset=utf-8'); break;
-      case 'css': header('Content-Type: text/css; charset=utf-8'); break;
-      case 'pdf': header('Content-Type: application/pdf'); break;
-      case 'ttf': header('Content-Type: font/ttf'); break;
-      case 'otf': header('Content-Type: font/opentype'); break;
-      case 'svg': header('Content-Type: image/svg+xml'); break;
-      case 'eot': header('Content-Type: application/vnd.ms-fontobject'); break;
-      case 'woff': header('Content-Type: font/x-woff'); break;
-      case 'woff2': header('Content-Type: font/woff2'); break; // http://lists.w3.org/Archives/Public/public-webfonts-wg/2014Jun/0024.html
-      case 'swf': header('Content-Type: application/x-shockwave-flash'); break;
-      case 'tar':
-      case 'tgz': header('Content-Type: application/x-tar'); break;
-      case 'gz': header('Content-Type: application/x-gzip'); break;
-      case 'zip': header('Content-Type: application/x-zip'); break;
-      case 'csv': header('Content-Type: text/x-comma-separated-values'); break;
-      case 'xlsx': header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'); break;
-      case 'xls':
-      case 'xl': header('Content-Type: application/excel'); break;
-      case 'word':
-      case 'docx': header('Content-Type: application/vnd.openxmlformats-officedocument.wordprocessingml.document'); break;
-      case 'doc': header('Content-Type: application/msword'); break;
-      case 'ppt': header('Content-Type: application/powerpoint'); break;
-      case 'ogg': header('Content-Type: audio/ogg'); break;
-      case 'wav': header('Content-Type: audio/wav'); break;
-      case 'mp3': header('Content-Type: audio/mpeg'); break;
-      case 'mp4': header('Content-Type: video/mp4'); break;
-      case 'mpeg':
-      case 'mpe':
-      case 'mpg': header('Content-Type: video/mpeg'); break;
-      case 'mov':
-      case 'qt': header('Content-Type: video/quicktime'); break;
-      case 'psd': header('Content-Type: application/x-photoshop'); break;
-    }
+    $mimes =& get_mimes();
+    header('Content-Type: ' . (is_array($mimes[$type]) ? array_shift($mimes[$type]) : $mimes[$type]));
     if ($compress) {
       $supported = (isset($_SERVER['HTTP_ACCEPT_ENCODING'])) ? $_SERVER['HTTP_ACCEPT_ENCODING'] : '';
       $gzip = strstr($supported, 'gzip');
