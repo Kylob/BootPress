@@ -155,10 +155,10 @@ class Blog extends CI_Driver_Library {
         $debug = Smarty_Internal_Debug::display_debug($smarty);
         if (!is_callable('smarty_modifier_debug_print_var')) include SMARTY_PLUGINS_DIR . 'modifier.debug_print_var.php';
         foreach ($debug['vars'] as $key => $obj) {
-          if (strtolower($obj->scope) == 'global') {
+          if (strtolower($obj['scope']) == 'global') {
             unset($debug['vars'][$key]);
           } else {
-            $debug['vars'][$key] = smarty_modifier_debug_print_var($obj->value, 0, 80);
+            $debug['vars'][$key] = smarty_modifier_debug_print_var($obj['value'], 0, 80, 1);
           }
         }
         $page->save('Smarty', array(

@@ -4,7 +4,8 @@ extract($page->get('params'));
 
 $smarty = BASE . 'smarty/';
 
-$page->load($smarty, '3.1.21/libs/Smarty.class.php');
+// Modified $smarty . '[version]/libs/sysplugins/smarty_internal_debug.php' to only output and not display vars in the display_debug() method
+$page->load($smarty, '3.1.27/libs/Smarty.class.php');
 
 if (isset($class)) {
 
