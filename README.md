@@ -1,8 +1,10 @@
-# BootPress - Kick Your Websites Into High Gear
+# BootPress
+
+### Kick Your Websites Into High Gear
 
 BootPress is a PHP Framework with a built in blog and flat-file CMS.  It is designed to make building websites as easy as possible, by using the best tools that have been created by the big brains that be eg. CodeIgniter, Smarty, Bootstrap, the Ace Editor, Parsedown, Adminer, etc.
 
-See https://www.bootpress.org for more info.
+See https://www.bootpress.org/docs/ for more info.
 
 ## License
 
