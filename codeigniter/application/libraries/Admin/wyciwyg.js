@@ -102,6 +102,8 @@ function display_wyciwyg (classes, data, retrieve, file, line, col) {
     editor.getSession().setMode("ace/mode/html");
   } else if (classes.hasClass("less")) {
     editor.getSession().setMode("ace/mode/less");
+  } else if (classes.hasClass("scss")) {
+    editor.getSession().setMode("ace/mode/scss");
   } else if (classes.hasClass("css")) {
     editor.getSession().setMode("ace/mode/css");
   } else if (classes.hasClass("js")) {

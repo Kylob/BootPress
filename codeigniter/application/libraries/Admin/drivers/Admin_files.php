@@ -51,9 +51,8 @@ class Admin_files extends CI_Driver {
     if ($ci->blog->controller == '#admin#') {
       switch ($type) {
         case 'authors': $html .= $this->folder($path, false, array('images'=>'jpg|jpeg|gif|png', 'files'=>false, 'resources'=>false)); break;
-        case 'templates': $html .= $this->folder($path, false, array('images'=>'jpg|jpeg|gif|png', 'files'=>'js|css', 'resources'=>false)); break;
         case 'blog': $html .= $this->folder($path, false, array('exclude'=>'index.tpl', 'files'=>'tpl|js|css', 'resources'=>'pdf|zip|mp3|mp4')); break;
-        case 'themes': $html .= $this->folder($path, true, array('exclude'=>array('index.tpl', 'variables.less', 'custom.less'), 'files'=>'tpl|js|css', 'resources'=>'less|ttf|otf|svg|eot|woff|swf')); break;
+        case 'themes': $html .= $this->folder($path, true, array('exclude'=>'index.tpl', 'main'=>array('archives.tpl', 'authors.tpl', 'blog.tpl', 'default.tpl', 'feed.tpl', 'listings.tpl', 'tags.tpl'), 'files'=>'tpl|js|css|less|scss', 'resources'=>'ttf|otf|svg|eot|woff|swf')); break;
         case 'plugins': $html .= $this->folder($path, 2, array('exclude'=>'index.php')); break;
         case 'folders': $html .= $this->folder($path, false, array('exclude'=>'index.php')); break;
       }
@@ -340,7 +339,7 @@ class Admin_files extends CI_Driver {
         $data = array('success'=>true, 'newValue'=>$oldname);
       }
     }
-    $save = array_flip(preg_grep('/\.(js|css|less|tpl' . (is_admin(1) ? '|php' : null) . ')$/', $files));
+    $save = array_flip(preg_grep('/\.(js|css|less|scss|tpl' . (is_admin(1) ? '|php' : null) . ')$/', $files));
     foreach ($save as $file => $uri) $save[$file] = $path . $file;
     $this->save($save, $main);
     $ci->load->helper('number');
@@ -366,6 +365,11 @@ class Admin_files extends CI_Driver {
           $edit = $bp->button('xs warning wyciwyg ' . $ext, $bp->icon('pencil') . ' edit', array('href'=>'#', 'data-retrieve'=>$file, 'data-file'=>$file));
           $files[$ext][] = array($view, $edit, $rename, $size, $delete);
           break;
+        case 'less':
+        case 'scss':
+          $edit = $bp->button('xs warning wyciwyg ' . $ext, $bp->icon('pencil') . ' edit', array('href'=>'#', 'data-retrieve'=>$file, 'data-file'=>$file));
+          $files['css'][] = array('', $edit, $rename, $size, $delete);
+          break;
         case 'jpg':
         case 'jpeg':
         case 'gif':
@@ -385,7 +389,7 @@ class Admin_files extends CI_Driver {
     $html = '';
     if (!empty($files)) {
       $html .= $bp->table->open('class=table responsive striped condensed');
-      foreach (array('php'=>'PHP', 'tpl'=>'Smarty', 'css'=>'CSS', 'js'=>'JavaScript', 'images'=>'Images', 'links'=>'Links') as $type => $name) {
+      foreach (array('php'=>'PHP', 'tpl'=>'Templates', 'css'=>'CSS', 'js'=>'JavaScript', 'images'=>'Images', 'links'=>'Links') as $type => $name) {
         if (isset($files[$type])) {
           $html .= $bp->table->head();
           $html .= $bp->table->cell('colspan=6|style=padding-top:10px; padding-bottom:10px;', $name);

@@ -69,15 +69,15 @@ class Controller extends CI_Controller {
       } elseif ($template = $this->input->post($this->poster)) {
         $this->delay_flashdata();
         $data = array();
-        $file = BASE_URI . 'blog/content/post.tpl';
+        $file = BASE_URI . 'themes/' . $template . '/post.tpl';
         if (is_file($file)) {
           $this->load->driver('blog', array('role'=>'#post#'));
-          $this->blog->resources(BASE_URL . 'blog/content/');
+          $this->blog->resources(BASE_URL . 'themes/' . $template . '/');
           $this->load->library('auth');
           $vars = array(
             'template' => $template,
             'user' => $this->auth->user(),
-            'uri'=>array(
+            'uri'=> array(
               'id' => $this->sitemap->uri('id'),
               'type' => $this->sitemap->uri('type'),
               'views' => $this->sitemap->uri('views')
@@ -101,7 +101,7 @@ class Controller extends CI_Controller {
             $html = $bp_admin();
           } elseif ($route = $page->routes(array(
             ADMIN,
-            ADMIN . '[blog:view]/[published|unpublished|posts|pages' . (is_admin(1) ? '|authors|categories|tags|templates|backup|restore' : null) . ':folder]?',
+            ADMIN . '[blog:view]/[published|unpublished|posts|pages' . (is_admin(1) ? '|tags|categories|authors|backup|restore' : null) . ':folder]?',
             ADMIN . '[sitemap' . (is_admin(1) ? '|setup|errors|plugins|folders|databases' : null) . ':view]',
             ADMIN . '[users:view]/[logout' . (is_admin(1) ? '|register|edit|list' : null) . ':action]?',
             ADMIN . '[themes:view]/[download|preview:action]?/[:theme]?/[bootstrap\.less:less]?',
@@ -127,7 +127,7 @@ class Controller extends CI_Controller {
             $html = $this->blog->pages->post($file);
           } elseif ($route = $page->routes(array(
             BLOG,
-            BLOG . '/[atom|rss:method].xml',
+            BLOG . '/[feed:method].xml',
             BLOG . '/[archives:method]/[i:year]?/[i:month]?/[i:day]?',
             BLOG . '/[authors|tags:method]/[:uri]?',
             BLOG . '/[**:method]' => 'category'
@@ -412,10 +412,11 @@ class Controller extends CI_Controller {
           $this->blog->resources(BASE_URL . 'themes/' . $page->theme . '/');
           $layout = BASE_URI . 'themes/' . $page->theme . '/index.tpl';
         } else {
-          $this->blog->resources(str_replace(BASE, BASE_URL, $this->blog->templates . 'theme/'));
-          $layout = $this->blog->templates . '/theme/index.tpl';
+          $page->theme = false;
+          $this->blog->resources(str_replace(BASE, BASE_URL, $this->blog->templates));
+          $layout = $this->blog->templates . 'index.tpl';
         }
-        if (is_file($this->blog->post . 'post.tpl')) {
+        if ($page->theme && is_file(BASE_URI . 'themes/' . $page->theme . '/post.tpl')) {
           $page->plugin('jQuery', 'code', '$.ajax({type:"POST", url:location.href, data:{"' . md5(BASE_URL) . '":"' . $page->theme . '"}, cache:false, success:function(data){ $.each(data,function(key,value){ if(key=="css")$("<style/>").html(value).appendTo("head"); else if(key=="javascript")eval(value); else $("<span/>").html(value).appendTo(key) })}, dataType:"json"});');
         }
         $content = $this->blog->smarty($layout, array('content'=>$content));

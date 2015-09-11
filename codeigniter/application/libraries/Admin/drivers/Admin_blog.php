@@ -8,7 +8,7 @@ class Admin_blog extends CI_Driver {
   public function view ($params) {
     global $bp, $ci, $page;
     $bp->listings->display(20);
-    $view = (isset($params['folder']) && in_array($params['folder'], array('published', 'unpublished', 'posts', 'pages', 'authors', 'categories', 'tags', 'templates', 'backup', 'restore'))) ? $params['folder'] : 'form';
+    $view = (isset($params['folder']) && in_array($params['folder'], array('published', 'unpublished', 'posts', 'pages', 'authors', 'categories', 'tags', 'backup', 'restore'))) ? $params['folder'] : 'form';
     $html = $this->$view($params);
     if ($ci->input->get('image')) {
       return $this->display($this->box('default', array(
@@ -27,7 +27,6 @@ class Admin_blog extends CI_Driver {
       case 'authors': $header = $bp->icon('user', 'glyphicon', 'span style="margin-right:10px;"') . ' ' . ucwords($view); break;
       case 'categories': $header = $bp->icon('share-alt', 'fa', 'i style="margin-right:10px;"') . ' ' . ucwords($view); break;
       case 'tags': $header = $bp->icon('tags', 'fa', 'i style="margin-right:10px;"') . ' ' . ucwords($view); break;
-      case 'templates': $header = $bp->icon('files-o', 'fa', 'i style="margin-right:10px;"') . ' ' . ucwords($view); break;
       case 'backup': $header = $bp->icon('download', 'glyphicon', 'span style="margin-right:10px;"') . ' ' . ucwords($view); break;
       case 'restore': $header = $bp->icon('upload', 'glyphicon', 'span style="margin-right:10px;"') . ' ' . ucwords($view); break;
       case 'form': 
@@ -37,8 +36,7 @@ class Admin_blog extends CI_Driver {
     }
     $docs = '';
     if (!in_array($view, array('authors', 'categories', 'tags', 'backup', 'restore'))) {
-      $tab = ($view == 'templates') ? 'templates' : 'blog';
-      $docs = $bp->button('md link', 'Documentation ' . $bp->icon('new-window'), array('href'=>'https://www.bootpress.org/docs/' . $tab . '/', 'target'=>'_blank'));
+      $docs = $bp->button('md link', 'Documentation ' . $bp->icon('new-window'), array('href'=>'https://www.bootpress.org/docs/blog/', 'target'=>'_blank'));
     }
     return $this->display($this->box('default', array(
       'head with-border' => array($header, $docs),
@@ -60,7 +58,6 @@ class Admin_blog extends CI_Driver {
       $links[$bp->icon('file-o', 'fa') . ' Pages ' . $bp->badge($pages, 'right')] = $page->url('admin', 'blog/pages');
     }
     if (is_admin(1)) {
-      if ($posts || $pages) $links[$bp->icon('files-o', 'fa') . ' Templates'] = $page->url('admin', 'blog/templates');
       if (count($this->set_tags()) > 0) $links[$bp->icon('tags', 'fa') . ' Tags'] = $page->url('admin', 'blog/tags');
       if ($ci->blog->db->value('SELECT COUNT(*) FROM categories')) $links[$bp->icon('share-alt', 'fa') . ' Categories'] = $page->url('admin', 'blog/categories');
       if (count($this->set_authors()) > 0) $links[$bp->icon('user') . ' Authors'] = $page->url('admin', 'blog/authors');
@@ -220,39 +217,6 @@ class Admin_blog extends CI_Driver {
     return $bp->row('md', $tags);
   }
   
-  private function templates () {
-    global $bp, $ci, $page;
-    $html = '';
-    $media = $ci->admin->files->view('templates', $ci->blog->post);
-    $form = $page->plugin('Form', 'name', 'admin_blog_templates');
-    $form->values($ci->admin->files->save(array(
-      'blog' => array($ci->blog->post . 'blog.tpl', $ci->blog->templates . 'blog.tpl'),
-      'post' => array($ci->blog->post . 'post.tpl'),
-      'listings' => array($ci->blog->post . 'listings.tpl', $ci->blog->templates . 'listings.tpl'),
-      'tags' => array($ci->blog->post . 'tags.tpl', $ci->blog->templates . 'tags.tpl'),
-      'authors' => array($ci->blog->post . 'authors.tpl', $ci->blog->templates . 'authors.tpl'),
-      'archives' => array($ci->blog->post . 'archives.tpl', $ci->blog->templates . 'archives.tpl')
-    ), array('blog', 'post', 'listings', 'tags', 'authors', 'archives'), array($this, 'update')));
-    $form->validate(
-      array('blog', 'blog.tpl'),
-      array('post', 'post.tpl'),
-      array('listings', 'listings.tpl'),
-      array('tags', 'tags.tpl'),
-      array('authors', 'authors.tpl'),
-      array('archives', 'archives.tpl')
-    );
-    $html .= $form->header();
-    $html .= $form->field('blog', 'textarea', array('class'=>'wyciwyg tpl input-sm', 'data-file'=>'blog.tpl'));
-    $html .= $form->field('post', 'textarea', array('class'=>'wyciwyg tpl input-sm', 'data-file'=>'post.tpl'));
-    $html .= $form->field('listings', 'textarea', array('class'=>'wyciwyg tpl input-sm', 'data-file'=>'listings.tpl'));
-    $html .= $form->field('tags', 'textarea', array('class'=>'wyciwyg tpl input-sm', 'data-file'=>'tags.tpl'));
-    $html .= $form->field('authors', 'textarea', array('class'=>'wyciwyg tpl input-sm', 'data-file'=>'authors.tpl'));
-    $html .= $form->field('archives', 'textarea', array('class'=>'wyciwyg tpl input-sm', 'data-file'=>'archives.tpl'));
-    $html .= $form->close();
-    unset($form);
-    return $html . $media;
-  }
-  
   private function backup () {
     global $ci, $page;
     $ci->load->library('zip');
@@ -306,7 +270,11 @@ class Admin_blog extends CI_Driver {
         $page->eject($page->url('delete', '', '?'));
       }
       $form->values($ci->admin->files->save(array(
-        'index' => array($ci->blog->post . $uri . '/index.tpl', $ci->blog->templates . 'index.tpl')
+        'index' => array(
+          $ci->blog->post . $uri . '/index.tpl',
+          BASE_URI . 'themes/default/default.tpl',
+          $ci->blog->templates . 'default.tpl'
+        )
       ), array('index'), array($this, 'update'), array($uri)));
       $media = $ci->admin->files->view('blog', $ci->blog->post . $uri);
       if ($ci->input->get('image')) return $media;

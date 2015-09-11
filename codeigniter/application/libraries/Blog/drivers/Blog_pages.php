@@ -19,48 +19,6 @@ class Blog_pages extends CI_Driver {
     return $this->export('search', array('search'=>$search, 'breadcrumbs'=>$breadcrumbs, 'posts'=>$posts));
   }
   
-  public function atom () {
-    global $ci, $page;
-    $page->enforce($page->url('blog', 'atom.xml'));
-    $atom = $page->plugin('Feed', 'Atom', array($ci->blog->name, $page->url('blog'), array(
-      'link' => array('title'=>$ci->blog->name, 'href'=>$page->url('blog'), 'rel'=>'alternate'),
-      'subtitle' => $ci->blog->slogan
-    )));
-    foreach ($this->query('listings') as $post) {
-      $atom->entry($post['title'], $post['url'], $post['updated'], array(
-        'link' => array('rel'=>'alternate', 'href'=>$post['url']),
-        'summary' => $post['description'],
-        'published' => $post['published']
-      ));
-    }
-    return $atom->display();
-  }
-  
-  public function rss () {
-    global $ci, $page;
-    $page->enforce($page->url('blog', 'rss.xml'));
-    if ($ci->blog->slogan != '') {
-      $description = $ci->blog->slogan;
-    } elseif ($ci->blog->summary != '') {
-      $description = $ci->blog->summary;
-    } else {
-      $description = 'The latest posts from ' . $ci->blog->name;
-    }
-    $rss = $page->plugin('Feed', 'RSS', array($ci->blog->name, $page->url('blog'), $description, array(
-      'atom:link' => array('href'=>$page->url('blog', 'rss.xml'), 'rel'=>'self', 'type'=>'application/rss+xml')
-    )));
-    foreach ($this->query('listings') as $post) {
-      $rss->item($post['title'], array(
-        'link' => $post['url'],
-        'description' => $post['description'],
-        'guid' => array('isPermaLink'=>'true', 'value'=>$post['url']),
-        'pubDate' => $post['published'],
-        'lastBuildDate' => $post['updated']
-      ));
-    }
-    return $rss->display();
-  }
-  
   public function archives ($params) {
     global $ci, $page;
     list($uri, $Y, $m, $d) = array_pad(array_values($params), 4, '');
@@ -117,6 +75,28 @@ class Blog_pages extends CI_Driver {
     }
   }
   
+  public function category ($uri) {
+    global $ci, $page;
+    $page->enforce($page->url('blog', $uri));
+    $hier = $page->plugin('Hierarchy', 'categories', $this->db);
+    $path = $hier->path(array('uri', 'category'), array('where'=>'uri = ' . $uri));
+    $tree = $hier->tree(array('uri', 'category'), array('where'=>'uri = ' . $uri));
+    $counts = $hier->counts('blog', 'category_id');
+    foreach ($tree as $id => $fields) $tree[$id]['count'] = $counts[$id];
+    $category = array();
+    $breadcrumbs = array($ci->blog->name => $page->url('blog'));
+    foreach ($path as $path) {
+      $category[] = $path['category'];
+      $breadcrumbs[$path['category']] = $page->url('blog', $path['uri']);
+    }
+    $categories = array_keys($tree);
+    $count = 'SELECT COUNT(*) FROM blog WHERE category_id IN(' . implode(', ', $categories) . ') AND featured <= 0 AND published != 0';
+    $query = 'SELECT id FROM blog WHERE category_id IN(' . implode(', ', $categories) . ') AND featured <= 0 AND published != 0 ORDER BY featured, published ASC';
+    $posts = $this->info($this->posts($count, $query));
+    $categories = $this->query('categories', array('nest'=>$hier->nestify($tree), 'tree'=>$tree));
+    return $this->export('category', array('category'=>$category, 'breadcrumbs'=>$breadcrumbs, 'posts'=>$posts, 'categories'=>$categories));
+  }
+  
   public function tags ($params) {
     global $ci, $page;
     $uri = $params['method'];
@@ -146,28 +126,6 @@ class Blog_pages extends CI_Driver {
     }
   }
   
-  public function category ($uri) {
-    global $ci, $page;
-    $page->enforce($page->url('blog', $uri));
-    $hier = $page->plugin('Hierarchy', 'categories', $this->db);
-    $path = $hier->path(array('uri', 'category'), array('where'=>'uri = ' . $uri));
-    $tree = $hier->tree(array('uri', 'category'), array('where'=>'uri = ' . $uri));
-    $counts = $hier->counts('blog', 'category_id');
-    foreach ($tree as $id => $fields) $tree[$id]['count'] = $counts[$id];
-    $category = array();
-    $breadcrumbs = array($ci->blog->name => $page->url('blog'));
-    foreach ($path as $path) {
-      $category[] = $path['category'];
-      $breadcrumbs[$path['category']] = $page->url('blog', $path['uri']);
-    }
-    $categories = array_keys($tree);
-    $count = 'SELECT COUNT(*) FROM blog WHERE category_id IN(' . implode(', ', $categories) . ') AND featured <= 0 AND published != 0';
-    $query = 'SELECT id FROM blog WHERE category_id IN(' . implode(', ', $categories) . ') AND featured <= 0 AND published != 0 ORDER BY featured, published ASC';
-    $posts = $this->info($this->posts($count, $query));
-    $categories = $this->query('categories', array('nest'=>$hier->nestify($tree), 'tree'=>$tree));
-    return $this->export('category', array('category'=>$category, 'breadcrumbs'=>$breadcrumbs, 'posts'=>$posts, 'categories'=>$categories));
-  }
-  
   public function post ($row) { // 'id', 'uri', and 'content'
     global $ci, $page;
     if ($row['uri'] != 'index') $page->enforce($row['uri']);
@@ -179,6 +137,20 @@ class Blog_pages extends CI_Driver {
     $breadcrumbs[$post['title']] = $post['url'];
     if ($page->robots && $post['published'] != 0) $ci->sitemap->save('blog', $post['id'], $post['content']);
     return $this->export('blog', array('breadcrumbs'=>$breadcrumbs, 'post'=>$post));
+  }
+  
+  public function feed () {
+    global $ci, $page;
+    $page->enforce($page->url('blog', 'feed.xml'));
+    $posts = $this->query('listings');
+    $xml = trim($this->export('feed', array('posts'=>$posts)));
+    $type = substr($xml, -10);
+    if (strpos($type, '</rss>')) {
+      $ci->output->set_content_type('application/rss+xml');
+    } elseif (strpos($type, '</feed>')) {
+      $ci->output->set_content_type('application/atom+xml');
+    }
+    return $xml;
   }
   
   private function range ($Y, $m=false, $d=false) {
@@ -219,7 +191,7 @@ class Blog_pages extends CI_Driver {
     return $breadcrumbs;
   }
   
-  private function export ($blog, $vars) {
+  private function export ($blog, array $vars) {
     global $ci, $page;
     switch ($blog) {
       case 'index':
@@ -228,20 +200,21 @@ class Blog_pages extends CI_Driver {
       case 'author':
       case 'tag':
       case 'category':
-        $ci->sitemap->cache();
         $content = 'listings';
         break;
       case 'archives':
       case 'authors':
       case 'tags':
       case 'blog':
-        $ci->sitemap->cache();
+      case 'feed':
         $content = $blog;
         break;
     }
+    $ci->sitemap->cache();
     $ci->blog->resources(str_replace(BASE_URI, BASE_URL, $ci->blog->post), $blog);
-    if (is_file($ci->blog->post . $content . '.tpl')) {
-      $template = $ci->blog->post . $content . '.tpl';
+    $theme = ($page->theme == 'default' && $ci->session->preview_layout && is_admin(2)) ? $ci->session->preview_layout : $page->theme;
+    if (is_file(BASE_URI . 'themes/' . $theme . '/' . $content . '.tpl')) {
+      $template = BASE_URI . 'themes/' . $theme . '/' . $content . '.tpl';
     } else {
       $template = $ci->blog->templates . $content . '.tpl';
     }

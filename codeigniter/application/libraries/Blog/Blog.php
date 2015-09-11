@@ -18,11 +18,22 @@ class Blog extends CI_Driver_Library {
     $this->admin = $admin; // An array of values we pass to the $ci->auth class
     unset($admin); // We do not want these values accessible anywhere else
     $this->controller = $blog['role']; // Either '#admin#', '#folder#', '#blog#', or '#post#'
-    $this->templates = str_replace('\\', '/', APPPATH) . 'libraries/templates/';
+    $this->templates = str_replace('\\', '/', APPPATH) . 'libraries/Blog/theme/';
     $this->authors = BASE_URI . 'blog/authors/';
     $this->post = BASE_URI . 'blog/content/';
     if (!is_dir($this->post)) mkdir($this->post, 0755, true);
-    if (!is_file($this->post . 'setup.ini')) file_put_contents($this->post . 'setup.ini', file_get_contents($this->templates . 'setup.ini'));
+    if (!is_file($this->post . 'setup.ini')) file_put_contents($this->post . 'setup.ini', file_get_contents(dirname($this->templates) . '/setup.ini'));
+    
+    // for backwards compatibility:
+    if (is_file($this->post . 'blog.tpl') && is_dir(BASE_URI . 'themes/default/')) {
+      rename($this->post . 'blog.tpl', BASE_URI . 'themes/default/blog.tpl');
+      if (is_file($this->post . 'archives.tpl')) rename($this->post . 'archives.tpl', BASE_URI . 'themes/default/archives.tpl');
+      if (is_file($this->post . 'authors.tpl')) rename($this->post . 'authors.tpl', BASE_URI . 'themes/default/authors.tpl');
+      if (is_file($this->post . 'listings.tpl')) rename($this->post . 'listings.tpl', BASE_URI . 'themes/default/listings.tpl');
+      if (is_file($this->post . 'post.tpl')) rename($this->post . 'post.tpl', BASE_URI . 'themes/default/post.tpl');
+      if (is_file($this->post . 'tags.tpl')) rename($this->post . 'tags.tpl', BASE_URI . 'themes/default/tags.tpl');
+    }
+    
     $config = parse_ini_file($this->post . 'setup.ini');
     $this->blog = array('name'=>'', 'summary'=>'');
     if (isset($config['blog'])) $this->blog = array_merge($this->blog, $config['blog']);
@@ -128,7 +139,7 @@ class Blog extends CI_Driver_Library {
         'page' => new PageClone($page, ($this->controller == '#post#' ? 'post' : 'blog'))
       ));
       $security = new Smarty_Security($smarty);
-      $security->php_functions = array_merge(array('isset', 'empty', 'count', 'in_array', 'is_array', 'time', 'nl2br'), $functions); // Smarty defaults
+      $security->php_functions = array_merge(array('isset', 'empty', 'count', 'in_array', 'is_array', 'date', 'time', 'nl2br'), $functions); // Smarty defaults (except date)
       $security->allow_super_globals = false;
       $security->allow_constants = false;
       $smarty->enableSecurity($security);
@@ -468,7 +479,13 @@ class Blog extends CI_Driver_Library {
   
   public function create ($uri, $content='') {
     if (!is_dir($this->post . $uri)) mkdir($this->post . $uri, 0755, true);
-    if (empty($content)) $content = file_get_contents($this->templates . 'index.tpl');
+    if (empty($content)) {
+      if (is_file(BASE_URI . 'themes/default/default.tpl')) {
+        $content = file_get_contents(BASE_URI . 'themes/default/default.tpl');
+      } else {
+        $content = file_get_contents($this->templates . 'default.tpl');
+      }
+    }
     if (!is_file($this->post . $uri . '/index.tpl')) file_put_contents($this->post . $uri . '/index.tpl', $content);
     return $this->file($uri);
   }

@@ -17,7 +17,6 @@
 plugins/*
 !plugins/CDN/
 !plugins/Database/
-!plugins/Feed/
 !plugins/Form/
 !plugins/Hierarchy/
 !plugins/Image/

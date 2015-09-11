@@ -163,7 +163,7 @@ class Admin extends CI_Driver_Library {
     $page->sidebar = $search . $links;
     if (isset($driver['setup']) && $this->view != 'errors') {
       $page->sidebar = str_replace('<a href="#">Setup</a>', '<a href="#" class="wyciwyg ini" data-retrieve="setup.ini" data-file="setup.ini">' . $bp->icon('cog', 'fa') . ' Setup</a>', $page->sidebar);
-      $ci->admin->files->save(array('setup.ini' => array($ci->blog->post . 'setup.ini', $ci->blog->templates . 'setup.ini')));
+      $ci->admin->files->save(array('setup.ini' => array($ci->blog->post . 'setup.ini', dirname($ci->blog->templates) . '/setup.ini')));
     }
     if ($ci->session->collapse_sidebar || empty($page->sidebar)) $page->collapse = 'sidebar';
     $page->filter('layout', 'prepend', '<div id="adminForms">');
