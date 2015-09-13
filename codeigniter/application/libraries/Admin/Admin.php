@@ -2,7 +2,7 @@
 
 class Admin extends CI_Driver_Library {
   
-  protected $valid_drivers = array('users', 'errors', 'files', 'setup', 'blog', 'themes', 'plugins', 'folders', 'databases', 'analytics', 'sitemap');
+  protected $valid_drivers = array('users', 'errors', 'files', 'blog', 'themes', 'plugins', 'folders', 'databases', 'analytics', 'sitemap');
   private $view;
   
   public function __construct ($params) {
@@ -16,15 +16,9 @@ class Admin extends CI_Driver_Library {
         if (($key = array_search($driver, $this->valid_drivers)) !== false) unset($this->valid_drivers[$key]);
       }
     }
-    $this->view = $params['file'];
-    if (!is_admin(2)) { // if not signed in, then they must be in the process of doing so
-      if ($this->view != 'users') $page->eject($page->url('admin', 'users'));
-    } elseif ($ci->blog->name == '' && $this->view != 'setup') { // this blog is just getting started
-      $page->eject($page->url('admin', 'setup'));
-    } elseif ($ci->blog->name != '' && $this->view == 'setup') { // there is no reason for them to be here anymore
-      $page->eject($page->url('admin', 'blog'));
-    }
     $page->robots = false;
+    $this->view = $params['file'];
+    if (!is_admin(2) && $this->view != 'users') $page->eject($page->url('admin', 'users'));
     $blog = ($ci->blog->name != '') ? $ci->blog->name : 'Blog';
     $page->title = 'Admin &raquo; ' . ucfirst($this->view) . ' &raquo; ' . $blog;
     if (is_admin(2) && ($field = $ci->input->post('field')) && ($checked = $ci->input->post('checked'))) {
@@ -63,7 +57,7 @@ class Admin extends CI_Driver_Library {
     if ($ci->blog->controller != '#admin#') {
       $page->filter('layout', 'prepend', '<div id="adminForms">');
       $page->filter('layout', 'append', '</div>' . $this->wyciwyg());
-      $page->style('textarea.input-sm { font-family: Menlo, Monaco, Consolas, "Courier New", monospace; }');
+      $page->style('textarea.input-sm { font-family:Menlo, Monaco, Consolas, "Courier New", monospace; white-space:pre; }');
       return $content;
     }
     $links = array();
@@ -71,7 +65,6 @@ class Admin extends CI_Driver_Library {
     $page->theme = 'admin';
     $page->header = '<h1><a href="' . $page->url('base') . '">' . ($ci->blog->name != '' ? $ci->blog->name : 'Blog') . '</a></h1>';
     if (is_admin(2)) {
-      if (isset($driver['setup']) && is_admin(1) && $this->view != 'errors') $links['Setup'] = '#';
       if ($ci->blog->name != '') {
         if (isset($driver['blog'])) $links[$bp->icon('globe', 'fa') . ' Blog'] = $page->url('admin', 'blog');
         if (isset($driver['themes'])) $links[$bp->icon('desktop', 'fa') . ' Themes'] = $page->url('admin', 'themes');
@@ -114,12 +107,12 @@ class Admin extends CI_Driver_Library {
     if (isset($driver['users'])) {
       $user = $bp->icon('user', 'glyphicon', 'span style="margin-right:10px;"') . ' ';
       if (is_admin(1)) {
-        $menu = array($user . $ci->auth->user('name') => ($this->view == 'setup' ? '#' : array(
+        $menu = array($user . $ci->auth->user('name') => array(
           'Edit Your Profile' => $page->url('admin', 'users'),
           'Register User' => $page->url('admin', 'users/register'),
           'View Users' => $page->url('admin', 'users/list?view=all'),
           'Logout' => $page->url('admin', 'users/logout')
-        )));
+        ));
       } elseif (is_admin(2)) {
         $menu = array($user . $ci->auth->user('name') => array(
           'Edit Your Profile' => $page->url('admin', 'users'),
@@ -134,7 +127,7 @@ class Admin extends CI_Driver_Library {
       'class' => 'sidebar-form',
       'button' => $bp->button('flat', $bp->icon('search', 'fa'), array('title'=>'Search', 'type'=>'submit'))
     )) : '';
-    if (isset($driver['errors']) && $this->view != 'setup' && in_array('errors', $this->valid_drivers) && $link = $ci->admin->errors->link()) {
+    if (isset($driver['errors']) && in_array('errors', $this->valid_drivers) && $link = $ci->admin->errors->link()) {
       $links = array_merge(array($bp->icon('exclamation-triangle', 'fa', 'i class="text-danger"') . ' <span class="text-danger"><b>View Errors</b></span>'=>$link), $links);
     }
     $links = (!empty($links)) ? '<ul class="sidebar-menu">' . $bp->links('li treeview', $links, array('active'=>$page->url('admin', $this->view))) . '</ul>' : '';
@@ -161,10 +154,6 @@ class Admin extends CI_Driver_Library {
       $links = str_replace('Analytics</a>', $analytics, $links);
     }
     $page->sidebar = $search . $links;
-    if (isset($driver['setup']) && $this->view != 'errors') {
-      $page->sidebar = str_replace('<a href="#">Setup</a>', '<a href="#" class="wyciwyg ini" data-retrieve="setup.ini" data-file="setup.ini">' . $bp->icon('cog', 'fa') . ' Setup</a>', $page->sidebar);
-      $ci->admin->files->save(array('setup.ini' => array($ci->blog->post . 'setup.ini', dirname($ci->blog->templates) . '/setup.ini')));
-    }
     if ($ci->session->collapse_sidebar || empty($page->sidebar)) $page->collapse = 'sidebar';
     $page->filter('layout', 'prepend', '<div id="adminForms">');
     $page->filter('layout', 'append', '</div>' . $this->wyciwyg());
@@ -172,7 +161,7 @@ class Admin extends CI_Driver_Library {
       '.box-header h3 .fa, .box-header h3 .glyphicon { margin-right:10px; }',
       '.media-body span.space { margin-right:25px; }',
       '.media-right { white-space:nowrap; }',
-      'textarea.input-sm { font-family: Menlo, Monaco, Consolas, "Courier New", monospace; }'
+      'textarea.input-sm { font-family:Menlo, Monaco, Consolas, "Courier New", monospace; white-space:pre; }'
     ));
     return $content;
   }

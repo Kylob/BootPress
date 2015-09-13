@@ -13,6 +13,7 @@ class Admin_themes extends CI_Driver {
     $this->docs = $bp->button('md link', 'Documentation ' . $bp->icon('new-window'), array('href'=>'https://www.bootpress.org/docs/themes/', 'target'=>'_blank'));
     if (isset($params['theme'])) {
       $this->theme = $this->mktheme($params['theme']);
+      $page->theme = $this->theme; // to double check the ini file
       if (isset($params['action']) && $params['action'] == 'download') return $this->download();
       $html .= $this->theme();
     } else {
@@ -22,7 +23,7 @@ class Admin_themes extends CI_Driver {
   }
   
   public function update () {
-    global $ci;
+    global $ci, $page;
     $ci->sitemap->suspend_caching(0);
   }
   
@@ -42,7 +43,7 @@ class Admin_themes extends CI_Driver {
         foreach ($files as $file) copy($ci->blog->templates . $file, $this->dir . $theme . '/' . $file);
       }
     }
-    foreach (array('archives.tpl', 'authors.tpl', 'blog.tpl', 'default.tpl', 'feed.tpl', 'listings.tpl', 'tags.tpl') as $template) {
+    foreach (array('setup.ini', 'archives.tpl', 'authors.tpl', 'blog.tpl', 'default.tpl', 'feed.tpl', 'listings.tpl', 'tags.tpl') as $template) {
       if (!is_file($this->dir . $theme . '/' . $template)) {
         copy($ci->blog->templates . $template, $this->dir . $theme . '/' . $template);
       }
@@ -56,7 +57,7 @@ class Admin_themes extends CI_Driver {
     $ci->load->library('zip');
     $ci->zip->compression_level = 9;
     $ci->zip->read_dir($this->dir . $this->theme, false);
-    $ci->zip->download('backup-theme-' . $page->get('domain') . '-' . $this->theme . '-' . date('Y-m-d_H-i-s', time() - $user['offset']) . '.zip');
+    $ci->zip->download('backup-theme-' . $page->domain . '-' . $this->theme . '-' . date('Y-m-d_H-i-s', time() - $user['offset']) . '.zip');
   }
   
   private function theme () {
@@ -81,6 +82,7 @@ class Admin_themes extends CI_Driver {
       }
       exit;
     } elseif ($ci->session->preview_layout) {
+      $ci->sitemap->suspend_caching(60);
       $ci->session->preview_layout = $this->theme;
       $ci->session->mark_as_temp('preview_layout', 3000);
     }
@@ -93,8 +95,9 @@ class Admin_themes extends CI_Driver {
     }
     $form = $page->plugin('Form', 'name', 'admin_theme_manage');
     $form->values($ci->admin->files->save(array(
+      'setup' => array($this->dir . $this->theme . '/setup.ini', $ci->blog->templates . 'setup.ini'),
       'index' => array($this->dir . $this->theme . '/index.tpl', $ci->blog->templates . 'index.tpl')
-    ), array('index'), array($this, 'update')));
+    ), array('setup', 'index'), array($this, 'update')));
     $form->values(array(
       'preview' => ($ci->session->preview_layout) ? 'Y' : 'N',
       'action' => 'copy'
@@ -109,7 +112,8 @@ class Admin_themes extends CI_Driver {
       array('preview', '', 'YN'),
       array('save', 'Save As', 'required', 'Enter the name of the theme for which you would like to Copy, Rename, or Swap.'),
       array('action', '', 'required|inarray[menu]'),
-      array('index', 'index.tpl', '', 'This file creates the layout for your content.')
+      array('setup', 'setup.ini', '', 'This file establishes the desired {$bp} class and {$blog} array of basic information.'), 
+      array('index', 'index.tpl', '', 'This is the main theme file that receives the {$content} from your templates below.')
     );
     if ($form->submitted() && empty($form->errors)) {
       if (!empty($form->vars['save'])) {
@@ -172,7 +176,8 @@ class Admin_themes extends CI_Driver {
         $form->field('save', 'text'),
         $form->field('action', 'radio'),
         $form->submit('Submit', $bp->button('info pull-right', 'Download ' . $bp->icon('download'), array('href'=>$page->url('admin', 'themes/download', $this->theme)))),
-        $form->field('index', 'textarea', array('class'=>'wyciwyg tpl input-sm', 'data-file'=>'index.tpl')),
+        $form->field('setup', 'textarea', array('class'=>'wyciwyg ini input-sm', 'rows'=>8, 'data-file'=>'setup.ini')),
+        $form->field('index', 'textarea', array('class'=>'wyciwyg tpl input-sm', 'rows'=>8, 'data-file'=>'index.tpl')),
         $form->close(),
         $media
       ))

@@ -1,6 +1,6 @@
 <?php
 
-extract($page->get('params'));
+extract($params);
 
 $page->load($plugin, 'Hierarchy.php');
 

@@ -3,9 +3,9 @@
 function add_jquery_scripts ($js, $plugin) {
   global $page;
   $scripts = array();
-  if (!$version = $page->get('info', $plugin, 'version')) $version = '1.11.0';
+  if (!$version = $page->info($plugin, 'version')) $version = '1.11.0';
   $scripts[] = $page->plugin('CDN', 'url', 'jquery/' . $version . '/jquery.min.js');
-  if ($ui = $page->get('info', $plugin, 'ui')) {
+  if ($ui = $page->info($plugin, 'ui')) {
     $scripts[] = $page->plugin('CDN', 'url', 'jquery.ui/' . (is_string($ui) ? $ui : '1.10.4') . '/jquery-ui.min.js');
   }
   return array_merge($scripts, $js);
@@ -13,7 +13,7 @@ function add_jquery_scripts ($js, $plugin) {
 
 function add_jquery_code ($html, $plugin) {
   global $ci, $page;
-  $code = array_unique($page->get('info', $plugin));
+  $code = array_unique($page->info($plugin));
   if (empty($code)) return $html;
   foreach ($code as $key => $value) $code[$key] = $page->indent($value);
   return $html . "\n  <script>" . '$(document).ready(function(){' . "\n" . implode("\n", $code) . "\n  });</script>";

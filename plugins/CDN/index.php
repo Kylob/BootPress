@@ -1,6 +1,6 @@
 <?php
 
-extract($page->get('params'));
+extract($params);
 
 $path = 'jsdelivr/files/';
 if (isset($link)) $links = array($link);

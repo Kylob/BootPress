@@ -57,9 +57,9 @@ class Controller extends CI_Controller {
       $this->benchmark->mark('page_setup_end');
       $this->benchmark->mark('page_content_start');
       if ($this->model == $this->poster) {
+        $image = base64_decode('R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7');
         $this->delay_flashdata();
         $this->log_analytics('users');
-        $image = base64_decode('R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7');
         header('Expires: Fri, 01 Jan 1990 00:00:00 GMT');
         header('Cache-Control: max-age=0, must-revalidate');
         header('Content-Length: ' . strlen($image));
@@ -67,12 +67,11 @@ class Controller extends CI_Controller {
         header('Pragma: no-cache');
         exit($image);
       } elseif ($template = $this->input->post($this->poster)) {
-        $this->delay_flashdata();
         $data = array();
-        $file = BASE_URI . 'themes/' . $template . '/post.tpl';
-        if (is_file($file)) {
-          $this->load->driver('blog', array('role'=>'#post#'));
-          $this->blog->resources(BASE_URL . 'themes/' . $template . '/');
+        $this->delay_flashdata();
+        $page->theme = $template;
+        $this->load->driver('blog', array('role'=>'#post#'));
+        if ($post = $this->blog->theme('post.tpl')) {
           $this->load->library('auth');
           $vars = array(
             'template' => $template,
@@ -83,7 +82,7 @@ class Controller extends CI_Controller {
               'views' => $this->sitemap->uri('views')
             )
           );
-          $this->blog->smarty($file, $vars);
+          $this->blog->smarty($post, $vars);
           $data = $this->compile($page->post);
         }
         $data = json_encode($this->filter_links($data));
@@ -102,9 +101,9 @@ class Controller extends CI_Controller {
           } elseif ($route = $page->routes(array(
             ADMIN,
             ADMIN . '[blog:view]/[published|unpublished|posts|pages' . (is_admin(1) ? '|tags|categories|authors|backup|restore' : null) . ':folder]?',
-            ADMIN . '[sitemap' . (is_admin(1) ? '|setup|errors|plugins|folders|databases' : null) . ':view]',
+            ADMIN . '[sitemap' . (is_admin(1) ? '|errors|plugins|folders|databases' : null) . ':view]',
             ADMIN . '[users:view]/[logout' . (is_admin(1) ? '|register|edit|list' : null) . ':action]?',
-            ADMIN . '[themes:view]/[download|preview:action]?/[:theme]?/[bootstrap\.less:less]?',
+            ADMIN . '[themes:view]/[download:action]?/[:theme]?',
             ADMIN . '[analytics:view]/[users|pages|referrers:method]?'
           ))) {
             if (!isset($route['params']['view'])) $page->eject(ADMIN . 'blog');
@@ -123,16 +122,17 @@ class Controller extends CI_Controller {
           )));
         } else {
           $this->load->driver('blog', array('role'=>'#blog#'));
-          if ($file = $this->blog->file($page->get('uri'))) {
+          if ($file = $this->blog->file($page->uri)) {
             $html = $this->blog->pages->post($file);
           } elseif ($route = $page->routes(array(
             BLOG,
-            BLOG . '/[feed:method].xml',
+            BLOG . '/[feed|rss|atom:method].xml',
             BLOG . '/[archives:method]/[i:year]?/[i:month]?/[i:day]?',
             BLOG . '/[authors|tags:method]/[:uri]?',
             BLOG . '/[**:method]' => 'category'
           ))) {
             $method = (isset($route['params']['method'])) ? $route['params']['method'] : ($this->input->get('search') ? 'search' : 'index');
+            if ($method == 'atom' || $method == 'rss') $page->eject($page->url('blog', 'feed.xml'), 301);
             if ($route['target'] == 'category') {
               $method = 'category';
               $route['params'] = array_shift($route['params']);
@@ -146,12 +146,12 @@ class Controller extends CI_Controller {
       }
       $this->benchmark->mark('page_content_end');
       $this->benchmark->mark('page_display_start');
-      if ($page->get('type') == 'html') {
+      if ($page->type == 'html') {
         $html = $this->layout($html);
         do { $errors .= ob_get_clean(); } while (ob_get_level());
         $html = $this->filter_links($page->display($html . $errors));
       }
-      if ($this->output->get_content_type() == 'text/html') $this->output->set_content_type($page->get('type'));
+      if ($this->output->get_content_type() == 'text/html') $this->output->set_content_type($page->type);
       if (trim($errors) == '') $this->sitemap->update($html);
     }
     $this->log_analytics('hits');
@@ -390,45 +390,22 @@ class Controller extends CI_Controller {
   
   private function layout ($content) {
     global $page;
-    if ($page->theme == 'admin') {
-      $this->analytics();
-      $lte = 'codeigniter/application/libraries/Admin/LTE/2.0/';
-      $this->blog->resources(BASE_URL . $lte);
-      $content = $this->blog->smarty(BASE . $lte . 'index.tpl', array('content'=>$content));
-      return $page->customize('layout', $content);
-    }
     $content = $page->customize('content', $content);
-    if (($preview = $this->session->preview_layout) && is_admin(2)) $page->theme = $preview;
     if ($page->theme !== false) {
-      $this->analytics();
-      if (strpos($page->theme, BASE_URI) !== false) {
-        if (is_file($page->theme)) $content = $page->outreach($page->theme, array('content'=>$content));
-      } else {
-        if (is_file(BASE_URI . 'themes/' . $page->theme . '/index.tpl')) {
-          $this->blog->resources(BASE_URL . 'themes/' . $page->theme . '/');
-          $layout = BASE_URI . 'themes/' . $page->theme . '/index.tpl';
-        } elseif (is_file(BASE_URI . 'themes/default/index.tpl')) {
-          $page->theme = 'default';
-          $this->blog->resources(BASE_URL . 'themes/' . $page->theme . '/');
-          $layout = BASE_URI . 'themes/' . $page->theme . '/index.tpl';
-        } else {
-          $page->theme = false;
-          $this->blog->resources(str_replace(BASE, BASE_URL, $this->blog->templates));
-          $layout = $this->blog->templates . 'index.tpl';
-        }
-        if ($page->theme && is_file(BASE_URI . 'themes/' . $page->theme . '/post.tpl')) {
-          $page->plugin('jQuery', 'code', '$.ajax({type:"POST", url:location.href, data:{"' . md5(BASE_URL) . '":"' . $page->theme . '"}, cache:false, success:function(data){ $.each(data,function(key,value){ if(key=="css")$("<style/>").html(value).appendTo("head"); else if(key=="javascript")eval(value); else $("<span/>").html(value).appendTo(key) })}, dataType:"json"});');
-        }
-        $content = $this->blog->smarty($layout, array('content'=>$content));
-      }
+      $image = BASE_URL . md5(BASE_URL) . '/' . $this->uri->uri_string();
+      $page->link('<script>(function(){var e=(new Date).getTimezoneOffset();var t=(new Date((new Date).getFullYear(),0,1)).getTimezoneOffset();var n=(new Date((new Date).getFullYear(),6,1)).getTimezoneOffset();var r=Math.abs(t-n);var i=e<Math.max(t,n)?1:0;var s=e/-60;if(i)s-=r/60;var o="";if(r)o=t>n?"N":"S";var u={dst:i,offset:e*60,timezone:s,hemisphere:o,referrer:document.referrer,height:window.innerHeight,width:window.innerWidth};var a=new XMLHttpRequest;a.open("GET","' . $image . '?"+Object.keys(u).reduce(function(e,t){e.push(t+"="+encodeURIComponent(u[t]));return e},[]).join("&"),true);a.setRequestHeader("X-Requested-With","XMLHttpRequest");a.send()})()</script><noscript><img height="1" width="1" style="border-style:none;" alt="" src="' . $image . '"></noscript>');
     }
+    if ($page->theme == 'admin') {
+      $layout = BASE . 'codeigniter/application/libraries/Admin/LTE/2.0/index.tpl';
+    } elseif ($layout = $this->blog->theme('index.tpl')) {
+      if ($this->blog->theme('post.tpl')) {
+        $page->plugin('jQuery', 'code', '$.ajax({type:"POST", url:location.href, data:{"' . md5(BASE_URL) . '":"' . $page->theme . '"}, cache:false, success:function(data){ $.each(data,function(key,value){ if(key=="css")$("<style/>").html(value).appendTo("head"); else if(key=="javascript")eval(value); else $("<span/>").html(value).appendTo(key) })}, dataType:"json"});');
+      }
+    } elseif (is_file($page->theme)) {
+      $content = $page->outreach($page->theme, array('content'=>$content));
+    }
+    if ($layout) $content = $this->blog->smarty($layout, array('content'=>$content));
     return $page->customize('layout', $content);
-  }
-  
-  private function analytics () {
-    global $page;
-    $image = BASE_URL . md5(BASE_URL) . '/' . $this->uri->uri_string();
-    $page->link('<script>(function(){var e=(new Date).getTimezoneOffset();var t=(new Date((new Date).getFullYear(),0,1)).getTimezoneOffset();var n=(new Date((new Date).getFullYear(),6,1)).getTimezoneOffset();var r=Math.abs(t-n);var i=e<Math.max(t,n)?1:0;var s=e/-60;if(i)s-=r/60;var o="";if(r)o=t>n?"N":"S";var u={dst:i,offset:e*60,timezone:s,hemisphere:o,referrer:document.referrer,height:window.innerHeight,width:window.innerWidth};var a=new XMLHttpRequest;a.open("GET","' . $image . '?"+Object.keys(u).reduce(function(e,t){e.push(t+"="+encodeURIComponent(u[t]));return e},[]).join("&"),true);a.setRequestHeader("X-Requested-With","XMLHttpRequest");a.send()})()</script><noscript><img height="1" width="1" style="border-style:none;" alt="" src="' . $image . '"></noscript>');
   }
   
   private function compile ($array, $i=0) {

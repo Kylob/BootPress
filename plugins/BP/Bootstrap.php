@@ -2,9 +2,15 @@
 
 class Bootstrap {
   
+  public $framework = 'bootstrap';
+  public $version = null;
   private $table = null;
   private $navbar = null;
   private $listings = null;
+  
+  public function __construct ($version=null) {
+    if ($version) $this->version = version_compare($version, 4, '>=') ? 4 : 3;
+  }
   
   public function __get ($name) {
     switch ($name) {

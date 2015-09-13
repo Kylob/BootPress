@@ -22,7 +22,6 @@ class Blog extends CI_Driver_Library {
     $this->authors = BASE_URI . 'blog/authors/';
     $this->post = BASE_URI . 'blog/content/';
     if (!is_dir($this->post)) mkdir($this->post, 0755, true);
-    if (!is_file($this->post . 'setup.ini')) file_put_contents($this->post . 'setup.ini', file_get_contents(dirname($this->templates) . '/setup.ini'));
     
     // for backwards compatibility:
     if (is_file($this->post . 'blog.tpl') && is_dir(BASE_URI . 'themes/default/')) {
@@ -33,17 +32,93 @@ class Blog extends CI_Driver_Library {
       if (is_file($this->post . 'post.tpl')) rename($this->post . 'post.tpl', BASE_URI . 'themes/default/post.tpl');
       if (is_file($this->post . 'tags.tpl')) rename($this->post . 'tags.tpl', BASE_URI . 'themes/default/tags.tpl');
     }
+    if (is_file($this->post . 'setup.ini') && is_dir(BASE_URI . 'themes/default/')) {
+      rename($this->post . 'setup.ini', BASE_URI . 'themes/default/setup.ini');
+    }
     
-    $config = parse_ini_file($this->post . 'setup.ini');
-    $this->blog = array('name'=>'', 'summary'=>'');
-    if (isset($config['blog'])) $this->blog = array_merge($this->blog, $config['blog']);
-    unset($config['blog']);
-    $this->config = array_merge(array('pagination'=>10), $config);
-    $this->blog['bootstrap'] = '3.3.2';
-    $page->load(BASE, 'bootstrap/Bootstrap.php');
-    $bp = new Bootstrap;
-    $this->blog['page'] = trim($this->controller, '#');
-    if (empty($this->blog['name']) && $this->controller != '#admin#') $page->eject($page->url('admin'));
+    $this->setup();
+  }
+  
+  public function setup () {
+    global $bp, $ci, $page;
+    static $previous = null;
+    if ($previous == $page->theme) return;
+    if ($setup = $this->theme('setup.ini')) {
+      $previous = $page->theme;
+      $this->config = parse_ini_file($setup);
+      $this->blog = (isset($this->config['blog'])) ? $this->config['blog'] : array();
+      if (!isset($this->blog['name']) || empty($this->blog['name'])) $this->blog['name'] = 'Another { BootPress } Site';
+      if (!isset($this->blog['summary'])) $this->blog['summary'] = '';
+      if (!isset($this->blog['bootstrap']) || empty($this->blog['bootstrap'])) $this->blog['bootstrap'] = '3.3.5';
+      $bp = $page->plugin('BP', 'bootstrap', $this->blog['bootstrap']);
+      $compare = $this->config;
+      unset($this->config['blog']);
+      if (!isset($this->config['pagination']) || empty($this->config['pagination'])) $this->config['pagination'] = 10;
+      $ini = array('blog'=>$this->blog) + $this->config;
+      if ($compare !== $ini) {
+        file_put_contents($setup, $this->ini($ini, array(
+          'blog' => 'These are available in your Smarty template\'s {$blog} array:',
+          'pagination' => 'The number of listings to show per page:'
+        )));
+      }
+      $this->blog['page'] = trim($this->controller, '#');
+    }
+  }
+  
+  public function theme ($file, $blog=null) {
+    global $ci, $page;
+    $theme = ($page->theme == 'default' && ($preview = $ci->session->preview_layout) && is_admin(2)) ? $preview : $page->theme;
+    if (is_string($theme) && strpos($theme, '/') === false) {
+      if ($blog) $this->blog['page'] = $blog;
+      // Themes act autonomously of each other so that chaos does not ensue
+      if (is_file(BASE_URI . 'themes/' . $theme . '/' . $file)) {
+        return BASE_URI . 'themes/' . $theme . '/' . $file;
+      } elseif (is_file($this->templates . $file)) {
+        return $this->templates . $file;
+      }
+    }
+    return null;
+  }
+  
+  public function ini ($settings, $comments=array()) {
+    $content = '';
+    if (is_array($settings)) {
+      $reserved = array('null', 'yes', 'no', 'true', 'false', 'on', 'off', 'none');
+      $characters = array('{', '}', '|', '&', '~', '!', '[', '(', ')', '^', '"');
+      foreach ($settings as $name => $param) {
+        $name = str_replace($characters, '', $name);
+        if (in_array($name, $reserved)) continue; // don't do that
+        if (isset($comments[$name])) $content .= '; ' . implode("\n; ", (array) $comments[$name]) . "\n";
+        if (is_array($param)) {
+          $params = array();
+          foreach ($param as $key => $value) {
+            if (!is_numeric($key)) $key = str_replace($characters, '', $key);
+            if (is_numeric($key) || in_array($key, $reserved)) {
+              $params[] = $value;
+            } else {
+              $params["{$name}[{$key}]"] = $value;
+            }
+          }
+          $pad = max(array_map('strlen', array_keys($params)));
+          foreach ($params as $key => $value) {
+            if (is_numeric($key)) $key = $name . '[]';
+            $content .= str_pad($key, $pad) . ' = ' . $this->ini((string) $value) . "\n";
+          }
+        } else {
+          $content .= $name . ' = ' . $this->ini($param) . "\n";
+        }
+        $content .= "\n";
+      }
+    } elseif (is_null($settings)) {
+      $content .= 'null';
+    } elseif (is_bool($settings)) {
+      $content .= ($settings) ? 'true' : 'false';
+    } elseif (is_numeric($settings)) {
+      $content .= $settings;
+    } else {
+      $content .= '"' . $settings . '"';
+    }
+    return $content;
   }
   
   public function __get ($name) {
@@ -115,13 +190,9 @@ class Blog extends CI_Driver_Library {
     }
   }
   
-  public function resources ($media, $page=null) {
-    $this->url = $media;
-    if ($page) $this->blog['page'] = $page;
-  }
-  
   public function smarty ($file, $vars=array(), $testing=false) {
     global $bp, $ci, $page;
+    $this->url = str_replace(array(BASE_URI, BASE), BASE_URL, dirname($file)) . '/';
     $debug = (!$testing && is_admin(2) && $ci->session->enable_profiler) ? true : false;
     if ($debug) {
       $memory = memory_get_usage();
@@ -133,9 +204,9 @@ class Blog extends CI_Driver_Library {
       $functions = array('preg_replace', 'number_format', 'implode', 'explode', 'array_keys', 'array_values', 'array_flip', 'array_reverse', 'array_shift', 'array_unshift', 'array_pop', 'array_push', 'array_combine', 'array_merge');
       if ($testing || $this->controller == '#post#') $functions = array_merge(array('is_user', 'is_admin', 'in_group'), $functions);
       $smarty = $page->plugin('Smarty', 'class');
-      $smarty->setCompileDir($smarty->getCompileDir() . $page->get('domain'));
+      $smarty->setCompileDir($smarty->getCompileDir() . $page->domain);
       $smarty->assign(array(
-        'bp' => new BootstrapClone($bp),
+        'bp' => new BootPressClone($bp),
         'page' => new PageClone($page, ($this->controller == '#post#' ? 'post' : 'blog'))
       ));
       $security = new Smarty_Security($smarty);
@@ -145,7 +216,7 @@ class Blog extends CI_Driver_Library {
       $smarty->enableSecurity($security);
     }
     unset($vars['bp'], $vars['page']);
-    $vars['blog'] = $this->blog;
+    $vars = array('blog'=>$this->blog) + $vars;
     $smarty->assign($vars);
     $smarty->setTemplateDir(dirname($file) . '/');
     try {
@@ -180,7 +251,7 @@ class Blog extends CI_Driver_Library {
   
   public function decache ($domain=null) {
     global $page;
-    if (empty($domain)) $domain = $page->get('domain');
+    if (empty($domain)) $domain = $page->domain;
     $cache = APPPATH . 'cache/' . $domain . '/proceed.txt';
     if (is_file($cache)) unlink($cache);
     $smarty = $page->plugin('Smarty', 'class');
@@ -192,6 +263,78 @@ class Blog extends CI_Driver_Library {
     unset($smarty);
   }
   
+  public function file ($uri) {
+    global $bp, $ci, $page;
+    if (preg_match('/[^a-z0-9-\/]/', $uri)) {
+      $seo = $page->seo($uri);
+      if (is_dir($this->post . $uri)) rename($this->post . $uri, $this->post . $seo);
+      $uri = $seo;
+    }
+    if (empty($uri)) $uri = 'index';
+    $blog = $this->db->row(array(
+      'SELECT b.id, b.category_id AS category, c.uri AS path, b.content, b.keywords, b.author, b.updated',
+      'FROM blog AS b LEFT JOIN categories AS c ON b.category_id = c.id',
+      'WHERE b.uri = ?'
+    ), array($uri));
+    $file = $this->post . $uri . '/index.tpl';
+    if (is_file($file)) {
+      $page->title = '';
+      $page->description = '';
+      $page->keywords = '';
+      $page->robots = true;
+      $page->body = '';
+      $page->theme = 'default';
+      $page->vars = array();
+      $content = trim($this->smarty($file));
+      if ($page->markdown === true) $content = $bp->md($content);
+      unset($page->vars['markdown']);
+      $published = $page->published;
+      if (is_string($published) && ($date = strtotime($published))) {
+        $published = $date * -1; // a post
+      } elseif ($published === true) {
+        $published = 1; // a page
+      } else {
+        $published = 0; // unpublished
+      }
+      $author = (string) $page->author;
+      $update = array(
+        'category_id' => $this->category($blog, $uri),
+        'uri' => $uri,
+        'title' => $page->title,
+        'description' => $page->description,
+        'keywords' => $page->keywords,
+        'theme' => $page->theme,
+        'thumb' => (string) $page->thumb,
+        'author' => (!empty($author)) ? $page->seo($author) : '',
+        'featured' => ($page->featured === true) ? -1 : 0,
+        'published' => $published,
+        'updated' => filemtime($file) * -1,
+        'content' => $content
+      );
+      if (empty($blog)) {
+        $update['seo'] = $page->seo($update['title']);
+        $blog = array('id' => $this->db->insert('blog', $update));
+        if (!empty($update['author'])) $this->author($blog['id'], $author, $update['author']);
+        if (!empty($update['keywords'])) $this->tag($blog['id'], $update['keywords']);
+      } else {
+        foreach (array('updated', 'content') as $check) {
+          if ($update[$check] != $blog[$check]) {
+            $ci->sitemap->modify('uri', $uri);
+            $update['seo'] = $page->seo($update['title']);
+            $this->db->update('blog', 'id', array($blog['id']=>$update));
+            $this->author($blog['id'], $author, $update['author'], $blog['author']);
+            $this->tag($blog['id'], $update['keywords'], $blog['keywords']);
+            break;
+          }
+        }
+      }
+      return array('id'=>$blog['id'], 'uri'=>$uri, 'content'=>$content);
+    } elseif ($blog) { // then remove
+      $this->delete($blog['uri']);
+    }
+    return false;
+  }
+  
   public function query ($type, $params=null) {
     global $bp, $ci, $page;
     $posts = array();
@@ -200,7 +343,7 @@ class Blog extends CI_Driver_Library {
       #-- The following are for listings --#
       
       case 'similar': // keywords, limit 5 (order by RANK)
-        if (empty($params)) $params = $this->db->row('SELECT id AS exclude, keywords AS tags FROM blog WHERE uri = ?', array($page->get('uri')));
+        if (empty($params)) $params = $this->db->row('SELECT id AS exclude, keywords AS tags FROM blog WHERE uri = ?', array($page->uri));
         if (!empty($params)) {
           $id = (is_array($params) && isset($params['exclude'])) ? (int) $params['exclude'] : 0;
           $limit = (is_array($params) && isset($params['limit'])) ? (int) $params['limit'] : 10;
@@ -353,79 +496,6 @@ class Blog extends CI_Driver_Library {
         
     }
     return $posts;
-  }
-  
-  public function file ($uri) {
-    global $bp, $ci, $page;
-    if (preg_match('/[^a-z0-9-\/]/', $uri)) {
-      $seo = $page->seo($uri);
-      if (is_dir($this->post . $uri)) rename($this->post . $uri, $this->post . $seo);
-      $uri = $seo;
-    }
-    if (empty($uri)) $uri = 'index';
-    $blog = $this->db->row(array(
-      'SELECT b.id, b.category_id AS category, c.uri AS path, b.content, b.keywords, b.author, b.updated',
-      'FROM blog AS b LEFT JOIN categories AS c ON b.category_id = c.id',
-      'WHERE b.uri = ?'
-    ), array($uri));
-    $file = $this->post . $uri . '/index.tpl';
-    if (is_file($file)) {
-      $this->resources(BASE_URL . 'blog/content/' . $uri . '/');
-      $page->title = '';
-      $page->description = '';
-      $page->keywords = '';
-      $page->robots = true;
-      $page->body = '';
-      $page->theme = 'default';
-      $page->vars = array();
-      $content = trim($this->smarty($file));
-      if ($page->markdown === true) $content = $bp->md($content);
-      unset($page->vars['markdown']);
-      $published = $page->published;
-      if (is_string($published) && ($date = strtotime($published))) {
-        $published = $date * -1; // a post
-      } elseif ($published === true) {
-        $published = 1; // a page
-      } else {
-        $published = 0; // unpublished
-      }
-      $author = (string) $page->author;
-      $update = array(
-        'category_id' => $this->category($blog, $uri),
-        'uri' => $uri,
-        'title' => $page->title,
-        'description' => $page->description,
-        'keywords' => $page->keywords,
-        'theme' => $page->theme,
-        'thumb' => (string) $page->thumb,
-        'author' => (!empty($author)) ? $page->seo($author) : '',
-        'featured' => ($page->featured === true) ? -1 : 0,
-        'published' => $published,
-        'updated' => filemtime($file) * -1,
-        'content' => $content
-      );
-      if (empty($blog)) {
-        $update['seo'] = $page->seo($update['title']);
-        $blog = array('id' => $this->db->insert('blog', $update));
-        if (!empty($update['author'])) $this->author($blog['id'], $author, $update['author']);
-        if (!empty($update['keywords'])) $this->tag($blog['id'], $update['keywords']);
-      } else {
-        foreach (array('updated', 'content') as $check) {
-          if ($update[$check] != $blog[$check]) {
-            $ci->sitemap->modify('uri', $uri);
-            $update['seo'] = $page->seo($update['title']);
-            $this->db->update('blog', 'id', array($blog['id']=>$update));
-            $this->author($blog['id'], $author, $update['author'], $blog['author']);
-            $this->tag($blog['id'], $update['keywords'], $blog['keywords']);
-            break;
-          }
-        }
-      }
-      return array('id'=>$blog['id'], 'uri'=>$uri, 'content'=>$content);
-    } elseif ($blog) { // then remove
-      $this->delete($blog['uri']);
-    }
-    return false;
   }
   
   public function info ($ids) {
@@ -677,7 +747,7 @@ class PageClone {
   
 }
 
-class BootstrapClone {
+class BootPressClone {
   
   private $class;
   

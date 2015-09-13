@@ -1,6 +1,6 @@
 <?php
 
-extract($page->get('params'));
+extract($params);
 
 if (defined('IMAGEMAGICK_PATH') && constant('IMAGEMAGICK_PATH') != '') {
   $page->load($plugin, 'Image.php', 'Magick.php');

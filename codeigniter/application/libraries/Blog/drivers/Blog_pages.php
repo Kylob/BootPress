@@ -200,25 +200,20 @@ class Blog_pages extends CI_Driver {
       case 'author':
       case 'tag':
       case 'category':
-        $content = 'listings';
+        $template = 'listings';
         break;
       case 'archives':
       case 'authors':
       case 'tags':
       case 'blog':
       case 'feed':
-        $content = $blog;
+        $template = $blog;
         break;
     }
-    $ci->sitemap->cache();
-    $ci->blog->resources(str_replace(BASE_URI, BASE_URL, $ci->blog->post), $blog);
-    $theme = ($page->theme == 'default' && $ci->session->preview_layout && is_admin(2)) ? $ci->session->preview_layout : $page->theme;
-    if (is_file(BASE_URI . 'themes/' . $theme . '/' . $content . '.tpl')) {
-      $template = BASE_URI . 'themes/' . $theme . '/' . $content . '.tpl';
-    } else {
-      $template = $ci->blog->templates . $content . '.tpl';
+    if ($file = $this->theme($template . '.tpl', $blog)) {
+      $ci->sitemap->cache();
+      return $ci->blog->smarty($file, $vars);
     }
-    return $ci->blog->smarty($template, $vars);
   }
   
 }

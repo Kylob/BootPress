@@ -15,6 +15,7 @@
 
 # And only these plugins:
 plugins/*
+!plugins/BP/
 !plugins/CDN/
 !plugins/Database/
 !plugins/Form/

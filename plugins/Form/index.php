@@ -1,6 +1,6 @@
 <?php
 
-extract($page->get('params'));
+extract($params);
 
 if (isset($name)) {
   include_once($plugin['uri'] . 'Form.php');

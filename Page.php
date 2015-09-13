@@ -8,6 +8,7 @@ class Page {
   private $query = ''; // A string beginning with '?' (if any params)
   private $domain = ''; // The $website as defined in the main index.php page. 
   private $folder = null; // A "folder" (directory) that shifts the relative context of the $this->url and $this->uri
+  private $theme = 'default';
   public $language = 'en';
   public $charset = 'UTF-8';
   public $title = '';
@@ -15,13 +16,13 @@ class Page {
   public $keywords = '';
   public $robots = true;
   public $body = '';
-  public $theme = 'default';
   public $vars = array(); // an extra array that can be stuffed with whatever values you please - for themes mainly
   private $data = array(); // meta, ico, apple, css, style, other, js, script
-  private $params = array(); // managed in $this->outreach() (private) for plugins, retrieved in $this->get('params') (public)
-  private $saved = array(); // managed in $this->save($name), and retrieved in $this->get('info', $name) - for filters mainly
+  private $saved = array(); // managed in $this->save($name), and retrieved in $this->info($name) - for filters mainly
   private $filters = array(); // managed in $this->filter() (public), and retrieved in $this->customize() (private)
   private $loaded = array(); // include(ed) files from $this->load()
+  
+  private $params = array(); // remove along with $this->get()
   
   public function __construct () {
     global $ci;	
@@ -61,9 +62,11 @@ class Page {
   }
   
   public function set ($var, $value='') {
+    global $ci;
     if (!is_array($var)) $var = array($var => $value);
     foreach ($var as $key => $value) {
       switch ($key) {
+        case 'theme':
         case 'language':
         case 'charset':
         case 'title':
@@ -71,8 +74,8 @@ class Page {
         case 'keywords':
         case 'robots':
         case 'body':
-        case 'theme':
           $this->$key = $value;
+          if ($key == 'theme' && isset($ci->blog)) $ci->blog->setup();
           break;
         default:
           $this->vars[$key] = $value;
@@ -81,26 +84,53 @@ class Page {
     }
   }
   
+  public function __set ($name, $value) {
+    global $ci;
+    if ($name == 'theme') {
+      $this->theme = $value;
+      if ($value != 'admin' && isset($ci->blog)) $ci->blog->setup();
+    } else {
+      $this->vars[$name] = $value;
+    }
+  }
+  
   public function __get ($name) {
+    switch ($name) {
+      case 'url':
+      case 'uri':
+      case 'type':
+      case 'query':
+      case 'domain':
+      case 'theme':
+        return $this->$name;
+        break;
+    }
     return (isset($this->vars[$name])) ? $this->vars[$name] : null;
+  }
+  
+  public function __isset ($name) {
+    // http://stackoverflow.com/questions/2045791/php-empty-on-get-accessor
+    return ($this->__get($name) !== null) ? true : false;
   }
   
   public function get ($var, $name=null, $value=null) {
     switch ($var) {
       case 'info':
-        if (!is_null($value)) return (isset($this->saved[$name][$value])) ? $this->saved[$name][$value] : null;
-        $value = (isset($this->saved[$name])) ? $this->saved[$name] : array();
-        foreach ($value as $key => $info) if (!is_numeric($key)) unset($value[$key]);
+        trigger_error('Page::get has been deprecated.  Use the $page->info() method instead.');
+        $value = $this->info($name, $value);
         break;
       case 'params':
-        $params = $this->params;
-        $value = array_pop($params);
+        trigger_error('Page::get has been deprecated.  You may now access the $params directly.');
+        return $this->params;
         break;
       case 'url':
       case 'uri':
       case 'type':
       case 'query':
-      case 'domain': $value = $this->$var; break;
+      case 'domain':
+        trigger_error('Page::get has been deprecated.  You may now access the $page->' . $var . ' directly.');
+        $value = $this->$var;
+        break;
     }
     return $value;
   }
@@ -409,6 +439,13 @@ class Page {
     }
   }
   
+  public function info ($name, $value=null) {
+    if (!is_null($value)) return (isset($this->saved[$name][$value])) ? $this->saved[$name][$value] : null;
+    $value = (isset($this->saved[$name])) ? $this->saved[$name] : array();
+    foreach ($value as $key => $info) if (!is_numeric($key)) unset($value[$key]);
+    return $value;
+  }
+  
   public function filter ($section, $function, $params, $order=10) {
     $errors = array();
     if (!in_array($section, array('document', 'metadata', 'css', 'styles', 'content', 'layout', 'javascript', 'scripts', 'page'))) {
@@ -447,16 +484,15 @@ class Page {
     return $param;
   }
   
-  public function outreach ($path, $params=array()) { // used in $this->plugin()
-    global $bp, $ci, $page, $export;
-    $this->params[] = $params;
+  public function outreach ($path, $params=array()) {
+    global $bp, $ci, $page; // , $export;
+    $this->params = $params; // remove along with $this->get()
     $export = '';
     ob_start();
     include $path;
     $html = ob_get_clean();
     if (!empty($export) || is_numeric($export) || is_array($export)) $html = $export;
-    $export = '';
-    array_shift($this->params);
+    // $export = '';
     return $html;
   }
   

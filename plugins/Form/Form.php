@@ -882,7 +882,7 @@ class Form {
       return; // they may attempt to submit this form as much as they like (with captcha)
     }
     $this->log = $name;
-    $this->db = $page->plugin('Database', 'sqlite', $this->uri . 'attempts/' . $page->get('domain') . '.db');
+    $this->db = $page->plugin('Database', 'sqlite', $this->uri . 'attempts/' . $page->domain . '.db');
     if ($this->db->created) {
       $this->db->create('attempts', array(
         'form' => 'TEXT NOT NULL DEFAULT ""',

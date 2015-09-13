@@ -137,7 +137,7 @@ class Admin_blog extends CI_Driver {
         $author['thumb'] = substr($author['thumb'], strrpos($author['thumb'], '/') + 1);
       }
       unset($author['uri'], $author['url']);
-      $form->values($uri, $ci->admin->files->ini($author));
+      $form->values($uri, $ci->blog->ini($author));
       $html .= $form->field($uri, 'textarea', array('label'=>$label, 'class'=>'wyciwyg ini input-sm', 'data-file'=>$uri . '.ini', 'spellcheck'=>'false', 'rows'=>5)) . '<br>';
     }
     $html .= $form->close();
@@ -223,7 +223,7 @@ class Admin_blog extends CI_Driver {
     $ci->zip->compression_level = 9;
     if (is_dir($ci->blog->post)) $ci->zip->read_dir($ci->blog->post, false);
     if (is_dir($ci->blog->authors)) $ci->zip->read_dir($ci->blog->authors, false);
-    $ci->zip->download('backup-blog-' . $page->get('domain') . '-' . date('Y-m-d') . '.zip');
+    $ci->zip->download('backup-blog-' . $page->domain . '-' . date('Y-m-d') . '.zip');
   }
   
   private function restore () {

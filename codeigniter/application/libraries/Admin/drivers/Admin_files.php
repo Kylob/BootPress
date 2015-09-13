@@ -5,44 +5,9 @@ class Admin_files extends CI_Driver {
   private $folder;
   
   public function ini ($settings, $comments=array()) {
-    $content = '';
-    if (is_array($settings)) {
-      $reserved = array('null', 'yes', 'no', 'true', 'false', 'on', 'off', 'none');
-      $characters = array('{', '}', '|', '&', '~', '!', '[', '(', ')', '^', '"');
-      foreach ($settings as $name => $param) {
-        $name = str_replace($characters, '', $name);
-        if (in_array($name, $reserved)) continue; // don't do that
-        if (isset($comments[$name])) $content .= '; ' . implode("\n; ", (array) $comments[$name]) . "\n";
-        if (is_array($param)) {
-          $params = array();
-          foreach ($param as $key => $value) {
-            if (!is_numeric($key)) $key = str_replace($characters, '', $key);
-            if (is_numeric($key) || in_array($key, $reserved)) {
-              $params[] = $value;
-            } else {
-              $params["{$name}[{$key}]"] = $value;
-            }
-          }
-          $pad = max(array_map('strlen', array_keys($params)));
-          foreach ($params as $key => $value) {
-            if (is_numeric($key)) $key = $name . '[]';
-            $content .= str_pad($key, $pad) . ' = ' . $this->ini((string) $value) . "\n";
-          }
-        } else {
-          $content .= $name . ' = ' . $this->ini($param) . "\n";
-        }
-        $content .= "\n";
-      }
-    } elseif (is_null($settings)) {
-      $content .= 'null';
-    } elseif (is_bool($settings)) {
-      $content .= ($settings) ? 'true' : 'false';
-    } elseif (is_numeric($settings)) {
-      $content .= $settings;
-    } else {
-      $content .= '"' . $settings . '"';
-    }
-    return $content;
+    global $ci;
+    trigger_error('Deprecated. The $ci->admin->files->ini() has been moved to $ci->blog->ini().');
+    return $ci->blog->ini($settings, $comments);
   }
   
   public function view ($type, $path) {
@@ -502,7 +467,7 @@ class Admin_files extends CI_Driver {
         return false;
       });
     ');
-    return $form . '<div id="admin_manage_files">' . $files . '</div>';
+    return '<div id="admin_manage_files">' . $files . '</div><br>' . $form;
   }
   
 }

@@ -67,7 +67,7 @@ class MY_Profiler extends CI_Profiler {
 	protected function _compile_smarty()
 	{
 		global $page;
-		$smarty = (is_object($page)) ? $page->get('info', 'Smarty') : array();
+		$smarty = (is_object($page)) ? $page->info('Smarty') : array();
 		foreach ($smarty as $key => $value) {
 			$smarty[$key]['memory'] = $this->get_file_size($value['memory']);
 			$smarty[$key]['file'] = $this->base_uri($value['file']);
