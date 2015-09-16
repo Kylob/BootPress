@@ -90,11 +90,27 @@ class Page {
       $this->theme = $value;
       if ($value != 'admin' && isset($ci->blog)) $ci->blog->setup();
     } else {
+      
+      
+      if ($name == 'post' && !empty($value)) {
+        print_r(debug_backtrace());
+        exit;
+      }
+      
+      
       $this->vars[$name] = $value;
     }
   }
   
-  public function __get ($name) {
+  public function __isset ($name) {
+    // http://stackoverflow.com/questions/2045791/php-empty-on-get-accessor
+    return ($this->__get($name) !== null) ? true : false;
+  }
+  
+  public function &__get ($name) {
+    // This method must return a reference and not use ternary operators for multidimensional arrays to work
+    // http://stackoverflow.com/questions/4310473/using-set-with-arrays-solved-but-why
+    // http://stackoverflow.com/questions/5966918/return-null-by-reference-via-get
     switch ($name) {
       case 'url':
       case 'uri':
@@ -105,12 +121,8 @@ class Page {
         return $this->$name;
         break;
     }
-    return (isset($this->vars[$name])) ? $this->vars[$name] : null;
-  }
-  
-  public function __isset ($name) {
-    // http://stackoverflow.com/questions/2045791/php-empty-on-get-accessor
-    return ($this->__get($name) !== null) ? true : false;
+    if (isset($this->vars[$name])) return $this->vars[$name];
+    return null;
   }
   
   public function get ($var, $name=null, $value=null) {
