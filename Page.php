@@ -90,14 +90,6 @@ class Page {
       $this->theme = $value;
       if ($value != 'admin' && isset($ci->blog)) $ci->blog->setup();
     } else {
-      
-      
-      if ($name == 'post' && !empty($value)) {
-        print_r(debug_backtrace());
-        exit;
-      }
-      
-      
       $this->vars[$name] = $value;
     }
   }
