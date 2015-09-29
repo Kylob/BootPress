@@ -114,7 +114,8 @@ class Page {
         break;
     }
     if (isset($this->vars[$name])) return $this->vars[$name];
-    return null;
+    $null = null;
+    return $null;
   }
   
   public function get ($var, $name=null, $value=null) {
@@ -435,19 +436,19 @@ class Page {
     }
   }
   
-  public function save ($name, $info, $value=null) {
-    if (func_num_args() == 2 || is_array($info)) {
-      $this->saved[$name][] = $info;
+  public function save ($name, $key, $value=null) {
+    if (func_num_args() == 2 || is_array($key)) {
+      $this->saved[$name][] = $key;
     } else {
-      $this->saved[$name][$info] = $value;
+      $this->saved[$name][$key] = $value;
     }
   }
   
-  public function info ($name, $value=null) {
-    if (!is_null($value)) return (isset($this->saved[$name][$value])) ? $this->saved[$name][$value] : null;
-    $value = (isset($this->saved[$name])) ? $this->saved[$name] : array();
-    foreach ($value as $key => $info) if (!is_numeric($key)) unset($value[$key]);
-    return $value;
+  public function info ($name, $key=null) {
+    if (!is_null($key)) return (isset($this->saved[$name][$key])) ? $this->saved[$name][$key] : null;
+    $info = (isset($this->saved[$name])) ? $this->saved[$name] : array();
+    foreach ($info as $key => $value) if (!is_numeric($key)) unset($info[$key]);
+    return $info;
   }
   
   public function filter ($section, $function, $params, $order=10) {

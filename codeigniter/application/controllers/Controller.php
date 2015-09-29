@@ -66,15 +66,14 @@ class Controller extends CI_Controller {
         header('Content-Type: image/gif');
         header('Pragma: no-cache');
         exit($image);
-      } elseif ($template = $this->input->post($this->poster)) {
+      } elseif ($theme = $this->input->post($this->poster)) {
         $data = array();
         $this->delay_flashdata();
-        $page->theme = $template;
+        $page->theme = $theme;
         $this->load->driver('blog', array('role'=>'#post#'));
         if ($post = $this->blog->theme('post.tpl')) {
           $this->load->library('auth');
           $vars = array(
-            'template' => $template,
             'user' => $this->auth->user(),
             'uri'=> array(
               'id' => $this->sitemap->uri('id'),
