@@ -14,7 +14,6 @@ class Admin_themes extends CI_Driver {
     if (isset($params['theme'])) {
       $this->theme = $this->mktheme($params['theme']);
       $page->theme = $this->theme; // to double check the ini file
-      if (isset($params['action']) && $params['action'] == 'download') return $this->download();
       $html .= $this->theme();
     } else {
       $html .= $this->create();
@@ -35,7 +34,7 @@ class Admin_themes extends CI_Driver {
       if ($unzip && is_file($unzip)) {
         $ci->load->library('unzip');
         $ci->unzip->files($unzip, $this->dir . $theme, 0755);
-        $ci->unzip->extract('tpl|js|css|less|scss|ttf|otf|svg|eot|woff|swf|jpg|jpeg|gif|png|ico', $ci->unzip->common_dir());
+        $ci->unzip->extract('tpl|js|css|less|scss|ttf|otf|svg|eot|woff|woff2|swf|jpg|jpeg|gif|png|ico', $ci->unzip->common_dir());
         $ci->unzip->close();
       } else {
         list($dirs, $files) = $ci->blog->folder($ci->blog->templates, 'recursive');
@@ -49,15 +48,6 @@ class Admin_themes extends CI_Driver {
       }
     }
     return $theme;
-  }
-  
-  private function download () {
-    global $ci, $page;
-    $user = $ci->session->analytics;
-    $ci->load->library('zip');
-    $ci->zip->compression_level = 9;
-    $ci->zip->read_dir($this->dir . $this->theme, false);
-    $ci->zip->download('backup-theme-' . $page->domain . '-' . $this->theme . '-' . date('Y-m-d_H-i-s', time() - $user['offset']) . '.zip');
   }
   
   private function theme () {
@@ -175,7 +165,7 @@ class Admin_themes extends CI_Driver {
         $this->select(),
         $form->field('save', 'text'),
         $form->field('action', 'radio'),
-        $form->submit('Submit', $bp->button('info pull-right', 'Download ' . $bp->icon('download'), array('href'=>$page->url('admin', 'themes/download', $this->theme)))),
+        $form->submit(),
         $form->field('setup', 'textarea', array('class'=>'wyciwyg ini input-sm', 'rows'=>8, 'data-file'=>'setup.ini')),
         $form->field('index', 'textarea', array('class'=>'wyciwyg tpl input-sm', 'rows'=>8, 'data-file'=>'index.tpl')),
         $form->close(),

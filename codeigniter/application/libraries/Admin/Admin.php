@@ -5,7 +5,7 @@ class Admin extends CI_Driver_Library {
   protected $valid_drivers = array('users', 'errors', 'files', 'blog', 'themes', 'plugins', 'folders', 'databases', 'analytics', 'sitemap');
   private $view;
   
-  public function __construct ($params) {
+  public function __construct ($params=array()) {
     global $ci, $page;
     if ($ci->blog->controller != '#admin#') {
       $this->valid_drivers = array('files');
@@ -55,8 +55,8 @@ class Admin extends CI_Driver_Library {
     global $bp, $ci, $page;
     $html = '';
     if ($ci->blog->controller != '#admin#') {
-      $page->filter('layout', 'prepend', '<div id="adminForms">');
-      $page->filter('layout', 'append', '</div>' . $this->wyciwyg());
+      $page->filter('layout', 'prepend', '<div id="adminForms">', 50);
+      $page->filter('layout', 'append', '</div>' . $this->wyciwyg(), 50);
       $page->style('textarea.input-sm { font-family:Menlo, Monaco, Consolas, "Courier New", monospace; white-space:pre; }');
       return $content;
     }
@@ -207,7 +207,7 @@ class Admin extends CI_Driver_Library {
   
   private function wyciwyg () {
     global $bp, $page;
-    $page->plugin('CDN', 'link', 'ace/1.1.8/min/ace.js');
+    $page->plugin('CDN', 'link', 'ace/1.2.0/min/ace.js');
     $page->link(BASE_URL . 'codeigniter/application/libraries/Admin/wyciwyg.js');
     $html = '<div id="wyciwyg" style="display:none; width:100%; padding:0 10px;">';
       $html .= '<div id="toolbar" class="btn-toolbar">';
@@ -260,7 +260,7 @@ class Admin extends CI_Driver_Library {
         $html .= '</div>';
         
         $html .= '<div class="pull-right" style="margin-bottom:10px;">';
-          $html .= '<button class="return eject btn btn-link btn-xs" title="Click to Return">' . $bp->icon('reply', 'fa') . ' Return</button>';
+          $html .= '<button class="eject btn btn-link btn-xs" title="Click to Return">' . $bp->icon('reply', 'fa') . ' Return</button>';
           $html .= '<button class="send btn btn-primary btn-xs">' . $bp->icon('save', 'fa') . ' Save Changes</button>';
           $html .= '<div class="btn-group btn-group-xs pull-right" style="margin-left:5px;">';
             $html .= '<button class="btn btn-default increase" title="Increase Font Size"><i class="glyphicon glyphicon-plus"></i></button>';

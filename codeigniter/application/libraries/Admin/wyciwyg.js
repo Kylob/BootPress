@@ -57,8 +57,43 @@ $.fn.selectRange = function(start, end) {
   });
 };
 
-var acefile = {compare:'', changes:false};
+var acefile = {
+  compare: '',
+  changes: false,
+  send: function () {
+    var btn = $("#toolbar button.send");
+    if (!btn.hasClass("disabled") && !btn.is(":hidden")) {
+      editor.setReadOnly(true);
+      acefile.changes = false;
+      btn.addClass("disabled").removeClass("btn-primary").data("html", btn.html()).text("Saving ...");
+      $("#toolbar button.eject").hide();
+      $("#toolbar div.status").hide();
+      setTimeout(function(){ acefile.save(editor.getSession().getValue()); }, 100);
+    }
+  },
+  save: function (data) {
+    $.ajax({url:window.location, type:"POST", data:{wyciwyg:data, field:$("#wyciwyg").data("input")}, complete:function(xhr){
+      acefile.response(xhr.status == 200 ? xhr.responseText.toString() : "Server Error: " + xhr.status);
+    }, dataType:"text"});
+  },
+  response: function (status) {
+    var btn = $("#toolbar button.send");
+    btn.removeClass("disabled").addClass("btn-primary").html(btn.data("html")).hide();
+    $("#toolbar button.eject").show();
+    if (status == "Saved") {
+      $("#toolbar div.status").removeClass("text-danger").addClass("text-success").text("Saved").show();
+    } else {
+      $("#toolbar div.status").removeClass("text-success").addClass("text-danger").text("Error").show();
+      alert(status);
+    }
+    acefile.compare = editor.getSession().getValue();
+    acefile.changes = btn;
+    editor.setReadOnly(false);
+  }
+};
+
 var editor = ace.edit("editor");
+editor.$blockScrolling = Infinity; // Try removing this in the future.
 editor.setTheme("ace/theme/tomorrow");
 editor.setBehavioursEnabled(false);
 editor.getSession().setTabSize(2);
@@ -114,6 +149,7 @@ function display_wyciwyg (classes, data, retrieve, file, line, col) {
   $("#adminForms").data("scroll", $(window).scrollTop()).hide(0);
   $("#wyciwyg").data("input", retrieve);
   $("#wyciwyg").show(10, function(){
+    $("html").css("background-color", "#fff");
     $(window).scrollTop(0);
     editor.resize();
     editor.focus();
@@ -180,11 +216,12 @@ $(document).ready(function(){
     return false;
   });
   
-  $("#toolbar").on("click", "button.return", function(){
+  $("#toolbar").on("click", "button.eject", function(){
     var btn = $(this);
     var file = ($("#wyciwyg").data("input").indexOf(".") > 0) ? true : false;
     if (!file) var input = $("textarea[name=" + $("#wyciwyg").data("input") + "]");
     $("#wyciwyg").hide(10, function(){
+      $("html").css("background-color", "");
       if (!file) input.val(editor.getSession().getValue());
       $("#adminForms").show(10, function(){
         $(window).scrollTop($("#adminForms").data("scroll"));
@@ -197,41 +234,7 @@ $(document).ready(function(){
     });
   });
   
-  $("#toolbar").on("click", "button.send", function(){
-    var btn = $(this);
-    var html = btn.html();
-    if (!btn.hasClass("disabled") && !btn.is(":hidden")) {
-      acefile.changes = false;
-      editor.setReadOnly(true);
-      btn.addClass("disabled").removeClass("btn-primary").text("Saving ...");
-      $("#toolbar button.eject").hide();
-      $("#toolbar div.status").hide();
-      var data = editor.getSession().getValue();
-      $.ajax({
-        url: window.location,
-        type: "POST",
-        data: {wyciwyg:data, field:$("#wyciwyg").data("input")},
-        complete: function (xhr) {
-          acefile.changes = btn;
-          acefile.compare = data;
-          editor.setReadOnly(false);
-          btn.removeClass("disabled").addClass("btn-primary").html(html).hide();
-          $("#toolbar button.eject").show();
-          if (xhr.status == 200 && xhr.responseText.toString() == "Saved") {
-            $("#toolbar div.status").removeClass("text-danger").addClass("text-success").text("Saved").show();
-          } else {
-            $("#toolbar div.status").removeClass("text-success").addClass("text-danger").text("Error").show();
-            if (xhr.status == 200) {
-              alert(xhr.responseText);
-            } else {
-              alert("Server Error: " + xhr.status);
-            }
-          }
-        },
-        dataType: "text"
-      });
-    }
-  });
+  $("#toolbar").on("click", "button.send", acefile.send);
   
   $("#toolbar .increase").click(function(){
     editor.setFontSize(Math.min(editor.getFontSize() + 1, 20));

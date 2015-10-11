@@ -223,7 +223,7 @@ class Admin_blog extends CI_Driver {
     $ci->zip->compression_level = 9;
     if (is_dir($ci->blog->post)) $ci->zip->read_dir($ci->blog->post, false);
     if (is_dir($ci->blog->authors)) $ci->zip->read_dir($ci->blog->authors, false);
-    $ci->zip->download('backup-blog-' . $page->domain . '-' . date('Y-m-d') . '.zip');
+    $ci->zip->download('backup-' . $page->domain . '-blog-' . date('Y-m-d') . '.zip');
   }
   
   private function restore () {

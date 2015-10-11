@@ -153,8 +153,8 @@ return array(
 	'jar'	=>	array('application/java-archive', 'application/x-java-application', 'application/x-jar', 'application/x-compressed'),
 	'svg'	=>	array('image/svg+xml', 'application/xml', 'text/xml'),
 	'vcf'	=>	'text/x-vcard',
-	
-	'less'	=>	array('text/css', 'text/plain'),
+	'less'	=>	array('text/x-less', 'text/css', 'text/plain', 'application/octet-stream'),
+	'scss'	=>	array('text/css', 'text/plain', 'application/octet-stream'),
 	'ico'	=> 	array('image/x-icon', 'image/vnd.microsoft.icon'),
 	'ttf'	=> 	array('application/font-sfnt', 'application/font-ttf', 'application/x-font-ttf', 'font/ttf', 'font/truetype', 'application/octet-stream'),
 	'otf'	=> 	array('application/font-sfnt', 'application/font-otf', 'application/x-font-otf', 'font/opentype', 'application/octet-stream'),

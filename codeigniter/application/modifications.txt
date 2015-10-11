@@ -4,7 +4,8 @@ config/config.php
 
 config/mimes.php
 	Added:
-	'less'	=>	array('text/css', 'text/plain'),
+	'less'	=>	array('text/x-less', 'text/css', 'text/plain', 'application/octet-stream'),
+	'scss'	=>	array('text/css', 'text/plain', 'application/octet-stream'),
 	'ico'	=> 	array('image/x-icon', 'image/vnd.microsoft.icon'),
 	'ttf'	=> 	array('application/font-sfnt', 'application/font-ttf', 'font/ttf', 'font/truetype', 'application/octet-stream'),
 	'otf'	=> 	array('application/font-sfnt', 'application/font-otf', 'font/opentype', 'application/octet-stream'),

@@ -17,7 +17,7 @@ class Admin_files extends CI_Driver {
       switch ($type) {
         case 'authors': $html .= $this->folder($path, false, array('images'=>'jpg|jpeg|gif|png', 'files'=>false, 'resources'=>false)); break;
         case 'blog': $html .= $this->folder($path, false, array('exclude'=>'index.tpl', 'files'=>'tpl|js|css', 'resources'=>'pdf|zip|mp3|mp4')); break;
-        case 'themes': $html .= $this->folder($path, true, array('exclude'=>'index.tpl', 'main'=>array('archives.tpl', 'authors.tpl', 'blog.tpl', 'default.tpl', 'feed.tpl', 'listings.tpl', 'tags.tpl'), 'files'=>'tpl|js|css|less|scss', 'resources'=>'ttf|otf|svg|eot|woff|swf')); break;
+        case 'themes': $html .= $this->folder($path, true, array('exclude'=>'index.tpl', 'main'=>array('archives.tpl', 'authors.tpl', 'blog.tpl', 'default.tpl', 'feed.tpl', 'listings.tpl', 'tags.tpl'), 'files'=>'tpl|js|css|less|scss', 'resources'=>'ttf|otf|svg|eot|woff|woff2|swf')); break;
         case 'plugins': $html .= $this->folder($path, 2, array('exclude'=>'index.php')); break;
         case 'folders': $html .= $this->folder($path, false, array('exclude'=>'index.php')); break;
       }
@@ -50,9 +50,9 @@ class Admin_files extends CI_Driver {
     $files = array_merge(array(
       'main' => array(), // The files we don't want to rename or delete
       'exclude' => array(), // The files we don't want to include at all
-      'files' => 'tpl|js|css' . (is_admin(1) ? '|php' : null),
+      'files' => 'tpl|js|css|less|scss' . (is_admin(1) ? '|php' : null),
       'images' => 'jpg|jpeg|gif|png|ico',
-      'resources' => 'pdf|ttf|otf|svg|eot|woff|swf|tar|gz|tgz|zip|csv|xl|xls|xlsx|word|doc|docx|ppt|ogg|wav|mp3|mp4|mpe|mpeg|mpg|mov|qt|psd',
+      'resources' => 'pdf|ttf|otf|svg|eot|woff|woff2|swf|tar|gz|tgz|zip|csv|xl|xls|xlsx|word|doc|docx|ppt|ogg|wav|mp3|mp4|mpe|mpeg|mpg|mov|qt|psd',
     ), $types);
     $types = array();
     foreach (array('files', 'images', 'resources') as $type) {
@@ -304,6 +304,20 @@ class Admin_files extends CI_Driver {
         $data = array('success'=>true, 'newValue'=>$oldname);
       }
     }
+    if ($ci->input->get('download') == 'files') {
+      $ci->load->library('zip');
+      $ci->zip->compression_level = 9;
+      if ($recursive) {
+        $ci->zip->read_dir($path, false);
+      } else {
+        list($dirs, $files) = $ci->blog->folder($path);
+        foreach ($files as $file) {
+          $ci->zip->read_file($path . $file);
+        }
+      }
+      $user = $ci->session->analytics;
+      $ci->zip->download('backup-' . $page->domain . '-' . str_replace(array(BASE_URI, '/'), array('', '-'), $path) . date('Y-m-d_H-i-s', time() - $user['offset']) . '.zip');
+    }
     $save = array_flip(preg_grep('/\.(js|css|less|scss|tpl' . (is_admin(1) ? '|php' : null) . ')$/', $files));
     foreach ($save as $file => $uri) $save[$file] = $path . $file;
     $this->save($save, $main);
@@ -426,7 +440,7 @@ class Admin_files extends CI_Driver {
       if (!empty($ext['files'])) $html .= $form->field('file', 'text');
       if ($recursive) $html .= $form->field('directory', 'text');
       $html .= $form->field('upload[]', 'file');
-      $html .= $form->submit();
+      $html .= $form->submit('Submit', $bp->button('link pull-right', $bp->icon('download') . ' Backup', array('href'=>$page->url('add', '', 'download', 'files'), 'title'=>'Click to Download')));
       $html .= $form->close();
       unset($form);
       $form = $html;

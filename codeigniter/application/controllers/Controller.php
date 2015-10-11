@@ -36,7 +36,7 @@ class Controller extends CI_Controller {
     }
     $paths = array_diff($paths, array('index')); // remove any reference to 'index'
     $type = pathinfo($uri, PATHINFO_EXTENSION);
-    if (!empty($type) && in_array($type, array('xml', 'txt', 'less'))) {
+    if (!empty($type) && in_array($type, array('xml', 'txt', 'less', 'scss'))) {
       $desired_url = $this->config->base_url(implode('/', $paths) . '.' . $type);
     } else {
       $desired_url = $this->config->site_url($paths) . strstr($_SERVER['REQUEST_URI'], '?');
@@ -289,7 +289,7 @@ class Controller extends CI_Controller {
       if (isset($cache[$ext])) { // we want to cache this resource
         $resources[] = BASE_URL . $uri;
         $types[$uri] = '.' . $ext;
-      } elseif ($ext == 'txt' || $ext == 'xml' || $ext == 'less') {
+      } elseif (in_array($ext, array('xml', 'txt', 'less', 'scss'))) {
         // We'll place these at the top to make sure they are preserved
         $links = array_merge(array(BASE_URL . $uri => BASE_URL . $uri), $links);
       } else { // we are ensuring the correct url_suffix
@@ -398,7 +398,7 @@ class Controller extends CI_Controller {
       $layout = BASE . 'codeigniter/application/libraries/Admin/LTE/2.0/index.tpl';
     } elseif ($layout = $this->blog->theme('index.tpl')) {
       if ($this->blog->theme('post.tpl')) {
-        $page->plugin('jQuery', 'code', '$.ajax({type:"POST", url:location.href, data:{"' . md5(BASE_URL) . '":"' . $page->theme . '"}, cache:false, success:function(data){ $.each(data,function(key,value){ if(key=="css")$("<style/>").html(value).appendTo("head"); else if(key=="javascript")eval(value); else $("<span/>").html(value).appendTo(key) })}, dataType:"json"});');
+        $page->plugin('jQuery', 'code', '$.ajax({type:"POST",url:location.href,data:{"' . md5(BASE_URL) . '":"' . $page->theme . '"},cache:!1,success:function(e){$.each(e,function(e,t){if("css"==e){var a=document.createElement("style");a.type="text/css",document.getElementsByTagName("head")[0].appendChild(a),a.styleSheet?a.styleSheet.cssText=t:a.appendChild(document.createTextNode(t))}else if("javascript"==e){var c=document.createElement("script");c.type="text/javascript",c.text=t,document.body.appendChild(c),document.body.removeChild(document.body.lastChild)}else $("<span/>").html(t).appendTo(e)})},dataType:"json"});');
       }
     } elseif (is_file($page->theme)) {
       $content = $page->outreach($page->theme, array('content'=>$content));

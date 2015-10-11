@@ -39,6 +39,11 @@ class Admin_plugins extends CI_Driver {
       $form->values($ci->admin->files->save(array('index' => $this->plugins . $plugin . '/index.php')));
     } else {
       $form->validate('edit', 'Create', 'required', 'Enter the name of the plugin that you would like to create.  If it already exists then nothing will happen.');
+      $form->upload('upload', 'Upload', 'zip', array(
+        'info' => 'Submit a zipped file to extract for your plugin.',
+        'filesize' => 10,
+        'limit' => 1
+      ));
     }
     #-- Submitted --#
     if ($form->submitted() && empty($form->errors)) {
@@ -49,6 +54,15 @@ class Admin_plugins extends CI_Driver {
         } elseif (!is_dir($this->plugins . $folder)) {
           mkdir($this->plugins . $folder, 0755, true);
           file_put_contents($this->plugins . $folder . '/index.php', '');
+          if (!empty($form->vars['upload'])) {
+            $unzip = key($form->vars['upload']);
+            if (is_file($unzip)) {
+              $ci->load->library('unzip');
+              $ci->unzip->files($unzip, $this->plugins . $folder);
+              $ci->unzip->extract(null, $ci->unzip->common_dir());
+              $ci->unzip->close();
+            }
+          }
         }
         $form->eject = $page->url('add', $form->eject, 'plugin', $folder);
       }
@@ -56,7 +70,13 @@ class Admin_plugins extends CI_Driver {
     }
     $html .= $form->header();
     $html .= $form->field('plugin', !empty($dirs) ? 'select' : 'hidden');
-    $html .= $form->field('edit', 'text', array('append'=>$bp->button('primary', 'Submit', array('type'=>'submit', 'data-loading-text'=>'Submitting...'))));
+    if ($plugin) {
+      $html .= $form->field('edit', 'text', array('append'=>$bp->button('primary', 'Submit', array('type'=>'submit', 'data-loading-text'=>'Submitting...'))));
+    } else {
+      $html .= $form->field('edit', 'text');
+      $html .= $form->field('upload', 'file');
+      $html .= $form->submit();
+    }
     if ($plugin) $html .= $form->field('index', 'textarea', array('class'=>'wyciwyg php input-sm', 'data-file'=>'index.php'));
     $html .= $form->close();
     $page->plugin('jQuery', 'code', '

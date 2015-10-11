@@ -26,7 +26,7 @@ class Sitemap {
     if (!$analytics && empty($_POST)) {
       $this->id = md5(BASE_URL . $uri);
       if (empty($_GET)) {
-        if (strpos($uri, '.') === false) $this->uri = $uri; // ie. not an xml, txt or less file
+        if (strpos($uri, '.') === false) $this->uri = $uri; // ie. not an xml, txt, less or scss file
       } else {
         $this->id .= '/' . md5(serialize($_GET));
       }
@@ -262,7 +262,7 @@ class Sitemap {
   }
   
   public function may_change () {
-    global $ci;
+    global $ci, $page;
     $file = $this->folder . $this->id;
     if (empty($this->id) || !file_exists($file)) return;
     header('Cache-Control: max-age=0, must-revalidate');
