@@ -1,0 +1,13 @@
+# Ignore everything here
+/*
+
+# Except for these
+!.gitignore
+!another.css
+!bom.css
+!data.csv
+!empty.txt
+!image.jpg
+!index.php
+!sparks.js
+!vjustify.js

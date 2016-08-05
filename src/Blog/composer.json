@@ -1,0 +1,27 @@
+{
+    "name": "bootpress/blog",
+    "description": "A file based blog that can be implemented in any project with full-text searching, featured and similar posts, pages, listings, archives, authors, tags, categories, sitemap and feed.",
+    "keywords": ["bootpress", "smarty", "blog", "flat file", "flat-file" "flatfile", "cms"],
+    "homepage": "https://www.bootpress.org/components/blog/",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Kyle Gadd",
+            "email": "kyle.gadd@gmail.com"
+        }
+    ],
+    "require": {
+        "php": ">=5.4",
+        "bootpress/page": "^1.0",
+        "bootpress/asset": "^1.0",
+        "bootpress/theme": "^1.0",
+        "bootpress/sqlite": "^1.0",
+        "bootpress/sitemap": "^1.0",
+        "bootpress/hierarchy": "^1.0",
+        "bootpress/pagination": "^1.0",
+        "symfony/yaml": "^2.3||^3.0"
+    },
+    "autoload": {
+        "psr-4": { "BootPress\\Blog\\": "" }
+    }
+}

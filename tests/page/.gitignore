@@ -1,0 +1,8 @@
+# Ignore everything here
+/*
+
+# Except for these
+!.gitignore
+!load-file-test.php
+!assets/
+!blog/

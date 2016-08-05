@@ -1,0 +1,6 @@
+# Ignore everything here
+/*
+
+# Except for these
+!.gitignore
+!default/

@@ -1,0 +1,20 @@
+{
+    "name": "bootpress/hierarchy",
+    "description": "Nested Set benefits with Adjacency List effort.  Retrieve the children, counts, levels, paths, trees, nests, and leaves from your category nodes.",
+    "keywords": ["bootpress", "hierarchy", "nested sets", "adjacency list", "categories"],
+    "homepage": "https://www.bootpress.org/components/hierarchy/",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Kyle Gadd",
+            "email": "kyle.gadd@gmail.com"
+        }
+    ],
+    "require": {
+        "php": ">=5.4",
+        "bootpress/database": "^1.0"
+    },
+    "autoload": {
+        "psr-4": { "BootPress\\Hierarchy\\": "" }
+    }
+}

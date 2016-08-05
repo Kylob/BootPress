@@ -1,0 +1,21 @@
+{
+    "name": "bootpress/sqlite",
+    "description": "Extends the Database component to create and update tables and indexes at will.  Simplifies FTS full-text searching.",
+    "keywords": ["bootpress", "sqlite", "sqlite3", "fts", "database"],
+    "homepage": "https://www.bootpress.org/components/sqlite/",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Kyle Gadd",
+            "email": "kyle.gadd@gmail.com"
+        }
+    ],
+    "require": {
+        "php": ">=5.4",
+        "ext-sqlite3": "*",
+        "bootpress/database": "^1.0"
+    },
+    "autoload": {
+        "psr-4": { "BootPress\\SQLite\\": "" }
+    }
+}

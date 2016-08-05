@@ -1,0 +1,24 @@
+{
+    "name": "bootpress/page",
+    "description": "A framework agnostic HTML framwork that allows you to manipulate every part of an HTML page at any time.",
+    "keywords": ["bootpress", "page", "url", "uri", "html", "framework"],
+    "homepage": "https://www.bootpress.org/components/page/",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Kyle Gadd",
+            "email": "kyle.gadd@gmail.com"
+        }
+    ],
+    "require": {
+        "php": ">=5.4",
+        "symfony/http-foundation": "^2.3||^3.0",
+        "erusev/parsedown": "^1.0",
+        "jbroadway/urlify": "^1.0",
+        "spartz/text-formatter": "^1.0",
+        "altorouter/altorouter": "^1.0"
+    },
+    "autoload": {
+        "psr-4": { "BootPress\\Page\\": "" }
+    }
+}

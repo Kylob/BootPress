@@ -1,0 +1,25 @@
+{
+    "name": "bootpress/auth",
+    "description": "Manages users and logs them in securely using the definitive best practices known to man.",
+    "keywords": ["bootpress", "auth", "security"],
+    "homepage": "https://www.bootpress.org/components/auth/",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Kyle Gadd",
+            "email": "kyle.gadd@gmail.com"
+        }
+    ],
+    "require": {
+        "php": ">=5.4",
+        "bootpress/page": "^1.0",
+        "bootpress/sqlite": "^1.0"
+    },
+    "suggest": {
+        "paragonie/random_compat": "PHP 5.x polyfill for random_bytes() and random_int() from PHP 7",
+        "ircmaxell/password-compat": "PHP 5.5 password_* functions, with forward-compatible support."
+    },
+    "autoload": {
+        "psr-4": { "BootPress\\Auth\\": "" }
+    }
+}

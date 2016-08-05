@@ -1,0 +1,23 @@
+{
+    "name": "bootpress/theme",
+    "description": "A Smarty theme manager for layouts that utilizes the Page and Bootstrap components.",
+    "keywords": ["bootpress", "smarty", "themes"],
+    "homepage": "https://www.bootpress.org/components/theme/",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Kyle Gadd",
+            "email": "kyle.gadd@gmail.com"
+        }
+    ],
+    "require": {
+        "php": ">=5.4",
+        "bootpress/page": "^1.0",
+        "bootpress/bootstrap": "^1.0",
+        "symfony/yaml": "^2.3||^3.0",
+        "smarty/smarty": "~3.1"
+    },
+    "autoload": {
+        "psr-4": { "BootPress\\Theme\\": "" }
+    }
+}

@@ -1,0 +1,54 @@
+{
+    "name": "bootpress/components",
+    "description": "Kick Your Websites Into High Gear",
+    "keywords": ["bootpress", "components", "framework"],
+    "homepage": "https://www.bootpress.org/components/",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Kyle Gadd",
+            "email": "kyle.gadd@gmail.com"
+        }
+    ],
+    "require": {
+        "php": ">=5.4",
+        "symfony/yaml": "^2.3||^3.0",
+        "symfony/http-foundation": "^2.3||^3.0",
+        "league/glide-symfony": "^1.0",
+        "matthiasmullie/minify": "1.3.*",
+        "pguardiario/phpuri": "*",
+        "erusev/parsedown": "^1.0",
+        "jbroadway/urlify": "^1.0",
+        "spartz/text-formatter": "^1.0",
+        "altorouter/altorouter": "^1.0",
+        "smarty/smarty": "~3.1"
+    },
+    "require-dev": {
+        "phpunit/phpunit": "^4.0",
+        "fabpot/php-cs-fixer": "^1.0",
+        "squizlabs/php_codesniffer": "^2.4"
+    },
+    "suggest": {
+        "paragonie/random_compat": "PHP 5.x polyfill for random_bytes() and random_int() from PHP 7",
+        "ircmaxell/password-compat": "PHP 5.5 password_* functions, with forward-compatible support."
+    },
+    "replace": {
+        "bootpress/asset": "self.version",
+        "bootpress/auth": "self.version",
+        "bootpress/blog": "self.version",
+        "bootpress/bootstrap": "self.version",
+        "bootpress/database": "self.version",
+        "bootpress/form": "self.version",
+        "bootpress/hierarchy": "self.version",
+        "bootpress/page": "self.version",
+        "bootpress/pagination": "self.version",
+        "bootpress/sitemap": "self.version",
+        "bootpress/sqlite": "self.version",
+        "bootpress/table": "self.version",
+        "bootpress/theme": "self.version",
+        "bootpress/validator": "self.version"
+    },
+    "autoload": {
+        "psr-4": { "BootPress\\": "src/" }
+    }
+}

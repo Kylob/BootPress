@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<phpunit bootstrap="tests/bootstrap.php" stderr="true">
+<!-- http://stackoverflow.com/questions/9745080/test-php-headers-with-phpunit?rq=1 -->
+
+    <testsuites>
+        <testsuite name="BootPress Components">
+            <!-- <directory>tests</directory> -->
+            <file>tests/PageTest.php</file>
+            <file>tests/DatabaseTest.php</file>
+            <file>tests/SqliteTest.php</file>
+            <file>tests/ValidatorTest.php</file>
+            <file>tests/FormTest.php</file>
+            <file>tests/BootstrapTest.php</file>
+            <file>tests/TableTest.php</file>
+            <file>tests/PaginationTest.php</file>
+            <file>tests/HierarchyTest.php</file>
+            <file>tests/AssetTest.php</file>
+            <file>tests/SitemapTest.php</file>
+            <file>tests/ThemeTest.php</file>
+            <file>tests/BlogTest.php</file>
+            <file>tests/AuthTest.php</file>
+        </testsuite>
+    </testsuites>
+    
+    <filter>
+        <whitelist>
+            <directory>src</directory>
+        </whitelist>
+    </filter>
+    
+</phpunit>
