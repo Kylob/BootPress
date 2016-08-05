@@ -9,7 +9,7 @@ php:
   - nightly
 
 before_script:
-  - if [[ "$TRAVIS_PHP_VERSION" != '5.4' ]]; then composer install -n ; fi
+  - composer install
 
 script:
-  - if [[ "$TRAVIS_PHP_VERSION" != '5.4' ]]; then phpunit ; fi
+  - phpunit
