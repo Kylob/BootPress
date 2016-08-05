@@ -8,6 +8,7 @@ use BootPress\SQLite\Component as SQLite;
 use BootPress\Sitemap\Component as Sitemap;
 use BootPress\Hierarchy\Component as Hierarchy;
 use BootPress\Pagination\Component as Pagination;
+use Symfony\Component\Finder\Finder;
 use Symfony\Component\Yaml\Yaml;
 
 /*
