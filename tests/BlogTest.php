@@ -1647,7 +1647,7 @@ class BlogTest extends HTMLUnit_Framework_TestCase
         $this->assertEquals('Joe Bloggs', static::$blog->config('authors', 'joe-bloggs', 'name'));
         $this->assertNull(static::$blog->config('authors', 'anonymous', 'thumb'));
     }
-
+    
     protected function blogPage($path, array $query = array())
     {
         $request = Request::create('http://website.com/'.$path, 'GET', $query);
