@@ -31,7 +31,7 @@ class PageTest extends \PHPUnit_Framework_TestCase
         $this->assertEquals('css', $page->url['format']);
         $this->assertEquals('file.css', $page->url['path']);
         $page = Page::isolated(array('dir'=>'page/../page/test'));
-        $dir = str_replace('\\', '/', realpath('').'/page/test/');
+        $dir = str_replace('\\', '/', __DIR__.'/page/test/');
         $this->assertEquals($dir, $page->dir['page']);
         $this->assertFileNotExists($dir);
     }
