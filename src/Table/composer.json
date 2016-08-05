@@ -1,0 +1,20 @@
+{
+    "name": "bootpress/table",
+    "description": "Builds HTML tables that are easy to visualize and see what is going on.",
+    "keywords": ["bootpress", "html", "table"],
+    "homepage": "https://www.bootpress.org/components/table/",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Kyle Gadd",
+            "email": "kyle.gadd@gmail.com"
+        }
+    ],
+    "require": {
+        "php": ">=5.4",
+        "bootpress/page": "^1.0"
+    },
+    "autoload": {
+        "psr-4": { "BootPress\\Table\\": "" }
+    }
+}

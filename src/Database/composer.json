@@ -1,0 +1,19 @@
+{
+    "name": "bootpress/database",
+    "description": "A PDO wrapper with lazy connections, query profiling, and convenience methods that simplify and speed up your queries.",
+    "keywords": ["bootpress", "database", "sql", "pdo"],
+    "homepage": "https://www.bootpress.org/components/database/",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Kyle Gadd",
+            "email": "kyle.gadd@gmail.com"
+        }
+    ],
+    "require": {
+        "php": ">=5.4"
+    },
+    "autoload": {
+        "psr-4": { "BootPress\\Database\\": "" }
+    }
+}
