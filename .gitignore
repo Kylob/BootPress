@@ -1,0 +1,15 @@
+# Ignore everything here
+/*
+
+# Except for these
+!src/
+!tests/
+!.gitignore
+!.travis.yml
+!composer.json
+!CHANGELOG.md
+!CONTRIBUTING.md
+!LICENSE.md
+!README.md
+!phpunit.xml.dist
+

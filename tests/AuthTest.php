@@ -260,7 +260,6 @@ class AuthTest extends \PHPUnit_Framework_TestCase
     
     public function testHttpBasicAuthentication()
     {
-        
         // Use the database and authenticate via $_SERVER['HTTP_AUTHORIZATION']
         $page = Page::html(self::$page, Request::create(
             'http://website.com/',

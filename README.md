@@ -41,13 +41,13 @@ The MIT License (MIT). Please see [License File](LICENSE.md) for more informatio
 
 [ico-version]: https://img.shields.io/packagist/v/bootpress/components.svg?style=flat-square
 [ico-license]: https://img.shields.io/badge/license-MIT-brightgreen.svg?style=flat-square
-[ico-travis]: https://img.shields.io/travis/bootpress/components/master.svg?style=flat-square
+[ico-travis]: https://img.shields.io/travis/Kylob/BootPress/master.svg?style=flat-square
 [ico-scrutinizer]: https://img.shields.io/scrutinizer/coverage/g/bootpress/components.svg?style=flat-square
 [ico-code-quality]: https://img.shields.io/scrutinizer/g/bootpress/components.svg?style=flat-square
 [ico-downloads]: https://img.shields.io/packagist/dt/bootpress/components.svg?style=flat-square
 
 [link-packagist]: https://packagist.org/packages/bootpress/components
-[link-travis]: https://travis-ci.org/bootpress/components
+[link-travis]: https://travis-ci.org/Kylob/BootPress
 [link-scrutinizer]: https://scrutinizer-ci.com/g/bootpress/components/code-structure
 [link-code-quality]: https://scrutinizer-ci.com/g/bootpress/components
 [link-downloads]: https://packagist.org/packages/bootpress/components
