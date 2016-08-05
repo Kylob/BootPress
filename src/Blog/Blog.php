@@ -788,6 +788,9 @@ class Blog
             if ($file->isDir()) {
                 $path = str_replace('\\', '/', substr($name, strlen($this->folder.'content/')));
                 if ($info = $this->blogInfo($path)) {
+                    
+                    echo "\npath: ".$path;
+                    
                     $id = $this->db->insert($blog, array_values($info));
                     if (!empty($info['keywords'])) {
                         $tags = array_filter(array_map('trim', explode(',', $info['keywords'])));
