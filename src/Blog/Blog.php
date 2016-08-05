@@ -962,5 +962,8 @@ class Blog
             }
         }
         file_put_contents($this->folder.'config.yml', Yaml::dump($yaml, 3));
+        
+        echo "\n\nupdateConfig():\n\n".file_get_contents($this->folder.'config.yml')."\n\n";
+        
     }
 }
