@@ -185,25 +185,7 @@ class BlogTest extends HTMLUnit_Framework_TestCase
         #  Paragraph
         ##
         $this->assertEqualsRegExp(array(
-            '<div itemscope itemtype="http://schema.org/Article">',
-                '<div class="page-header"><h1 itemprop="name">A Simple Post</h1></div><br>',
-                '<div itemprop="articleBody" style="padding-bottom:40px;">',
-                    '<h3>Header</h3>',
-                    '<p>Paragraph</p>',
-                '</div>',
-                '<p>Tagged:',
-                    '&nbsp;<a href="http://website.com/blog/tags/simple.html" itemprop="keywords">Simple</a>',
-                    '&nbsp;<a href="http://website.com/blog/tags/markdown.html" itemprop="keywords">Markdown</a>',
-                '</p>',
-                '<p>',
-                    'Published:',
-                    '<a href="http://website.com/blog/archives/2010/08/03.html" itemprop="datePublished">August  3, 2010</a>',
-                    'by <a href="http://website.com/blog/authors/joe-bloggs.html" itemprop="author">Joe Bloggs</a>',
-                '</p>',
-            '</div>',
-            '<ul class="pager">',
-                '<li class="next"><a href="http://website.com/category/subcategory/flowery-post.html">A Flowery Post &raquo;</a></li>',
-            '</ul>',
+            
         ), static::$theme->fetchSmarty($template));
         $this->assertEquals('blog-post.tpl', $template['file']);
         $this->assertEqualsRegExp('<h3>Header</h3><p>Paragraph</p>', $template['vars']['post']['content']);
