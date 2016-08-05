@@ -779,6 +779,14 @@ class Blog
         $tagged = $this->db->insert('tagged', array('blog_id', 'tag_id'));
         $sitemap = new Sitemap();
         $sitemap->reset('blog');
+        
+        $finder = new Finder();
+        $finder->files()->in($this->folder.'content/')->name('index.tpl');
+        foreach ($finder as $file) {
+            echo "\nfound: ".$file->getRelativePath();
+        }
+        echo "\n";
+        
         $iterator = new \RecursiveIteratorIterator(
             new \RecursiveDirectoryIterator($this->folder.'content/', \RecursiveDirectoryIterator::SKIP_DOTS),
             \RecursiveIteratorIterator::SELF_FIRST,
