@@ -3,6 +3,5 @@
 
 # Except for these
 !.gitignore
-!config.yml
 !content/
 !themes/
