@@ -56,7 +56,7 @@
             "@phpunit",
             "@phpcs"
         ],
-        "phpunit": "php vendor/bin/phpunit",
+        "phpunit": "php vendor/bin/phpunit --debug",
         "phpcs": "php vendor/bin/phpcs"
     }
 }
