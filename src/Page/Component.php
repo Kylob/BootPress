@@ -591,7 +591,8 @@ class Component
      * - '**target**' - The route we successfully matched.  If the route is a key, then this is it's value.  Otherwise it is the route itself.
      * - '**params**' - All of the params we matched to the successful route.
      * - '**method**' - Either '**POST**' or '**GET**'.
-  # @example       ```php
+     * 
+     * ```php
      * $routes = array(
      *   '' => 'index.php',
      *   'listings' => 'listings.php',
@@ -1038,13 +1039,13 @@ class Component
      * 
      * ```php
      * $name = $page->dirname(__CLASS__);
-     
+     * 
      * $page->info($name); // returns array();
-     
+     * 
      * $page->save($name, 'one');
      * $page->save($name, 'two');
      * $page->save($name, 'skip', 'few');
-     
+     * 
      * $page->info($name); // returns array('one', 'two');
      * $page->info($name, 'skip'); // returns 'few';
      * $page->info($name, 'set'); // returns null;
