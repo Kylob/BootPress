@@ -787,9 +787,12 @@ class Blog
         foreach ($iterator as $name => $file) {
             if ($file->isDir()) {
                 $path = str_replace('\\', '/', substr($name, strlen($this->folder.'content/')));
-                if ($info = $this->blogInfo($path)) {
                     
                     echo "\npath: ".$path;
+                    
+                if ($info = $this->blogInfo($path)) {
+                    
+                    echo ' - check';
                     
                     $id = $this->db->insert($blog, array_values($info));
                     if (!empty($info['keywords'])) {
