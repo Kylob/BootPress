@@ -13,4 +13,4 @@ before_script:
   - if [[ "$TRAVIS_PHP_VERSION" < '5.5' ]]; then composer require ircmaxell/password-compat:1.* -n ; fi
 
 script:
-  - phpunit --debug --coverage-text
+  - phpunit --debug
