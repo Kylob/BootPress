@@ -776,14 +776,8 @@ class Blog
         $finder->files()->in($this->folder.'content')->name('index.tpl')->sortByName();
         foreach ($finder as $file) {
             $path = str_replace('\\', '/', $file->getRelativePath());
-            
-            echo "\nfound: ".$file->getRelativePath();
-            
             if ($info = $this->blogInfo($path)) {
                 $id = $this->db->insert($blog, array_values($info));
-                
-                echo ' -check '.$id;
-                
                 if (!empty($info['keywords'])) {
                     $tags = array_filter(array_map('trim', explode(',', $info['keywords'])));
                     foreach ($tags as $tag) {
@@ -956,8 +950,5 @@ class Blog
             }
         }
         file_put_contents($this->folder.'config.yml', Yaml::dump($yaml, 3));
-        
-        echo "\n\nupdateConfig():\n\n".file_get_contents($this->folder.'config.yml')."\n\n";
-        
     }
 }
