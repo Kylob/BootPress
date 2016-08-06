@@ -110,23 +110,6 @@ class BlogTest extends HTMLUnit_Framework_TestCase
         if (is_file($db)) {
             unlink($db);
         }
-        
-        rename($page->dir('blog/content/category'), $page->dir('blog/content/Category'));
-        
-        $iterator = new \RecursiveIteratorIterator(
-            new \RecursiveDirectoryIterator(static::$folder, \RecursiveDirectoryIterator::SKIP_DOTS),
-            \RecursiveIteratorIterator::SELF_FIRST,
-            \RecursiveIteratorIterator::CATCH_GET_CHILD
-        );
-        foreach ($iterator as $name => $file) {
-            if ($file->isDir()) {
-                $path = str_replace('\\', '/', substr($name, strlen(static::$folder)));
-                echo "\npath: ".$path;
-            }
-        }
-        echo "\n";
-        
-        
         $themes = $page->dir('blog/themes');
         if (is_dir($themes)) {
             foreach (glob($themes.'*') as $template) {
