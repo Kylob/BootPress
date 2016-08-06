@@ -1645,20 +1645,6 @@ class BlogTest extends HTMLUnit_Framework_TestCase
         $this->assertEquals('blog', static::$blog->config('blog', 'listings'));
         $this->assertEquals('Joe Bloggs', static::$blog->config('authors', 'joe-bloggs', 'name'));
         $this->assertNull(static::$blog->config('authors', 'anonymous', 'thumb'));
-        
-        
-        print_r([
-            'time' => time(),
-            'strtotime' => strtotime('Jan 1, 1998 12:30 am'),
-            'timezone' => date_default_timezone_get(),
-            'date' => date('Y-m-d H:i:s', strtotime('Jan 1, 1998 12:30 pm')),
-            'gmdate' => gmdate('Y-m-d H:i:s', strtotime('Jan 1, 1998 12:30 am')),
-            'no date' => date('Y-m-d H:i:s'),
-            'no gmdate' => gmdate('Y-m-d H:i:s'),
-            'mktime' => mktime(0,0,0,1,1,1998),
-            'gmmktime' => gmmktime(0,0,0,1,1,1998),
-        ]);
-        
     }
     
     protected function blogPage($path, array $query = array())
