@@ -1090,7 +1090,7 @@ class BlogTest extends HTMLUnit_Framework_TestCase
                 'September' => 'http://website.com/blog/archives/2010/09.html',
             ),
             'listings' => array(
-                'archives' => array(mktime(0,0,0,9,1,2010), mktime(23,59,59,10,0,2010), // from, to
+                'archives' => array(mktime(0,0,0,9,1,2010), mktime(23,59,59,10,0,2010)), // from, to
             ),
         ), $template['vars']);
         $pagination = new Pagination();
