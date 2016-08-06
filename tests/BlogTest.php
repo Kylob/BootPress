@@ -132,9 +132,6 @@ class BlogTest extends HTMLUnit_Framework_TestCase
     public function testAboutPage()
     {
         $template = $this->blogPage('about.html');
-        
-        echo file_get_contents(static::$config);
-        
         $file = static::$folder.'about/index.tpl';
         ##
         #  {*
