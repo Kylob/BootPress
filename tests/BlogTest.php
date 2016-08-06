@@ -120,7 +120,7 @@ class BlogTest extends HTMLUnit_Framework_TestCase
         );
         foreach ($iterator as $name => $file) {
             if ($file->isDir()) {
-                $path = str_replace('\\', '/', substr($name, strlen($this->folder.'content/')));
+                $path = str_replace('\\', '/', substr($name, strlen(static::$folder.'/')));
                 echo "\npath: ".$path;
             }
         }
