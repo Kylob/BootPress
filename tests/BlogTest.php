@@ -1096,9 +1096,9 @@ class BlogTest extends HTMLUnit_Framework_TestCase
         $pagination = new Pagination();
         $listings = static::$blog->query($template['vars']['listings'], $pagination);
         $this->assertEquals(2, static::$blog->query($template['vars']['listings'], 'count'));
-        $this->assertEquals(array(2, 3), array_keys($listings));
-        // 2 - featured (Sep 12 2008) category/subcategory
-        // 3 - flowery (Sep 12 2008) category/subcategory
+        $this->assertEquals(array(3,4), array_keys($listings));
+        // 3 - featured (Sep 12 2008) category/subcategory
+        // 4 - flowery (Sep 12 2008) category/subcategory
     }
 
     public function testArchivesDailyListings()
@@ -1229,9 +1229,9 @@ class BlogTest extends HTMLUnit_Framework_TestCase
         $listings = static::$blog->query($template['vars']['listings'], $pagination);
         unset($template['vars']['listings']['count']); // to test the actual query
         $this->assertEquals(2, static::$blog->query($template['vars']['listings'], 'count'));
-        $this->assertEquals(array(2, 1), array_keys($listings));
-        // 2 - featured (Sep 12 2008) category/subcategory
-        // 1 - simple (Aug 3 2008) category
+        $this->assertEquals(array(3,2), array_keys($listings));
+        // 3 - featured (Sep 12 2008) category/subcategory
+        // 2 - simple (Aug 3 2008) category
     }
 
     public function testTagsListings()
@@ -1376,9 +1376,9 @@ class BlogTest extends HTMLUnit_Framework_TestCase
         $listings = static::$blog->query($template['vars']['listings'], $pagination);
         unset($template['vars']['listings']['count']); // to test the actual query
         $this->assertEquals(3, static::$blog->query($template['vars']['listings'], 'count'));
-        $this->assertEquals(array(2, 1, 5), array_keys($listings));
-        // 2 - featured (Sep 12 2008) category/subcategory
-        // 1 - simple (Aug 3 2008) category
+        $this->assertEquals(array(3,2,5), array_keys($listings));
+        // 3 - featured (Sep 12 2008) category/subcategory
+        // 2 - simple (Aug 3 2008) category
         // 5 - index
     }
 
@@ -1645,6 +1645,20 @@ class BlogTest extends HTMLUnit_Framework_TestCase
         $this->assertEquals('blog', static::$blog->config('blog', 'listings'));
         $this->assertEquals('Joe Bloggs', static::$blog->config('authors', 'joe-bloggs', 'name'));
         $this->assertNull(static::$blog->config('authors', 'anonymous', 'thumb'));
+        
+        
+        print_r([
+            'time' => time(),
+            'strtotime' => strtotime('Jan 1, 1998 12:30 am'),
+            'timezone' => date_default_timezone_get(),
+            'date' => date('Y-m-d H:i:s', strtotime('Jan 1, 1998 12:30 pm')),
+            'gmdate' => gmdate('Y-m-d H:i:s', strtotime('Jan 1, 1998 12:30 am')),
+            'no date' => date('Y-m-d H:i:s'),
+            'no gmdate' => gmdate('Y-m-d H:i:s'),
+            'mktime' => mktime(0,0,0,1,1,1998),
+            'gmmktime' => gmmktime(0,0,0,1,1,1998),
+        ]);
+        
     }
     
     protected function blogPage($path, array $query = array())

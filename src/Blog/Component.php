@@ -121,8 +121,8 @@ class Component extends Blog
         list($path, $Y, $m, $d) = array_pad(array_values($params), 4, '');
         if (!empty($d)) {
             list($from, $to) = $this->range($Y, $m, $d);
-            $page->enforce($page->url('blog/listings', $path, gmdate('/Y/m/d', $from)));
-            $vars['archive'] = array_combine(array('date', 'year', 'month', 'day'), explode(' ', gmdate($from.' Y F j', $from)));
+            $page->enforce($page->url('blog/listings', $path, date('/Y/m/d', $from)));
+            $vars['archive'] = array_combine(array('date', 'year', 'month', 'day'), explode(' ', date($from.' Y F j', $from)));
             $vars['breadcrumbs'] = $this->breadcrumbs(array(
                 'Archives' => $path,
                 $vars['archive']['year'] => $Y,
@@ -131,8 +131,8 @@ class Component extends Blog
             ));
         } elseif (!empty($m)) {
             list($from, $to) = $this->range($Y, $m);
-            $page->enforce($page->url('blog/listings', $path, gmdate('/Y/m', $from)));
-            $vars['archive'] = array_combine(array('date', 'year', 'month'), explode(' ', gmdate($from.' Y F', $from)));
+            $page->enforce($page->url('blog/listings', $path, date('/Y/m', $from)));
+            $vars['archive'] = array_combine(array('date', 'year', 'month'), explode(' ', date($from.' Y F', $from)));
             $vars['breadcrumbs'] = $this->breadcrumbs(array(
                 'Archives' => $path,
                 $vars['archive']['year'] => $Y,
@@ -140,8 +140,8 @@ class Component extends Blog
             ));
         } elseif (!empty($Y)) {
             list($from, $to) = $this->range($Y);
-            $page->enforce($page->url('blog/listings', $path, gmdate('/Y', $from)));
-            $vars['archive'] = array_combine(array('date', 'year'), explode(' ', gmdate($from.' Y', $from)));
+            $page->enforce($page->url('blog/listings', $path, date('/Y', $from)));
+            $vars['archive'] = array_combine(array('date', 'year'), explode(' ', date($from.' Y', $from)));
             $vars['breadcrumbs'] = $this->breadcrumbs(array(
                 'Archives' => $path,
                 $vars['archive']['year'] => $Y,
@@ -234,14 +234,14 @@ class Component extends Blog
     private function range($Y, $m = null, $d = null)
     {
         if (!empty($d)) {
-            $from = gmmktime(0, 0, 0, (int) $m, (int) $d, (int) $Y);
-            $to = gmmktime(23, 59, 59, (int) $m, (int) $d, (int) $Y);
+            $from = mktime(0, 0, 0, (int) $m, (int) $d, (int) $Y);
+            $to = mktime(23, 59, 59, (int) $m, (int) $d, (int) $Y);
         } elseif (!empty($m)) {
-            $from = gmmktime(0, 0, 0, (int) $m, 1, (int) $Y);
-            $to = gmmktime(23, 59, 59, (int) $m + 1, 0, (int) $Y);
+            $from = mktime(0, 0, 0, (int) $m, 1, (int) $Y);
+            $to = mktime(23, 59, 59, (int) $m + 1, 0, (int) $Y);
         } else {
-            $from = gmmktime(0, 0, 0, 1, 1, (int) $Y);
-            $to = gmmktime(23, 59, 59, 1, 0, (int) $Y + 1);
+            $from = mktime(0, 0, 0, 1, 1, (int) $Y);
+            $to = mktime(23, 59, 59, 1, 0, (int) $Y + 1);
         }
 
         return array($from, $to);
