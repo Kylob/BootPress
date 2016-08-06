@@ -782,7 +782,7 @@ class Blog
         $sitemap->reset('blog');
         
         $finder = new Finder();
-        $finder->files()->in($this->folder.'content/')->name('index.tpl');
+        $finder->files()->in($this->folder.'content/')->name('index.tpl')->sortByName();
         foreach ($finder as $file) {
             echo "\nfound: ".$file->getRelativePath();
         }
