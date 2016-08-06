@@ -724,9 +724,9 @@ class BlogTest extends HTMLUnit_Framework_TestCase
         
         // manual query
         $posts = static::$blog->query('similar', array(5, 'simple')); // specify keywords to use
-        $this->assertEquals(array(1), array_keys($posts));
+        $this->assertEquals(array(2), array_keys($posts));
         $posts = static::$blog->query('similar', array(5 => 'simple')); // specify keywords to use
-        $this->assertEquals(array(1), array_keys($posts));
+        $this->assertEquals(array(2), array_keys($posts));
         $posts = static::$blog->query('similar', array(5 => 'not-exists'));
         $this->assertEquals(array(), $posts); // no results
     }
