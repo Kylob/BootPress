@@ -1079,7 +1079,7 @@ class BlogTest extends HTMLUnit_Framework_TestCase
         $this->assertEquals('blog-listings.tpl', $template['file']);
         $this->assertEquals(array(
             'archive' => array(
-                'date' => 1283295600,
+                'date' => mktime(0,0,0,9,15,2010),
                 'year' => 2010,
                 'month' => 'September',
             ),
@@ -1120,7 +1120,7 @@ class BlogTest extends HTMLUnit_Framework_TestCase
         $this->assertEquals('blog-listings.tpl', $template['file']);
         $this->assertEquals(array(
             'archive' => array(
-                'date' => 1286060400,
+                'date' => mktime(0,0,0,10,3,2010),
                 'year' => 2010,
                 'month' => 'October',
                 'day' => 3,
@@ -1166,7 +1166,7 @@ class BlogTest extends HTMLUnit_Framework_TestCase
                     'path' => 'joe-bloggs',
                     'url' => 'http://website.com/blog/authors/joe-bloggs.html',
                     'thumb' => 'http://website.com/page/blog/user.jpg',
-                    'latest' => date('Y-m-d H:i:s', 1284246000),
+                    'latest' => strtotime('Sep 12, 2010'),
                     'count' => 2,
                 ),
             ),
@@ -1180,7 +1180,7 @@ class BlogTest extends HTMLUnit_Framework_TestCase
                 'path' => 'joe-bloggs',
                 'url' => 'http://website.com/blog/authors/joe-bloggs.html',
                 'thumb' => 'http://website.com/page/blog/user.jpg',
-                'latest' => date('Y-m-d H:i:s', 1284246000),
+                'latest' => strtotime('Sep 12, 2010'),
                 'count' => 2,
             ),
         ), $authors);
@@ -1217,7 +1217,7 @@ class BlogTest extends HTMLUnit_Framework_TestCase
                 'path' => 'joe-bloggs',
                 'url' => 'http://website.com/blog/authors/joe-bloggs.html',
                 'thumb' => 'http://website.com/page/blog/user.jpg',
-                'latest' => date('Y-m-d H:i:s', 1284246000),
+                'latest' => strtotime('Sep 12, 2010'),
                 'count' => 2,
             ),
             'listings' => array(
@@ -1263,7 +1263,7 @@ class BlogTest extends HTMLUnit_Framework_TestCase
                     'path' => 'featured',
                     'url' => 'http://website.com/blog/tags/featured.html',
                     'thumb' => '',
-                    'latest' => date('Y-m-d H:i:s', 1284246000),
+                    'latest' => strtotime('Sep 12, 2010'),
                     'count' => 1,
                     'rank' => 1,
                 ),
@@ -1272,7 +1272,7 @@ class BlogTest extends HTMLUnit_Framework_TestCase
                     'path' => 'flowers',
                     'url' => 'http://website.com/blog/tags/flowers.html',
                     'thumb' => '',
-                    'latest' => date('Y-m-d H:i:s', 1284246000),
+                    'latest' => strtotime('Sep 12, 2010'),
                     'count' => 1,
                     'rank' => 1,
                 ),
@@ -1281,7 +1281,7 @@ class BlogTest extends HTMLUnit_Framework_TestCase
                     'path' => 'markdown',
                     'url' => 'http://website.com/blog/tags/markdown.html',
                     'thumb' => '',
-                    'latest' => date('Y-m-d H:i:s', 1284246000),
+                    'latest' => strtotime('Sep 12, 2010'),
                     'count' => 3,
                     'rank' => 5,
                 ),
@@ -1290,7 +1290,7 @@ class BlogTest extends HTMLUnit_Framework_TestCase
                     'path' => 'nature',
                     'url' => 'http://website.com/blog/tags/nature.html',
                     'thumb' => '',
-                    'latest' => date('Y-m-d H:i:s', 1284246000),
+                    'latest' => strtotime('Sep 12, 2010'),
                     'count' => 1,
                     'rank' => 1,
                 ),
@@ -1299,7 +1299,7 @@ class BlogTest extends HTMLUnit_Framework_TestCase
                     'path' => 'simple',
                     'url' => 'http://website.com/blog/tags/simple.html',
                     'thumb' => '',
-                    'latest' => date('Y-m-d H:i:s', 1280790000),
+                    'latest' => strtotime('Aug 3, 2010'),
                     'count' => 2,
                     'rank' => 3,
                 ),
@@ -1364,7 +1364,7 @@ class BlogTest extends HTMLUnit_Framework_TestCase
                 'path' => 'markdown',
                 'url' => 'http://website.com/blog/tags/markdown.html',
                 'thumb' => '',
-                'latest' => date('Y-m-d H:i:s', 1284246000),
+                'latest' => strtotime('Sep 12, 2010'),
                 'count' => 3,
             ),
             'listings' => array(
