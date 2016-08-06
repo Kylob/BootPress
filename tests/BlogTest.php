@@ -114,7 +114,7 @@ class BlogTest extends HTMLUnit_Framework_TestCase
         rename($page->dir('blog/content/category'), $page->dir('blog/content/Category'));
         
         $iterator = new \RecursiveIteratorIterator(
-            new \RecursiveDirectoryIterator(static::$folder, \RecursiveDirectoryIterator::SKIP_DOTS),
+            new \RecursiveDirectoryIterator(static::$folder.'/', \RecursiveDirectoryIterator::SKIP_DOTS),
             \RecursiveIteratorIterator::SELF_FIRST,
             \RecursiveIteratorIterator::CATCH_GET_CHILD
         );
