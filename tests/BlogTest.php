@@ -110,7 +110,7 @@ class BlogTest extends HTMLUnit_Framework_TestCase
         if (is_file($db)) {
             unlink($db);
         }
-        rename($page->dir('blog/content/category'), $page->dir('blog/content/Category'));
+        // rename($page->dir('blog/content/category'), $page->dir('blog/content/Category'));
         $themes = $page->dir('blog/themes');
         if (is_dir($themes)) {
             foreach (glob($themes.'*') as $template) {
