@@ -234,14 +234,14 @@ class Component extends Blog
     private function range($Y, $m = null, $d = null)
     {
         if (!empty($d)) {
-            $from = mktime(0, 0, 0, (int) $m, (int) $d, (int) $Y);
-            $to = mktime(23, 59, 59, (int) $m, (int) $d, (int) $Y);
+            $from = gmmktime(0, 0, 0, (int) $m, (int) $d, (int) $Y);
+            $to = gmmktime(23, 59, 59, (int) $m, (int) $d, (int) $Y);
         } elseif (!empty($m)) {
-            $from = mktime(0, 0, 0, (int) $m, 1, (int) $Y);
-            $to = mktime(23, 59, 59, (int) $m + 1, 0, (int) $Y);
+            $from = gmmktime(0, 0, 0, (int) $m, 1, (int) $Y);
+            $to = gmmktime(23, 59, 59, (int) $m + 1, 0, (int) $Y);
         } else {
-            $from = mktime(0, 0, 0, 1, 1, (int) $Y);
-            $to = mktime(23, 59, 59, 1, 0, (int) $Y + 1);
+            $from = gmmktime(0, 0, 0, 1, 1, (int) $Y);
+            $to = gmmktime(23, 59, 59, 1, 0, (int) $Y + 1);
         }
 
         return array($from, $to);
