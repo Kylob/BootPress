@@ -724,15 +724,7 @@ class Blog
     private function blogInfo($path)
     {
         $page = Page::html();
-        $dir = $this->folder.'content/';
-        if (preg_match('/[^a-z0-9-\/]/', $path)) {
-            $seo = $page->format('url', $path, 'slashes');
-            if (is_dir($dir.$path)) {
-                rename($dir.$path, $dir.$seo);
-            }
-            $path = $seo;
-        }
-        $file = $dir.$path.'/index.tpl';
+        $file = $this->folder.'content/'.$path.'/index.tpl';
         if (!is_file($file)) {
             return false;
         }
@@ -788,10 +780,10 @@ class Blog
             echo "\nfound: ".$file->getRelativePath();
             
             if ($info = $this->blogInfo($path)) {
-                
-                echo ' -check';
-                
                 $id = $this->db->insert($blog, array_values($info));
+                
+                echo ' -check '.$id;
+                
                 if (!empty($info['keywords'])) {
                     $tags = array_filter(array_map('trim', explode(',', $info['keywords'])));
                     foreach ($tags as $tag) {
