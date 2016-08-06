@@ -46,7 +46,7 @@ class BlogTest extends HTMLUnit_Framework_TestCase
         $this->assertNull($blog->query(array('tags' => array(1, 2, 3)))); // should be a string
         $this->assertNull($blog->query(array(
             'categories' => array('string'),
-        ))); // should be either a string, or an array if id's
+        ))); // should either be a string, or an array of id's
         $this->assertNull($blog->query(array(
             'categories' => '',
             'search' => 'term',
@@ -110,7 +110,6 @@ class BlogTest extends HTMLUnit_Framework_TestCase
         if (is_file($db)) {
             unlink($db);
         }
-        rename($page->dir('blog/content/category'), $page->dir('blog/content/Category'));
         $themes = $page->dir('blog/themes');
         if (is_dir($themes)) {
             foreach (glob($themes.'*') as $template) {
@@ -185,7 +184,25 @@ class BlogTest extends HTMLUnit_Framework_TestCase
         #  Paragraph
         ##
         $this->assertEqualsRegExp(array(
-            
+            '<div itemscope itemtype="http://schema.org/Article">',
+                '<div class="page-header"><h1 itemprop="name">A Simple Post</h1></div><br>',
+                '<div itemprop="articleBody" style="padding-bottom:40px;">',
+                    '<h3>Header</h3>',
+                    '<p>Paragraph</p>',
+                '</div>',
+                '<p>Tagged:',
+                    '&nbsp;<a href="http://website.com/blog/tags/simple.html" itemprop="keywords">Simple</a>',
+                    '&nbsp;<a href="http://website.com/blog/tags/markdown.html" itemprop="keywords">Markdown</a>',
+                '</p>',
+                '<p>',
+                    'Published:',
+                    '<a href="http://website.com/blog/archives/2010/08/03.html" itemprop="datePublished">August  3, 2010</a>',
+                    'by <a href="http://website.com/blog/authors/joe-bloggs.html" itemprop="author">Joe Bloggs</a>',
+                '</p>',
+            '</div>',
+            '<ul class="pager">',
+                '<li class="next"><a href="http://website.com/category/subcategory/flowery-post.html">A Flowery Post &raquo;</a></li>',
+            '</ul>',
         ), static::$theme->fetchSmarty($template));
         $this->assertEquals('blog-post.tpl', $template['file']);
         $this->assertEqualsRegExp('<h3>Header</h3><p>Paragraph</p>', $template['vars']['post']['content']);
@@ -593,7 +610,7 @@ class BlogTest extends HTMLUnit_Framework_TestCase
         $pagination = new Pagination();
         $listings = static::$blog->query($template['vars']['listings'], $pagination);
         $this->assertEquals(4, static::$blog->query($template['vars']['listings'], 'count'));
-        $this->assertEquals(array(3, 6, 4, 2), array_keys($listings));
+        $this->assertEquals(array(3,6,4,2), array_keys($listings));
         // 3 - featured (Sep 12 2008) category/subcategory
         // 6 - uncategorized (Oct 3 2010)
         // 4 - flowery (Sep 12 2008) category/subcategory
@@ -698,7 +715,7 @@ class BlogTest extends HTMLUnit_Framework_TestCase
     {
         $template = $this->blogPage(''); // keywords: simple, markDown
         $posts = static::$blog->query('similar', 10); // determined via $page->keywords
-        $this->assertEquals(array(2, 3), array_keys($posts));
+        $this->assertEquals(array(2,3), array_keys($posts));
         // 2 - simple (Aug 3 2008) category - keywords: Simple, Markdown
         // 3 - featured (Sep 12 2008) category/subcategory - keywords: Featured, markdown
         
@@ -719,7 +736,7 @@ class BlogTest extends HTMLUnit_Framework_TestCase
             'category/subcategory/flowery-post',
             'category/subcategory/featured-post',
         ));
-        $this->assertEquals(array(6, 4, 3), array_keys($posts));
+        $this->assertEquals(array(6,4,3), array_keys($posts));
         // 6 - uncategorized (Oct 3 2010)
         // 4 - flowery (Sep 12 2008) category/subcategory
         // 3 - featured (Sep 12 2008) category/subcategory
@@ -808,7 +825,7 @@ class BlogTest extends HTMLUnit_Framework_TestCase
         $listings = static::$blog->query($template['vars']['listings'], $pagination);
         $this->assertEquals(3, static::$blog->query($template['vars']['listings'], 'count'));
         $this->assertEquals(3, static::$blog->query(array('categories' => 'category'), 'count')); // to test string conversion
-        $this->assertEquals(array(3, 4, 2), array_keys($listings));
+        $this->assertEquals(array(3,4,2), array_keys($listings));
         // 3 - featured (Sep 12 2008) category/subcategory
         // 4 - flowery (Sep 12 2008) category/subcategory
         // 2 - simple (Aug 3 2008) category
@@ -859,7 +876,7 @@ class BlogTest extends HTMLUnit_Framework_TestCase
         $pagination = new Pagination();
         $listings = static::$blog->query($template['vars']['listings'], $pagination);
         $this->assertEquals(2, static::$blog->query($template['vars']['listings'], 'count'));
-        $this->assertEquals(array(3, 4), array_keys($listings));
+        $this->assertEquals(array(3,4), array_keys($listings));
         // 3 - featured (Sep 12 2008) category/subcategory
         // 4 - flowery (Sep 12 2008) category/subcategory
     }
@@ -1033,7 +1050,7 @@ class BlogTest extends HTMLUnit_Framework_TestCase
         $pagination = new Pagination();
         $listings = static::$blog->query($template['vars']['listings'], $pagination);
         $this->assertEquals(4, static::$blog->query($template['vars']['listings'], 'count'));
-        $this->assertEquals(array(3, 6, 4, 2), array_keys($listings));
+        $this->assertEquals(array(3,6,4,2), array_keys($listings));
         // 3 - featured (Sep 12 2008) category/subcategory
         // 6 - uncategorized (Oct 3 2010)
         // 4 - flowery (Sep 12 2008) category/subcategory
@@ -1079,7 +1096,7 @@ class BlogTest extends HTMLUnit_Framework_TestCase
         $pagination = new Pagination();
         $listings = static::$blog->query($template['vars']['listings'], $pagination);
         $this->assertEquals(2, static::$blog->query($template['vars']['listings'], 'count'));
-        $this->assertEquals(array(3, 4), array_keys($listings));
+        $this->assertEquals(array(3,4), array_keys($listings));
         // 3 - featured (Sep 12 2008) category/subcategory
         // 4 - flowery (Sep 12 2008) category/subcategory
     }
@@ -1212,7 +1229,7 @@ class BlogTest extends HTMLUnit_Framework_TestCase
         $listings = static::$blog->query($template['vars']['listings'], $pagination);
         unset($template['vars']['listings']['count']); // to test the actual query
         $this->assertEquals(2, static::$blog->query($template['vars']['listings'], 'count'));
-        $this->assertEquals(array(3, 2), array_keys($listings));
+        $this->assertEquals(array(3,2), array_keys($listings));
         // 3 - featured (Sep 12 2008) category/subcategory
         // 2 - simple (Aug 3 2008) category
     }
@@ -1359,7 +1376,7 @@ class BlogTest extends HTMLUnit_Framework_TestCase
         $listings = static::$blog->query($template['vars']['listings'], $pagination);
         unset($template['vars']['listings']['count']); // to test the actual query
         $this->assertEquals(3, static::$blog->query($template['vars']['listings'], 'count'));
-        $this->assertEquals(array(3, 2, 5), array_keys($listings));
+        $this->assertEquals(array(3,2,5), array_keys($listings));
         // 3 - featured (Sep 12 2008) category/subcategory
         // 2 - simple (Aug 3 2008) category
         // 5 - index
@@ -1628,8 +1645,22 @@ class BlogTest extends HTMLUnit_Framework_TestCase
         $this->assertEquals('blog', static::$blog->config('blog', 'listings'));
         $this->assertEquals('Joe Bloggs', static::$blog->config('authors', 'joe-bloggs', 'name'));
         $this->assertNull(static::$blog->config('authors', 'anonymous', 'thumb'));
+        
+        
+        print_r([
+            'time' => time(),
+            'strtotime' => strtotime('Jan 1, 1998 12:30 am'),
+            'timezone' => date_default_timezone_get(),
+            'date' => date('Y-m-d H:i:s', strtotime('Jan 1, 1998 12:30 pm')),
+            'gmdate' => gmdate('Y-m-d H:i:s', strtotime('Jan 1, 1998 12:30 am')),
+            'no date' => date('Y-m-d H:i:s'),
+            'no gmdate' => gmdate('Y-m-d H:i:s'),
+            'mktime' => mktime(0,0,0,1,1,1998),
+            'gmmktime' => gmmktime(0,0,0,1,1,1998),
+        ]);
+        
     }
-
+    
     protected function blogPage($path, array $query = array())
     {
         $request = Request::create('http://website.com/'.$path, 'GET', $query);

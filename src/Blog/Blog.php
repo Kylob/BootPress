@@ -8,6 +8,7 @@ use BootPress\SQLite\Component as SQLite;
 use BootPress\Sitemap\Component as Sitemap;
 use BootPress\Hierarchy\Component as Hierarchy;
 use BootPress\Pagination\Component as Pagination;
+use Symfony\Component\Finder\Finder;
 use Symfony\Component\Yaml\Yaml;
 
 /*
@@ -723,15 +724,7 @@ class Blog
     private function blogInfo($path)
     {
         $page = Page::html();
-        $dir = $this->folder.'content/';
-        if (preg_match('/[^a-z0-9-\/]/', $path)) {
-            $seo = $page->format('url', $path, 'slashes');
-            if (is_dir($dir.$path)) {
-                rename($dir.$path, $dir.$seo);
-            }
-            $path = $seo;
-        }
-        $file = $dir.$path.'/index.tpl';
+        $file = $this->folder.'content/'.$path.'/index.tpl';
         if (!is_file($file)) {
             return false;
         }
@@ -779,38 +772,33 @@ class Blog
         $tagged = $this->db->insert('tagged', array('blog_id', 'tag_id'));
         $sitemap = new Sitemap();
         $sitemap->reset('blog');
-        $iterator = new \RecursiveIteratorIterator(
-            new \RecursiveDirectoryIterator($this->folder.'content/', \RecursiveDirectoryIterator::SKIP_DOTS),
-            \RecursiveIteratorIterator::SELF_FIRST,
-            \RecursiveIteratorIterator::CATCH_GET_CHILD
-        );
-        foreach ($iterator as $name => $file) {
-            if ($file->isDir()) {
-                $path = str_replace('\\', '/', substr($name, strlen($this->folder.'content/')));
-                if ($info = $this->blogInfo($path)) {
-                    $id = $this->db->insert($blog, array_values($info));
-                    if (!empty($info['keywords'])) {
-                        $tags = array_filter(array_map('trim', explode(',', $info['keywords'])));
-                        foreach ($tags as $tag) {
-                            $this->db->insert($tagged, array($id, $this->getId('tags', $tag)));
-                        }
+        $finder = new Finder();
+        $finder->files()->in($this->folder.'content')->name('index.tpl')->sortByName();
+        foreach ($finder as $file) {
+            $path = str_replace('\\', '/', $file->getRelativePath());
+            if ($info = $this->blogInfo($path)) {
+                $id = $this->db->insert($blog, array_values($info));
+                if (!empty($info['keywords'])) {
+                    $tags = array_filter(array_map('trim', explode(',', $info['keywords'])));
+                    foreach ($tags as $tag) {
+                        $this->db->insert($tagged, array($id, $this->getId('tags', $tag)));
                     }
-                    $category = 'blog';
-                    if ($info['category_id'] > 0) {
-                        $category .= '/'.array_search($info['category_id'], $this->ids['categories']);
-                    }
-                    if ($info['search']) {
-                        $sitemap->upsert($category, array(
-                            'id' => $id,
-                            'path' => $info['path'],
-                            'title' => $info['title'],
-                            'description' => $info['description'],
-                            'keywords' => $info['keywords'],
-                            'thumb' => $info['thumb'],
-                            'content' => $info['content'],
-                            'updated' => $info['updated'],
-                        ));
-                    }
+                }
+                $category = 'blog';
+                if ($info['category_id'] > 0) {
+                    $category .= '/'.array_search($info['category_id'], $this->ids['categories']);
+                }
+                if ($info['search']) {
+                    $sitemap->upsert($category, array(
+                        'id' => $id,
+                        'path' => $info['path'],
+                        'title' => $info['title'],
+                        'description' => $info['description'],
+                        'keywords' => $info['keywords'],
+                        'thumb' => $info['thumb'],
+                        'content' => $info['content'],
+                        'updated' => $info['updated'],
+                    ));
                 }
             }
         }
