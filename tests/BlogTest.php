@@ -1090,7 +1090,7 @@ class BlogTest extends HTMLUnit_Framework_TestCase
                 'September' => 'http://website.com/blog/archives/2010/09.html',
             ),
             'listings' => array(
-                'archives' => array(1283295600, 1285887599), // from, to
+                'archives' => array(mktime(0,0,0,9,1,2010), mktime(23,59,59,10,0,2010), // from, to
             ),
         ), $template['vars']);
         $pagination = new Pagination();
@@ -1133,7 +1133,7 @@ class BlogTest extends HTMLUnit_Framework_TestCase
                 '3' => 'http://website.com/blog/archives/2010/10/03.html',
             ),
             'listings' => array(
-                'archives' => array(1286060400, 1286146799), // from, to
+                'archives' => array(mktime(0,0,0,10,3,2010), mktime(23,59,59,10,3,2010)), // from, to
             ),
         ), $template['vars']);
         $pagination = new Pagination();
@@ -1166,7 +1166,7 @@ class BlogTest extends HTMLUnit_Framework_TestCase
                     'path' => 'joe-bloggs',
                     'url' => 'http://website.com/blog/authors/joe-bloggs.html',
                     'thumb' => 'http://website.com/page/blog/user.jpg',
-                    'latest' => 1284246000,
+                    'latest' => date('Y-m-d H:i:s', 1284246000),
                     'count' => 2,
                 ),
             ),
@@ -1180,7 +1180,7 @@ class BlogTest extends HTMLUnit_Framework_TestCase
                 'path' => 'joe-bloggs',
                 'url' => 'http://website.com/blog/authors/joe-bloggs.html',
                 'thumb' => 'http://website.com/page/blog/user.jpg',
-                'latest' => 1284246000,
+                'latest' => date('Y-m-d H:i:s', 1284246000),
                 'count' => 2,
             ),
         ), $authors);
@@ -1217,7 +1217,7 @@ class BlogTest extends HTMLUnit_Framework_TestCase
                 'path' => 'joe-bloggs',
                 'url' => 'http://website.com/blog/authors/joe-bloggs.html',
                 'thumb' => 'http://website.com/page/blog/user.jpg',
-                'latest' => 1284246000,
+                'latest' => date('Y-m-d H:i:s', 1284246000),
                 'count' => 2,
             ),
             'listings' => array(
@@ -1263,7 +1263,7 @@ class BlogTest extends HTMLUnit_Framework_TestCase
                     'path' => 'featured',
                     'url' => 'http://website.com/blog/tags/featured.html',
                     'thumb' => '',
-                    'latest' => 1284246000,
+                    'latest' => date('Y-m-d H:i:s', 1284246000),
                     'count' => 1,
                     'rank' => 1,
                 ),
@@ -1272,7 +1272,7 @@ class BlogTest extends HTMLUnit_Framework_TestCase
                     'path' => 'flowers',
                     'url' => 'http://website.com/blog/tags/flowers.html',
                     'thumb' => '',
-                    'latest' => 1284246000,
+                    'latest' => date('Y-m-d H:i:s', 1284246000),
                     'count' => 1,
                     'rank' => 1,
                 ),
@@ -1281,7 +1281,7 @@ class BlogTest extends HTMLUnit_Framework_TestCase
                     'path' => 'markdown',
                     'url' => 'http://website.com/blog/tags/markdown.html',
                     'thumb' => '',
-                    'latest' => 1284246000,
+                    'latest' => date('Y-m-d H:i:s', 1284246000),
                     'count' => 3,
                     'rank' => 5,
                 ),
@@ -1290,7 +1290,7 @@ class BlogTest extends HTMLUnit_Framework_TestCase
                     'path' => 'nature',
                     'url' => 'http://website.com/blog/tags/nature.html',
                     'thumb' => '',
-                    'latest' => 1284246000,
+                    'latest' => date('Y-m-d H:i:s', 1284246000),
                     'count' => 1,
                     'rank' => 1,
                 ),
@@ -1299,7 +1299,7 @@ class BlogTest extends HTMLUnit_Framework_TestCase
                     'path' => 'simple',
                     'url' => 'http://website.com/blog/tags/simple.html',
                     'thumb' => '',
-                    'latest' => 1280790000,
+                    'latest' => date('Y-m-d H:i:s', 1280790000),
                     'count' => 2,
                     'rank' => 3,
                 ),
@@ -1314,7 +1314,7 @@ class BlogTest extends HTMLUnit_Framework_TestCase
                 'path' => 'markdown',
                 'url' => 'http://website.com/blog/tags/markdown.html',
                 'thumb' => '',
-                'latest' => 1284246000,
+                'latest' => date('Y-m-d H:i:s', 1284246000),
                 'count' => 3,
                 'rank' => 5,
             ),
@@ -1323,7 +1323,7 @@ class BlogTest extends HTMLUnit_Framework_TestCase
                 'path' => 'simple',
                 'url' => 'http://website.com/blog/tags/simple.html',
                 'thumb' => '',
-                'latest' => 1280790000,
+                'latest' => date('Y-m-d H:i:s', 1280790000),
                 'count' => 2,
                 'rank' => 1,
             ),
@@ -1364,7 +1364,7 @@ class BlogTest extends HTMLUnit_Framework_TestCase
                 'path' => 'markdown',
                 'url' => 'http://website.com/blog/tags/markdown.html',
                 'thumb' => '',
-                'latest' => 1284246000,
+                'latest' => date('Y-m-d H:i:s', 1284246000),
                 'count' => 3,
             ),
             'listings' => array(
