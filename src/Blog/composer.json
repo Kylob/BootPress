@@ -19,6 +19,7 @@
         "bootpress/sitemap": "^1.0",
         "bootpress/hierarchy": "^1.0",
         "bootpress/pagination": "^1.0",
+        "symfony/finder": "^2.3||^3.0",
         "symfony/yaml": "^2.3||^3.0"
     },
     "autoload": {
