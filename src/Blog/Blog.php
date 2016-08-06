@@ -780,52 +780,39 @@ class Blog
         $tagged = $this->db->insert('tagged', array('blog_id', 'tag_id'));
         $sitemap = new Sitemap();
         $sitemap->reset('blog');
-        
         $finder = new Finder();
-        $finder->files()->in($this->folder.'content/')->name('index.tpl')->sortByName();
+        $finder->files()->in($this->folder.'content')->name('index.tpl')->sortByName();
         foreach ($finder as $file) {
+            $path = str_replace('\\', '/', $file->getRelativePath());
+            
             echo "\nfound: ".$file->getRelativePath();
-        }
-        echo "\n";
-        
-        $iterator = new \RecursiveIteratorIterator(
-            new \RecursiveDirectoryIterator($this->folder.'content/', \RecursiveDirectoryIterator::SKIP_DOTS),
-            \RecursiveIteratorIterator::SELF_FIRST,
-            \RecursiveIteratorIterator::CATCH_GET_CHILD
-        );
-        foreach ($iterator as $name => $file) {
-            if ($file->isDir()) {
-                $path = str_replace('\\', '/', substr($name, strlen($this->folder.'content/')));
-                    
-                    echo "\npath: ".$path;
-                    
-                if ($info = $this->blogInfo($path)) {
-                    
-                    echo ' - check';
-                    
-                    $id = $this->db->insert($blog, array_values($info));
-                    if (!empty($info['keywords'])) {
-                        $tags = array_filter(array_map('trim', explode(',', $info['keywords'])));
-                        foreach ($tags as $tag) {
-                            $this->db->insert($tagged, array($id, $this->getId('tags', $tag)));
-                        }
+            
+            if ($info = $this->blogInfo($path)) {
+                
+                echo ' -check';
+                
+                $id = $this->db->insert($blog, array_values($info));
+                if (!empty($info['keywords'])) {
+                    $tags = array_filter(array_map('trim', explode(',', $info['keywords'])));
+                    foreach ($tags as $tag) {
+                        $this->db->insert($tagged, array($id, $this->getId('tags', $tag)));
                     }
-                    $category = 'blog';
-                    if ($info['category_id'] > 0) {
-                        $category .= '/'.array_search($info['category_id'], $this->ids['categories']);
-                    }
-                    if ($info['search']) {
-                        $sitemap->upsert($category, array(
-                            'id' => $id,
-                            'path' => $info['path'],
-                            'title' => $info['title'],
-                            'description' => $info['description'],
-                            'keywords' => $info['keywords'],
-                            'thumb' => $info['thumb'],
-                            'content' => $info['content'],
-                            'updated' => $info['updated'],
-                        ));
-                    }
+                }
+                $category = 'blog';
+                if ($info['category_id'] > 0) {
+                    $category .= '/'.array_search($info['category_id'], $this->ids['categories']);
+                }
+                if ($info['search']) {
+                    $sitemap->upsert($category, array(
+                        'id' => $id,
+                        'path' => $info['path'],
+                        'title' => $info['title'],
+                        'description' => $info['description'],
+                        'keywords' => $info['keywords'],
+                        'thumb' => $info['thumb'],
+                        'content' => $info['content'],
+                        'updated' => $info['updated'],
+                    ));
                 }
             }
         }
