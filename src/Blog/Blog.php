@@ -344,23 +344,23 @@ class Blog
                 if (empty($years)) {
                     $times = $this->db->row('SELECT ABS(MAX(published)) AS begin, ABS(MIN(published)) AS end FROM blog WHERE featured <= 0 AND published < 0', '', 'assoc');
                     if (!is_null($times['end'])) {
-                        $years = range(date('Y', $times['begin']), date('Y', $times['end']));
+                        $years = range(gmdate('Y', $times['begin']), gmdate('Y', $times['end']));
                     }
                 }
                 $months = array('Jan' => 1, 'Feb' => 2, 'Mar' => 3, 'Apr' => 4, 'May' => 5, 'Jun' => 6, 'Jul' => 7, 'Aug' => 8, 'Sep' => 9, 'Oct' => 10, 'Nov' => 11, 'Dec' => 12);
                 $archives = array();
                 foreach ($years as $Y) {
                     foreach ($months as $M => $n) {
-                        $to = mktime(23, 59, 59, $n + 1, 0, $Y) * -1;
-                        $from = mktime(0, 0, 0, $n, 1, $Y) * -1;
+                        $to = gmmktime(23, 59, 59, $n + 1, 0, $Y) * -1;
+                        $from = gmmktime(0, 0, 0, $n, 1, $Y) * -1;
                         $archives[] = "SUM(CASE WHEN featured <= 0 AND published >= {$to} AND published <= {$from} THEN 1 ELSE 0 END) AS {$M}{$Y}";
                     }
                 }
                 if (!empty($archives) && $archives = $this->db->row(array('SELECT', implode(",\n", $archives), 'FROM blog'), '', 'assoc')) {
                     $page = Page::html();
                     foreach ($archives as $date => $count) {
-                        $time = mktime(0, 0, 0, $months[substr($date, 0, 3)], 15, substr($date, 3));
-                        list($Y, $M, $m) = explode(' ', date('Y M m', $time));
+                        $time = gmmktime(0, 0, 0, $months[substr($date, 0, 3)], 15, substr($date, 3));
+                        list($Y, $M, $m) = explode(' ', gmdate('Y M m', $time));
                         if (!isset($posts[$Y])) {
                             $posts[$Y] = array('count' => 0, 'url' => $page->url('blog/listings', 'archives', $Y));
                         }
@@ -628,7 +628,7 @@ class Blog
             if ($row['published'] > 1) {
                 $post['page'] = false;
                 $post['author'] = $this->configInfo('authors', $row['author_path'], $row['author_name']);
-                $post['archive'] = $page->url('blog/listings', 'archives', date('Y/m/d/', $row['published']));
+                $post['archive'] = $page->url('blog/listings', 'archives', gmdate('Y/m/d/', $row['published']));
                 $post['previous'] = $row['previous'];
                 $post['next'] = $row['next'];
                 if ($post['previous']) {
