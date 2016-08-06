@@ -543,6 +543,7 @@ class Component
                 $cache[$dir][$path] = $tiny;
             }
         }
+        $this->db->close($stmt);
         if (empty($insert) && empty($update)) {
             return;
         }
