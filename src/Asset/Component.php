@@ -262,9 +262,12 @@ class Component
         $asset->openDatabase();
         $cache = array();
         $assets = array();
+        
+        $find = $page->dir;
+        
         foreach ($matches as $url) {
-            $dir = trim($url['dir']);
-            if (!isset($page->dir[$dir])) {
+            $dir = $url['dir'];
+            if (!isset($find[$dir])) {
                 echo "\n".$dir;
                 static::$not_found[] = substr($url[0], strlen($page->url['base']));
                 continue;
