@@ -265,7 +265,7 @@ class Component
         foreach ($matches as $url) {
             $dir = $url['dir'];
             if (!isset($page->dir[$dir])) {
-                static::$not_found[] = substr($url[0], strlen($page->url['base']));;
+                static::$not_found[] = substr($url[0], strlen($page->url['base']));
                 continue;
             }
             $ext = strtolower($url['ext']);
