@@ -246,16 +246,16 @@ class Component
             '(#(?P<frag>['.$page->url['chars'].'.\/#]+))?',
         )).'/i', $html, $matches, PREG_SET_ORDER);
         if (empty($matches)) {
-            if ($array) {
-                print_r([$array, $matches, array(
-                    '('.$page->url['preg'].')',
-                    '(?P<dir>['.$page->url['chars'].']+)\/',
-                    '(?P<file>['.$page->url['chars'].'.\/]+\.(?P<ext>'.self::PREG_TYPES.'))',
-                    '(?P<query>\?['.$page->url['chars'].'&;=.\/]+)?',
-                    '(#(?P<frag>['.$page->url['chars'].'.\/#]+))?',
-                )]);
-            }
             return $array ? $array : $html;
+        }
+        if ($array) {
+            print_r([$array, $matches, array(
+                '('.$page->url['preg'].')',
+                '(?P<dir>['.$page->url['chars'].']+)\/',
+                '(?P<file>['.$page->url['chars'].'.\/]+\.(?P<ext>'.self::PREG_TYPES.'))',
+                '(?P<query>\?['.$page->url['chars'].'&;=.\/]+)?',
+                '(#(?P<frag>['.$page->url['chars'].'.\/#]+))?',
+            )]);
         }
         $asset->openDatabase();
         $cache = array();
