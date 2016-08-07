@@ -248,27 +248,13 @@ class Component
         if (empty($matches)) {
             return $array ? $array : $html;
         }
-        /*
-        if ($array) {
-            print_r([$array, $matches, array(
-                '('.$page->url['preg'].')',
-                '(?P<dir>['.$page->url['chars'].']+)\/',
-                '(?P<file>['.$page->url['chars'].'.\/]+\.(?P<ext>'.self::PREG_TYPES.'))',
-                '(?P<query>\?['.$page->url['chars'].'&;=.\/]+)?',
-                '(#(?P<frag>['.$page->url['chars'].'.\/#]+))?',
-            )]);
-        }
-        */
         $asset->openDatabase();
         $cache = array();
         $assets = array();
-        
-        $find = $page->dir;
-        
+        $found = $page->dir; // in PHP7 isset($page->dir[$url]) will not work on a private property retrieved via ``__get()``
         foreach ($matches as $url) {
             $dir = $url['dir'];
-            if (!isset($find[$dir])) {
-                echo "\n".$dir;
+            if (!isset($found[$dir])) {
                 static::$not_found[] = substr($url[0], strlen($page->url['base']));
                 continue;
             }
@@ -309,11 +295,6 @@ class Component
         $asset->closeDatabase();
         $rnr = array();
         $base = strlen($page->url['base']);
-        
-        if ($array) {
-            print_r([$matches, $page->dir, static::$not_found, $cache, $assets]);
-        }
-        
         foreach ($assets as $match => $url) {
             $cached = array();
             foreach ($url['file'] as $file) {
