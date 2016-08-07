@@ -307,7 +307,7 @@ class Component
         $base = strlen($page->url['base']);
         
         if ($array) {
-            print_r([$cache, $assets]);
+            print_r([static::$not_found, $cache, $assets]);
         }
         
         foreach ($assets as $match => $url) {
