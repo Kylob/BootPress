@@ -248,6 +248,7 @@ class Component
         if (empty($matches)) {
             return $array ? $array : $html;
         }
+        /*
         if ($array) {
             print_r([$array, $matches, array(
                 '('.$page->url['preg'].')',
@@ -257,6 +258,7 @@ class Component
                 '(#(?P<frag>['.$page->url['chars'].'.\/#]+))?',
             )]);
         }
+        */
         $asset->openDatabase();
         $cache = array();
         $assets = array();
@@ -303,6 +305,11 @@ class Component
         $asset->closeDatabase();
         $rnr = array();
         $base = strlen($page->url['base']);
+        
+        if ($array) {
+            print_r([$cache, $assets]);
+        }
+        
         foreach ($assets as $match => $url) {
             $cached = array();
             foreach ($url['file'] as $file) {
