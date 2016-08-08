@@ -1,19 +1,22 @@
-
 engines:
     phpcodesniffer:
         enabled: true
         config:
             file_extensions: "php"
             standard: "PSR1,PSR2"
-            ignore_warnings: true
         checks:
             Generic Files LineLength TooLong:
+                enabled: false
+            Squiz WhiteSpace SuperfluousWhitespace EndLine:
                 enabled: false
     phpmd:
         enabled: false
         config:
             file_extensions: "php"
             rulesets: "cleancode,codesize,controversial,design,naming,unusedcode"
+ratings:
+    paths:
+        - "src/"
+        - "**.php"
 exclude_paths:
     - "tests/"
-    - "!**.php"
