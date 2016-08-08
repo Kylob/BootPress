@@ -13,11 +13,14 @@ engines:
         enabled: true
         config:
             file_extensions: "php"
-            rulesets: "controversial,design,naming,unusedcode"
-            # rulesets: "cleancode,codesize,controversial,design,naming,unusedcode"
+            rulesets: "controversial,design,naming,unusedcode" # "cleancode,codesize,controversial,design,naming,unusedcode"
+        checks:
+            Controversial/CamelCaseVariableName:
+                enabled: false
+            Naming/ShortVariable:
+                enabled: false
 ratings:
     paths:
         - "src/"
-        - "**.php"
 exclude_paths:
     - "tests/"
