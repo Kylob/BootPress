@@ -10,10 +10,11 @@ engines:
             Squiz WhiteSpace SuperfluousWhitespace EndLine:
                 enabled: false
     phpmd:
-        enabled: false
+        enabled: true
         config:
             file_extensions: "php"
-            rulesets: "cleancode,codesize,controversial,design,naming,unusedcode"
+            rulesets: "controversial,design,naming,unusedcode"
+            # rulesets: "cleancode,codesize,controversial,design,naming,unusedcode"
 ratings:
     paths:
         - "src/"
