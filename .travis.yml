@@ -14,10 +14,6 @@ before_script:
     - if [[ $TRAVIS_PHP_VERSION < 5.5 ]]; then composer require ircmaxell/password-compat:1.*; fi
     - if [[ $TRAVIS_PHP_VERSION == 5.4 ]]; then composer require codeclimate/php-test-reporter:dev-master*; fi
     
-    "codeclimate/php-test-reporter": "dev-master"
-    phpunit --coverage-clover build/logs/clover.xml
-    
-
 script:
     - if [[ $TRAVIS_PHP_VERSION == 5.4 ]];
         then phpunit --debug --coverage-text --coverage-clover build/logs/clover.xml;
