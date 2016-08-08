@@ -5,14 +5,15 @@ engines:
         config:
             file_extensions: "php"
             standard: "PSR1,PSR2"
+            ignore_warnings: true
+        checks:
+            Generic Files LineLength TooLong:
+                enabled: false
     phpmd:
-        enabled: true
+        enabled: false
         config:
             file_extensions: "php"
             rulesets: "cleancode,codesize,controversial,design,naming,unusedcode"
-ratings:
-    paths:
-        - src/**
-        - "**.php"
 exclude_paths:
-    - tests/**
+    - "tests/"
+    - "!**.php"
