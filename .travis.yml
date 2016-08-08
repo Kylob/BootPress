@@ -21,11 +21,7 @@ script:
         fi
 
 after_script:
-    - if [ $TRAVIS_PHP_VERSION == 5.4 ]; then 
-        ./vendor/bin/test-reporter;
-        wget https://scrutinizer-ci.com/ocular.phar;
-        php ocular.phar code-coverage:upload --format=php-clover build/logs/clover.xml;
-        fi
+    - if [ $TRAVIS_PHP_VERSION == 5.4 ]; then ./vendor/bin/test-reporter; fi
 
 addons:
     code_climate:
