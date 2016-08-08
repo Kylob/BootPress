@@ -3,8 +3,8 @@
 [![Latest Version on Packagist](https://img.shields.io/packagist/v/bootpress/components.svg?style=flat-square)](https://packagist.org/packages/bootpress/components)
 [![Software License](https://img.shields.io/badge/license-MIT-brightgreen.svg?style=flat-square)](LICENSE.md)
 [![Build Status](https://img.shields.io/travis/Kylob/BootPress/master.svg?style=flat-square)](https://travis-ci.org/Kylob/BootPress)
-[![Test Coverage](https://img.shields.io/codeclimate/coverage/github/Kylob/BootPress.svg?style=flat-square)](https://codeclimate.com/github/Kylob/BootPress/coverage)
 [![Code Climate](https://img.shields.io/codeclimate/github/Kylob/BootPress.svg?style=flat-square)](https://codeclimate.com/github/Kylob/BootPress)
+[![Test Coverage](https://img.shields.io/codeclimate/coverage/github/Kylob/BootPress.svg?style=flat-square)](https://codeclimate.com/github/Kylob/BootPress/coverage)
 [![Total Downloads](https://img.shields.io/packagist/dt/bootpress/components.svg?style=flat-square)](https://packagist.org/packages/bootpress/components)
 
 Jump start your code with these decoupled PHP components that can be used in any project.
