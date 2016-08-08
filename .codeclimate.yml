@@ -15,9 +15,17 @@ engines:
             file_extensions: "php"
             rulesets: "controversial,design,naming,unusedcode" # "cleancode,codesize,controversial,design,naming,unusedcode"
         checks:
+            Controversial/CamelCaseParameterName:
+                enabled: false
             Controversial/CamelCaseVariableName:
                 enabled: false
+            Naming/ShortMethodName:
+                enabled: false
             Naming/ShortVariable:
+                enabled: false
+            UnusedFormalParameter:
+                enabled: false
+            UnusedLocalVariable:
                 enabled: false
 ratings:
     paths:
