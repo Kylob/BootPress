@@ -12,15 +12,25 @@ before_script:
     - composer install --dev
     - if [[ $TRAVIS_PHP_VERSION < 7 || $TRAVIS_PHP_VERSION == 'hhvm' ]]; then composer require paragonie/random_compat:1.*; fi
     - if [[ $TRAVIS_PHP_VERSION < 5.5 ]]; then composer require ircmaxell/password-compat:1.*; fi
+    - if [[ $TRAVIS_PHP_VERSION == 5.4 ]]; then composer require codeclimate/php-test-reporter:dev-master*; fi
+    
+    "codeclimate/php-test-reporter": "dev-master"
+    phpunit --coverage-clover build/logs/clover.xml
+    
 
 script:
-    - if [[ $TRAVIS_PHP_VERSION == '5.4' ]];
-        then phpunit --debug --coverage-text --coverage-clover coverage.xml;
+    - if [[ $TRAVIS_PHP_VERSION == 5.4 ]];
+        then phpunit --debug --coverage-text --coverage-clover build/logs/clover.xml;
         else phpunit --debug;
         fi
 
 after_script:
-    - if [ $TRAVIS_PHP_VERSION == '5.4' ]; then 
+    - if [ $TRAVIS_PHP_VERSION == 5.4 ]; then 
+        ./vendor/bin/test-reporter
         wget https://scrutinizer-ci.com/ocular.phar;
-        php ocular.phar code-coverage:upload --format=php-clover coverage.xml;
+        php ocular.phar code-coverage:upload --format=php-clover build/logs/clover.xml;
         fi
+
+addons:
+    code_climate:
+        repo_token: 4a40abd1cab819c1120e8884a40a61cdb97bd5cc9618259474d5013b246437fa
