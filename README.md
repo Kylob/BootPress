@@ -1,11 +1,11 @@
 # BootPress
 
-[![Latest Version on Packagist][ico-version]][link-packagist]
-[![Software License][ico-license]](LICENSE.md)
-[![Build Status][ico-travis]][link-travis]
-[![Coverage Status][ico-scrutinizer]][link-scrutinizer]
-[![Quality Score][ico-code-quality]][link-code-quality]
-[![Total Downloads][ico-downloads]][link-downloads]
+[![Latest Version on Packagist](https://img.shields.io/packagist/v/bootpress/components.svg?style=flat-square)](https://packagist.org/packages/bootpress/components)
+[![Software License](https://img.shields.io/badge/license-MIT-brightgreen.svg?style=flat-square)](LICENSE.md)
+[![Build Status](https://img.shields.io/travis/Kylob/BootPress/master.svg?style=flat-square)](https://travis-ci.org/Kylob/BootPress)
+[![Test Coverage](https://img.shields.io/codeclimate/coverage/github/Kylob/BootPress.svg?style=flat-square)](https://codeclimate.com/github/Kylob/BootPress/coverage)
+[![Code Climate](https://img.shields.io/codeclimate/github/Kylob/BootPress.svg?style=flat-square)](https://codeclimate.com/github/Kylob/BootPress)
+[![Total Downloads](https://img.shields.io/packagist/dt/bootpress/components.svg?style=flat-square)](https://packagist.org/packages/bootpress/components)
 
 Jump start your code with these decoupled PHP components that can be used in any project.
 
@@ -38,16 +38,3 @@ $ composer require bootpress/components
 ## License
 
 The MIT License (MIT). Please see [License File](LICENSE.md) for more information.
-
-[ico-version]: https://img.shields.io/packagist/v/bootpress/components.svg?style=flat-square
-[ico-license]: https://img.shields.io/badge/license-MIT-brightgreen.svg?style=flat-square
-[ico-travis]: https://img.shields.io/travis/Kylob/BootPress/master.svg?style=flat-square
-[ico-scrutinizer]: https://img.shields.io/scrutinizer/coverage/g/bootpress/components.svg?style=flat-square
-[ico-code-quality]: https://img.shields.io/scrutinizer/g/bootpress/components.svg?style=flat-square
-[ico-downloads]: https://img.shields.io/packagist/dt/bootpress/components.svg?style=flat-square
-
-[link-packagist]: https://packagist.org/packages/bootpress/components
-[link-travis]: https://travis-ci.org/Kylob/BootPress
-[link-scrutinizer]: https://scrutinizer-ci.com/g/bootpress/components/code-structure
-[link-code-quality]: https://scrutinizer-ci.com/g/bootpress/components
-[link-downloads]: https://packagist.org/packages/bootpress/components
