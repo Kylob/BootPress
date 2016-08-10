@@ -18,7 +18,7 @@ script:
     - if [[ $TRAVIS_PHP_VERSION == 5.4 ]];
         then phpunit --debug --coverage-text --coverage-clover build/logs/clover.xml;
         else phpunit --debug;
-        fi
+      fi
 
 after_script:
     - if [ $TRAVIS_PHP_VERSION == 5.4 ]; then ./vendor/bin/test-reporter; fi
