@@ -115,6 +115,7 @@ class AssetTest extends \PHPUnit_Framework_TestCase
 
         $html = array(
             'head' => '<!doctype html><html><head>',
+                'ico' => $page->url('dir', 'assets/missing.ico'),
                 'css' => $page->url('dir', 'assets/bom.css'),
             'body' => '</head><body>',
                 'html' => '<p>Some <a href="'.$page->url('base', 'index').'">content</a>.</p>',
@@ -139,6 +140,7 @@ class AssetTest extends \PHPUnit_Framework_TestCase
         $this->assertArrayHasKey('js', $compare);
         $this->assertArrayHasKey('end', $compare);
         $this->assertEquals($html['html'], $compare['html']);
+        $this->assertEquals($html['ico'], $compare['ico']);
         $this->assertNotEquals($html['css'], $compare['css']);
         $this->assertNotEquals($html['csv'], $compare['csv']);
         $this->assertNotEquals($html['jpg'], $compare['jpg']);

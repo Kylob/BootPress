@@ -255,7 +255,7 @@ class Component
         $found = $page->dir; // in PHP7 isset($page->dir[$url]) will not work on a private property retrieved via ``__get()``
         foreach ($matches as $url) {
             $dir = $url['dir'];
-            if (!isset($found[$dir])) {
+            if (!isset($found[$dir]) || !is_file($found[$dir].$url['file'])) {
                 static::$not_found[] = substr($url[0], strlen($page->url['base']));
                 continue;
             }
