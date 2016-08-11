@@ -9,6 +9,9 @@ class PageTest extends \PHPUnit_Framework_TestCase
 {
     public function testHtmlStaticMethod()
     {
+        // To avert a ps_files_cleanup_dir permission denied error.
+        session_save_path('/tmp');
+        ini_set('session.gc_probability', 0);
         $request = Request::create('http://website.com/path/to/folder.html', 'GET', array('foo' => 'bar'));
         $page = Page::html(array('testing' => true, 'dir' => __DIR__.'/page', 'suffix' => '.html'), $request);
         $this->assertEquals(str_replace('\\', '/', __DIR__.'/page').'/', $page->dir['page']);
