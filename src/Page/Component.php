@@ -73,10 +73,10 @@ class Component
         $page->request = (is_null($request)) ? Request::createFromGlobals() : $request;
         if (false === $folder = realpath($dir)) {
             $folders = array();
-            $base = realpath('');
+            $current = realpath('');
             $dir = str_replace(array('/', '\\'), DIRECTORY_SEPARATOR, $dir);
-            if (strstr($base, DIRECTORY_SEPARATOR, true) !== strstr($dir, DIRECTORY_SEPARATOR, true)) {
-                $dir = $base.DIRECTORY_SEPARATOR.$dir;
+            if (strstr($current, DIRECTORY_SEPARATOR, true) !== strstr($dir, DIRECTORY_SEPARATOR, true)) {
+                $dir = $current.DIRECTORY_SEPARATOR.$dir;
             }
             foreach (array_filter(explode(DIRECTORY_SEPARATOR, $dir), 'strlen') as $folder) {
                 if ($folder == '..') {
