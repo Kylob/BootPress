@@ -13,7 +13,7 @@ engines:
         enabled: true
         config:
             file_extensions: "php"
-            rulesets: "controversial,design,naming,unusedcode" # "cleancode,codesize,controversial,design,naming,unusedcode"
+            rulesets: "codesize,controversial,design,naming" # "cleancode,codesize,controversial,design,naming,unusedcode"
         checks:
             Controversial/CamelCaseParameterName:
                 enabled: false
@@ -24,10 +24,6 @@ engines:
             Naming/ShortMethodName:
                 enabled: false
             Naming/ShortVariable:
-                enabled: false
-            UnusedFormalParameter:
-                enabled: false
-            UnusedLocalVariable:
                 enabled: false
 ratings:
     paths:
