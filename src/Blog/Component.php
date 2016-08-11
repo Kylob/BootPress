@@ -14,7 +14,7 @@ class Component extends Blog
         $page = Page::html();
         $listings = $this->config('blog', 'listings');
         if ($id = $this->file($page->url['path'])) {
-            $params = array('id'=>$id, 'path'=>$page->url['path']);
+            $params = array('id' => $id, 'path' => $page->url['path']);
             $method = 'blog';
         } elseif ($route = $page->routes(array(
             $listings,
@@ -175,7 +175,7 @@ class Component extends Blog
         $vars['author'] = $this->query('authors', $name);
         if (empty($vars['author'])) {
             $page->eject($page->url('blog/listings', $path));
-            
+
             return false;
         }
         $vars['breadcrumbs'][$vars['author']['name']] = $page->url('blog/listings', $path, $vars['author']['path']);
@@ -200,7 +200,7 @@ class Component extends Blog
         $vars['tag'] = $this->query('tags', $name);
         if (empty($vars['tag'])) {
             $page->eject($page->url('blog/listings', $path));
-            
+
             return false;
         }
         $vars['breadcrumbs'][$vars['tag']['name']] = $page->url('blog/listings', $path, $vars['tag']['path']);
@@ -215,6 +215,7 @@ class Component extends Blog
         Page::html()->enforce(Page::html()->url('blog/listings', 'feed.xml'));
         $this->theme->globalVars('blog', array('page' => 'feed'));
         $vars['listings'] = array();
+
         return array('blog-feed.tpl', $vars);
     }
 

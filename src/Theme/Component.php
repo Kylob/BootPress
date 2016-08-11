@@ -18,7 +18,7 @@ class Component
     /**
      * Theme folder getter.
      * 
-     * @param string $name 
+     * @param string $name
      * 
      * @return null|string
      */
@@ -69,7 +69,7 @@ class Component
         }
         $vars = array(
             'content' => $html,
-            'config' => $this->config
+            'config' => $this->config,
         );
         if ($index['dir'] != $this->folder) {
             $theme = substr($index['dir'], mb_strlen($this->folder)); // with trailing slash
@@ -79,15 +79,15 @@ class Component
             $config = array();
             $previous = '';
             foreach (explode('/', substr($theme, 0, -1)) as $folder) {
-                $previous .= $folder . '/';
-                $file = $this->folder . $previous . 'config.yml';
+                $previous .= $folder.'/';
+                $file = $this->folder.$previous.'config.yml';
                 if (is_file($file)) { // any child values will override the parents
                     $config = array_merge($config, (array) Yaml::parse(file_get_contents($file)));
                 }
             }
             $vars['config'] += $config; // The original config values override them all
         }
-        
+
         return $this->fetchSmarty($index['file'], $vars);
     }
 

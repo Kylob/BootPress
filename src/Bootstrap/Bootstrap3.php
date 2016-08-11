@@ -49,7 +49,7 @@ class Bootstrap3
      * This method works in conjunction with ``$bp->col()`` below.  It makes things a little less verbose, but much easier to edit, modify, and see at a glance what in the world is going on.
      * 
      * @param string $size    This value can be either '**xs**' < 768px, '**sm**' >= 768px, '**md**' >= 992 , or '**lg**' >= 1200. This is the point at which your grid will break, if no smaller size is indicated. With this method you can indicate multiple sizes by simply inserting another argument. All of your ``$size``'s must correspond with the values given in the ``$bp->col()``'s or ``$columns`` below.
-     * @param array $columns  An array of ``$bp->col()``'s.  This argument does not need to be the second one in line.  It is merely the last one given.
+     * @param array  $columns An array of ``$bp->col()``'s.  This argument does not need to be the second one in line.  It is merely the last one given.
      * 
      * @return string
      * 
@@ -91,10 +91,10 @@ class Bootstrap3
     /**
      * This is a helper method for ``$bp->row()`` above.  It only returns it's own arguments, but it helps to keep things straight.  Including arrays within arrays can get to be a little unwieldly, especially in a Smarty template. Just take a look at the ``$bp->media()`` method.
      * 
-     * @param mixed $number   This parameter must correspond with it's parent ``$bp->row($size)``. It can be an integer between 1 and 12, as long as all of the ``$bp->col()``'s respective numbers add up to 12 or less. To get fancy you can add a space, then an '**offset-**', '**push-**', or '**pull-**' followed by the number of columns that you would like to affect. All of these will be preceded by ``col-{$size}-...``. To include additional classes just keep on going with a space in between each like you normally would.
-     * @param string $column  The actual html content you would like to be placed in this column.
+     * @param mixed  $number This parameter must correspond with it's parent ``$bp->row($size)``. It can be an integer between 1 and 12, as long as all of the ``$bp->col()``'s respective numbers add up to 12 or less. To get fancy you can add a space, then an '**offset-**', '**push-**', or '**pull-**' followed by the number of columns that you would like to affect. All of these will be preceded by ``col-{$size}-...``. To include additional classes just keep on going with a space in between each like you normally would.
+     * @param string $column The actual html content you would like to be placed in this column.
      * 
-     * @return array  An array of it's own parameters.
+     * @return array An array of it's own parameters.
      * 
      * ```php
      * echo $bp->row('sm', 'md', 'lg', array(
@@ -111,14 +111,12 @@ class Bootstrap3
     /**
      * This assists you in making Ordered, Unordered, and Definition lists. It is especially useful when you are nesting lists within lists. Your code almost looks exactly like you would expect to see it on the big screen. It would have been nice if we could have named this method 'list', but someone has taken that already.
      * 
-     * @param string $tag   Either an '**ol**' (Ordered list), '**ul**' (Unordered list), or a '**dl**' (Definition list). You can add any other classes you like (or not), but the special ones that Bootstrap has blessed us with are:
+     * @param string $tag Either an '**ol**' (Ordered list), '**ul**' (Unordered list), or a '**dl**' (Definition list). You can add any other classes you like (or not), but the special ones that Bootstrap has blessed us with are:
      * 
      * - '**list-inline**' - For an unordered list to be displayed horizontally.
      * - '**list-unstyled**' - For an unordered list to be unbulleted.
      * - '**dl-horizontal**' - For a definition to be displayed beside it's title rather than below.
-     
-     
-     * @param array  $list  For Ordered and Unordered lists this is an ``array($li, $li, ...)``, and to nest another list just make the ``$li`` another array.
+     * @param array $list For Ordered and Unordered lists this is an ``array($li, $li, ...)``, and to nest another list just make the ``$li`` another array.
      * 
      * For Definition Lists this is an ``array($title => $definition, ...)``. If you have multiple ``$definition``'s, then just make ``$title`` an array of them.
      * 
@@ -174,8 +172,8 @@ class Bootstrap3
     /**
      * This will assist you in creating a search bar for your site.
      * 
-     * @param string $url   This is the url that you would like the search term to be sent to.
-     * @param array  $form  To customize the form, you can submit an array with any of the following keys:
+     * @param string $url  This is the url that you would like the search term to be sent to.
+     * @param array  $form To customize the form, you can submit an array with any of the following keys:
      * 
      * - '**name**' - The name of the input field. The default is '**search**'.
      * - '**placeholder**' - Subtle text to indicate what sort of field it is. The default is '**Search**'.
@@ -226,12 +224,12 @@ class Bootstrap3
 
         return $form->header().$html.$form->close();
     }
-    
+
     /**
      * Returns a BootPress\Form\Component instance with a few methods added for some Bootstrapped good looks.
      * 
-     * @param string $name    The name of the form.
-     * @param string $method  The form's method for sending.
+     * @param string $name   The name of the form.
+     * @param string $method The form's method for sending.
      * 
      * @return object
      * 
@@ -247,10 +245,10 @@ class Bootstrap3
     /**
      * Though not particularly a Bootstrap feature, this method is a natural for Smarty templates. It returns an ``<img>`` tag along with it's ``$params`` if the ``$src`` is not empty. If the ``$src`` is empty, then it skips the ``$params`` and heads for the ``$alt`` door.
      * 
-     * @param string $src     The image src location.
-     * @param string $params  Additional parameters you would like included in the ``<img>`` tag.
-     * @param string $alt     What to display if the ``$src`` is empty.
-     * @param string $frag    A #fragment to append to the end of ``$src`` (if any)
+     * @param string $src    The image src location.
+     * @param string $params Additional parameters you would like included in the ``<img>`` tag.
+     * @param string $alt    What to display if the ``$src`` is empty.
+     * @param string $frag   A #fragment to append to the end of ``$src`` (if any)
      * 
      * @return string
      * 
@@ -273,9 +271,9 @@ class Bootstrap3
     /**
      * This method helps you cut down on verbosity, but do you remember migrating from icon in v.2 to glyphicon in v.3? If that happens again, then we'll just change the ``$prefix`` default and that will be that.
      * 
-     * @param string $symbol  The icon you would like to display without the base and icon class prefix.
-     * @param string $prefix  The base and icon class prefix. The default is a Bootstrap icon, but this can be used with any icon font by simply entering their value here.
-     * @param string $tag     The tag to use for displaying your font. Everyone uses the <i> tag, so that is the default. If $prefix == 'glyphicon' (the default for Bootstrap) then we will use a span element. Why? I don't know, but since v.2 that seems to be what they prefer to use now. If you want to style an icon further then you can do so here. eg. 'i style="font-size:16px;"'
+     * @param string $symbol The icon you would like to display without the base and icon class prefix.
+     * @param string $prefix The base and icon class prefix. The default is a Bootstrap icon, but this can be used with any icon font by simply entering their value here.
+     * @param string $tag    The tag to use for displaying your font. Everyone uses the <i> tag, so that is the default. If $prefix == 'glyphicon' (the default for Bootstrap) then we will use a span element. Why? I don't know, but since v.2 that seems to be what they prefer to use now. If you want to style an icon further then you can do so here. eg. 'i style="font-size:16px;"'
      * 
      * @return string
      * 
@@ -305,9 +303,9 @@ class Bootstrap3
     /**
      * A button by itself is easy enough, but when you start including dropdowns and groups your markup can get ugly quick. Follow the examples. We'll start simple and go from there.
      * 
-     * @param string $class    The classes: '**xs**', '**sm**', '**lg**', '**block**', '**default**', '**primary**', '**success**', '**info**', '**warning**', '**danger**', and '**link**' will all be prefixed with 'btn', and we include the 'btn' class too. Notice how we left out the 'btn-group' option? Don't worry about that one. Feel free to add any more that you like such as '**disabled**'.
-     * @param string $name     The text of your button. You may also include badges, labels, icons, etc, but leave the caret up to us. If you are including a dropdown menu and you would like to split the button from the menu, then you can make this an ``array('split' => $name)``.
-     * @param array  $options  These are all of the attributes that you would like to include in the ``<button>`` tag, except if you include an 'href' key then it will be an ``<a>`` tag. Other potential options include: 'id', 'style', 'title', 'type', 'data-...', etc, but the ones we take notice of and do special things with are:
+     * @param string $class   The classes: '**xs**', '**sm**', '**lg**', '**block**', '**default**', '**primary**', '**success**', '**info**', '**warning**', '**danger**', and '**link**' will all be prefixed with 'btn', and we include the 'btn' class too. Notice how we left out the 'btn-group' option? Don't worry about that one. Feel free to add any more that you like such as '**disabled**'.
+     * @param string $name    The text of your button. You may also include badges, labels, icons, etc, but leave the caret up to us. If you are including a dropdown menu and you would like to split the button from the menu, then you can make this an ``array('split' => $name)``.
+     * @param array  $options These are all of the attributes that you would like to include in the ``<button>`` tag, except if you include an 'href' key then it will be an ``<a>`` tag. Other potential options include: 'id', 'style', 'title', 'type', 'data-...', etc, but the ones we take notice of and do special things with are:
      * 
      * - '**dropdown**' - This is an ``array($name => $link, ...)`` of names and their associated links.
      *   - If the $name is numeric (ie. not specified) then the $link will be a header (if it is not empty), or a divider if it is.
@@ -386,9 +384,9 @@ class Bootstrap3
     /**
      * This method will group together your buttons.
      * 
-     * @param string $class    The classes: '**xs**', '**sm**', '**lg**', '**justified**', and '**vertical**' will all be prefixed with 'btn-group', and we include the 'btn-group' class too. When you size a group up, then don't size the individual buttons.
-     * @param array  $buttons  An ``array($bp->button(), ...)`` of buttons.
-     * @param string $form     This can be either '**checkbox**' or '**radio**' and your button group will act accordingly.
+     * @param string $class   The classes: '**xs**', '**sm**', '**lg**', '**justified**', and '**vertical**' will all be prefixed with 'btn-group', and we include the 'btn-group' class too. When you size a group up, then don't size the individual buttons.
+     * @param array  $buttons An ``array($bp->button(), ...)`` of buttons.
+     * @param string $form    This can be either '**checkbox**' or '**radio**' and your button group will act accordingly.
      * 
      * @return string
      * 
@@ -427,9 +425,9 @@ class Bootstrap3
     /**
      * This used to be a private method that we only used internally for tabs and pills and buttons and so forth, but it is just so useful. Now you can make your own dropdowns with regular ``<a>`` links as will.
      * 
-     * @param string $tag      If this isn't 'li', then it will be an '**a**'. If you specify 'li' tags then you will need to surround this method's output with your own ``<ul>`` or ``<ol>`` tags. Otherwise you can just use the returned ``<a>`` $links (with dropdowns if any) as is. The ``<a>``'s with dropdowns will be surrounded by a ``<span class="dropdown">``. If one of those dropdown links are active then the ``<span>`` and ``<a>`` tags will receive an additional 'active' class as well. To add any other class(es) to the ``<a>`` or ``<li>`` tags just add them after the $tag here eg. '**a special-class**'.
-     * @param array  $links    An ``array($name => $href, ...)`` of links. If $href is an array unto itself, then it will be turned into a dropdown menu with the same header and divider rules applied as with ``$bp->buttons()``.
-     * @param array  $options  The available options are:
+     * @param string $tag     If this isn't 'li', then it will be an '**a**'. If you specify 'li' tags then you will need to surround this method's output with your own ``<ul>`` or ``<ol>`` tags. Otherwise you can just use the returned ``<a>`` $links (with dropdowns if any) as is. The ``<a>``'s with dropdowns will be surrounded by a ``<span class="dropdown">``. If one of those dropdown links are active then the ``<span>`` and ``<a>`` tags will receive an additional 'active' class as well. To add any other class(es) to the ``<a>`` or ``<li>`` tags just add them after the $tag here eg. '**a special-class**'.
+     * @param array  $links   An ``array($name => $href, ...)`` of links. If $href is an array unto itself, then it will be turned into a dropdown menu with the same header and divider rules applied as with ``$bp->buttons()``.
+     * @param array  $options The available options are:
      * 
      * - '**active**' => $name, $href, 'url', 'urlquery', or number (starting from 1)
      * - '**disabled**' => $name or $href or number (starting from 1)
@@ -529,8 +527,8 @@ class Bootstrap3
     /**
      * Creates a Bootstrap tabs nav menu.
      * 
-     * @param array $links    An ``array($name => $href, ...)`` of links. If $href is an array unto itself, then it will be turned into a dropdown menu with the same header and divider rules applied as with ``$bp->buttons()``.
-     * @param array $options  The available options are:
+     * @param array $links   An ``array($name => $href, ...)`` of links. If $href is an array unto itself, then it will be turned into a dropdown menu with the same header and divider rules applied as with ``$bp->buttons()``.
+     * @param array $options The available options are:
      * 
      * - '**active**' => $name, $href, 'url', 'urlquery', or number (starting from 1)
      * - '**disabled**' => $name or $href or number (starting from 1)
@@ -569,8 +567,8 @@ class Bootstrap3
     /**
      * Creates a Bootstrap pills nav menu.
      * 
-     * @param array $links    An ``array($name => $href, ...)`` of links. If $href is an array unto itself, then it will be turned into a dropdown menu with the same header and divider rules applied as with ``$bp->buttons()``.
-     * @param array $options  The available options are:
+     * @param array $links   An ``array($name => $href, ...)`` of links. If $href is an array unto itself, then it will be turned into a dropdown menu with the same header and divider rules applied as with ``$bp->buttons()``.
+     * @param array $options The available options are:
      * 
      * - '**active**' => $name, $href, 'url', 'urlquery', or number (starting from 1)
      * - '**disabled**' => $name or $href or number (starting from 1)
@@ -664,8 +662,8 @@ class Bootstrap3
     /**
      * This makes a Bootstrap label, and saves you having to type label twice. Awesome, right? We didn't build the class for this, but it was simple enough to include so I did. I use it.
      * 
-     * @param string $class  Either '**default**', '**primary**', '**success**', '**info**', '**warning**', or '**danger**'. The label class and prefix are automatically included. You can add more classes to it if you like.
-     * @param string $text   The label's text.
+     * @param string $class Either '**default**', '**primary**', '**success**', '**info**', '**warning**', or '**danger**'. The label class and prefix are automatically included. You can add more classes to it if you like.
+     * @param string $text  The label's text.
      * 
      * @return string
      * 
@@ -683,8 +681,8 @@ class Bootstrap3
     /**
      * This method is a little bit more useful than label, so I am not as embarrassed to present it. If ``$count`` equals 0, or if it's not numeric (null?), then it still includes the tag but leaves the value empty.
      * 
-     * @param integer $count  The number you would like to display.
-     * @param string  $align  This will pull your badge 'right' or 'left' or not (default). In a list group, badges are automatically positioned on the right.
+     * @param int    $count The number you would like to display.
+     * @param string $align This will pull your badge 'right' or 'left' or not (default). In a list group, badges are automatically positioned on the right.
      * 
      * @return string
      * 
@@ -703,9 +701,9 @@ class Bootstrap3
     /**
      * Creates Bootstrap alert messages.
      * 
-     * @param string $type         Either '**success**', '**info**', '**warning**', or '**danger**'.
-     * @param string $alert        The status message. All ``<h1-6>`` headers and ``<a>`` links will be classed appropriately.
-     * @param bool   $dismissable  If you set this to false, then the alert will not be dismissable.
+     * @param string $type        Either '**success**', '**info**', '**warning**', or '**danger**'.
+     * @param string $alert       The status message. All ``<h1-6>`` headers and ``<a>`` links will be classed appropriately.
+     * @param bool   $dismissable If you set this to false, then the alert will not be dismissable.
      * 
      * @return string
      * 
@@ -737,9 +735,9 @@ class Bootstrap3
     /**
      * This allows you to create any flavor of progress bar that Bootstrap has to offer.
      * 
-     * @param integer $percent  The amount of progress from 0 to 100. In order to stack multiple values then turn this into an array.
-     * @param string  $class    You can include one of the four contextual classes: '**success**', '**info**', '**warning**' or '**danger**'. Also '**striped**' and '**active**' if you like the looks of those. These will all be properly prefixed. If you are stacking multiple bars, then turn this into an array and make sure your classes correspond with your percentages.
-     * @param mixed   $display  If $display !== false, then the percentage will be displayed in the progress bar.
+     * @param int    $percent The amount of progress from 0 to 100. In order to stack multiple values then turn this into an array.
+     * @param string $class   You can include one of the four contextual classes: '**success**', '**info**', '**warning**' or '**danger**'. Also '**striped**' and '**active**' if you like the looks of those. These will all be properly prefixed. If you are stacking multiple bars, then turn this into an array and make sure your classes correspond with your percentages.
+     * @param mixed  $display If $display !== false, then the percentage will be displayed in the progress bar.
      * 
      * @return string
      * 
@@ -772,7 +770,7 @@ class Bootstrap3
     /**
      * This is the easiest way I could devise of making Bootstrap media objects as manageable as possible. ``<h1-6>`` Headers and ``<img>`` images will automatically be classed appropriately.
      * 
-     * @param array $list  A media array row that looks like this: ``array($left, $body, $right);``
+     * @param array $list A media array row that looks like this: ``array($left, $body, $right);``
      * 
      * - If you don't have an image or whatever for the left side, then set an empty value
      * - If you have nothing to right align then you can either leave it off, or set an empty value
@@ -856,8 +854,8 @@ class Bootstrap3
     /**
      * Displays a Bootstrap list group. ``<h1-6>`` Headers and ``<p>`` paragraphs will automatically be classed appropriately.
      * 
-     * @param array $links   If you would like to create an unordered list, then this is just an array of values. Otherwise this will be an ``array($name => $href, ...)`` of links. $name badges will automatically be positioned on the right.
-     * @param mixed $active  This value can be either the $name, $href (link), or number (starting from 1) that you would like to be selected as "active".
+     * @param array $links  If you would like to create an unordered list, then this is just an array of values. Otherwise this will be an ``array($name => $href, ...)`` of links. $name badges will automatically be positioned on the right.
+     * @param mixed $active This value can be either the $name, $href (link), or number (starting from 1) that you would like to be selected as "active".
      * 
      * @return string
      * 
@@ -911,8 +909,8 @@ class Bootstrap3
     /**
      * Creates a Bootstrap panel component.
      * 
-     * @param string $class     Either '**default**', '**primary**', '**success**', '**info**', '**warning**', or '**danger**'. The panel class and prefix are automatically included. You can add more classes to it if you like.
-     * @param array  $sections  An ``array($panel => $content, ...)`` of sections. If $panel equals:
+     * @param string $class    Either '**default**', '**primary**', '**success**', '**info**', '**warning**', or '**danger**'. The panel class and prefix are automatically included. You can add more classes to it if you like.
+     * @param array  $sections An ``array($panel => $content, ...)`` of sections. If $panel equals:
      * 
      * - '**head**', '**header**', or '**heading**' - The panel heading $content. All ``<h1-6>`` headers will be classed appropriately
      * - '**body**' - The panel body $content
@@ -963,9 +961,9 @@ class Bootstrap3
     /**
      * This is for creating toggleable tabs and pills for transitioning through panes of local content.
      * 
-     * @param string $type     Specify either '**tabs**' or '**pills**'.
-     * @param array  $links    An ``array($name => $html, ...)`` of content to toggle through. If $html is an array unto itself, then it will be turned into a dropdown menu with the same header and divider rules applied as with ``$bp->buttons()``.
-     * @param array  $options  The available options are:
+     * @param string $type    Specify either '**tabs**' or '**pills**'.
+     * @param array  $links   An ``array($name => $html, ...)`` of content to toggle through. If $html is an array unto itself, then it will be turned into a dropdown menu with the same header and divider rules applied as with ``$bp->buttons()``.
+     * @param array  $options The available options are:
      * 
      * - '**fade**' - No key, just the value. Will give your panes a fade in effect while toggling.
      * - '**active**' and '**disabled**' => $name, $html (if you dare), or number (starting from 1)
@@ -1049,9 +1047,9 @@ class Bootstrap3
     /**
      * Bootstrap accordions are basically collapsible panels, so keep that in mind. That is essentially what you are creating here.
      * 
-     * @param string  $class     Either '**default**', '**primary**', '**success**', '**info**', '**warning**', or '**danger**'. These only apply to the head section, and are passed directly by us into ``$this->panel()``.
-     * @param array   $sections  An ``array($heading => $body, ...)`` of sections that will become your accordion. The ``<h1-6>`` headers in the $heading will be automatically classed appropriately. Accordions are definitely nestable, but we don't create them via nested arrays through this method. Just add a pre-made accordion to the $body you would like it to reside in ie. the $body should never be an array.
-     * @param integer $open      This is the panel number you would like be open from the get-go (starting at 1). If you don't want any to be open initially, then set this to 0.
+     * @param string $class    Either '**default**', '**primary**', '**success**', '**info**', '**warning**', or '**danger**'. These only apply to the head section, and are passed directly by us into ``$this->panel()``.
+     * @param array  $sections An ``array($heading => $body, ...)`` of sections that will become your accordion. The ``<h1-6>`` headers in the $heading will be automatically classed appropriately. Accordions are definitely nestable, but we don't create them via nested arrays through this method. Just add a pre-made accordion to the $body you would like it to reside in ie. the $body should never be an array.
+     * @param int    $open     This is the panel number you would like be open from the get-go (starting at 1). If you don't want any to be open initially, then set this to 0.
      * 
      * @return string
      * 
@@ -1106,8 +1104,8 @@ class Bootstrap3
     /**
      * Creates a Bootstrap carousel for cycling through elements. Those elements don't necessarily need to be images, but pretty much they always are.
      * 
-     * @param array $images   An ``array($image, ...)`` of images to cycle through, starting with the first (logically). To get fancy and add captions, then make this an ``array($image => $caption, ...)`` of images with captions to cycle through. If you have some images with captions and others without, then you can merge these two concepts no problem. Remember, the $image is not just a location, it is the entire ``<img>`` tag src and all.
-     * @param array $options  The available option keys are:
+     * @param array $images  An ``array($image, ...)`` of images to cycle through, starting with the first (logically). To get fancy and add captions, then make this an ``array($image => $caption, ...)`` of images with captions to cycle through. If you have some images with captions and others without, then you can merge these two concepts no problem. Remember, the $image is not just a location, it is the entire ``<img>`` tag src and all.
+     * @param array $options The available option keys are:
      * 
      * - '**interval**' - The time delay in thousandths of a second between cycles (or frame changes). The default is 5000 ie. 5 seconds.
      * - '**indicators**' - Those little circle things at the bottom to give you an idea of where you are at. If you don't want them, then set this to false. The default is true ie. include them.

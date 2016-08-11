@@ -13,7 +13,7 @@ class Driver
     /**
      * Either implement an established PDO instance, or set up a lazy database connection that we only connect to if and when you actually use it.  Every $dsn string with a '**dbname**' is saved in a databases.yml file so that you only need to spell everything out once, and then just refer to the 'dbname' in your code.
      * 
-     * @param string|object   $dsn       Either a PDO Instance, a DSN string that contains the information required to connect to the database, or the 'dbname' saved in the databases.yml file.  Some examples are:
+     * @param string|object $dsn Either a PDO Instance, a DSN string that contains the information required to connect to the database, or the 'dbname' saved in the databases.yml file.  Some examples are:
      * 
      * - [MySQL](http://php.net/manual/en/ref.pdo-mysql.connection.php "mysql")
      *     - mysql:host=[name];port=[number];dbname=[database];unix_socket=[instead of host or port];charset=[utf-8]
@@ -35,11 +35,10 @@ class Driver
      *     - mssql:host=[name];dbname=[database];charset=[utf-8];appname=[application];secure=[currently unused]
      * - [Cubrid](http://php.net/manual/en/ref.pdo-cubrid.connection.php "cubrid")
      *     - cubrid:host=[name];port=[number];dbname=[database];
-     * 
-     * @param string|null     $username  The user name for the DSN string. This parameter is optional for some PDO drivers.
-     * @param string|null     $password  The password for the DSN string. This parameter is optional for some PDO drivers.
-     * @param array           $options   An ``array('key'=>'value', ...)`` of driver-specific connection options.
-     * @param array           $exec      Queries you would like to execute upon connecting to the database.
+     * @param string|null $username The user name for the DSN string. This parameter is optional for some PDO drivers.
+     * @param string|null $password The password for the DSN string. This parameter is optional for some PDO drivers.
+     * @param array       $options  An ``array('key'=>'value', ...)`` of driver-specific connection options.
+     * @param array       $exec     Queries you would like to execute upon connecting to the database.
      * 
      * @see http://php.net/manual/en/pdo.construct.php
      */
@@ -83,7 +82,7 @@ class Driver
     }
 
     /**
-     * @return integer  The current database's id.
+     * @return int The current database's id.
      */
     public function id()
     {
@@ -91,9 +90,9 @@ class Driver
     }
 
     /**
-     * @param string $name  Pass a value to set the database driver's name.
+     * @param string $name Pass a value to set the database driver's name.
      * 
-     * @return string|null  The current database driver's name.
+     * @return string|null The current database driver's name.
      */
     public function driver($name = null)
     {
@@ -104,13 +103,14 @@ class Driver
         if (is_string($name)) {
             static::$drivers[$this->id] = $name;
         }
+
         return (isset(static::$drivers[$this->id])) ? static::$drivers[$this->id] : null;
     }
 
     /**
-     * @param integer $id  To only return the data for a specific database connection.
+     * @param int $id To only return the data for a specific database connection.
      * 
-     * @return array  Debug, error, and profile data for all of your database queries.
+     * @return array Debug, error, and profile data for all of your database queries.
      */
     public static function logs($id = null)
     {
@@ -139,7 +139,7 @@ class Driver
     }
 
     /**
-     * @return array  All of the errors generated from all of your database connections.
+     * @return array All of the errors generated from all of your database connections.
      */
     public static function errors()
     {
@@ -166,7 +166,7 @@ class Driver
     }
 
     /**
-     * @return object  The database connection.  This is how we create lazy connections.
+     * @return object The database connection.  This is how we create lazy connections.
      */
     public function connection()
     {

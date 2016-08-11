@@ -7,7 +7,7 @@ use BootPress\Form\Component as Form;
 class Bootstrap3Form extends Form
 {
     use Base;
-    
+
     private $bp;
     private $prompt = array(
         'info' => 'glyphicon glyphicon-question-sign',
@@ -16,20 +16,20 @@ class Bootstrap3Form extends Form
     private $align = 'form-horizontal';
     private $collapse = 'sm';
     private $indent = 2;
-    
+
     /**
      * {@inheritdoc}
      */
-    public function __construct($name = 'form', $method = 'post', Bootstrap3 $bp)
+    public function __construct($name, $method, Bootstrap3 $bp)
     {
-        parent::__construct($name, $method = 'post');
+        parent::__construct($name, $method);
         $this->bp = $bp;
     }
-    
+
     /**
      * A private property getter.
      * 
-     * @param string $name 
+     * @param string $name
      * 
      * @return null|string
      */
@@ -53,9 +53,9 @@ class Bootstrap3Form extends Form
      * @param false|mixed $required If this is anything but (bool) false and $place == 'prepend', the the $html will only be prepended if the field is required per the ``$form->validator``.
      * 
      * ```php
-$form->prompt('prepend', '<font color="red">*</font> ', 'required'); // If the field is required it will add a red asterisk to the front.
-
-$form->prompt('append', ':'); // Adds a semicolon to all of the prompts.
+     * $form->prompt('prepend', '<font color="red">*</font> ', 'required'); // If the field is required it will add a red asterisk to the front.
+     * 
+     * $form->prompt('append', ':'); // Adds a semicolon to all of the prompts.
      * ```
      */
     public function prompt($place, $html, $required = false)
@@ -66,11 +66,11 @@ $form->prompt('append', ':'); // Adds a semicolon to all of the prompts.
                 $this->prompt[$place] = $html;
                 break;
             case 'prepend':
-                $this->prompt['prepend'] = array('html'=>$html, 'required'=>(bool) $required);
+                $this->prompt['prepend'] = array('html' => $html, 'required' => (bool) $required);
                 break;
         }
     }
-    
+
     /**
      * Supersize or undersize your input fields.
      * 
@@ -86,16 +86,15 @@ $form->prompt('append', ':'); // Adds a semicolon to all of the prompts.
     }
 
     /**
-     * Utilize any Bootstrap form style
+     * Utilize any Bootstrap form style.
      * 
-     * @param string  $direction The options are:
+     * @param string $direction The options are:
      *
      * - '**collapse**' - This will display the form prompt immediately above the field.
      * - '**inline**' - All of the fields will be inline with each other, and the form prompts will be removed.
      * - '**horizontal**' - Vertically aligns all of the fields with the prompt immediately preceding, and right aligned.
-     * 
-     * @param string  $collapse  Either '**xs**', '**sm**', '**md**', or '**lg**'.  This is the breaking point so to speak for a '**horizontal**' form.  It is the device size on which the form will '**collapse**'.
-     * @param integer $indent    The number of columns (up to 12) that you would like to indent the field in a '**horizontal**' form.
+     * @param string $collapse Either '**xs**', '**sm**', '**md**', or '**lg**'.  This is the breaking point so to speak for a '**horizontal**' form.  It is the device size on which the form will '**collapse**'.
+     * @param int    $indent   The number of columns (up to 12) that you would like to indent the field in a '**horizontal**' form.
      * 
      * ```php
      * $form->align('collapse');
@@ -113,12 +112,12 @@ $form->prompt('append', ':'); // Adds a semicolon to all of the prompts.
             $this->indent = (is_numeric($indent) && $indent > 0 && $indent < 12) ? $indent : 2;
         }
     }
-    
+
     /**
      * Use to display a message on the retrun trip after you have ``$page->eject()``ed them.  The Bootstrap alert status message will be displayed at the top of the form when you return ``$form->header()``.
      * 
-     * @param string $status   Either '**success**', '**info**', '**warning**', or '**danger**'.  If this is '**html**', then the $message will be delivered as is.
-     * @param string $message  The message you would like to get across to your user.  ``<h1-6>`` headers and ``<a>`` links may be used.
+     * @param string $status  Either '**success**', '**info**', '**warning**', or '**danger**'.  If this is '**html**', then the $message will be delivered as is.
+     * @param string $message The message you would like to get across to your user.  ``<h1-6>`` headers and ``<a>`` links may be used.
      * 
      * ```php
      * if ($vars = $form->validator->certified()) {
@@ -134,7 +133,7 @@ $form->prompt('append', ':'); // Adds a semicolon to all of the prompts.
             'msg' => $message,
         ));
     }
-    
+
     /**
      * {@inheritdoc}
      */
@@ -205,7 +204,7 @@ $form->prompt('append', ':'); // Adds a semicolon to all of the prompts.
      * 
      * @param string|array $prepend An element to place before the $input.
      * @param string|array $append  An element to place after the $input.
-     * @param string $input   The form field to wrap.    
+     * @param string       $input   The form field to wrap.    
      * 
      * @return string A ``<div class="input-group">...</div>`` html string.
      * 
@@ -234,15 +233,15 @@ $form->prompt('append', ':'); // Adds a semicolon to all of the prompts.
 
         return $this->page->tag('div', array('class' => $group), $input);
     }
-    
+
     /**
      * This is to add html tags, or semicolons, or asterisks, or whatever you would like include with all of the form's prompts.
      * 
-     * @param string|array $prompt  The form label reference.  If you want to include additional information relative to the field, then you can make this an ``array($prompt => $info)``, or an ``array($prompt, $info)`` that will appear when cliked or hovered over.  To customize the icon set ``$form->prompt('info', 'fa fa-info-circle')``.
-     * @param string       $name    The name of the associated input field.
-     * @param string       $id      The id of the associated input field.
+     * @param string|array $prompt The form label reference.  If you want to include additional information relative to the field, then you can make this an ``array($prompt => $info)``, or an ``array($prompt, $info)`` that will appear when cliked or hovered over.  To customize the icon set ``$form->prompt('info', 'fa fa-info-circle')``.
+     * @param string       $name   The name of the associated input field.
+     * @param string       $id     The id of the associated input field.
      * 
-     * @return string  The generated HTML ``<label>``.
+     * @return string The generated HTML ``<label>``.
      */
     public function label($prompt, $name, $id)
     {
@@ -257,7 +256,7 @@ $form->prompt('append', ':'); // Adds a semicolon to all of the prompts.
         }
         if (isset($this->prompt['prepend'])) {
             if (!$this->prompt['prepend']['required'] || $this->validator->required($name)) {
-                $prompt = $this->prompt['prepend']['html'] . $prompt;
+                $prompt = $this->prompt['prepend']['html'].$prompt;
             }
         }
         if (isset($this->prompt['append'])) {
@@ -290,6 +289,7 @@ $form->prompt('append', ':'); // Adds a semicolon to all of the prompts.
                 $class = $this->input;
                 break;
         }
+
         return $this->page->tag('label', array(
             'class' => $class,
             'for' => $id,
@@ -325,13 +325,13 @@ $form->prompt('append', ':'); // Adds a semicolon to all of the prompts.
             case 'input':
             case 'select':
             case 'textarea':
-                $input = $this->addClass($input, array('p'=>'help-block'));
+                $input = $this->addClass($input, array('p' => 'help-block'));
                 if ($tag != 'input' || !in_array($type, array('checkbox', 'radio', 'file', 'submit', 'reset', 'button'))) {
-                    $input = $this->addClass($input, array($tag=>'form-control '.$this->input));
+                    $input = $this->addClass($input, array($tag => 'form-control '.$this->input));
                 }
                 break;
             case 'p':
-                $input = $this->addClass($input, array('p'=>'form-control-static'));
+                $input = $this->addClass($input, array('p' => 'form-control-static'));
                 break;
         }
         $group = array('form-group');
@@ -350,12 +350,12 @@ $form->prompt('append', ':'); // Adds a semicolon to all of the prompts.
             if (empty($prompt)) {
                 $class[] = 'col-'.$this->collapse.'-offset-'.$this->indent;
             }
-            $html = $prompt.$this->page->tag('div', array('class'=>$class), $error.$input);
+            $html = $prompt.$this->page->tag('div', array('class' => $class), $error.$input);
         } else {
             $html = $prompt.$error.$input;
         }
 
-        return "\n\t".$this->page->tag('div', array('class'=>$group), $html);
+        return "\n\t".$this->page->tag('div', array('class' => $group), $html);
     }
 
     /**
@@ -400,6 +400,7 @@ $form->prompt('append', ':'); // Adds a semicolon to all of the prompts.
         if ($this->align == 'form-horizontal') {
             $html .= '</div></div>';
         }
+
         return $html;
     }
 }

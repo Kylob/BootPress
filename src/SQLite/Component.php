@@ -43,7 +43,7 @@ class Component extends Database
         $this->connection->exec('PRAGMA foreign_keys = ON');
         $this->fts = new Fts($this);
     }
-    
+
     public function __get($name)
     {
         if ($name == 'connection') {
@@ -332,7 +332,7 @@ class Component extends Database
         } catch (\Exception $e) {
             return false;
         }
-        
+
         return ($object) ? true : false; // returns (bool) true or false
     }
 

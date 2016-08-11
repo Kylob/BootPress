@@ -6,15 +6,13 @@ use BootPress\Page\Component as Page;
 
 class Component
 {
-    
     /**
      * Custom validation rules that you would like to apply.
      * 
      * @var callable[]
      */
     public $rules = array();
-    
-    
+
     /**
      * Before you check if ``$this->certified()``, these are the error messages associated with each validation rule.  After ``$this->certified()``, these are all the errors we encountered (if any).  You can customize and add as you see fit.
      * 
@@ -47,49 +45,49 @@ class Component
         'inList' => 'Please make a valid selection.',
         'noWhiteSpace' => 'No white space please.',
     );
-    
+
     /**
      * This is where we save all of the information ``$this->set()``ed for each field.
      * 
      * @var array
      */
     protected $data = array();
-    
+
     /**
      * These are the user submitted values for each field.
      * 
      * @var array
      */
     protected $values = array();
-    
+
     /**
      * Whether the form has been submitted or not.  Null if we don't know.
      * 
      * @var null|bool
      */
     protected $submitted = null;
-    
+
     /**
      * Either false or an array of all the submitted values.
      * 
      * @var false|array
      */
     protected $certified = false;
-    
+
     /**
      * The rules we reserve for validation until the end.
      * 
      * @var string[]
      */
     protected $reserved = array('default', 'required', 'equalTo', 'notEqualTo');
-    
+
     /**
      * The rules we define in-house.
      * 
      * @var string[]
      */
     protected $methods = array('number', 'integer', 'digits', 'min', 'max', 'range', 'alphaNumeric', 'minLength', 'maxLength', 'rangeLength', 'minWords', 'maxWords', 'rangeWords', 'pattern', 'date', 'email', 'url', 'ipv4', 'ipv6', 'inList', 'yesNo', 'trueFalse', 'noWhiteSpace', 'singleSpace');
-    
+
     /**
      * So that we have something to work with no matter what happens to ``$this->errors`` (anything can happen) public property.
      * 
@@ -118,7 +116,6 @@ class Component
      * @param string $field The name of your form field.  If this is an ``array($field => $rules, $field, ...)`` then we loop through each one and call this method ourselves over and over.
      * 
      * Your $field names can be an array by adding brackets to the end ie. 'name[]'.  They can also be multi-dimensional arrays such as 'name[first]', or 'name[players][]', or 'name[parent][child]', etc.  The important thing to remember is that you must always use the exact name given here when referencing them in other methods.
-     * 
      * @param string|array $rules A pipe delimited set (or an array) of rules to validate and filter the $field with.  You can also specify custom messages by making this an ``array($rule => $message, ...)``.  Parameters are comma-delimited, and placed within '**[]**' two brackets.  The available options are:
      *
      * - '**remote[rule]**' - Set ``$form->rules['rule'] = function($value){}`` to determine the validity of a submitted value.  The function should return a boolean true or false.
@@ -385,9 +382,9 @@ class Component
         if ($this->submitted) {
             $submitted = array();
             foreach ($this->data as $field => $data) {
-                $value =& $submitted;
+                $value = &$submitted;
                 foreach ($data['field'] as $index) {
-                    $value =& $value[$index];
+                    $value = &$value[$index];
                 }
                 $value = $this->values[$field];
                 if (isset($data['rules']['required']) && empty($value)) {
@@ -406,25 +403,25 @@ class Component
 
         return $this->certified;
     }
-    
+
     /**
      * Allows you to know if a form $field has been required, or not.
      * 
-     * @param string $field 
+     * @param string $field
      * 
-     * @return bool  Whether the field is required or not.
+     * @return bool Whether the field is required or not.
      */
     public function required($field)
     {
         return (isset($this->data[$field]['rules']['required'])) ? true : false;
     }
-    
+
     /**
      * Returns the submitted value of the $field that should be used when displaying the form.
      * 
      * The array feature comes in handy when you want to save the values to your database.
      * 
-     * @param string|array $field 
+     * @param string|array $field
      * 
      * @return mixed
      */
@@ -438,14 +435,14 @@ class Component
 
             return $values;
         }
-        
+
         return ($this->submitted && isset($this->values[$field])) ? $this->values[$field] : null;
     }
 
     /**
      * Returns an error message (if any) that should be used when displaying the form.
      * 
-     * @param string $field 
+     * @param string $field
      * 
      * @return null|string
      */
@@ -457,7 +454,7 @@ class Component
     /**
      * Returns all of the rules set up for the $field.
      * 
-     * @param string $field 
+     * @param string $field
      * 
      * @return string[]
      * 
@@ -475,7 +472,7 @@ class Component
     /**
      * Returns a $field's rules and associated error messages.
      * 
-     * @param string $field 
+     * @param string $field
      * 
      * @return string[]
      * 
@@ -516,7 +513,7 @@ class Component
     /**
      * Returns the unique id assigned to the $field.
      * 
-     * @param string $field 
+     * @param string $field
      * 
      * @return string
      */
@@ -569,8 +566,8 @@ class Component
     /**
      * Determines if the $value is greater than or equal to $param.
      * 
-     * @param float $value 
-     * @param float $param 
+     * @param float $value
+     * @param float $param
      * 
      * @return bool
      */
@@ -582,8 +579,8 @@ class Component
     /**
      * Determines if the $value is less than or equal to $param.
      * 
-     * @param float $value 
-     * @param float $param 
+     * @param float $value
+     * @param float $param
      * 
      * @return bool
      */
@@ -595,8 +592,8 @@ class Component
     /**
      * Determines if the $value is greater than or equal to $param[0], and less than or equal to $param[1].
      * 
-     * @param float   $value 
-     * @param float[] $param 
+     * @param float   $value
+     * @param float[] $param
      * 
      * @return bool
      */
@@ -620,8 +617,8 @@ class Component
     /**
      * Determines if the $value's length is greater than or equal to $param.
      * 
-     * @param string $value 
-     * @param int    $param 
+     * @param string $value
+     * @param int    $param
      * 
      * @return bool
      */
@@ -635,8 +632,8 @@ class Component
     /**
      * Determines if the $value's length is less than or equal to $param.
      * 
-     * @param string $value 
-     * @param int    $param 
+     * @param string $value
+     * @param int    $param
      * 
      * @return bool
      */
@@ -650,8 +647,8 @@ class Component
     /**
      * Determines if the $value's length is greater than or equal to $param[0], and less than or equal to $param[1].
      * 
-     * @param string $value 
-     * @param int[]  $param 
+     * @param string $value
+     * @param int[]  $param
      * 
      * @return bool
      */
@@ -665,8 +662,8 @@ class Component
     /**
      * Determines if the number of $value's words are greater than or equal to $param.
      * 
-     * @param string $value 
-     * @param int    $param 
+     * @param string $value
+     * @param int    $param
      * 
      * @return bool
      */
@@ -680,8 +677,8 @@ class Component
     /**
      * Determines if the number of $value's words are less than or equal to $param.
      * 
-     * @param string $value 
-     * @param int    $param 
+     * @param string $value
+     * @param int    $param
      * 
      * @return bool
      */
@@ -695,8 +692,8 @@ class Component
     /**
      * Determines if the number of $value's words are greater than or equal to $param[0], and less than or equal to $param[1].
      * 
-     * @param string $value 
-     * @param int[]  $param 
+     * @param string $value
+     * @param int[]  $param
      * 
      * @return bool
      */
@@ -710,8 +707,8 @@ class Component
     /**
      * Determines if the $value matches the supplied regex ($param).
      * 
-     * @param string $value 
-     * @param string $param 
+     * @param string $value
+     * @param string $param
      * 
      * @return bool
      */
@@ -723,7 +720,7 @@ class Component
     /**
      * Determines if the $value is a parseable date.
      * 
-     * @param string $value 
+     * @param string $value
      * 
      * @return bool
      */
@@ -735,7 +732,7 @@ class Component
     /**
      * Determines if the $value is a valid looking email.
      * 
-     * @param string $value 
+     * @param string $value
      * 
      * @return bool
      */
@@ -747,7 +744,7 @@ class Component
     /**
      * Determines if the $value is a valid looking url.
      * 
-     * @param string $value 
+     * @param string $value
      * 
      * @return bool
      */
@@ -759,7 +756,7 @@ class Component
     /**
      * Determines if the $value is a valid looking ipv4 address.
      * 
-     * @param string $value 
+     * @param string $value
      * 
      * @return bool
      */
@@ -771,7 +768,7 @@ class Component
     /**
      * Determines if the $value is a valid looking ipv6 address.
      * 
-     * @param string $value 
+     * @param string $value
      * 
      * @return bool
      */
@@ -783,8 +780,8 @@ class Component
     /**
      * Determines if the $value exists in the $param array.
      * 
-     * @param string $value 
-     * @param array  $param 
+     * @param string $value
+     * @param array  $param
      * 
      * @return bool
      */
@@ -796,7 +793,7 @@ class Component
     /**
      * Determines if the $value contains any white space.
      * 
-     * @param string $value 
+     * @param string $value
      * 
      * @return bool
      */
@@ -808,7 +805,7 @@ class Component
     /**
      * Removes any doubled-up whitespace from the $value.
      * 
-     * @param string $value 
+     * @param string $value
      * 
      * @return string
      */
@@ -820,7 +817,7 @@ class Component
     /**
      * Returns a **1** (true) or **0** (false) integer depending on the $value.
      * 
-     * @param mixed $value 
+     * @param mixed $value
      * 
      * @return int
      */
@@ -836,7 +833,7 @@ class Component
     /**
      * Returns a '**Y**' or '**N**' string depending on the $value.
      * 
-     * @param mixed $value 
+     * @param mixed $value
      * 
      * @return string
      */
@@ -852,9 +849,9 @@ class Component
     /**
      * Returns the number of words in $value.
      * 
-     * @param string $value 
+     * @param string $value
      * 
-     * @return integer
+     * @return int
      */
     private static function numWords($value)
     {
@@ -866,14 +863,14 @@ class Component
         return count($words[0]);
     }
 
-     /**
-      * A helper method to validate a $value via a callable $param.
-      * 
-      * @param string $value 
-      * @param string $param 
-      * 
-      * @return string
-      */
+    /**
+     * A helper method to validate a $value via a callable $param.
+     * 
+     * @param string $value
+     * @param string $param
+     * 
+     * @return string
+     */
     private function remote($value, $param)
     {
         $value = (isset($this->rules[$param]) && is_callable($this->rules[$param])) ? $this->rules[$param]($value) : false;
@@ -885,11 +882,11 @@ class Component
     }
 
     /**
-     * A helper method to determine the value in an array based on a string eg. 'array[value]'
+     * A helper method to determine the value in an array based on a string eg. 'array[value]'.
      * 
-     * @param mixed $array 
-     * @param array $indexes 
-     * @param int   $i  
+     * @param mixed $array
+     * @param array $indexes
+     * @param int   $i
      * 
      * @return mixed
      */
@@ -905,7 +902,7 @@ class Component
     /**
      * A helper method to remove any reference to an array ie. 'array[value]' would be just 'array'.
      * 
-     * @param string $field 
+     * @param string $field
      * 
      * @return string
      */
@@ -917,9 +914,9 @@ class Component
     /**
      * A helper method to validate a string or an array of values based on it's $rule's and $param's.
      * 
-     * @param mixed  $value 
-     * @param string $rule 
-     * @param mixed  $param 
+     * @param mixed  $value
+     * @param string $rule
+     * @param mixed  $param
      * 
      * @return array The derived value, and error (if any).
      */
@@ -968,8 +965,8 @@ class Component
     /**
      * A helper method to retrieve the associated error message when something goes wrong.
      * 
-     * @param string $rule 
-     * @param mixed  $param  
+     * @param string $rule
+     * @param mixed  $param
      * 
      * @return null|string
      */
