@@ -24,14 +24,14 @@ class Component
     /**
      * Prepares a Symfony Response for you to send.
      * 
-     * @param string       $file     Either a file location, or the type of file you are sending eg. html, txt, less, scss, json, xml, rdf, rss, atom, js, css
-     * @param array|string $options  An array of options if ``$file`` is a location, or the string of data you want to send.  The available options are:
+     * @param string       $file    Either a file location, or the type of file you are sending eg. html, txt, less, scss, json, xml, rdf, rss, atom, js, css
+     * @param array|string $options An array of options if ``$file`` is a location, or the string of data you want to send.  The available options are:
      * 
      * - '**name**' - changes a downloadable asset's file name
      * - 
      * - 
      * 
-     * @return object  A Symfony\Component\HttpFoundation\Response
+     * @return object A Symfony\Component\HttpFoundation\Response
      */
     public static function dispatch($file, $options = array())
     {
@@ -178,6 +178,7 @@ class Component
                                 $image = $glide->getImageResponse(basename($row['file']), $params);
                                 break 2;
                             }
+                            // Otherwise we treat is as any other (default) file
                         default:
                             $file = $row['file'];
                             break 2;
@@ -309,9 +310,9 @@ class Component
             static::$urls[substr($match, $base)] = $cached;
         }
         ksort(static::$urls);
-        uasort($rnr, function($a, $b) { // ORDER BY strlen(remove) DESC so we don't step on any toes
+        uasort($rnr, function ($a, $b) {
             return mb_strlen($b) - mb_strlen($a);
-        });
+        });  // ORDER BY strlen(remove) DESC so we don't step on any toes
         $rnr = array_flip($rnr); // remove => replace
         return str_replace(array_keys($rnr), array_values($rnr), $array ? $array : $html);
     }
@@ -481,7 +482,7 @@ class Component
         }
         $rnr = array();
         $base = phpUri::parse($row['file']);
-        $common = dirname($row['file']) . '/';
+        $common = dirname($row['file']).'/';
         foreach ($matches as $match) {
             if (preg_match('/(?P<file>[^#\?]*)(?P<extra>.*)/', ltrim($match['path'], '/'), $path)) {
                 if (static::mime(pathinfo($path['file'], PATHINFO_EXTENSION))) {
@@ -505,7 +506,7 @@ class Component
             }
             $css = static::urls(str_replace(array_keys($rnr), array_values($rnr), $css));
         }
-        
+
         return $css;
     }
 

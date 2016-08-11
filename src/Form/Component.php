@@ -8,69 +8,69 @@ use BootPress\Validator\Component as Validator;
 class Component
 {
     /**
-     * @var \BootPress\Validator\Component 
+     * @var \BootPress\Validator\Component
      */
     public $validator;
-    
+
     /**
      * If a form is submitted successfully then you should ``$page->eject()`` them using this value.
      * 
      * @var string
      */
     public $eject = '';
-    
+
     /**
      * You should set this ``array($field => $value)`` to all of the default values for the form you are going to create.  Once the form has been submitted and passed validation, then these will be all of your filtered and validated values.
      * 
      * @var string[]
      */
     public $values = array();
-    
+
     /**
      * An array of attributes and their values that will be included in the opening ``<form>`` tag.
      * 
      * @var string[]
      */
     public $header = array();
-    
+
     /**
      * Any additional html that you want to be included just before the ``</form>`` tag.
      * 
      * @var string[]
      */
     public $footer = array();
-    
+
     /**
      * All of your hidden form inputs that we put after ``$this->footer``.
      * 
      * @var string[]
      */
     public $hidden = array();
-    
+
     /**
-     * Used by select menus to prepend a default value at the beginning eg. &nbsp;
+     * Used by select menus to prepend a default value at the beginning eg. &nbsp;.
      * 
      * @var array
      */
     protected $prepend = array();
-    
+
     /**
      * Stores all of the values you submitted in ``$this->menu()`` for radio, checkbox, and select menus.
      * 
      * @var array
      */
     protected $menus = array();
-    
+
     /**
-     * @var \BootPress\Page\Component 
+     * @var \BootPress\Page\Component
      */
     protected $page;
 
     /**
      * Creates a BootPress\Form\Component object.
      * 
-     * @param string $name    The name of your form.
-     * @param string $method  How you would like the form to be sent ie. '**post**' or '**get**'
+     * @param string $name   The name of your form.
+     * @param string $method How you would like the form to be sent ie. '**post**' or '**get**'
      */
     public function __construct($name = 'form', $method = 'post')
     {
@@ -97,11 +97,11 @@ class Component
     /**
      * This establishes the options for a checkbox, radio, or select menu field.
      * 
-     * @param string $field    The name of the field.
-     * @param array  $menu     An ``array($value => $options), ...)`` of options to display in the menu.
-     * @param string $prepend  An optional non-value to prepend to the menu eg. '&nbsp;'.  This is used for select menus when you would like a blank option up top.
+     * @param string $field   The name of the field.
+     * @param array  $menu    An ``array($value => $options), ...)`` of options to display in the menu.
+     * @param string $prepend An optional non-value to prepend to the menu eg. '&nbsp;'.  This is used for select menus when you would like a blank option up top.
      * 
-     * @return string  A comma-separated list of values from your menu that is useful for using inList Validation.
+     * @return string A comma-separated list of values from your menu that is useful for using inList Validation.
      * 
      * ```php
      * $form->menu('save[]', array(
@@ -144,7 +144,7 @@ class Component
     }
 
     /**
-     * This will begin the form with all of the attributes you have established in ``$this->headers`` array.  The values we have already set (but may be overridden) are:
+     * This will begin the form with all of the attributes you have established in ``$this->headers`` array.  The values we have already set (but may be overridden) are:.
      *
      * - '**name**' - The name of your form.
      * - '**method**' - Either 'get' or 'post'.
@@ -154,7 +154,7 @@ class Component
      * 
      * If you add a numeric (megabytes) 'upload' field then then we convert the megabytes to bytes, add the enctype="multipart/form-data" to the header, and set a 'MAX_FILE_SIZE' hidden input with the number of bytes allowed.
      * 
-     * @return string  The opening ``<form>`` tag.
+     * @return string The opening ``<form>`` tag.
      * 
      * ```php
      * echo $form->header();
@@ -184,8 +184,8 @@ class Component
     /**
      * This will wrap a ``<fieldset>`` around the included $html, and place a nice ``<legend>`` up top.  This is not very difficult to do by hand, but it does look nice with all of the $html ``$form->field()``'s nicely indented and looking like they belong where they are.
      * 
-     * @param string $legend  The fieldset's legend value.
-     * @param string $html    The html you would like this fieldset to enclose (if any).  These args can go on forever, and they are all included as additional $html (strings) to place in the fieldset just after the legend.  If this is an array then we ``implode('', $html)`` and include that.
+     * @param string $legend The fieldset's legend value.
+     * @param string $html   The html you would like this fieldset to enclose (if any).  These args can go on forever, and they are all included as additional $html (strings) to place in the fieldset just after the legend.  If this is an array then we ``implode('', $html)`` and include that.
      * 
      * @return string
      * 
@@ -214,10 +214,10 @@ class Component
     /**
      * Retrieves an input's default value to display using the Validator::value method.  This is used internally when creating form fields using this class.
      * 
-     * @param string      $field   The input's name.
-     * @param false|mixed $escape  If set to anything but false, then we run the value(s) through ``htmlspecialchars``.
+     * @param string      $field  The input's name.
+     * @param false|mixed $escape If set to anything but false, then we run the value(s) through ``htmlspecialchars``.
      * 
-     * @return array|string  The field's default value.
+     * @return array|string The field's default value.
      */
     public function defaultValue($field, $escape = false)
     {
@@ -234,10 +234,10 @@ class Component
     /**
      * This adds the jQuery Validation rules and messages set earlier to the input field's submitted attributes.  This is used internally when creating form fields using this class.
      * 
-     * @param string $field       The input's name.
-     * @param array  $attributes  The currently constituted attributes.
+     * @param string $field      The input's name.
+     * @param array  $attributes The currently constituted attributes.
      * 
-     * @return array  The submitted attributes with the data rules and messages applied.
+     * @return array The submitted attributes with the data rules and messages applied.
      * 
      * @see http://johnnycode.com/2014/03/27/using-jquery-validate-plugin-html5-data-attribute-rules/
      * 
@@ -261,10 +261,10 @@ class Component
     /**
      * Creates an input field from an array of attributes.  This is used internally when creating form fields using this class.
      * 
-     * @param string   $type        The type of input.
-     * @param string[] $attributes  The input's other attributes.
+     * @param string   $type       The type of input.
+     * @param string[] $attributes The input's other attributes.
      * 
-     * @return string  An html input tag.
+     * @return string An html input tag.
      * 
      * ```php
      * $form->footer[] = $form->input('submit', array('name' => 'Submit'));
@@ -282,10 +282,10 @@ class Component
     /**
      * Creates a text input field.
      * 
-     * @param string   $field       The text input's name.
-     * @param string[] $attributes  Anything else you would like to add besides the 'name', 'id', 'value', and data validation attributes.
+     * @param string   $field      The text input's name.
+     * @param string[] $attributes Anything else you would like to add besides the 'name', 'id', 'value', and data validation attributes.
      * 
-     * @return string  An ``<input type="text" ...>`` html tag.
+     * @return string An ``<input type="text" ...>`` html tag.
      * 
      * ```php
      * $form->validator->set('name', 'required');
@@ -307,10 +307,10 @@ class Component
     /**
      * Creates a password input field.
      * 
-     * @param string   $field       The password input's name.
-     * @param string[] $attributes  Anything else you would like to add besides the 'name', 'id', 'value', and data validation attributes.
+     * @param string   $field      The password input's name.
+     * @param string[] $attributes Anything else you would like to add besides the 'name', 'id', 'value', and data validation attributes.
      * 
-     * @return string  An ``<input type="password" ...>`` html tag.
+     * @return string An ``<input type="password" ...>`` html tag.
      * 
      * ```php
      * $form->validator->set('password', 'required|alphaNumeric|minLength[5]|noWhiteSpace');
@@ -332,11 +332,11 @@ class Component
     /**
      * Creates checkboxes from the ``$form->menu($field)`` you set earlier.
      * 
-     * @param string   $field       The checkbox's name.
-     * @param string[] $attributes  Anything else you would like to add besides the 'name', 'value', 'checked', and data validation attributes.
-     * @param string   $wrap        The html that surrounds each checkbox.
+     * @param string   $field      The checkbox's name.
+     * @param string[] $attributes Anything else you would like to add besides the 'name', 'value', 'checked', and data validation attributes.
+     * @param string   $wrap       The html that surrounds each checkbox.
      * 
-     * @return string  A checkbox ``<label><input type="checkbox" ...></label>`` html tag.
+     * @return string A checkbox ``<label><input type="checkbox" ...></label>`` html tag.
      * 
      * ```php
      * $form->menu('remember', array('Y'=>'Remember Me'));
@@ -376,11 +376,11 @@ class Component
     /**
      * Creates radio buttons from the ``$form->menu($field)`` you set earlier.
      * 
-     * @param string   $field       The radio button's name.
-     * @param string[] $attributes  Anything else you would like to add besides the 'name', 'value', 'checked', and data validation attributes.
-     * @param string   $wrap        The html that surrounds each radio button.
+     * @param string   $field      The radio button's name.
+     * @param string[] $attributes Anything else you would like to add besides the 'name', 'value', 'checked', and data validation attributes.
+     * @param string   $wrap       The html that surrounds each radio button.
      * 
-     * @return string  Radio ``<label><input type="radio" ...></label>`` html tags.
+     * @return string Radio ``<label><input type="radio" ...></label>`` html tags.
      * 
      * ```php
      * $gender = $form->menu('gender', array('M'=>'Male', 'F'=>'Female')); // A radio menu
@@ -425,10 +425,10 @@ class Component
      *
      * You can get fairly fancy with these creating optgroups and hier menus.  We'll let the examples speak for themselves.
      * 
-     * @param string   $field       The select menu's name.
-     * @param string[] $attributes  Anything else you would like to add besides the 'name', 'id', and data validation attributes.
+     * @param string   $field      The select menu's name.
+     * @param string[] $attributes Anything else you would like to add besides the 'name', 'id', and data validation attributes.
      * 
-     * @return string  A ``<select ...>`` tag with all it's ``<option>``'s.
+     * @return string A ``<select ...>`` tag with all it's ``<option>``'s.
      * 
      * ```php
      * $save = $form->menu('save[]', array(
@@ -547,17 +547,17 @@ class Component
                 }
             }
         }
-        
+
         return $this->page->tag('select', $this->validate($field, $attributes), $values);
     }
 
     /**
      * Creates a textarea field.
      * 
-     * @param string   $field       The textarea's name.
-     * @param string[] $attributes  Anything else you would like to add besides the 'name', 'id', and data validation attributes.  If you don't set the 'cols' and 'rows' then we will.
+     * @param string   $field      The textarea's name.
+     * @param string[] $attributes Anything else you would like to add besides the 'name', 'id', and data validation attributes.  If you don't set the 'cols' and 'rows' then we will.
      * 
-     * @return string  A ``<textarea ...>`` html tag.
+     * @return string A ``<textarea ...>`` html tag.
      * 
      * ```php
      * $form->values['description'] = '"default"';
@@ -582,7 +582,7 @@ class Component
     /**
      * Closes and cleans up shop.
      * 
-     * @return string  The closing ``</form>`` tag with ``$this->footer`` and ``$this->hidden`` form fields preceding it.
+     * @return string The closing ``</form>`` tag with ``$this->footer`` and ``$this->hidden`` form fields preceding it.
      * 
      * ```php
      * echo $form->close();
@@ -602,11 +602,11 @@ class Component
     }
 
     /**
-     * This is used with menus for getting to the bottom of multi-dimensional arrays, and determining it's root keys and values
+     * This is used with menus for getting to the bottom of multi-dimensional arrays, and determining it's root keys and values.
      * 
-     * @param array $array 
+     * @param array $array
      * 
-     * @return array  A single-dimensional ``array($key => $value, ...)``'s.
+     * @return array A single-dimensional ``array($key => $value, ...)``'s.
      */
     private function flatten(array $array)
     {

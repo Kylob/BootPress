@@ -11,22 +11,22 @@ use Symfony\Component\HttpFoundation\Response;
 class Component
 {
     /**
-     * To access the Sitemap database
+     * To access the Sitemap database.
      * 
      * @var \BootPress\SQLite\Component
      */
     public $db;
-    
+
     /**
      * @var int[]
      */
     private $ids;
-    
+
     /**
      * @var mixed[]
      */
     private $stmt = array();
-    
+
     /**
      * @var bool
      */
@@ -195,8 +195,6 @@ class Component
      * @param string $category The type of link you are saving, whatever you want to call it.  This allows you to segregate your search results if desired.
      * @param string $content  The main body of your page.
      * @param array  $save     Any other additional information that you consider to be important, and would like available to you when delivering search results.
-     * 
-     * @return null
      */
     public static function add($category, $content, array $save = array())
     {
@@ -224,8 +222,6 @@ class Component
      * Call this when you ``$this->upsert()`` everything so that you can ``$this->delete()`` any missing links after.
      * 
      * @param string $category The sitemap section you are working on.
-     * 
-     * @return null
      */
     public function reset($category)
     {
@@ -239,16 +235,14 @@ class Component
      * 
      * @param string   $category The sitemap section you are working on.
      * @param string[] $save     An ``array(key => value)`` pairs of data to save for each link.
-     * The keys we are looking for are:
-     * - '**category**' - To group and specify results.
-     * - '**path**' - Of the url, without any suffix.
-     * - '**title**' - Of the page.
-     * - '**description**' - The meta description.
-     * - '**keywords**' - A comma-separated list of tags.
-     * - '**thumb**' - An image url for generating a thumbnail image.
-     * - '**content**' - The main content section of the page.  We ``strip_tags()`` in house for searching, but deliver the original content with your search results.
-     * 
-     * @return null
+     *                           The keys we are looking for are:
+     *                           - '**category**' - To group and specify results.
+     *                           - '**path**' - Of the url, without any suffix.
+     *                           - '**title**' - Of the page.
+     *                           - '**description**' - The meta description.
+     *                           - '**keywords**' - A comma-separated list of tags.
+     *                           - '**thumb**' - An image url for generating a thumbnail image.
+     *                           - '**content**' - The main content section of the page.  We ``strip_tags()`` in house for searching, but deliver the original content with your search results.
      */
     public function upsert($category, array $save)
     {
@@ -282,9 +276,7 @@ class Component
     /**
      * Deletes a specific path (if specified), or everything that was not ``$this->upserted()`` after you ``$this->reset()``ed your sitemap links.
      * 
-     * @param string $path  
-     * 
-     * @return null
+     * @param string $path
      */
     public function delete($path = null)
     {
@@ -370,8 +362,8 @@ class Component
     /**
      * Adds the category and additional parameters to a query string.
      * 
-     * @param string $category 
-     * @param string $and  
+     * @param string $category
+     * @param string $and
      * 
      * @return string
      */
@@ -391,7 +383,7 @@ class Component
     /**
      * Converts a category string into it's id.
      * 
-     * @param string $category 
+     * @param string $category
      * 
      * @return int
      */
@@ -420,15 +412,12 @@ class Component
     }
 
     /**
-     * 
-     * 
-     * @param string        $action The type of query.
-     * @param string        $table  The table to take $action on..
-     * @param string|array  $values The appropriate values for a given query.
+     * @param string       $action The type of query.
+     * @param string       $table  The table to take $action on..
+     * @param string|array $values The appropriate values for a given query.
      * 
      * @return array|false|int
      */
-    
     private function exec($action, $table, $values)
     {
         $action = strtolower($action);

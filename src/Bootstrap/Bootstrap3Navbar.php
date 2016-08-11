@@ -4,13 +4,12 @@ namespace BootPress\Bootstrap;
 
 class Bootstrap3Navbar extends Bootstrap3
 {
-    
     /**
      * This will open a new navbar.
      * 
-     * @param mixed  $brand    The name of your website. If this is a string then it will automatically link to your ``$page->url['base']``. If you want to override that, then make this an ``array($brand, $link)``.
-     * @param string $align    Either '**top**', '**bottom**', or '**static**' if you want to fix the alignment. If you are just trying to get to the next arg then you can declare '**inverse**' here and we will know what you are talking about.
-     * @param mixed  $inverse  If this is anything but false (eg. '****inverse**') then we will display the inverted or alternate navbar.
+     * @param mixed  $brand   The name of your website. If this is a string then it will automatically link to your ``$page->url['base']``. If you want to override that, then make this an ``array($brand, $link)``.
+     * @param string $align   Either '**top**', '**bottom**', or '**static**' if you want to fix the alignment. If you are just trying to get to the next arg then you can declare '**inverse**' here and we will know what you are talking about.
+     * @param mixed  $inverse If this is anything but false (eg. '****inverse**') then we will display the inverted or alternate navbar.
      * 
      * @return string
      * 
@@ -59,8 +58,8 @@ class Bootstrap3Navbar extends Bootstrap3
     /**
      * This will create a menu of links across your navbar.
      * 
-     * @param array $links    An ``array($name => $href, ...)`` of links. If ``$href`` is an array unto itself, then it will be turned into a dropdown menu with the same header and divider rules applied as with buttons.
-     * @param array $options  The options available here are:
+     * @param array $links   An ``array($name => $href, ...)`` of links. If ``$href`` is an array unto itself, then it will be turned into a dropdown menu with the same header and divider rules applied as with buttons.
+     * @param array $options The options available here are:
      * 
      * - '**active**' => $name, $href, 'url', 'urlquery', or number (starting from 1)
      * - '**disabled**' => $name or $href or number (starting from 1)
@@ -90,9 +89,9 @@ class Bootstrap3Navbar extends Bootstrap3
     /**
      * This is used in exactly the same manner as $bp->button(...), except that it will be added to the navbar, and receive the navbar-btn class.
      * 
-     * @param string $class 
-     * @param string $name 
-     * @param array  $options  
+     * @param string $class
+     * @param string $name
+     * @param array  $options
      * 
      * @return string
      */
@@ -110,8 +109,8 @@ class Bootstrap3Navbar extends Bootstrap3
     /**
      * This is used in exactly the same manner as ``$bp->search(...)``, but modified slightly for use in a navbar.
      * 
-     * @param string $url   The same as it's parent.
-     * @param array  $form  The same as it's parent, except for the default '**class**' which is '**navbar-form navbar-right**'.
+     * @param string $url  The same as it's parent.
+     * @param array  $form The same as it's parent, except for the default '**class**' which is '**navbar-form navbar-right**'.
      * 
      * @return string
      * 
@@ -131,8 +130,8 @@ class Bootstrap3Navbar extends Bootstrap3
     /**
      * This adds a string of text to the navbar. It will be wrapped in a ``<p>`` tag, and any ``<a>``'s it finds will also receive their special class treatment.
      * 
-     * @param string $string  The message you would like to get across.
-     * @param string $pull    Either '**left**' or '**right**'.
+     * @param string $string The message you would like to get across.
+     * @param string $pull   Either '**left**' or '**right**'.
      * 
      * @return string
      * 

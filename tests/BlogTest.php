@@ -110,6 +110,7 @@ class BlogTest extends HTMLUnit_Framework_TestCase
         if (is_file($db)) {
             unlink($db);
         }
+        rename($page->dir('blog/content/category'), $page->dir('blog/content/Category'));
         $themes = $page->dir('blog/themes');
         if (is_dir($themes)) {
             foreach (glob($themes.'*') as $template) {
@@ -771,6 +772,7 @@ class BlogTest extends HTMLUnit_Framework_TestCase
             mkdir(static::$folder . 'undefined', 0755, true); // to bypass preliminary folder check
         }
         $this->assertFalse($this->blogPage('undefined.html'));
+        rmdir(static::$folder . 'undefined');
         
         $template = $this->blogPage('category.html');
         $this->assertEqualsRegExp(array(
@@ -1548,7 +1550,17 @@ class BlogTest extends HTMLUnit_Framework_TestCase
                 'Unpublished Post' => 'http://website.com/category/unpublished-post.html',
             ),
         ), $template['vars']);
+        
+        
         $template = $this->blogPage('category/unpublished-post.html'); // is not updated
+        
+        // verify seo folders enforced on a single access
+        rename(static::$folder.'category/unpublished-post', static::$folder.'category/Unpublished--post');
+        $this->assertFileExists(static::$folder.'category/Unpublished--post');
+        $this->assertFalse(static::$blog->file('category/Unpublished--post'));
+        $this->assertFileNotExists(static::$folder.'category/Unpublished--post');
+        $this->assertFileExists(static::$folder.'category/unpublished-post');
+        
         unlink($file);
         rmdir(dirname($file));
         $this->assertFalse($this->blogPage('category/unpublished-post.html')); // an orphaned directory

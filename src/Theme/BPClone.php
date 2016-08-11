@@ -17,12 +17,12 @@ class BPClone
         $property = ($this->class) ? $this->class->$name : null;
         if (is_object($property) || is_null($property)) {
             if (!isset($this->clone[$name])) {
-                $this->clone[$name] = new BPClone($property);
+                $this->clone[$name] = new self($property);
             }
-            
+
             return $this->clone[$name];
         }
-        
+
         return $property;
     }
 

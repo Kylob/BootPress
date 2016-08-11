@@ -29,11 +29,11 @@ class Blog
     protected $folder;
     private $config;
     private $ids;
-    
+
     /**
      * Blog folder getter.
      * 
-     * @param string $name 
+     * @param string $name
      * 
      * @return null|string
      */
@@ -55,12 +55,12 @@ class Blog
         if (!is_dir($this->folder.'content')) {
             mkdir($this->folder.'content', 0755, true);
         }
-        
+
         // $this->theme
         $this->theme = $theme;
         $this->theme->globalVars('blog', $this->config('blog'));
         $this->theme->addPageMethod('blog', array($this, 'query'));
-        
+
         // set 'blog/listings' and 'blog/config' url's
         $blog = $page->url['base'];
         $listings = $this->config('blog', 'listings');
@@ -519,7 +519,7 @@ class Blog
 
             return false;
         }
-        
+
         if ($blog) { // update maybe
             foreach (array('updated', 'search', 'content') as $field) {
                 if ($current[$field] != $blog[$field]) {
@@ -535,7 +535,7 @@ class Blog
             $blog = $current;
             $blog['id'] = $this->db->insert('blog', $current);
         }
-        
+
         if (!empty($current['keywords'])) {
             $tags = array_filter(array_map('trim', explode(',', $current['keywords'])));
             foreach ($tags as $tag) {
@@ -717,14 +717,22 @@ class Blog
         if (!empty($config['thumb'])) {
             $config['thumb'] = $page->url('blog/config', $config['thumb']);
         }
-        
+
         return $config;
     }
 
     private function blogInfo($path)
     {
         $page = Page::html();
-        $file = $this->folder.'content/'.$path.'/index.tpl';
+        $dir = $this->folder.'content/';
+        if (preg_match('/[^a-z0-9-\/]/', $path)) {
+            $seo = $page->format('url', $path, 'slashes');
+            if (is_dir($dir.$path)) {
+                rename($dir.$path, $dir.$seo);
+            }
+            $path = $seo;
+        }
+        $file = $dir.$path.'/index.tpl';
         if (!is_file($file)) {
             return false;
         }
@@ -772,6 +780,7 @@ class Blog
         $tagged = $this->db->insert('tagged', array('blog_id', 'tag_id'));
         $sitemap = new Sitemap();
         $sitemap->reset('blog');
+        $this->normalizeFolders();
         $finder = new Finder();
         $finder->files()->in($this->folder.'content')->name('index.tpl')->sortByName();
         foreach ($finder as $file) {
@@ -807,6 +816,24 @@ class Blog
         $this->db->close($blog);
         $this->db->close($tagged);
         $this->updateConfig();
+    }
+
+    private function normalizeFolders($path = null)
+    {
+        $page = Page::html();
+        $dir = $this->folder.'content/';
+        // normalize
+        if ($path && preg_match('/[^a-z0-9-\/]/', $path)) {
+            $seo = $page->format('url', $path, 'slashes');
+            if (is_dir($dir.$path)) {
+                rename($dir.$path, $dir.$seo);
+            }
+            $path = $seo;
+        }
+        // folders
+        foreach (glob($page->dir($dir, $path).'*', GLOB_ONLYDIR) as $folder) {
+            $this->normalizeFolders(substr($folder, strlen($dir)));
+        }
     }
 
     private function getId($table, $value)
