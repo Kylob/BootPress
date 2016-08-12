@@ -657,6 +657,7 @@ class Blog
         if (is_null($this->config)) {
             $file = $this->folder.'config.yml';
             $this->config = (is_file($file)) ? (array) Yaml::parse(file_get_contents($file)) : array();
+            $current = true;
             foreach (array(
                 'listings' => 'blog',
                 'breadcrumb' => 'Blog',
@@ -666,18 +667,23 @@ class Blog
             ) as $key => $val) {
                 if (!isset($this->config['blog'][$key]) || is_array($this->config['blog'][$key])) {
                     $this->config['blog'][$key] = $val;
+                    $current = false;
                 }
             }
             $page = Page::html();
             foreach (array('authors', 'categories', 'tags') as $param) {
                 if (!isset($this->config[$param]) || !is_array($this->config[$param])) {
                     $this->config[$param] = array();
+                    $current = false;
                 }
                 foreach ($this->config[$param] as $key => $val) {
                     if (is_string($val)) {
                         $this->config[$param][$key] = array('name' => $val);
                     }
                 }
+            }
+            if (!$current) {
+                file_put_contents($file, Yaml::dump($this->config, 3));
             }
         }
         switch (func_num_args()) {

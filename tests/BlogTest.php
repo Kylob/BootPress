@@ -25,6 +25,7 @@ class BlogTest extends HTMLUnit_Framework_TestCase
         $created = array(
             $folder . 'content' => 'rmdir',
             $folder . 'Blog.db' => 'unlink',
+            $folder . 'config.yml' => 'unlink',
             $folder => 'rmdir',
         );
         foreach ($created as $file => $remove) {
