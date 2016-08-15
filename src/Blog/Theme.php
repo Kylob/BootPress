@@ -61,6 +61,17 @@ class Theme
         $this->page->additional[$name] = $function;
     }
 
+    /**
+     * Fetches a Smarty template $file
+     * 
+     * @param string|array $file    The template file.
+     * @param array        $vars    To pass to the Smarty template.
+     * @param mixed        $testing If anything but (bool) false, then we will lint check the $file.
+     * 
+     * @return string Unless ``$testing !== false`` then we will return (bool) true if the lint check passes, or an error string if it doesn't.
+     * 
+     * @throws LogicException If the $file does not exist, or if it is not in the Blog's 'content' or 'themes' folders.
+     */
     public function fetchSmarty($file, array $vars = array(), $testing = false)
     {
         if (is_null($this->smarty)) {
