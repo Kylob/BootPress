@@ -30,8 +30,6 @@ class Theme
      * 
      * @param string|array $name  The vars variable.  You can make this an ``array($name => $value, ...)`` to set multiple vars at once.
      * @param mixed        $value Of your vars $name if it is not an array.
-     * 
-     * @return <type>
      */
     public function globalVars($name, $value = null)
     {
