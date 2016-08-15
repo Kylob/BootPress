@@ -1,6 +1,6 @@
 <?php
 
-namespace BootPress\Theme;
+namespace BootPress\Blog;
 
 use BootPress\Page\Component as Page;
 

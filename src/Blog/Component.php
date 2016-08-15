@@ -33,7 +33,7 @@ class Component extends Blog
             $template = false;
         } elseif ($template = $this->$method($params)) {
             $template = array_combine(array('file', 'vars'), $template);
-            $template['default'] = $page->dir($page->dirname(__CLASS__), 'theme');
+            $template['default'] = __DIR__.'/theme/';
             if ($template['file'] == 'blog-feed.tpl') {
                 $type = 'xml';
                 $xml = $this->theme->fetchSmarty($template);

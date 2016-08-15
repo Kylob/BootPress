@@ -23,7 +23,7 @@
         "jbroadway/urlify": "^1.0",
         "spartz/text-formatter": "^1.0",
         "altorouter/altorouter": "^1.0",
-        "smarty/smarty": "3.1 - 3.1.29"
+        "smarty/smarty": "~3.1"
     },
     "require-dev": {
         "phpunit/phpunit": "^4.0",
@@ -47,7 +47,6 @@
         "bootpress/sitemap": "self.version",
         "bootpress/sqlite": "self.version",
         "bootpress/table": "self.version",
-        "bootpress/theme": "self.version",
         "bootpress/validator": "self.version"
     },
     "autoload": {

@@ -20,7 +20,6 @@ Jump start your code with these decoupled PHP components that can be used in any
 - **Sitemap** - A sitemap generator that tracks updates, and makes your entire site searchable.
 - **SQLite** - Extends the Database component to create and update tables and indexes at will.  Simplifies FTS full-text searching.
 - **Table** - Builds HTML tables that are easy to visualize and see what is going on.
-- **Theme** - A Smarty theme manager for layouts that utilizes the Page and Bootstrap components.
 - **Validator** - Form validation that is designed to simplify and work seamlessly with Jorn's jQuery Validation Plugin.
 
 Documentation is forth-coming, and will be completed by v1.0.  If you star this project at GitHub it will spur me on knowing that someone cares.

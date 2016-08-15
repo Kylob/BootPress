@@ -29,9 +29,10 @@ abstract class HTMLUnit_Framework_TestCase extends \PHPUnit_Framework_TestCase
                         self::merge(array_slice($equals, 0, $key, true), $regexp[0]),
                         '',
                         "-'".$value."'",
-                        "+'".substr($string, 0, strlen($value))."'",
-                        '',
-                        self::merge(array_slice($equals, $key + 1, null, true), $regexp[0]),
+                        "+'".$string."'",
+                        // "+'".substr($string, 0, strlen($value))."'",
+                        // '',
+                        // self::merge(array_slice($equals, $key + 1, null, true), $regexp[0]),
                     )));
                 }
                 $string = substr($string, strlen($value));
