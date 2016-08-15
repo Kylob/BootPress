@@ -7,6 +7,6 @@ Published: Sep 12, 2010
 
 {$page->title}
 
-<img src="{$page->url('folder', 'flowers.jpg')}">
+<img src="{'flowers.jpg'|link}">
 
 Aren't they beautiful?

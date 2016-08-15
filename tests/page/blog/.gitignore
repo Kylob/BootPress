@@ -4,4 +4,3 @@
 # Except for these
 !.gitignore
 !content/
-!themes/

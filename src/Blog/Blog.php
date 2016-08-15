@@ -3,7 +3,6 @@
 namespace BootPress\Blog;
 
 use BootPress\Page\Component as Page;
-use BootPress\Theme\Component as Theme;
 use BootPress\SQLite\Component as SQLite;
 use BootPress\Sitemap\Component as Sitemap;
 use BootPress\Hierarchy\Component as Hierarchy;
@@ -14,24 +13,32 @@ use Symfony\Component\Yaml\Yaml;
 /*
 $html = '';
 $page = Page::html();
-$theme = new Theme;
-$blog = new Blog($theme);
+$blog = new Blog();
 if ($template = $blog->page()) {
-    $html = $theme->fetchSmarty($template);
+    $html = $blog->theme->fetchSmarty($template);
 }
-$html = $page->display($theme->layout($html));
+$html = $page->display($blog->theme->layout($html));
 */
 
 class Blog
 {
-    public $db;
+    /** @var BootPress\SQLite\Component The Blog's SQLite Database. */
+    protected $db;
+    
+    /** @var BootPress\Blog\Theme For creating the layout, and fetching Smarty templates. */
     protected $theme;
+    
+    /** @var BootPress\Blog\Theme Where the Blog directory resides. */
     protected $folder;
+    
+    /** @var array All of the Blog's saved config values. */
     private $config;
+    
+    /** @var array Saved id's so we don't have to look them up twice. */
     private $ids;
 
     /**
-     * Blog folder getter.
+     * Magic getter for the '**db**', '**theme**', and '**folder**' protected properties.
      * 
      * @param string $name
      * 
@@ -40,13 +47,15 @@ class Blog
     public function __get($name)
     {
         switch ($name) {
+            case 'db':
+            case 'theme':
             case 'folder':
                 return $this->$name;
                 break;
         }
     }
 
-    public function __construct(Theme $theme, $folder = 'blog')
+    public function __construct($folder = 'blog')
     {
         $page = Page::html();
 
@@ -56,16 +65,16 @@ class Blog
             mkdir($this->folder.'content', 0755, true);
         }
 
-        // $this->theme
-        $this->theme = $theme;
-        $this->theme->globalVars('blog', $this->config('blog'));
-        $this->theme->addPageMethod('blog', array($this, 'query'));
-
         // set 'blog/listings' and 'blog/config' url's
         $blog = $page->url['base'];
         $listings = $this->config('blog', 'listings');
         $page->url('set', 'blog/listings', ($listings ? $blog.$listings.'/' : $blog));
         $page->url('set', 'blog/config', $blog.'page/'.substr($this->folder, strlen($page->dir['page'])));
+
+        // $this->theme
+        $this->theme = new Theme($this);
+        $this->theme->globalVars('blog', $this->config('blog'));
+        $this->theme->addPageMethod('blog', array($this, 'query'));
 
         // $this->db
         $this->db = new SQLite($this->folder.'Blog.db');
@@ -659,15 +668,23 @@ class Blog
             $this->config = (is_file($file)) ? (array) Yaml::parse(file_get_contents($file)) : array();
             $current = true;
             foreach (array(
-                'listings' => 'blog',
-                'breadcrumb' => 'Blog',
-                'name' => '',
-                'thumb' => '',
-                'summary' => '',
-            ) as $key => $val) {
-                if (!isset($this->config['blog'][$key]) || is_array($this->config['blog'][$key])) {
-                    $this->config['blog'][$key] = $val;
-                    $current = false;
+                'blog' => array(
+                    'name' => 'Another { BootPress } Site',
+                    'thumb' => '',
+                    'summary' => '',
+                    'listings' => 'blog',
+                    'breadcrumb' => 'Blog',
+                ),
+                'themes' => array(
+                    'default' => 'default',
+                    'bootstrap' => '3.3.7',
+                ),
+            ) as $name => $config) {
+                foreach ($config as $key => $val) {
+                    if (!isset($this->config[$name][$key]) || !is_string($this->config[$name][$key]) || (empty($this->config[$name][$key]) && !empty($val))) {
+                        $this->config[$name][$key] = $val;
+                        $current = false;
+                    }
                 }
             }
             $page = Page::html();
@@ -910,6 +927,9 @@ class Blog
 
         // Blog
         $yaml['blog'] = $this->config('blog');
+        
+        // Themes
+        $yaml['themes'] = $this->config('themes');
 
         // Authors
         $yaml['authors'] = array();
@@ -952,11 +972,6 @@ class Blog
         foreach ($categories as $path => $values) {
             $yaml['categories'][$path] = $values;
         }
-        foreach ($yaml['categories'] as $path => $values) {
-            if (count($values) == 1) {
-                $yaml['categories'][$path] = array_shift($values);
-            }
-        }
 
         // Tags
         $yaml['tags'] = array();
@@ -977,11 +992,7 @@ class Blog
         foreach ($tags as $path => $values) {
             $yaml['tags'][$path] = $values;
         }
-        foreach ($yaml['tags'] as $path => $values) {
-            if (count($values) == 1) {
-                $yaml['tags'][$path] = array_shift($values);
-            }
-        }
+        
         file_put_contents($this->folder.'config.yml', Yaml::dump($yaml, 3));
     }
 }

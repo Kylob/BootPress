@@ -23,9 +23,16 @@ class AuthTest extends \PHPUnit_Framework_TestCase
     
     public static function tearDownAfterClass()
     {
-        $db = self::$page['dir'].'/Users.db';
-        if (is_file($db)) {
-            // unlink($db);
+        $dir = __DIR__.'/page/';
+        foreach (array(
+            $dir.'databases.yml',
+            $dir.'Sitemap.db',
+            $dir.'Users.db',
+            $dir.'users.yml',
+        ) as $target) {
+            if (is_file($target)) {
+                @unlink($target);
+            }
         }
     }
     

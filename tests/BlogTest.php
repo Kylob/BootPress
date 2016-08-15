@@ -4,7 +4,7 @@ namespace BootPress\Tests;
 
 use BootPress\Page\Component as Page;
 use BootPress\Blog\Component as Blog;
-use BootPress\Theme\Component as Theme;
+use BootPress\Blog\Component as Theme;
 use BootPress\Sitemap\Component as Sitemap;
 use BootPress\Pagination\Component as Pagination;
 use Symfony\Component\HttpFoundation\Request;
@@ -13,32 +13,32 @@ use Symfony\Component\Yaml\Yaml;
 class BlogTest extends HTMLUnit_Framework_TestCase
 {
     protected static $blog;
-    protected static $theme;
     protected static $config;
     protected static $folder;
     
+    public static function tearDownAfterClass()
+    {
+        $dir = __DIR__.'/page/';
+        foreach (array(
+            $dir.'blog/content/undefined',
+            $dir.'blog/smarty',
+            $dir.'blog/themes',
+            $dir.'blog/Blog.db',
+            $dir.'blog/config.yml',
+            $dir.'temp',
+        ) as $target) {
+            self::remove($target);
+        }
+    }
+
     public function testConstructorWithoutDir()
     {
         $request = Request::create('http://website.com/');
         $page = Page::html(array('dir' => __DIR__.'/page', 'suffix'=>'.html'), $request, 'overthrow');
         $folder = $page->dir('temp');
-        $created = array(
-            $folder . 'content' => 'rmdir',
-            $folder . 'Blog.db' => 'unlink',
-            $folder . 'config.yml' => 'unlink',
-            $folder => 'rmdir',
-        );
-        foreach ($created as $file => $remove) {
-            if (file_exists($file)) {
-                $remove($file);
-                $this->assertFileNotExists($file);
-            }
-        }
+        self::remove($folder);
         
-        // Set theme object we'll pass to Blog class
-        static::$theme = new Theme($page->dir('blog/themes'));
-
-        $blog = new Blog(static::$theme, $folder);
+        $blog = new Blog($folder);
         $this->assertNull($blog->missing);
         $this->assertEquals($folder, $blog->folder);
         $this->assertEquals(0, $blog->query(array())); // the number of blog posts and pages
@@ -57,10 +57,8 @@ class BlogTest extends HTMLUnit_Framework_TestCase
         ))); // the category doesn't exist
         
         $blog->db->connection()->close(); // releases Blog.db so it can be deleted
-        foreach ($created as $file => $remove) {
-            $this->assertFileExists($file);
-            $remove($file);
-        }
+        unset($blog);
+        self::remove($folder);
     }
 
     public function testConstructorAndDestructor()
@@ -69,15 +67,11 @@ class BlogTest extends HTMLUnit_Framework_TestCase
         $page = Page::html(array('dir' => __DIR__.'/page', 'suffix' => '.html'), $request, 'overthrow');
         
         // Remove files that may be lingering from previous tests, and set up for another round
-        if (is_file($page->file('Sitemap.db'))) {
-            unlink($page->file('Sitemap.db'));
-        }
+        self::remove($page->file('Sitemap.db'));
         
         // set irrelevant config values
         static::$config = $page->file('blog/config.yml');
-        if (is_file(static::$config)) {
-            unlink(static::$config);
-        }
+        self::remove(static::$config);
         file_put_contents(static::$config, Yaml::dump(array(
             'authors' => array(
                 'joe-bloggs' => array(
@@ -101,30 +95,19 @@ class BlogTest extends HTMLUnit_Framework_TestCase
         
         static::$folder = $page->dir('blog/content');
         $unpublished = static::$folder.'category/unpublished-post/index.tpl';
-        if (is_file($unpublished)) {
-            unlink($unpublished);
-        }
-        if (is_dir(dirname($unpublished))) {
-            rmdir(dirname($unpublished));
-        }
+        self::remove(dirname($unpublished));
+        
         $db = $page->file('blog/Blog.db');
-        if (is_file($db)) {
-            unlink($db);
-        }
+        self::remove($db);
+        
         rename($page->dir('blog/content/category'), $page->dir('blog/content/Category'));
         $themes = $page->dir('blog/themes');
-        if (is_dir($themes)) {
-            foreach (glob($themes.'*') as $template) {
-                if (is_file($template)) {
-                    unlink($template);
-                }
-            }
-        }
+        self::remove($themes);
 
         // Test Blog constructor, properties, and destructor
-        $blog = new Blog(static::$theme, $page->dir('blog'));
+        $blog = new Blog($page->dir('blog'));
         $this->assertInstanceOf('BootPress\Database\Component', $blog->db);
-        $this->assertAttributeInstanceOf('BootPress\Theme\Component', 'theme', $blog);
+        $this->assertAttributeInstanceOf('BootPress\Blog\Theme', 'theme', $blog);
         $this->assertAttributeEquals($page->dir('blog'), 'folder', $blog);
         $this->assertEquals($page->url['base'].'blog.html', $page->url('blog'));
         $this->assertEquals($page->url['base'].'blog/listings.html', $page->url('blog', 'listings'));
@@ -144,7 +127,7 @@ class BlogTest extends HTMLUnit_Framework_TestCase
         #
         #  This is my website.
         ##
-        $this->assertEqualsRegExp('This is my website.', static::$theme->fetchSmarty($template));
+        $this->assertEqualsRegExp('This is my website.', static::$blog->theme->fetchSmarty($template));
         $this->assertEquals('blog-post.tpl', $template['file']);
         $this->assertEquals(array(
             'post' => array(
@@ -205,7 +188,7 @@ class BlogTest extends HTMLUnit_Framework_TestCase
             '<ul class="pager">',
                 '<li class="next"><a href="http://website.com/category/subcategory/flowery-post.html">A Flowery Post &raquo;</a></li>',
             '</ul>',
-        ), static::$theme->fetchSmarty($template));
+        ), static::$blog->theme->fetchSmarty($template));
         $this->assertEquals('blog-post.tpl', $template['file']);
         $this->assertEqualsRegExp('<h3>Header</h3><p>Paragraph</p>', $template['vars']['post']['content']);
         unset($template['vars']['post']['content']);
@@ -301,7 +284,7 @@ class BlogTest extends HTMLUnit_Framework_TestCase
                     'by <a href="http://website.com/blog/authors/joe-bloggs.html" itemprop="author">Joe Bloggs</a>',
                 '</p>',
             '</div>',
-        ), static::$theme->fetchSmarty($template));
+        ), static::$blog->theme->fetchSmarty($template));
         $this->assertEquals('blog-post.tpl', $template['file']);
         $this->assertEqualsRegExp('<ol><li>One</li><li>Two</li><li>Three</li></ol>', $template['vars']['post']['content']);
         unset($template['vars']['post']['content']);
@@ -377,7 +360,7 @@ class BlogTest extends HTMLUnit_Framework_TestCase
         #
         #  {$page->title}
         #
-        #  <img src="{$page->url('folder', 'flowers.jpg')}">
+        #  <img src="{'flowers.jpg'|link}">
         #
         #  Aren't they beautiful?
         ##
@@ -403,7 +386,7 @@ class BlogTest extends HTMLUnit_Framework_TestCase
                 '<li class="previous"><a href="http://website.com/category/simple-post.html">&laquo; A Simple Post</a></li>',
                 '<li class="next"><a href="http://website.com/uncategorized-post.html">Uncategorized Post &raquo;</a></li>',
             '</ul>',
-        ), static::$theme->fetchSmarty($template));
+        ), static::$blog->theme->fetchSmarty($template));
         $this->assertEquals('blog-post.tpl', $template['file']);
         $image = Page::html()->url('page', 'blog/content/category/subcategory/flowery-post/flowers.jpg');
         $this->assertEqualsRegExp(array(
@@ -489,7 +472,7 @@ class BlogTest extends HTMLUnit_Framework_TestCase
         #
         #  This is the index page.
         ##
-        $this->assertEqualsRegExp('<p>This is the index page.</p>', static::$theme->fetchSmarty($template));
+        $this->assertEqualsRegExp('<p>This is the index page.</p>', static::$blog->theme->fetchSmarty($template));
         $this->assertEquals('blog-post.tpl', $template['file']);
         $this->assertEquals(array(
             'post' => array(
@@ -552,7 +535,7 @@ class BlogTest extends HTMLUnit_Framework_TestCase
             '<ul class="pager">',
                 '<li class="previous"><a href="http://website.com/category/subcategory/flowery-post.html">&laquo; A Flowery Post</a></li>',
             '</ul>',
-        ), static::$theme->fetchSmarty($template));
+        ), static::$blog->theme->fetchSmarty($template));
         $this->assertEquals('blog-post.tpl', $template['file']);
         $this->assertEquals(array(
             'post' => array(
@@ -601,7 +584,7 @@ class BlogTest extends HTMLUnit_Framework_TestCase
             '<p itemscope itemtype="http://schema.org/Article">',
                 '<big itemprop="name"><a href="http://website.com/category/simple-post.html">A Simple Post</a></big>',
             '</p>',
-        ), static::$theme->fetchSmarty($template));
+        ), static::$blog->theme->fetchSmarty($template));
         $this->assertEquals('blog-listings.tpl', $template['file']);
         $this->assertEquals(array(
             'listings' => array(),
@@ -630,7 +613,7 @@ class BlogTest extends HTMLUnit_Framework_TestCase
                 '<big itemprop="name"><a href="http://website.com/category/simple-post.html">A Simple Post</a></big>',
                 '<br>A <b>Simple</b> <b>Post</b>',
             '</p>',
-        ), static::$theme->fetchSmarty($template));
+        ), static::$blog->theme->fetchSmarty($template));
         $this->assertEquals('blog-listings.tpl', $template['file']);
         $this->assertEquals(array(
             'listings' => array(
@@ -668,7 +651,7 @@ class BlogTest extends HTMLUnit_Framework_TestCase
                 '<big itemprop="name"><a href="http://website.com/category/subcategory/flowery-post.html">A Flowery Post</a></big>',
                 '<br>Aren\'t they <b>beautiful</b>?',
             '</p>',
-        ), static::$theme->fetchSmarty($template));
+        ), static::$blog->theme->fetchSmarty($template));
         $this->assertEquals('blog-listings.tpl', $template['file']);
         $this->assertEquals(array(
             'listings' => array(
@@ -769,11 +752,9 @@ class BlogTest extends HTMLUnit_Framework_TestCase
 
     public function testBlogCategoryListings()
     {
-        if (!is_dir(static::$folder . 'undefined')) {
-            mkdir(static::$folder . 'undefined', 0755, true); // to bypass preliminary folder check
-        }
+        self::remove(static::$folder.'undefined');
+        mkdir(static::$folder.'undefined', 0755, true); // to bypass preliminary folder check
         $this->assertFalse($this->blogPage('undefined.html'));
-        rmdir(static::$folder . 'undefined');
         
         $template = $this->blogPage('category.html');
         $this->assertEqualsRegExp(array(
@@ -792,7 +773,7 @@ class BlogTest extends HTMLUnit_Framework_TestCase
             '<p itemscope itemtype="http://schema.org/Article">',
                 '<big itemprop="name"><a href="http://website.com/category/simple-post.html">A Simple Post</a></big>',
             '</p>',
-        ), static::$theme->fetchSmarty($template));
+        ), static::$blog->theme->fetchSmarty($template));
         $this->assertEquals('blog-listings.tpl', $template['file']);
         $this->assertEquals(array(
             'listings' => array(
@@ -851,7 +832,7 @@ class BlogTest extends HTMLUnit_Framework_TestCase
                 '<big itemprop="name"><a href="http://website.com/category/subcategory/flowery-post.html">A Flowery Post</a></big>',
                 '<br><span itemprop="headline">Aren\'t they beautiful?</span>',
             '</p>',
-        ), static::$theme->fetchSmarty($template));
+        ), static::$blog->theme->fetchSmarty($template));
         $this->assertEquals('blog-listings.tpl', $template['file']);
         $this->assertEquals(array(
             'listings' => array(
@@ -933,7 +914,7 @@ class BlogTest extends HTMLUnit_Framework_TestCase
                 '</div>',
             '</div>',
             '<br>',
-        ), static::$theme->fetchSmarty($template));
+        ), static::$blog->theme->fetchSmarty($template));
         $this->assertEquals('blog-archives.tpl', $template['file']);
         $this->assertEquals(array(
             'archives' => array(
@@ -1034,7 +1015,7 @@ class BlogTest extends HTMLUnit_Framework_TestCase
             '<p itemscope itemtype="http://schema.org/Article">',
                 '<big itemprop="name"><a href="http://website.com/category/simple-post.html">A Simple Post</a></big>',
             '</p>',
-        ), static::$theme->fetchSmarty($template));
+        ), static::$blog->theme->fetchSmarty($template));
         $this->assertEquals('blog-listings.tpl', $template['file']);
         $this->assertEquals(array(
             'archive' => array(
@@ -1078,7 +1059,7 @@ class BlogTest extends HTMLUnit_Framework_TestCase
                 '<big itemprop="name"><a href="http://website.com/category/subcategory/flowery-post.html">A Flowery Post</a></big>',
                 '<br><span itemprop="headline">Aren\'t they beautiful?</span>',
             '</p>',
-        ), static::$theme->fetchSmarty($template));
+        ), static::$blog->theme->fetchSmarty($template));
         $this->assertEquals('blog-listings.tpl', $template['file']);
         $this->assertEquals(array(
             'archive' => array(
@@ -1119,7 +1100,7 @@ class BlogTest extends HTMLUnit_Framework_TestCase
             '<p itemscope itemtype="http://schema.org/Article">',
                 '<big itemprop="name"><a href="http://website.com/uncategorized-post.html">Uncategorized Post</a></big>',
             '</p>',
-        ), static::$theme->fetchSmarty($template));
+        ), static::$blog->theme->fetchSmarty($template));
         $this->assertEquals('blog-listings.tpl', $template['file']);
         $this->assertEquals(array(
             'archive' => array(
@@ -1156,7 +1137,7 @@ class BlogTest extends HTMLUnit_Framework_TestCase
             '</ul>',
             '<h2>Authors</h2>',
             '<p><a href="http://website.com/blog/authors/joe-bloggs.html">Joe Bloggs <span class="badge">2</span></a></p>',
-        ), static::$theme->fetchSmarty($template));
+        ), static::$blog->theme->fetchSmarty($template));
         $this->assertEquals('blog-authors.tpl', $template['file']);
         $this->assertEquals(array(
             'breadcrumbs' => array(
@@ -1207,7 +1188,7 @@ class BlogTest extends HTMLUnit_Framework_TestCase
             '<p itemscope itemtype="http://schema.org/Article">',
                 '<big itemprop="name"><a href="http://website.com/category/simple-post.html">A Simple Post</a></big>',
             '</p>',
-        ), static::$theme->fetchSmarty($template));
+        ), static::$blog->theme->fetchSmarty($template));
         $this->assertEquals('blog-listings.tpl', $template['file']);
         $this->assertEquals(array(
             'breadcrumbs' => array(
@@ -1253,7 +1234,7 @@ class BlogTest extends HTMLUnit_Framework_TestCase
                 '<a class="text-primary" style="font-size:15px; padding:0px 5px;" href="http://website.com/blog/tags/nature.html">nature</a>',
                 '<a class="text-success" style="font-size:21px; padding:0px 5px;" href="http://website.com/blog/tags/simple.html">Simple</a>',
             '</p>',
-        ), static::$theme->fetchSmarty($template));
+        ), static::$blog->theme->fetchSmarty($template));
         $this->assertEquals('blog-tags.tpl', $template['file']);
         $this->assertEquals(array(
             'breadcrumbs' => array(
@@ -1354,7 +1335,7 @@ class BlogTest extends HTMLUnit_Framework_TestCase
             '<p itemscope itemtype="http://schema.org/Article">',
                 '<big itemprop="name"><a href="http://website.com/">Welcome to My Website</a></big>',
             '</p>',
-        ), static::$theme->fetchSmarty($template));
+        ), static::$blog->theme->fetchSmarty($template));
         $this->assertEquals('blog-listings.tpl', $template['file']);
         $this->assertEquals(array(
             'breadcrumbs' => array(
@@ -1394,7 +1375,7 @@ class BlogTest extends HTMLUnit_Framework_TestCase
             '<?xml version="1.0"?>',
             '<rss version="2.0">',
             '<channel>',
-                '<title></title>',
+                '<title>{.*}</title>',
                 '<link>http://website.com/blog.html</link>',
                 '<description></description>',
                     '<item>',
@@ -1451,9 +1432,7 @@ class BlogTest extends HTMLUnit_Framework_TestCase
         if (!is_dir(dirname($file))) {
             mkdir(dirname($file), 0755, true);
         }
-        if (is_file($file)) {
-            unlink($file);
-        }
+        self::remove($file);
         file_put_contents($file, implode("\n", array(
             '{*',
             'title: Unpublished Post',
@@ -1562,8 +1541,7 @@ class BlogTest extends HTMLUnit_Framework_TestCase
         $this->assertFileNotExists(static::$folder.'category/Unpublished--post');
         $this->assertFileExists(static::$folder.'category/unpublished-post');
         
-        unlink($file);
-        rmdir(dirname($file));
+        self::remove(dirname($file));
         $this->assertFalse($this->blogPage('category/unpublished-post.html')); // an orphaned directory
     }
 
@@ -1572,37 +1550,54 @@ class BlogTest extends HTMLUnit_Framework_TestCase
         $this->assertFileExists(static::$config);
         $this->assertEquals(implode("\n", array(
             'blog:',
-            '    listings: blog',
-            '    breadcrumb: Blog',
-            "    name: ''",
+            "    name: 'Another { BootPress } Site'",
             "    thumb: ''",
             "    summary: ''",
+            '    listings: blog',
+            '    breadcrumb: Blog',
+            'themes:',
+            '    default: default',
+            '    bootstrap: 3.3.7',
             'authors:',
             '    joe-bloggs:',
             "        name: 'Joe Bloggs'",
-            "        thumb: user.jpg",
+            '        thumb: user.jpg',
             '    anonymous:',
-            "        name: anonymous",
+            '        name: anonymous',
             'categories:',
-            '    category: Category',
-            '    category/subcategory: Subcategory',
-            '    unknown: UnKnown',
+            '    category:',
+            '        name: Category',
+            '    category/subcategory:',
+            '        name: Subcategory',
+            '    unknown:',
+            '        name: UnKnown',
             'tags:',
-            '    featured: Featured',
-            '    flowers: Flowers',
-            '    markdown: Markdown',
-            '    nature: nature',
-            '    simple: Simple',
-            '    unpublished: Unpublished',
-            "    not-exists: 'What are you doing?'",
+            '    featured:',
+            '        name: Featured',
+            '    flowers:',
+            '        name: Flowers',
+            '    markdown:',
+            '        name: Markdown',
+            '    nature:',
+            '        name: nature',
+            '    simple:',
+            '        name: Simple',
+            '    unpublished:',
+            '        name: Unpublished',
+            '    not-exists:',
+            "        name: 'What are you doing?'",
         )), trim(file_get_contents(static::$config)));
         $this->assertEquals(array(
             'blog' => array(
-                'listings' => 'blog',
-                'breadcrumb' => 'Blog',
-                'name' => '',
+                'name' => 'Another { BootPress } Site',
                 'thumb' => '',
                 'summary' => '',
+                'listings' => 'blog',
+                'breadcrumb' => 'Blog',
+            ),
+            'themes' => array(
+                'default' => 'default',
+                'bootstrap' => '3.3.7',
             ),
             'authors' => array(
                 'joe-bloggs' => array(
@@ -1649,15 +1644,145 @@ class BlogTest extends HTMLUnit_Framework_TestCase
             ),
         ), static::$blog->config());
         $this->assertEquals(array(
-            'listings' => 'blog',
-            'breadcrumb' => 'Blog',
-            'name' => '',
+            'name' => 'Another { BootPress } Site',
             'thumb' => '',
             'summary' => '',
+            'listings' => 'blog',
+            'breadcrumb' => 'Blog',
         ), static::$blog->config('blog'));
         $this->assertEquals('blog', static::$blog->config('blog', 'listings'));
         $this->assertEquals('Joe Bloggs', static::$blog->config('authors', 'joe-bloggs', 'name'));
         $this->assertNull(static::$blog->config('authors', 'anonymous', 'thumb'));
+    }
+    
+    public function testThemeGlobalVarsMethod()
+    {
+        $this->blogPage('theme.html');
+        static::$blog->theme->globalVars('foo', array('bar'));
+        static::$blog->theme->globalVars(array(
+            'foo' => array('baz', 'qux'),
+            'hodge' => 'podge',
+        ));
+        $this->assertAttributeEquals(array(
+            'foo' => array('bar', 'baz', 'qux'),
+            'hodge' => 'podge',
+            'blog' => array(
+                'name' => 'Another { BootPress } Site',
+                'thumb' => '',
+                'summary' => '',
+                'listings' => 'blog',
+                'breadcrumb' => 'Blog',
+            ),
+        ), 'vars', static::$blog->theme);
+        static::$blog->theme->globalVars('foo', 'bar');
+        $this->assertAttributeEquals(array(
+            'foo' => 'bar',
+            'hodge' => 'podge',
+            'blog' => array(
+                'name' => 'Another { BootPress } Site',
+                'thumb' => '',
+                'summary' => '',
+                'listings' => 'blog',
+                'breadcrumb' => 'Blog',
+            ),
+        ), 'vars', static::$blog->theme);
+    }
+    
+    public function testThemeAddPageMethodMethod()
+    {
+        static::$blog->theme->addPageMethod('hello', function(){return 'World';});
+        $this->setExpectedException('\LogicException');
+        static::$blog->theme->addPageMethod('amigo', 'Hello');
+    }
+    
+    public function testThemeFetchSmartyBlogFoldersException()
+    {
+        $this->setExpectedException('\LogicException');
+        static::$blog->theme->fetchSmarty('');
+    }
+    
+    public function testThemeFetchSmartyMissingFileException()
+    {
+        $this->setExpectedException('\LogicException');
+        static::$blog->theme->fetchSmarty(static::$folder.'missing.tpl');
+    }
+    
+    public function testThemeFetchSmartyDefaultFile()
+    {
+        $page = Page::html();
+        $default = $page->file('default.tpl');
+        file_put_contents($default, 'Default {template}');
+        
+        // Syntax Error
+        $this->assertEquals('<p>Syntax error in template "file:blog/themes/default/default.tpl"  on line 1 "Default {template}" unknown tag "template"</p>', static::$blog->theme->fetchSmarty(array(
+            'default' => $page->dir(),
+            'vars' => array('syntax'=>'error'),
+            'file' => 'default.tpl',
+        )));
+        
+        // Testing Mode
+        unlink($default);
+        $default = $page->file('blog/themes/default/default.tpl');
+        $this->assertFileExists($default);
+        $this->assertEquals('Syntax error in template "file:blog/themes/default/default.tpl"  on line 1 "Default {template}" unknown tag "template"', static::$blog->theme->fetchSmarty($default, array('syntax'=>'error'), 'testing'));
+        unlink($default);
+        
+        // Theme::link($path) array
+        $path = array(
+            'image.jpg?query=string' => '.jpg image',
+            'png image.png' => 'path/image.png',
+        );
+        $this->assertEquals(array(
+            'http://website.com/page/blog/themes/default/image.jpg?query=string' => '.jpg image',
+            'png image.png' => 'http://website.com/page/blog/themes/default/path/image.png',
+        ), static::$blog->theme->link($path));
+    }
+    
+    public function testThemeLayoutMethod()
+    {
+        $page = Page::html();
+        $layout = $page->dir('blog/themes/default');
+        $this->assertFileExists($layout); // should be created automatically
+        $this->assertEquals('<p>Content</p>', static::$blog->theme->layout('<p>Content</p>'));
+        file_put_contents($layout.'index.tpl', implode("\n", array(
+            '{$page->amigo} {$page->hello()} War {$bp->version}',
+            '{$bp->icon("thumbs-up")} {$content}',
+            '{$page->filter("content", "invalid", "error")}',
+            '{$page->filter("content", "prepend", "SPECIAL MESSAGE")}',
+        )));
+        $this->assertEqualsRegExp(array(
+            'World War 3.3.7',
+            '<span class="glyphicon glyphicon-thumbs-up"></span>',
+            '<p>Content</p>',
+        ), static::$blog->theme->layout('<p>Content</p>'));
+        
+        // test default theme selection
+        mkdir($layout.'child', 0755, true);
+        $page->theme = 'default/child';
+        file_put_contents($layout.'config.yml', 'default: theme'."\n".'name: Parent');
+        file_put_contents($layout.'child/config.yml', 'name: Child');
+        file_put_contents($layout.'child/index.tpl', '{$config.name} {$bp->framework} {$config.default}');
+        $this->assertEquals('Child bootstrap theme', static::$blog->theme->layout(''));
+        // $this->assertEquals('http://website.com/page/temp/theme/asset.css', $page->url('theme', 'asset.css'));
+        
+        // No Theme
+        $page->theme = false;
+        $this->assertEquals('HTML', static::$blog->theme->layout('HTML'));
+        
+        // Callable Theme
+        $page->theme = function($content, $bp, $vars) {
+            return 'Callable '.$content;
+        };
+        $this->assertEquals('Callable HTML', static::$blog->theme->layout('HTML'));
+        
+        // File Theme
+        $page->theme = $layout.'theme.php';
+        file_put_contents($page->theme, implode("\n", array(
+            '<?php',
+            'extract($params);',
+            'echo "File {$content}";',
+        )));
+        $this->assertEquals('File HTML', static::$blog->theme->layout('HTML'));
     }
     
     protected function blogPage($path, array $query = array())
@@ -1669,8 +1794,21 @@ class BlogTest extends HTMLUnit_Framework_TestCase
             'url' => 'http://website.com/',
             'suffix' => '.html',
         ), $request, 'overthrow');
-        static::$blog = new Blog(static::$theme, 'blog');
+        static::$blog = new Blog('blog');
 
         return static::$blog->page();
+    }
+    
+    private static function remove($target)
+    {
+        if (is_dir($target)) {
+            $files = glob(rtrim($target, '/\\').'/*');
+            foreach ($files as $file) {
+                self::remove($file);
+            }
+            @rmdir($target);
+        } elseif (is_file($target)) {
+            @unlink($target);
+        }
     }
 }

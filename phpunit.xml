@@ -16,7 +16,6 @@
             <file>tests/HierarchyTest.php</file>
             <file>tests/AssetTest.php</file>
             <file>tests/SitemapTest.php</file>
-            <file>tests/ThemeTest.php</file>
             <file>tests/BlogTest.php</file>
             <file>tests/AuthTest.php</file>
         </testsuite>
