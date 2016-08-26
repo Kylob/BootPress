@@ -7,6 +7,6 @@ Published: Sep 12, 2010
 
 {$page->title}
 
-<img src="{'flowers.jpg'|link}">
+<img src="{'flowers.jpg'|asset}">
 
 Aren't they beautiful?

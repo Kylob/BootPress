@@ -13,7 +13,7 @@ class Theme
     public $bp;
     private $page;
     private $blog;
-    private $link;
+    private $asset;
     private $smarty;
     private $vars = array();
 
@@ -88,7 +88,7 @@ class Theme
             $security->allow_super_globals = false;
             $security->allow_constants = false;
             $this->smarty->enableSecurity($security);
-            $this->smarty->registerPlugin('modifier', 'link', array($this, 'link'));
+            $this->smarty->registerPlugin('modifier', 'asset', array($this, 'asset'));
             $this->smarty->assign('bp', new BPClone($this->bp));
         }
         if (is_array($file)) {
@@ -117,7 +117,7 @@ class Theme
             $file = substr($file, strlen($this->blog->folder));
             throw new \LogicException("The Blog's '{$file}' file does not exist.");
         }
-        $this->link = array(
+        $this->asset = array(
             'url' => $page->path('page', substr($dir, strlen($page->dir['page']), -1)),
             'chars' => $page->url['chars'],
         );
@@ -149,27 +149,27 @@ class Theme
      *
      * @return string|array Whatever the $path was.  If the $path's string is not a relative asset, then it is just returned as is.  If the $path is an array, then every key and value in it will be turned into a url if it is a relative asset, and the rest of the array will remain the same.
      */
-    public function link($path)
+    public function asset($path)
     {
         if (is_string($path)) {
-            if ($this->link && preg_match('/^'.implode('', array(
+            if ($this->asset && preg_match('/^'.implode('', array(
                 '(?!((f|ht)tps?:)?\/\/)',
-                '['.$this->link['chars'].'.\/]+',
+                '['.$this->asset['chars'].'.\/]+',
                 '\.('.Asset::PREG_TYPES.')',
                 '.*',
             )).'$/i', ltrim($path), $matches)) {
-                $link = $this->link['url'].ltrim($matches[0], './');
+                $asset = $this->asset['url'].ltrim($matches[0], './');
             }
-        } elseif ($this->link && is_array($path)) {
-            $link = array();
+        } elseif ($this->asset && is_array($path)) {
+            $asset = array();
             foreach ($path as $key => $value) {
-                $link[$this->link($key)] = $this->link($value);
+                $asset[$this->asset($key)] = $this->asset($value);
             }
         }
 
-        return (isset($link)) ? $link : $path;
+        return (isset($asset)) ? $asset : $path;
     }
-
+    
     /**
      * Creates a layout using the ``$page->theme`` you have specified.
      *

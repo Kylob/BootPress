@@ -100,7 +100,7 @@ class BlogTest extends HTMLUnit_Framework_TestCase
         $db = $page->file('blog/Blog.db');
         self::remove($db);
         
-        rename($page->dir('blog/content/category'), $page->dir('blog/content/Category'));
+        @rename($page->dir('blog/content/category'), $page->dir('blog/content/Category'));
         $themes = $page->dir('blog/themes');
         self::remove($themes);
 
@@ -360,7 +360,7 @@ class BlogTest extends HTMLUnit_Framework_TestCase
         #
         #  {$page->title}
         #
-        #  <img src="{'flowers.jpg'|link}">
+        #  <img src="{'flowers.jpg'|asset}">
         #
         #  Aren't they beautiful?
         ##
@@ -1727,7 +1727,7 @@ class BlogTest extends HTMLUnit_Framework_TestCase
         $this->assertEquals('Syntax error in template "file:blog/themes/default/default.tpl"  on line 1 "Default {template}" unknown tag "template"', static::$blog->theme->fetchSmarty($default, array('syntax'=>'error'), 'testing'));
         unlink($default);
         
-        // Theme::link($path) array
+        // Theme::asset($path) array
         $path = array(
             'image.jpg?query=string' => '.jpg image',
             'png image.png' => 'path/image.png',
@@ -1735,7 +1735,7 @@ class BlogTest extends HTMLUnit_Framework_TestCase
         $this->assertEquals(array(
             'http://website.com/page/blog/themes/default/image.jpg?query=string' => '.jpg image',
             'png image.png' => 'http://website.com/page/blog/themes/default/path/image.png',
-        ), static::$blog->theme->link($path));
+        ), static::$blog->theme->asset($path));
     }
     
     public function testThemeLayoutMethod()
