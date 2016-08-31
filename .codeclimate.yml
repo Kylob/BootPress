@@ -21,6 +21,8 @@ engines:
                 enabled: false
             Controversial/CamelCaseVariableName:
                 enabled: false
+            Design/CouplingBetweenObjects:
+                enabled: false
             Naming/ShortMethodName:
                 enabled: false
             Naming/ShortVariable:

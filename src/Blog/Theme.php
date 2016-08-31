@@ -62,8 +62,8 @@ class Theme
     /**
      * Fetches a Twig template $file.
      *
-     * @param string|array $file    The template file.
-     * @param array        $vars    To pass to the Twig template.
+     * @param string|array $file The template file.
+     * @param array        $vars To pass to the Twig template.
      *
      * @return string
      *
@@ -85,7 +85,7 @@ class Theme
             ));
             $this->twig->addFilter(new \Twig_SimpleFilter('asset', array($this, 'asset')));
             $this->twig->addGlobal('page', $this->page);
-            $this->twig->addGlobal('pagination', new Pagination($this->blog->config('blog', 'pagination')));
+            $this->twig->addGlobal('pagination', new Pagination());
             $this->twig->addExtension(new MarkdownExtension(new PHPLeagueCommonMarkEngine()));
             /*
             $twig->registerUndefinedFunctionCallback(function ($name) {
@@ -140,7 +140,7 @@ class Theme
             });
             */
         }
-        
+
         if (is_array($file)) {
             $vars = (isset($file['vars']) && is_array($file['vars'])) ? $file['vars'] : array();
             $default = (isset($file['default']) && is_dir($file['default'])) ? rtrim($file['default'], '/').'/' : null;
@@ -211,7 +211,7 @@ class Theme
 
         return (isset($asset)) ? $asset : $path;
     }
-    
+
     /**
      * Creates a layout using the ``$page->theme`` you have specified.
      *
