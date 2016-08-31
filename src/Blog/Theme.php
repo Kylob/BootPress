@@ -4,29 +4,27 @@ namespace BootPress\Blog;
 
 use BootPress\Page\Component as Page;
 use BootPress\Asset\Component as Asset;
-use BootPress\Bootstrap\Component as Bootstrap;
+use BootPress\Pagination\Component as Pagination;
 use Symfony\Component\Yaml\Yaml;
-use Smarty;
+use Aptoma\Twig\Extension\MarkdownExtension;
+use Aptoma\Twig\Extension\MarkdownEngine\PHPLeagueCommonMarkEngine;
 
 class Theme
 {
-    public $bp;
-    private $page;
     private $blog;
+    private $page;
+    private $twig;
     private $asset;
-    private $smarty;
     private $vars = array();
 
     public function __construct(Blog $blog)
     {
-        $page = Page::html();
         $this->blog = $blog;
         $this->page = new PageClone();
-        $this->bp = Bootstrap::version($this->blog->config('themes', 'bootstrap'));
     }
 
     /**
-     * Establishes global vars that will be accessible to all of your Smarty templates.
+     * Establishes global vars that will be accessible to all of your Twig templates.
      *
      * @param string|array $name  The vars variable.  You can make this an ``array($name => $value, ...)`` to set multiple vars at once.
      * @param mixed        $value Of your vars $name if it is not an array.
@@ -46,7 +44,7 @@ class Theme
     }
 
     /**
-     * Gives your Smarty templates additional functionality via ``$page->$name(...)``.
+     * Gives your Twig templates additional functionality via ``$page->$name(...)``.
      *
      * @param string   $name     To access the $function with.
      * @param callable $function Does something.
@@ -62,35 +60,87 @@ class Theme
     }
 
     /**
-     * Fetches a Smarty template $file.
+     * Fetches a Twig template $file.
      *
      * @param string|array $file    The template file.
-     * @param array        $vars    To pass to the Smarty template.
-     * @param mixed        $testing If anything but (bool) false, then we will lint check the $file.
+     * @param array        $vars    To pass to the Twig template.
      *
-     * @return string Unless ``$testing !== false`` then we will return (bool) true if the lint check passes, or an error string if it doesn't.
+     * @return string
      *
      * @throws LogicException If the $file does not exist, or if it is not in the Blog's 'content' or 'themes' folders.
      */
-    public function fetchSmarty($file, array $vars = array(), $testing = false)
+    public function fetchTwig($file, array $vars = array())
     {
-        if (is_null($this->smarty)) {
-            $functions = array('var_dump', 'preg_replace', 'number_format', 'implode', 'explode', 'array_keys', 'array_values', 'array_flip', 'array_reverse', 'array_shift', 'array_unshift', 'array_pop', 'array_push', 'array_combine', 'array_merge');
-            $this->smarty = new Smarty();
-            $this->smarty->addPluginsDir($this->blog->folder.'smarty/plugins/');
-            $this->smarty->setCompileDir($this->blog->folder.'smarty/templates_c/');
-            $this->smarty->setConfigDir($this->blog->folder.'smarty/configs/');
-            $this->smarty->setCacheDir($this->blog->folder.'smarty/cache/');
-            $this->smarty->setTemplateDir($this->blog->folder);
-            $this->smarty->error_reporting = false;
-            $security = new \Smarty_Security($this->smarty);
-            $security->php_functions = array_merge(array('isset', 'empty', 'count', 'in_array', 'is_array', 'date', 'time', 'nl2br'), $functions); // Smarty defaults (except date)
-            $security->allow_super_globals = false;
-            $security->allow_constants = false;
-            $this->smarty->enableSecurity($security);
-            $this->smarty->registerPlugin('modifier', 'asset', array($this, 'asset'));
-            $this->smarty->assign('bp', new BPClone($this->bp));
+        if (is_null($this->twig)) {
+            foreach (array('content', 'plugins', 'themes') as $dir) {
+                if (!is_dir($this->blog->folder.$dir)) {
+                    mkdir($this->blog->folder.$dir, 0755, true);
+                }
+            }
+            $loader = new \Twig_Loader_Filesystem($this->blog->folder);
+            $loader->addPath($this->blog->folder.'plugins/', 'plugin');
+            $this->twig = new \Twig_Environment($loader, array(
+                'cache' => $this->blog->folder.'cache/twig/',
+                'autoescape' => false,
+            ));
+            $this->twig->addFilter(new \Twig_SimpleFilter('asset', array($this, 'asset')));
+            $this->twig->addGlobal('page', $this->page);
+            $this->twig->addGlobal('pagination', new Pagination($this->blog->config('blog', 'pagination')));
+            $this->twig->addExtension(new MarkdownExtension(new PHPLeagueCommonMarkEngine()));
+            /*
+            $twig->registerUndefinedFunctionCallback(function ($name) {
+                switch ($name) {
+                    case 'isset': // null test
+                    case 'empty': // empty test
+                    case 'count': // length filter ?
+                    case 'in_array': // 
+                    case 'is_array': // 
+                    case 'date': // date function ?
+                    case 'time': // 
+                    case 'nl2br': // nl2br filter
+                    case 'var_dump': // dump function
+                    case 'preg_replace': // 
+                    case 'number_format': // number_format filter
+                    case 'implode': // join filter
+                    case 'explode': // split filter
+                    case 'array_keys': // keys filter
+                    case 'array_values': // 
+                    case 'array_flip': // 
+                    case 'array_reverse': // reverse filter
+                    case 'array_shift': // 
+                    case 'array_unshift': // 
+                    case 'array_pop': // 
+                    case 'array_push': // 
+                    case 'array_combine': // 
+                    case 'array_merge': // merge filter
+                    
+                    // PCRE Functions
+                    case 'preg_filter': // Perform a regular expression search and replace
+                    case 'preg_grep': // Return array entries that match the pattern
+                    case 'preg_match_all': // Perform a global regular expression match
+                    case 'preg_match': // Perform a regular expression match
+                    case 'preg_quote': // Quote regular expression characters
+                    case 'preg_replace': // Perform a regular expression search and replace
+                    case 'preg_split': // Split string by a regular expression
+                    
+                    // String Functions
+                    case 'ltrim': // Strip whitespace (or other characters) from the beginning of a string
+                    case 'rtrim': // Strip whitespace (or other characters) from the end of a string
+                    case 'str_pad': // Pad a string to a certain length with another string
+                    case 'str_repeat': // Repeat a string
+                    case 'strpos': // Find the position of the first occurrence of a substring in a string
+                    case 'strrpos': // Find the position of the last occurrence of a substring in a string
+                    case 'strstr': // Find the first occurrence of a string
+                    case 'wordwrap': // Wraps a string to a given number of characters
+
+                        return new Twig_SimpleFunction($name, $name);
+                        break;
+                }
+                return false;
+            });
+            */
         }
+        
         if (is_array($file)) {
             $vars = (isset($file['vars']) && is_array($file['vars'])) ? $file['vars'] : array();
             $default = (isset($file['default']) && is_dir($file['default'])) ? rtrim($file['default'], '/').'/' : null;
@@ -109,6 +159,8 @@ class Theme
             $theme = strstr($file, '/', true).'/';
             $dir .= $theme;
             $file = substr($file, strlen($theme));
+            $loader = $this->twig->getLoader();
+            $loader->addPath($dir, 'theme');
         } else {
             $file = str_replace($page->dir['page'], '', $file);
             throw new \LogicException("'{$file}' is not in the Blog's 'content' or 'themes' folders.");
@@ -122,28 +174,18 @@ class Theme
             'chars' => $page->url['chars'],
         );
         $vars = array_merge($vars, $this->vars);
-        unset($vars['bp']);
-        $vars['page'] = $this->page;
-        $this->smarty->assign($vars);
+        unset($vars['page']);
         try {
-            $html = $this->smarty->fetch(substr($dir.$file, strlen($this->blog->folder)));
-            if (!empty($vars)) {
-                $this->smarty->clearAssign(array_keys($vars));
-            }
+            $html = $this->twig->render(substr($dir.$file, strlen($this->blog->folder)), $vars);
         } catch (\Exception $e) {
-            $page = str_replace('/', DIRECTORY_SEPARATOR, $page->dir['page']);
-            $error = str_replace(array($page, '\\'), array('', '/'), $e->getMessage());
-            if ($testing) {
-                return htmlspecialchars_decode($error);
-            }
-            $html = '<p>'.$error.'</p>';
+            $html = '<p>'.$e->getMessage().'</p>';
         }
 
-        return ($testing) ? true : $html;
+        return $html;
     }
 
     /**
-     * Takes an asset string (eg. image.jpg) that is relative to the main Smarty index.tpl being fetched, and prepends the url path to it.
+     * Takes an asset string (eg. image.jpg) that is relative to the main index.html.twig being fetched, and prepends the url path to it.
      *
      * @param string|array $path
      *
@@ -184,14 +226,13 @@ class Theme
         if ($theme === false) {
             return $html;
         } elseif (is_callable($theme)) {
-            return $theme($html, $this->bp, $this->vars);
+            return $theme($html, $this->vars);
         } elseif (is_file($theme)) {
             return $page->load($theme, array(
                 'content' => $html,
-                'bp' => $this->bp,
                 'vars' => $this->vars,
             ));
-        } elseif (!$index = $this->getFiles('index.tpl', __DIR__.'/theme/')) {
+        } elseif (!$index = $this->getFiles('index.html.twig', __DIR__.'/theme/')) {
             return $html;
         }
         $vars = array(
@@ -204,13 +245,13 @@ class Theme
             }
         }
 
-        return $this->fetchSmarty(array_pop($index), $vars);
+        return $this->fetchTwig(array_pop($index), $vars);
     }
 
     /**
      * Gets all the file ``$name``'s within the selected theme.
      *
-     * @param string $name    The file you are looking for eg. 'index.tpl'
+     * @param string $name    The file you are looking for eg. 'index.html.twig'
      * @param string $default The file path to a default template if no other is available.  It will be copied to the theme folder's root.  Must include a trailing slash.
      *
      * @return array|null
@@ -224,7 +265,7 @@ class Theme
             if (!empty($page->theme) && is_string($page->theme) && is_dir($themes.$page->theme)) {
                 $path = str_replace('\\', '/', $page->theme);
             } else {
-                $path = $this->blog->config('themes', 'default');
+                $path = $this->blog->config('blog', 'theme');
             }
             $paths = array_filter(explode('/', preg_replace('/[^a-z0-9-\/]/', '', $path)));
             if (!empty($paths)) {

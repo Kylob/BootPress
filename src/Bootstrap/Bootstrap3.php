@@ -14,7 +14,6 @@ class Bootstrap3
     protected $page;
     private $table;
     private $navbar;
-    private $pagination;
 
     public function __construct($version = null)
     {
@@ -32,7 +31,6 @@ class Bootstrap3
             break;
             case 'table':
             case 'navbar':
-            case 'pagination':
                 if (is_null($this->$name)) {
                     $class = 'BootPress\Bootstrap\Bootstrap3'.ucfirst($name);
                     $this->$name = new $class();

@@ -99,7 +99,7 @@ class FormTest extends HTMLUnit_Framework_TestCase
         $form = new Form('test');
         $form->values['field'] = '"default"';
         $form->validator->set('field', array('required' => 'Do this or "else".'));
-        $this->assertEqualsRegExp('<input type="text" class="example" name="field" id="field{[A-Z]}" value="&quot;default&quot;" data-rule-required="true" data-msg-required="Do this or &quot;else&quot;.">', $form->text('field', array('class' => 'example')));
+        $this->assertEqualsRegExp('<input type="text" class="example" name="field" id="field{{ [A-Z]+ }}" value="&quot;default&quot;" data-rule-required="true" data-msg-required="Do this or &quot;else&quot;.">', $form->text('field', array('class' => 'example')));
     }
 
     public function testPasswordMethod()
@@ -107,7 +107,7 @@ class FormTest extends HTMLUnit_Framework_TestCase
         $form = new Form('test');
         $form->values['field'] = '"default"';
         $form->validator->set('field', array('required' => 'Do this or "else".'));
-        $this->assertEqualsRegExp('<input type="password" class="example" name="field" id="field{[A-Z]}" data-rule-required="true" data-msg-required="Do this or &quot;else&quot;.">', $form->password('field', array('class' => 'example')));
+        $this->assertEqualsRegExp('<input type="password" class="example" name="field" id="field{{ [A-Z]+ }}" data-rule-required="true" data-msg-required="Do this or &quot;else&quot;.">', $form->password('field', array('class' => 'example')));
     }
 
     public function testCheckboxMethod()
@@ -149,14 +149,14 @@ class FormTest extends HTMLUnit_Framework_TestCase
             42 => 'Jin & Sun Kwon',
         ));
         $form->validator->set('save[]', "inList[{$save}]");
-        $this->assertEqualsRegExp('<select class="example" name="save[]" id="save{[A-Z]}" multiple="multiple" size="6" data-rule-inList="4,8,15,16,23,42"><option value="4">John Locke</option><option value="8" selected="selected">Hugo Reyes</option><option value="15" selected="selected">James Ford</option><option value="16">Sayid Jarrah</option><option value="23">Jack Shephard</option><option value="42">Jin & Sun Kwon</option></select>', $form->select('save[]', array('class' => 'example')));
+        $this->assertEqualsRegExp('<select class="example" name="save[]" id="save{{ [A-Z]+ }}" multiple="multiple" size="6" data-rule-inList="4,8,15,16,23,42"><option value="4">John Locke</option><option value="8" selected="selected">Hugo Reyes</option><option value="15" selected="selected">James Ford</option><option value="16">Sayid Jarrah</option><option value="23">Jack Shephard</option><option value="42">Jin & Sun Kwon</option></select>', $form->select('save[]', array('class' => 'example')));
 
         $form->values['save[]'] = 8;
-        $this->assertEqualsRegExp('<select name="save[]" id="save{[A-Z]}" data-rule-inList="4,8,15,16,23,42"><option value="4">John Locke</option><option value="8" selected="selected">Hugo Reyes</option><option value="15">James Ford</option><option value="16">Sayid Jarrah</option><option value="23">Jack Shephard</option><option value="42">Jin & Sun Kwon</option></select>', $form->select('save[]', array('multiple' => false)));
+        $this->assertEqualsRegExp('<select name="save[]" id="save{{ [A-Z]+ }}" data-rule-inList="4,8,15,16,23,42"><option value="4">John Locke</option><option value="8" selected="selected">Hugo Reyes</option><option value="15">James Ford</option><option value="16">Sayid Jarrah</option><option value="23">Jack Shephard</option><option value="42">Jin & Sun Kwon</option></select>', $form->select('save[]', array('multiple' => false)));
 
         $form->values['transport'] = 2;
         $form->menu('transport', array('Fast' => array(1 => 'Airplane'), 'Slow' => array(2 => 'Boat', 3 => 'Submarine')), '&nbsp;');
-        $this->assertEqualsRegExp('<select name="transport" id="transport{[A-Z]}"><option value="">&nbsp;</option><optgroup label="Fast"><option value="1">Airplane</option></optgroup><optgroup label="Slow"><option value="2" selected="selected">Boat</option><option value="3">Submarine</option></optgroup></select>', $form->select('transport'));
+        $this->assertEqualsRegExp('<select name="transport" id="transport{{ [A-Z]+ }}"><option value="">&nbsp;</option><optgroup label="Fast"><option value="1">Airplane</option></optgroup><optgroup label="Slow"><option value="2" selected="selected">Boat</option><option value="3">Submarine</option></optgroup></select>', $form->select('transport'));
 
         $form->values['vehicle'] = 11;
         $vehicles = $form->menu('vehicle', array(
@@ -166,7 +166,7 @@ class FormTest extends HTMLUnit_Framework_TestCase
             3 => array(15 => 'Galaga', '16' => 'Yushio'),
         ), '&nbsp;');
         $form->validator->set('vehicle', "inList[{$vehicles}]");
-        $this->assertEqualsRegExp('<select name="vehicle" id="vehicle{[A-Z]}" data-rule-inList="4,5,6,7,8,9,11,12,13,14,15,16"><option value="">&nbsp;</option><option value="11" selected="selected">Black Rock</option><option value="12">Kahana</option><option value="13">Elizabeth</option><option value="14">Searcher</option></select>', $form->select('vehicle'));
+        $this->assertEqualsRegExp('<select name="vehicle" id="vehicle{{ [A-Z]+ }}" data-rule-inList="4,5,6,7,8,9,11,12,13,14,15,16"><option value="">&nbsp;</option><option value="11" selected="selected">Black Rock</option><option value="12">Kahana</option><option value="13">Elizabeth</option><option value="14">Searcher</option></select>', $form->select('vehicle'));
 
         $html = Page::html()->display('<p>Content</p>');
         $this->assertContains('$.fn.hierSelect', $html);
@@ -178,6 +178,6 @@ class FormTest extends HTMLUnit_Framework_TestCase
         $form = new Form('test');
         $form->values['field'] = '"default"';
         $form->validator->set('field', array('required' => 'Do this or "else".'));
-        $this->assertEqualsRegExp('<textarea class="example" name="field" id="field{[A-Z]}" cols="40" rows="10" data-rule-required="true" data-msg-required="Do this or &quot;else&quot;.">&quot;default&quot;</textarea>', $form->textarea('field', array('class' => 'example')));
+        $this->assertEqualsRegExp('<textarea class="example" name="field" id="field{{ [A-Z]+ }}" cols="40" rows="10" data-rule-required="true" data-msg-required="Do this or &quot;else&quot;.">&quot;default&quot;</textarea>', $form->textarea('field', array('class' => 'example')));
     }
 }

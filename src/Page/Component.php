@@ -7,8 +7,8 @@ use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\Session\Session;
+use League\CommonMark\CommonMarkConverter;
 use Spartz\TextFormatter\TextFormatter;
-use ParsedownExtra; // erusev/parsedown-extra
 use URLify; // jbroadway/urlify
 use AltoRouter;
 
@@ -19,7 +19,6 @@ class Component
     private $url = array();
     private $html = array();
     private $data = array(); // meta, ico, apple, css, style, other, js, jquery, script
-    private $saved = array(); // managed in $this->save($name), and retrieved in $this->info($name) - for filters mainly
     private $filters = array(); // managed in $this->filter() (public), and retrieved in $this->process() (private)
     private $testing = false; // $this->send() exit's a Symfony Response if this is false
     private static $instance;
@@ -685,8 +684,8 @@ class Component
                 $string = implode('/', $url);
                 break;
             case 'markdown':
-                $parser = new ParsedownExtra();
-                $string = $parser->text($string);
+                $converter = new CommonMarkConverter();
+                $string = $converter->convertToHtml($string);
                 break;
             case 'title':
                 $string = explode(' ', $string);
@@ -777,77 +776,61 @@ class Component
     }
 
     /**
-     * This will enclose the $css within ``<script>`` tags and place it in the ``<head>`` of your page.
+     * This will enclose the $css within ``<style>`` tags and place it in the ``<head>`` of your page.
      * 
-     * @param string $code Your custom css code.
+     * @param string|array $css
      * 
      * ```php
-     * $page->script('body { background-color:red; }');
+     * $page->style('body { background-color:red; color:black; }');
+     * $page->style(array('body { background-color:red; color:black; }'));
+     * $page->style(array('body' => 'background-color:red; color:black;'));
+     * $page->style(array('body' => array('background-color:red;', 'color:black;')));
      * ```
      */
-    public function style($code)
+    public function style($css)
     {
-        if (is_array($code)) {
-            foreach ($code as $css => $rules) {
+        if (is_array($css)) {
+            foreach ($css as $tag => $rules) {
                 if (is_array($rules)) {
-                    $code[$css] = $css.' { '.implode(' ', $rules).' }';
-                } elseif (!is_numeric($css)) {
-                    $code[$css] = $css.' { '.$rules.' }';
+                    $css[$tag] = $tag.' { '.implode(' ', $rules).' }';
+                } elseif (!is_numeric($tag)) {
+                    $css[$tag] = $tag.' { '.$rules.' }';
                 }
             }
-            $code = implode("\n", $code);
+            $css = implode("\n", $css);
         }
-        $this->link('<style>'.(strpos($code, "\n") ? "\n".$this->indent($code)."\n\t" : trim($code)).'</style>');
+        $this->link('<style>'.(strpos($css, "\n") ? "\n".$this->indent($css)."\n\t" : trim($css)).'</style>');
     }
 
     /**
-     * This will enclose the $javascript within ``<style>`` tags and place it at the bottom of your page.
+     * This will enclose the $javascript within ``<script>`` tags and place it at the bottom of your page.
      * 
-     * @param string $code Your custom javascript code.
+     * @param string|array $javascript
      * 
      * ```php
      * $page->script('alert("Hello World");');
      * ```
      */
-    public function script($code)
+    public function script($javascript)
     {
-        if (is_array($code)) {
-            $code = implode("\n", $code);
+        if (is_array($javascript)) {
+            $javascript = implode("\n", $javascript);
         }
-        $this->link('<script>'.(strpos($code, "\n") ? "\n".$this->indent($code)."\n\t" : trim($code)).'</script>');
+        $this->link('<script>'.(strpos($javascript, "\n") ? "\n".$this->indent($javascript)."\n\t" : trim($javascript)).'</script>');
     }
 
     /**
-     * jQuery itself is included automatically if you ever call this method, and is placed before any other included scripts on the page.  The default version is currently v.1.11.4, but you can change that by setting ``$page->jquery`` to the file you want to use.  To include the jQuery UI right after that then call ``$page->jquery('ui', $file)``, and if you leave out the $file then we will use v.1.12.3.
+     * Places all of your jQuery $code into one ``$(document).ready(function(){...})`` at the end of your page.
      * 
-     * @param string|array $code    A string of jQuery.  All of the included code is compiled at the end of the page and placed into one ``$(document).ready(function(){...})``.  If this is a file or files (array), then they will be included via ``$page->link()``.
-     * @param mixed        $prepend Passed to ``$page->link()`` if including files.
+     * @param string|array $code
      * 
      * ```php
      * $page->jquery('$("button.continue").html("Next Step...");');
      * ```
      */
-    public function jquery($code, $prepend = false)
+    public function jquery($code)
     {
-        if ($code == 'ui') {
-            if (!isset($this->data['jquery']['ui'])) {
-                $this->data['jquery']['ui'] = false;
-            }
-            if (!empty($prepend)) {
-                $this->data['jquery']['ui'] = $prepend;
-            }
-
-            return;
-        }
-        foreach ((array) $code as $value) {
-            if (!is_string($value) || strpos($value, 'http') !== 0) {
-                $this->data['jquery'][] = $code;
-
-                return;
-            }
-        }
-        $this->link($code, $prepend);
-        $this->data['jquery'][] = '';
+        $this->data['jquery'][] = (is_array($code)) ? implode("\n", $code) : $code;
     }
 
     /**
@@ -1005,91 +988,28 @@ class Component
     }
 
     /**
-     * This method exists mainly for plugins.  It allows them to save some information for future use.  The saved information can be retrieved later by calling ``$page->info()``.
+     * Enables you to modify just about anything throughout the creation process of your page.
      * 
-     * @param string $name  There is a potential for collision here.  I recommend using the ``$page->dirname(__CLASS__)`` exclusively.
-     * @param mixed  $key   If you don't indicate a ``$value``, then this will be added to the ``$name``'s array which can be retrieved at ``$page->info($name)``.
-     * @param mixed  $value if ``$key`` is a specific value that you want to save then this will be it's value, and it will override any value previously set.  It can be retrieved at ``$page->info($name, $key)``.
+     * @param string   $section  Must be one of:
      * 
-     * ```php
-     * $name = $page->dirname(__CLASS__);
-     * $page->save($name, 'one');
-     * $page->save($name, 'two');
-     * $page->save($name, 'skip', 'few');
-     * ```
-     */
-    public function save($name, $key, $value = null)
-    {
-        if (func_num_args() == 2 || is_array($key)) {
-            $this->saved[$name][] = $key;
-        } else {
-            $this->saved[$name][$key] = $value;
-        }
-    }
-
-    /**
-     * Returns the info saved in ``$page->save($name)``.
-     * 
-     * @param string $name The one you indicated in ``$page->save($name)``.
-     * @param string $key  The specific value you ``$page->save($name, $key)``ed previously and now want to retrieve.
-     * 
-     * @return mixed If you indicate a ``$key`` then we will return the value if it exists, or null if it does not.  Otherwise we will return the whole array of info saved for ``$name`` (if any), or an empty array if not.
-     * 
-     * ```php
-     * $name = $page->dirname(__CLASS__);
-     * 
-     * $page->info($name); // returns array();
-     * 
-     * $page->save($name, 'one');
-     * $page->save($name, 'two');
-     * $page->save($name, 'skip', 'few');
-     * 
-     * $page->info($name); // returns array('one', 'two');
-     * $page->info($name, 'skip'); // returns 'few';
-     * $page->info($name, 'set'); // returns null;
-     * ```
-     */
-    public function info($name, $key = null)
-    {
-        if (!is_null($key)) {
-            return (isset($this->saved[$name][$key])) ? $this->saved[$name][$key] : null;
-        }
-        $info = (isset($this->saved[$name])) ? $this->saved[$name] : array();
-        foreach ($info as $key => $value) {
-            if (!is_numeric($key)) {
-                unset($info[$key]);
-            }
-        }
-
-        return $info;
-    }
-
-    /**
-     * Enables you to prepend, append, or modify just about anything throughout the creation process of your page.
-     * 
-     * @param string $section Must be one of (in the order we process them at ``$page->display()``):
-     * 
-     * - '**content**' - This comes first before all.  Presumably, it is the reason you are creating a website.  We create / process the content first, then we put the rest of the page together, which all revolves around the content.  If you have anything else to add (or edit), you may do so now.
-     * - '**metadata**' - This contains the title tag and metadata, just before we start inserting all of your css stylesheets.
-     * - '**css**' - After we insert any icon image links, we hand over the array of stylesheets we want to include for further processing (if any).
-     * - '**styles**' - After all the stylesheets are up, then we check for anything else you would like to add just before the ``</head><body>`` tags.
-     * - '**javascript**' - After your content we include jquery first, then all of your javascript files.
-     * - '**scripts**' - After listing all of your javascript src files, then we include any scripts, and place the jQuery code last.
+     * - '**metadata**' - The ``<title>`` and ``<meta>`` data that we include right after the ``<head>`` tag.
+     * - '**css**' - An array of stylesheet link urls.
+     * - '**styles**' - The ``<link>``'s and ``<style>``'s that we include just before the ``</head>`` tag.
+     * - '**html**' - The ``$page->display($content)`` that comes right after the ``<body>`` tag, and just before the javascript we include.
+     * - '**javascript**' - An array of javascript urls.
+     * - '**scripts**' - The ``<script>``'s and jQuery code that we include just before the ``</body>`` tag.
      * - '**head**' - Everything between the ``<head>`` ... ``</head>`` tags.
      * - '**body**' - Everything between the ``<body>`` ... ``</body>`` tags.
      * - '**page**' - The entire page from top to bottom.
      * - '**response**' - The final Symfony Response object if you ``$page->send()`` it.
-     * @param mixed $function Can be either '**prepend**', '**append**', or a callable function or method.  If filtering the '**response**' then we'll pass the ``$page`` (this class instance), ``$response`` (what you are filtering), and ``$type`` ('html', 'json', 'redirect', or ``$page->url['format']``) of content that you are dealing with.
-     * @param mixed $params
-     *                        - If ``$section`` equals '**response**'
-     *                        - These are the page *type* and response *code* conditions that the response must meet in order to be processed.  It can be an array or string.
-     *                        - Elseif ``$function`` equals '**prepend**' or '**append**' then this must be a string.
-     *                        - Elseif ``$function`` is a callable function or method:
-     *                        - ``$params`` must be an array of arguments which are passed to the function or method.
-     *                        - '**this**' must be listed as one of the ``$params``.
-     *                        - If '**this**' is the only ``$param``, then instead of an array you can just pass the string '**this**'.
-     *                        - '**this**' is the ``$section`` as currently constituted, and for which your filter would like to operate on.  If you don't return anything, then that section will magically disappear.
-     * @param int   $order    The level of importance (or priority) that this filter should receive.  The default is 10.  All filters are called in the order specified here.
+     * @param callable $function If filtering the '**response**' then we'll pass the ``$page`` (this class instance), ``$response`` (what you are filtering), and ``$type`` ('html', 'json', 'redirect', or ``$page->url['format']``) of content that you are dealing with.
+     * @param array    $params
+     *                           - If ``$section`` equals '**response**'
+     *                             - These are the page *type* and response *code* conditions that the response must meet in order to be processed.
+     *                           - Otherwise:
+     *                             - ``$params`` is an array of arguments that are passed to your $function.
+     *                             - '**this**' must be listed as one of the ``$params``.  It is the ``$section`` as currently constituted, and for which your filter would like to operate on.  If you don't return anything, then that section will magically disappear.
+     * @param int      $order    The level of importance (or priority) that this filter should receive.  The default is 10.  All filters are called in the order specified here.
      * 
      * ```php
      * $page->filter('response', function ($page, $response, $type) {
@@ -1098,69 +1018,43 @@ class Component
      * 
      * $page->filter('response', function ($page, $response) {
      *     return $response->setContent('json');
-     * }, 'json');
+     * }, array('json'));
      * 
      * $page->filter('response', function ($page, $response) {
      *     return $response->setContent(404);
-     * }, 404);
+     * }, array(404));
      * 
-     * function prepend_facebook_like_button ($content) {
-     *     return 'facebook_like_button '.$content;
-     * }
-     * 
-     * $page->filter('content', 'prepend_facebook_like_button', array('this')); // or ...
-     * 
-     * $page->filter('content', 'prepend_facebook_like_button', 'this'); // or ...
-     * 
-     * $page->filter('content', 'prepend', 'facebook_like_button ');
+     * $page->filter('body', function ($prepend, $html, $append) {
+     *     return implode(' ', array($prepend, $html, $append));
+     * }, array('facebook_like_button', 'this', 'tracking_code');
      * ```
      * 
      * @throws \LogicException If something was not set up right.
      */
-    public function filter($section, $function, $params = 'this', $order = 10)
+    public function filter($section, callable $function, array $params = array('this'), $order = 10)
     {
-        $errors = array();
         if ($section == 'response') {
-            if (!is_callable($function, false, $name)) {
-                $errors[] = "'{$name}' cannot be called";
-            }
-            if (!is_array($params)) {
-                $params = explode(' ', $params);
-            }
             foreach ($params as $key => $value) {
                 if (empty($value) || $value == 'this') {
                     unset($params[$key]);
                 }
             }
             $key = false;
-        } elseif (!in_array($section, array('metadata', 'css', 'styles', 'head', 'content', 'javascript', 'scripts', 'body', 'page'))) {
-            $errors[] = "'{$section}' cannot be filtered";
-        } elseif (in_array($function, array('prepend', 'append'))) {
-            if (!is_string($params)) {
-                $errors[] = "When using '{$function}', \$params must be a string";
-            } elseif (in_array($section, array('css', 'javascript'))) {
-                $this->filters[$function][$section][] = $params; // [prepend|append][css|javascript][] = (string)
-                return;
-            }
-            $key = ''; // not applicable here
+        } elseif (!in_array($section, array('metadata', 'css', 'styles', 'html', 'javascript', 'scripts', 'head', 'body', 'page'))) {
+            $error = "'{$section}' cannot be filtered";
         } else {
-            $params = (array) $params;
-            $key = array_search('this', $params);
-            if ($key === false) {
-                $errors[] = "'this' must be listed in the \$params so that we can give you something to filter";
-            }
-            if (!is_callable($function, false, $name)) {
-                $errors[] = "'{$name}' cannot be called";
+            if (false === $key = array_search('this', $params)) {
+                $error = "'this' must be listed in the \$params so that we can give you something to filter";
             }
         }
-        if (!empty($errors)) {
-            throw new \LogicException(implode("\n\n", $errors));
+        if (isset($error)) {
+            throw new \LogicException($error);
         }
         $this->filters[$section][] = array('function' => $function, 'params' => $params, 'order' => $order, 'key' => $key);
     }
 
     /**
-     * This method fulfills the measure of the whole Page component's existence: to be able to manipulate every part of an HTML page at any time.
+     * This method fulfills the measure of the Page component's existence: to be able to manipulate every part of an HTML page at any time.
      * 
      * @param string $content Of your page.
      * 
@@ -1168,26 +1062,49 @@ class Component
      */
     public function display($content)
     {
-        $content = $this->process('content', $content);
-        $head = array(
-            $this->process('metadata', "\t".implode("\n\t", $this->metadata())),
-            $this->process('styles', "\t".implode("\n\t", $this->styles())),
-        );
-        $body = array(
-            $content,
+        $html = array();
+        if (preg_match('/<\s*!doctype\s.*>/i', $content, $match)) {
+            $content = substr(strstr($content, $match[0]), strlen($match[0]));
+            $html[] = $match[0];
+        } else {
+            $html[] = $this->html['doctype'];
+        }
+        $pattern = '/(<\s*(%s)[^>]*>)([\s\S]*)<\s*\/\s*\2\s*>/i';
+        if (preg_match(sprintf($pattern, 'html'), $content, $match)) {
+            $html[] = $match[1];
+            $content = $match[3];
+        } else {
+            $html[] = '<html lang="'.$this->html['language'].'">';
+        }
+        if (preg_match(sprintf($pattern, 'head'), $content, $match)) {
+            $content = substr(strstr($content, $match[0]), strlen($match[0]));
+            $html[] = $match[1];
+            $head = array(
+                $this->process('metadata', "\t".implode("\n\t", $this->metadata($match[3]))),
+                $match[3],
+                $this->process('styles', "\t".implode("\n\t", $this->styles())),
+            );
+        } else {
+            $html[] = '<head>';
+            $head = array(
+                $this->process('metadata', "\t".implode("\n\t", $this->metadata())),
+                $this->process('styles', "\t".implode("\n\t", $this->styles())),
+            );
+        }
+        $html[] = $this->process('head', implode("\n", $head));
+        $html[] = '</head>';
+        if (preg_match(sprintf($pattern, 'body'), $content, $match)) {
+            $html[] = $match[1];
+            $content = $match[3];
+        } else {
+            $html[] = (!empty($this->html['body'])) ? '<body '.$this->html['body'].'>' : '<body>';
+        }
+        $html[] = $this->process('body', implode("\n", array(
+            $this->process('html', $content),
             $this->process('scripts', "\t".implode("\n\t", $this->scripts())),
-        );
-        $html = array(
-            $this->html['doctype'],
-            '<html lang="'.$this->html['language'].'">',
-            '<head>',
-            $this->process('head', implode("\n", $head)),
-            '</head>',
-            (!empty($this->html['body'])) ? '<body '.$this->html['body'].'>' : '<body>',
-            $this->process('body', implode("\n", $body)),
-            '</body>',
-            '</html>',
-        );
+        )));
+        $html[] = '</body>';
+        $html[] = '</html>';
 
         return $this->process('page', implode("\n", $html));
     }
@@ -1298,12 +1215,8 @@ class Component
                     }
                 }
                 call_user_func($filter['function'], $this, $param, $type); // $page, $response, $type
-            } elseif ($filter['function'] == 'prepend') {
-                $param = $filter['params'].$param;
-            } elseif ($filter['function'] == 'append') {
-                $param .= $filter['params'];
             } else {
-                $filter['params'][$filter['key']] = $param;
+                $filter['params'][$filter['key']] = $param; // replaces 'this' with our content
                 $param = call_user_func_array($filter['function'], $filter['params']);
             }
             unset($this->filters[$section][$key]);
@@ -1325,19 +1238,37 @@ class Component
         }
     }
 
-    protected function metadata()
+    protected function metadata($head = null)
     {
         // Used in $this->display()
         $metadata = array();
-        $metadata[] = '<meta charset="'.$this->html['charset'].'">';
-        $metadata[] = '<title>'.trim($this->html['title']).'</title>';
-        if (!empty($this->html['description'])) {
+        if (empty($head) || !preg_match('/<\s*meta\s(?=[^>]*?\b(charset)\s*=)/i', $head)) {
+            $metadata[] = '<meta charset="'.$this->html['charset'].'">';
+        }
+        if (empty($head) || !preg_match('/(<\s*title\s*>)/i', $head)) {
+            $metadata[] = '<title>'.trim($this->html['title']).'</title>';
+        }
+        $meta_names = array();
+        if ($head) {
+            // http://php.net/manual/en/function.get-meta-tags.php#117766
+            $pattern = <<<'EOT'
+                <\s*meta\s(?=[^>]*?
+                \b(?:name)\s*=\s*
+                    (?|"\s*([^"]*?)\s*"|'\s*([^']*?)\s*'|
+                    ([^"'>]*?)(?=\s*\/?\s*>|\s\w+\s*=))
+                )
+EOT;
+            if (preg_match_all("/{$pattern}/ix", $head, $match)) {
+                $meta_names = array_map('strtolower', $match[1]);
+            }
+        }
+        if (!empty($this->html['description']) && !in_array('description', $meta_names)) {
             $metadata[] = '<meta name="description" content="'.trim($this->html['description']).'">';
         }
-        if (!empty($this->html['keywords'])) {
+        if (!empty($this->html['keywords']) && !in_array('keywords', $meta_names)) {
             $metadata[] = '<meta name="keywords" content="'.trim($this->html['keywords']).'">';
         }
-        if ($this->robots !== true) {
+        if ($this->robots !== true && !in_array('robots', $meta_names)) {
             $metadata[] = ($this->html['robots']) ? '<meta name="robots" content="'.$this->html['robots'].'">' : '<meta name="robots" content="noindex, nofollow">'; // ie. false or null
         }
         if (isset($this->data['meta'])) {
@@ -1359,13 +1290,6 @@ class Component
         if (isset($this->data['apple'])) {
             $styles[] = '<link rel="apple-touch-icon" href="'.$this->data['apple'].'">';
         }
-        if (isset($this->filters['prepend']['css'])) {
-            $this->link($this->filters['prepend']['css'], 'prepend');
-        }
-        if (isset($this->filters['append']['css'])) {
-            $this->link($this->filters['append']['css']);
-        }
-        unset($this->filters['prepend']['css'], $this->filters['append']['css']);
         $css = (isset($this->data['css'])) ? $this->data['css'] : array();
         $css = $this->process('css', array_unique($css));
         foreach ($css as $url) {
@@ -1388,32 +1312,14 @@ class Component
     protected function scripts()
     {
         // Used in $this->display()
+        if (isset($this->data['jquery'])) {
+            $jquery = array_filter(array_unique($this->data['jquery']));
+            foreach ($jquery as $key => $value) {
+                $jquery[$key] = $this->indent($value);
+            }
+            $this->script('$(document).ready(function(){'."\n".implode("\n", $jquery)."\n".'});');
+        }
         $scripts = array();
-        if (isset($this->filters['prepend']['javascript'])) {
-            $this->link($this->filters['prepend']['javascript'], 'prepend');
-        }
-        $jquery = (isset($this->html['jquery'])) ? $this->html['jquery'] : false;
-        $code = (isset($this->data['jquery'])) ? $this->data['jquery'] : false;
-        if ($jquery || $code) {
-            if (isset($code['ui'])) {
-                $this->link($code['ui'] ? $code['ui'] : 'https://cdn.jsdelivr.net/jquery.ui/1.11.4/jquery-ui.min.js', 'prepend');
-                unset($code['ui']);
-            }
-            $this->link($jquery ? $jquery : 'https://cdn.jsdelivr.net/jquery/1.12.3/jquery.min.js', 'prepend');
-            if ($code) {
-                $code = array_filter(array_unique($code));
-            }
-            if (!empty($code)) {
-                foreach ($code as $key => $value) {
-                    $code[$key] = $this->indent($value);
-                }
-                $this->script('$(document).ready(function(){'."\n".implode("\n", $code)."\n".'});');
-            }
-        }
-        if (isset($this->filters['append']['javascript'])) {
-            $this->link($this->filters['append']['javascript']);
-        }
-        unset($this->filters['prepend']['javascript'], $this->filters['append']['javascript']);
         $javascript = (isset($this->data['js'])) ? $this->data['js'] : array();
         $javascript = $this->process('javascript', array_unique($javascript));
         foreach ($javascript as $url) {

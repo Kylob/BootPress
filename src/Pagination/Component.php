@@ -13,67 +13,15 @@ class Component
     private $limit; // formerly $display
     private $total; // formerly $num_pages
     private $current;
-    private $links = array(
-        'wrapper' => '<ul class="pagination">%s</ul>',
-        'link' => '<li><a href="%s">%s</a></li>',
-        'active' => '<li class="active"><span>%s</span></li>',
-        'disabled' => '<li class="disabled"><span>%s</span></li>',
-        'previous' => '&laquo;',
-        'next' => '&raquo;',
-        'dots' => '&hellip;',
-    );
-    private $pager = array(
-        'wrapper' => '<ul class="pager">%s</ul>',
-        'previous' => '<li class="previous"><a href="%s">&laquo; %s</a></li>',
-        'next' => '<li class="next"><a href="%s">%s &raquo;</a></li>',
-    );
+    private $links = array();
+    private $pager = array();
 
-    public function __construct($framework = 'bootstrap') // http://getbootstrap.com/components/#pagination
+    public function __construct($framework = 'bootstrap')
     {
         $this->page = Page::html();
         $this->get = false;
         $this->set();
-        switch ($framework) {
-            case 'zurb_foundation': // http://foundation.zurb.com/docs/components/pagination.html
-                $this->html('links', array(
-                    'active' => '<li class="current"><a href="">%s</a></li>',
-                    'disabled' => '<li class="unavailable"><a href="">%s</a></li>',
-                ));
-                break;
-            case 'semantic_ui': // http://semantic-ui.com/collections/menu.html#pagination
-                $this->html('links', array(
-                    'wrapper' => '<div class="ui pagination menu">%s</div>',
-                    'link' => '<a class="item" href="%s">%s</a>',
-                    'active' => '<div class="active item">%s</div>',
-                    'disabled' => '<div class="disabled item">%s</div>',
-                    'previous' => '<i class="left arrow icon"></i>',
-                    'next' => '<i class="right arrow icon"></i>',
-                ));
-                break;
-            case 'materialize': // http://materializecss.com/pagination.html
-                $this->html('links', array(
-                    'link' => '<li class="waves-effect"><a href="%s">%s</a></li>',
-                    'active' => '<li class="active"><a href="#!">%s</a></li>',
-                    'disabled' => '<li class="disabled"><a href="#!">%s</a></li>',
-                    'previous' => '<i class="material-icons">keyboard_arrow_left</i>',
-                    'next' => '<i class="material-icons">keyboard_arrow_right</i>',
-                ));
-                break;
-            case 'uikit': // http://getuikit.com/docs/pagination.html
-                $this->html('links', array(
-                    'wrapper' => '<ul class="uk-pagination">%s</ul>',
-                    'active' => '<li class="uk-active"><span>%s</span></li>',
-                    'disabled' => '<li class="uk-disabled"><span>%s</span></li>',
-                    'previous' => '<i class="uk-icon-angle-double-left"></i>',
-                    'next' => '<i class="uk-icon-angle-double-right"></i>',
-                ));
-                $this->html('pager', array(
-                    'wrapper' => '<ul class="uk-pagination">%s</ul>',
-                    'previous' => '<li class="uk-pagination-previous"><a href="%s"><i class="uk-icon-angle-double-left"></i> %s</a></li>',
-                    'next' => '<li class="uk-pagination-next"><a href="%s">%s <i class="uk-icon-angle-double-right"></i></a></li>',
-                ));
-                break;
-        }
+        $this->html($framework);
     }
 
     public function __get($name)
@@ -100,6 +48,29 @@ class Component
         }
 
         return;
+    }
+
+    /**
+     * This is here for the sake of Twig templates, and also because ``empty($this->limit)`` was returning true while ``$this->limit`` would return " LIMIT 0, 10" when accessed directly.
+     * 
+     * @param string $name Of the dynamic property
+     * 
+     * @return bool
+     */
+    public function __isset($name)
+    {
+        switch ($name) {
+            case 'limit':
+            case 'last_page':
+            case 'current_page':
+            case 'number_pages':
+            case 'previous_url':
+            case 'next_url':
+                return true;
+                break;
+        }
+
+        return false;
     }
 
     public function set($page = 'page', $limit = 10, $url = null)
@@ -137,12 +108,69 @@ class Component
         }
     }
 
-    public function html($type, array $options)
+    public function html($type = 'bootstrap', array $options = array())
     {
-        if ($type == 'links') {
+        if ($type == 'links' && !empty($this->links)) {
             $this->links = array_merge($this->links, $options);
-        } elseif ($type == 'pager') {
+        } elseif ($type == 'pager' && !empty($this->pager)) {
             $this->pager = array_merge($this->pager, $options);
+        } else {
+            // http://getbootstrap.com/components/#pagination
+            $this->links = array(
+                'wrapper' => '<ul class="pagination">%s</ul>',
+                'link' => '<li><a href="%s">%s</a></li>',
+                'active' => '<li class="active"><span>%s</span></li>',
+                'disabled' => '<li class="disabled"><span>%s</span></li>',
+                'previous' => '&laquo;',
+                'next' => '&raquo;',
+                'dots' => '&hellip;',
+            );
+            $this->pager = array(
+                'wrapper' => '<ul class="pager">%s</ul>',
+                'previous' => '<li class="previous"><a href="%s">&laquo; %s</a></li>',
+                'next' => '<li class="next"><a href="%s">%s &raquo;</a></li>',
+            );
+            switch ($type) {
+                case 'zurb_foundation': // http://foundation.zurb.com/docs/components/pagination.html
+                    $this->html('links', array(
+                        'active' => '<li class="current"><a href="">%s</a></li>',
+                        'disabled' => '<li class="unavailable"><a href="">%s</a></li>',
+                    ));
+                    break;
+                case 'semantic_ui': // http://semantic-ui.com/collections/menu.html#pagination
+                    $this->html('links', array(
+                        'wrapper' => '<div class="ui pagination menu">%s</div>',
+                        'link' => '<a class="item" href="%s">%s</a>',
+                        'active' => '<div class="active item">%s</div>',
+                        'disabled' => '<div class="disabled item">%s</div>',
+                        'previous' => '<i class="left arrow icon"></i>',
+                        'next' => '<i class="right arrow icon"></i>',
+                    ));
+                    break;
+                case 'materialize': // http://materializecss.com/pagination.html
+                    $this->html('links', array(
+                        'link' => '<li class="waves-effect"><a href="%s">%s</a></li>',
+                        'active' => '<li class="active"><a href="#!">%s</a></li>',
+                        'disabled' => '<li class="disabled"><a href="#!">%s</a></li>',
+                        'previous' => '<i class="material-icons">keyboard_arrow_left</i>',
+                        'next' => '<i class="material-icons">keyboard_arrow_right</i>',
+                    ));
+                    break;
+                case 'uikit': // http://getuikit.com/docs/pagination.html
+                    $this->html('links', array(
+                        'wrapper' => '<ul class="uk-pagination">%s</ul>',
+                        'active' => '<li class="uk-active"><span>%s</span></li>',
+                        'disabled' => '<li class="uk-disabled"><span>%s</span></li>',
+                        'previous' => '<i class="uk-icon-angle-double-left"></i>',
+                        'next' => '<i class="uk-icon-angle-double-right"></i>',
+                    ));
+                    $this->html('pager', array(
+                        'wrapper' => '<ul class="uk-pagination">%s</ul>',
+                        'previous' => '<li class="uk-pagination-previous"><a href="%s"><i class="uk-icon-angle-double-left"></i> %s</a></li>',
+                        'next' => '<li class="uk-pagination-next"><a href="%s">%s <i class="uk-icon-angle-double-right"></i></a></li>',
+                    ));
+                    break;
+            }
         }
     }
 

@@ -13,9 +13,9 @@
     "require": {
         "php": ">=5.4",
         "symfony/http-foundation": "^2.3||^3.0",
-        "erusev/parsedown-extra": "~0.7",
-        "jbroadway/urlify": "^1.0",
+        "league/commonmark": "~0.7",
         "spartz/text-formatter": "^1.0",
+        "jbroadway/urlify": "^1.0",
         "altorouter/altorouter": "^1.0"
     },
     "autoload": {

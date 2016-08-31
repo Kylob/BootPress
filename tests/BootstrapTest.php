@@ -150,7 +150,7 @@ class BootstrapTest extends HTMLUnit_Framework_TestCase
         $this->assertEqualsRegExp(array(
             '<div class="input-group input-group-lg">',
                 '<div class="input-group-addon">$</div>',
-                '<input type="text" name="field" id="field{[A-Z]}">',
+                '<input type="text" name="field" id="field{{ [A-Z]+ }}">',
                 '<div class="input-group-addon">.00</div>',
             '</div>',
         ), $form->group('$', '.00', $form->text('field')));
@@ -159,7 +159,7 @@ class BootstrapTest extends HTMLUnit_Framework_TestCase
         $this->assertEqualsRegExp(array(
             '<div class="input-group input-group-sm">',
                 '<div class="input-group-btn"><button type="button" class="btn btn-default">Go</button></div>',
-                '<input type="text" name="field" id="field{[A-Z]}">',
+                '<input type="text" name="field" id="field{{ [A-Z]+ }}">',
             '</div>',
         ), $form->group($bp->button('default', 'Go'), '', $form->text('field')));
         
@@ -167,7 +167,7 @@ class BootstrapTest extends HTMLUnit_Framework_TestCase
         $this->assertEqualsRegExp(array(
             '<div class="input-group">',
                 '<div class="input-group-btn"><button type="button" class="btn btn-default">Go</button></div>',
-                '<input type="text" name="field" id="field{[A-Z]}">',
+                '<input type="text" name="field" id="field{{ [A-Z]+ }}">',
             '</div>',
         ), $form->group($bp->button('default', 'Go'), '', $form->text('field')));
 
@@ -183,10 +183,10 @@ class BootstrapTest extends HTMLUnit_Framework_TestCase
         
         $this->assertEqualsRegExp(array(
             '<div class="form-group">',
-                '<label class="col-sm-2 control-label" for="field{[A-Z]}">Prompt:</label>',
+                '<label class="col-sm-2 control-label" for="field{{ [A-Z]+ }}">Prompt:</label>',
                 '<div class="col-sm-10">',
                     '<p class="validation help-block" style="display:none;"></p>',
-                    '<input type="text" name="field" id="field{[A-Z]}" class="form-control">',
+                    '<input type="text" name="field" id="field{{ [A-Z]+ }}" class="form-control">',
                 '</div>',
             '</div>',
         ), $form->field('Prompt', $form->text('field')));
@@ -194,9 +194,9 @@ class BootstrapTest extends HTMLUnit_Framework_TestCase
         $form->align('inline');
         $this->assertEqualsRegExp(array(
             '<div class="form-group">',
-                '<label class="sr-only" for="field{[A-Z]}">Prompt:</label>',
+                '<label class="sr-only" for="field{{ [A-Z]+ }}">Prompt:</label>',
                 '<p class="validation help-block" style="display:none;"></p>',
-                '<select name="field" id="field{[A-Z]}" class="form-control"></select>',
+                '<select name="field" id="field{{ [A-Z]+ }}" class="form-control"></select>',
             '</div>',
         ), $form->field('Prompt', $form->select('field')));
         
@@ -205,9 +205,9 @@ class BootstrapTest extends HTMLUnit_Framework_TestCase
         $form->validator->errors['field'] = 'Fix me'; // has no effect because the form was not submitted
         $this->assertEqualsRegExp(array(
             '<div class="form-group">',
-                '<label for="field{[A-Z]}">Prompt: <i title="Toggle Info" class="glyphicon glyphicon-question-sign" style="cursor:pointer;" data-html="true" data-toggle="tooltip" data-placement="bottom" data-container="form[name=example]"></i></label>',
+                '<label for="field{{ [A-Z]+ }}">Prompt: <i title="Toggle Info" class="glyphicon glyphicon-question-sign" style="cursor:pointer;" data-html="true" data-toggle="tooltip" data-placement="bottom" data-container="form[name=example]"></i></label>',
                 '<p class="validation help-block" style="display:none;"></p>',
-                '<textarea name="field" id="field{[A-Z]}" cols="40" rows="10" class="form-control"></textarea>',
+                '<textarea name="field" id="field{{ [A-Z]+ }}" cols="40" rows="10" class="form-control"></textarea>',
             '</div>',
         ), $form->field(array('Prompt' => 'Toggle Info'), $form->textarea('field')));
         
@@ -255,7 +255,7 @@ class BootstrapTest extends HTMLUnit_Framework_TestCase
             '<nav class="navbar navbar-fixed-top navbar-inverse">',
                 '<div class="container-fluid">',
                     '<div class="navbar-header">',
-                        '<button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar{[A-Z]}">',
+                        '<button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar{{ [A-Z]+ }}">',
                         '<span class="sr-only">Toggle navigation</span>',
                         '<span class="icon-bar"></span>',
                         '<span class="icon-bar"></span>',
@@ -263,7 +263,7 @@ class BootstrapTest extends HTMLUnit_Framework_TestCase
                         '</button>',
                         '<a class="navbar-brand" href="http://website.com/">Brand</a>',
                     '</div>',
-                    '<div class="collapse navbar-collapse" id="navbar{[A-Z]}"></div>',
+                    '<div class="collapse navbar-collapse" id="navbar{{ [A-Z]+ }}"></div>',
                 '</div>',
             '</nav>',
         );
@@ -294,12 +294,6 @@ class BootstrapTest extends HTMLUnit_Framework_TestCase
 
         // text
         $this->assertEquals('<p class="navbar-text">You <a href="#" class="navbar-link">link</a> me</p>', trim($bp->navbar->text('You <a href="#">link</a> me')));
-    }
-
-    public function testPaginationObject()
-    {
-        $bp = Bootstrap::version(3);
-        $this->assertInstanceOf('BootPress\Pagination\Component', $bp->pagination);
     }
 
     public function testRowColMethods()
@@ -370,7 +364,7 @@ class BootstrapTest extends HTMLUnit_Framework_TestCase
         $this->assertEqualsRegExp(array(
             '<form name="search" method="get" action="http://website.com/" accept-charset="utf-8" autocomplete="off" role="search" class="form-horizontal">',
                 '<div class="input-group">',
-                    '<input type="text" class="form-control" placeholder="Search" name="search" id="search{[A-Z]}" data-rule-required="true">',
+                    '<input type="text" class="form-control" placeholder="Search" name="search" id="search{{ [A-Z]+ }}" data-rule-required="true">',
                     '<div class="input-group-btn">',
                         '<button type="submit" class="btn btn-default" title="Search"><span class="glyphicon glyphicon-search"></span></button>',
                     '</div>',
@@ -380,7 +374,7 @@ class BootstrapTest extends HTMLUnit_Framework_TestCase
         
         $this->assertEqualsRegExp(array(
             '<form name="search" method="get" action="http://website.com/" accept-charset="utf-8" autocomplete="off" role="search" class="form-horizontal">',
-                '<input type="text" class="form-control input-lg" placeholder="Search" name="search" id="search{[A-Z]}" data-rule-required="true">',
+                '<input type="text" class="form-control input-lg" placeholder="Search" name="search" id="search{{ [A-Z]+ }}" data-rule-required="true">',
             '</form>',
         ), $bp->search('http://website.com/', array(
             'button' => false,
@@ -411,8 +405,8 @@ class BootstrapTest extends HTMLUnit_Framework_TestCase
 
         $this->assertEqualsRegExp(array(
             '<div class="btn-group">',
-                '<button type="button" class="btn btn-danger dropdown-toggle" id="dropdown{[A-Z]}" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Dropdown <span class="caret"></span></button>',
-                '<ul class="dropdown-menu" aria-labelledby="dropdown{[A-Z]}">',
+                '<button type="button" class="btn btn-danger dropdown-toggle" id="dropdown{{ [A-Z]+ }}" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Dropdown <span class="caret"></span></button>',
+                '<ul class="dropdown-menu" aria-labelledby="dropdown{{ [A-Z]+ }}">',
                     '<li role="presentation" class="dropdown-header">Header</li>',
                     '<li role="presentation" class="active"><a role="menuitem" tabindex="-1" href="#">Link</a></li>',
                     '<li role="presentation" class="divider"></li>',
@@ -433,8 +427,8 @@ class BootstrapTest extends HTMLUnit_Framework_TestCase
         $this->assertEqualsRegExp(array(
             '<div class="btn-group">',
                 '<button type="button" class="btn btn-danger">Dropdown</button>',
-                '<button type="button" class="btn btn-danger dropdown-toggle" id="dropdown{[A-Z]}" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"><span class="caret"></span> <span class="sr-only">Toggle Dropdown</span></button>',
-                '<ul class="dropdown-menu" aria-labelledby="dropdown{[A-Z]}">',
+                '<button type="button" class="btn btn-danger dropdown-toggle" id="dropdown{{ [A-Z]+ }}" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"><span class="caret"></span> <span class="sr-only">Toggle Dropdown</span></button>',
+                '<ul class="dropdown-menu" aria-labelledby="dropdown{{ [A-Z]+ }}">',
                     '<li role="presentation"><a role="menuitem" tabindex="-1" href="#">Link</a></li>',
                 '</ul>',
             '</div>',
@@ -452,8 +446,8 @@ class BootstrapTest extends HTMLUnit_Framework_TestCase
                 '<button type="button" class="btn btn-primary">Group</button>',
                 '<div class="btn-group">',
                     '<button type="button" class="btn btn-primary">Split</button>',
-                    '<button type="button" class="btn btn-primary dropdown-toggle" id="dropdown{[A-Z]}" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"><span class="caret"></span> <span class="sr-only">Toggle Dropdown</span></button>',
-                    '<ul class="dropdown-menu dropdown-menu-right" aria-labelledby="dropdown{[A-Z]}">',
+                    '<button type="button" class="btn btn-primary dropdown-toggle" id="dropdown{{ [A-Z]+ }}" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"><span class="caret"></span> <span class="sr-only">Toggle Dropdown</span></button>',
+                    '<ul class="dropdown-menu dropdown-menu-right" aria-labelledby="dropdown{{ [A-Z]+ }}">',
                         '<li role="presentation"><a role="menuitem" tabindex="-1" href="#">Works</a></li>',
                         '<li role="presentation"><a role="menuitem" tabindex="-1" href="#">Here</a></li>',
                         '<li role="presentation"><a role="menuitem" tabindex="-1" href="#">Too</a></li>',
@@ -498,8 +492,8 @@ class BootstrapTest extends HTMLUnit_Framework_TestCase
             '<a href="'.$url.'" class="special-class active">Home</a>',
             '<a href="http://website.com" class="special-class">Spelled out</a>',
             '<span class="dropdown">',
-                '<a id="dropdown{[A-Z]}" data-target="#" href="#" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" class="special-class">Dropdown <span class="caret"></span></a> ',
-                '<ul class="dropdown-menu" aria-labelledby="dropdown{[A-Z]}">',
+                '<a id="dropdown{{ [A-Z]+ }}" data-target="#" href="#" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" class="special-class">Dropdown <span class="caret"></span></a> ',
+                '<ul class="dropdown-menu" aria-labelledby="dropdown{{ [A-Z]+ }}">',
                     '<li role="presentation" class="dropdown-header">Header</li>',
                     '<li role="presentation"><a role="menuitem" tabindex="-1" href="#">Action</a></li>',
                     '<li role="presentation"><a role="menuitem" tabindex="-1" href="#">Another Action</a></li>',
@@ -576,8 +570,8 @@ class BootstrapTest extends HTMLUnit_Framework_TestCase
                     '<a href="http://website.com/path/to/folder.html?foo=bar">Nav</a>',
                 '</li>',
                 '<li class="dropdown">',
-                    '<a id="dropdown{[A-Z]}" data-target="#" href="#" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Pills <span class="caret"></span></a>',
-                    '<ul class="dropdown-menu" aria-labelledby="dropdown{[A-Z]}">',
+                    '<a id="dropdown{{ [A-Z]+ }}" data-target="#" href="#" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Pills <span class="caret"></span></a>',
+                    '<ul class="dropdown-menu" aria-labelledby="dropdown{{ [A-Z]+ }}">',
                         '<li role="presentation"><a role="menuitem" tabindex="-1" href="#">Action</a></li>',
                     '</ul>',
                 '</li>',
@@ -616,8 +610,8 @@ class BootstrapTest extends HTMLUnit_Framework_TestCase
             '<ul class="breadcrumb">',
                 '<li><a href="#">Home</a></li>',
                 '<li class="dropdown">',
-                    '<a href="#" data-toggle="dropdown" id="dropdown{[A-Z]}">Library <b class="caret"></b></a>',
-                    '<ul class="dropdown-menu" aria-labelledby="dropdown{[A-Z]}">',
+                    '<a href="#" data-toggle="dropdown" id="dropdown{{ [A-Z]+ }}">Library <b class="caret"></b></a>',
+                    '<ul class="dropdown-menu" aria-labelledby="dropdown{{ [A-Z]+ }}">',
                         '<li role="presentation" class="dropdown-header">Drop</li>',
                         '<li role="presentation"><a role="menuitem" tabindex="-1" href="#">Down</a></li>',
                     '</ul>',
@@ -842,27 +836,27 @@ class BootstrapTest extends HTMLUnit_Framework_TestCase
                     '<a href="#toggle" aria-controls="toggle" role="tab" data-toggle="tab">Toggle</a>',
                 '</li>',
                 '<li role="presentation" class="disabled">',
-                    '<a href="#tabs{[A-Z]}" aria-controls="tabs{[A-Z]}" role="tab" data-toggle="tab">Profile</a>',
+                    '<a href="#tabs{{ [A-Z]+ }}" aria-controls="tabs{{ [A-Z]+ }}" role="tab" data-toggle="tab">Profile</a>',
                 '</li>',
                 '<li class="dropdown active">',
-                    '<a id="dropdown{[A-Z]}" data-target="#" href="#" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="true">Dropdown <span class="caret"></span></a> ',
-                    '<ul class="dropdown-menu" aria-labelledby="dropdown{[A-Z]}">',
-                        '<li role="presentation" class="dropdown-header">#tabs{[A-Z]}</li>',
+                    '<a id="dropdown{{ [A-Z]+ }}" data-target="#" href="#" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="true">Dropdown <span class="caret"></span></a> ',
+                    '<ul class="dropdown-menu" aria-labelledby="dropdown{{ [A-Z]+ }}">',
+                        '<li role="presentation" class="dropdown-header">#tabs{{ [A-Z]+ }}</li>',
                         '<li role="presentation" class="active">',
-                            '<a role="menuitem" tabindex="-1" href="#tabs{[A-Z]}" data-toggle="tab">This</a>',
+                            '<a role="menuitem" tabindex="-1" href="#tabs{{ [A-Z]+ }}" data-toggle="tab">This</a>',
                         '</li>',
                         '<li role="presentation">',
-                            '<a role="menuitem" tabindex="-1" href="#tabs{[A-Z]}" data-toggle="tab">That</a>',
+                            '<a role="menuitem" tabindex="-1" href="#tabs{{ [A-Z]+ }}" data-toggle="tab">That</a>',
                         '</li>',
                     '</ul>',
                 '</li>',
             '</ul>',
             '<div class="tab-content">',
                 '<div role="tabpanel" class="tab-pane fade" id="toggle">Toggle Content</div>',
-                '<div role="tabpanel" class="tab-pane fade" id="tabs{[A-Z]}">Profile Content</div>',
-                '<div role="tabpanel" class="tab-pane fade" id="tabs{[A-Z]}">Header</div>',
-                '<div role="tabpanel" class="tab-pane fade in active" id="tabs{[A-Z]}">This Content</div>',
-                '<div role="tabpanel" class="tab-pane fade" id="tabs{[A-Z]}">That Content</div>',
+                '<div role="tabpanel" class="tab-pane fade" id="tabs{{ [A-Z]+ }}">Profile Content</div>',
+                '<div role="tabpanel" class="tab-pane fade" id="tabs{{ [A-Z]+ }}">Header</div>',
+                '<div role="tabpanel" class="tab-pane fade in active" id="tabs{{ [A-Z]+ }}">This Content</div>',
+                '<div role="tabpanel" class="tab-pane fade" id="tabs{{ [A-Z]+ }}">That Content</div>',
             '</div>',
         ), $bp->toggle('tabs', $toggle, array('active' => 4, 'fade')));
 
@@ -872,27 +866,27 @@ class BootstrapTest extends HTMLUnit_Framework_TestCase
                     '<a href="#toggle" aria-controls="toggle" role="pill" data-toggle="pill">Toggle</a>',
                 '</li>',
                 '<li role="presentation" class="disabled">',
-                    '<a href="#tabs{[A-Z]}" aria-controls="tabs{[A-Z]}" role="pill" data-toggle="pill">Profile</a>',
+                    '<a href="#tabs{{ [A-Z]+ }}" aria-controls="tabs{{ [A-Z]+ }}" role="pill" data-toggle="pill">Profile</a>',
                 '</li>',
                 '<li class="dropdown">',
-                    '<a id="dropdown{[A-Z]}" data-target="#" href="#" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Dropdown <span class="caret"></span></a> ',
-                    '<ul class="dropdown-menu" aria-labelledby="dropdown{[A-Z]}">',
-                        '<li role="presentation" class="dropdown-header">#tabs{[A-Z]}</li>',
+                    '<a id="dropdown{{ [A-Z]+ }}" data-target="#" href="#" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Dropdown <span class="caret"></span></a> ',
+                    '<ul class="dropdown-menu" aria-labelledby="dropdown{{ [A-Z]+ }}">',
+                        '<li role="presentation" class="dropdown-header">#tabs{{ [A-Z]+ }}</li>',
                         '<li role="presentation">',
-                            '<a role="menuitem" tabindex="-1" href="#tabs{[A-Z]}" data-toggle="pill">This</a>',
+                            '<a role="menuitem" tabindex="-1" href="#tabs{{ [A-Z]+ }}" data-toggle="pill">This</a>',
                         '</li>',
                         '<li role="presentation">',
-                            '<a role="menuitem" tabindex="-1" href="#tabs{[A-Z]}" data-toggle="pill">That</a>',
+                            '<a role="menuitem" tabindex="-1" href="#tabs{{ [A-Z]+ }}" data-toggle="pill">That</a>',
                         '</li>',
                     '</ul>',
                 '</li>',
             '</ul>',
             '<div class="tab-content">',
                 '<div role="tabpanel" class="tab-pane in active" id="toggle">Toggle Content</div>',
-                '<div role="tabpanel" class="tab-pane" id="tabs{[A-Z]}">Profile Content</div>',
-                '<div role="tabpanel" class="tab-pane" id="tabs{[A-Z]}">Header</div>',
-                '<div role="tabpanel" class="tab-pane" id="tabs{[A-Z]}">This Content</div>',
-                '<div role="tabpanel" class="tab-pane" id="tabs{[A-Z]}">That Content</div>',
+                '<div role="tabpanel" class="tab-pane" id="tabs{{ [A-Z]+ }}">Profile Content</div>',
+                '<div role="tabpanel" class="tab-pane" id="tabs{{ [A-Z]+ }}">Header</div>',
+                '<div role="tabpanel" class="tab-pane" id="tabs{{ [A-Z]+ }}">This Content</div>',
+                '<div role="tabpanel" class="tab-pane" id="tabs{{ [A-Z]+ }}">That Content</div>',
             '</div>',
         ), $bp->toggle('pills', $toggle, array('active' => 1)));
         
@@ -903,12 +897,12 @@ class BootstrapTest extends HTMLUnit_Framework_TestCase
                     '<a href="#toggle" aria-controls="toggle" role="tab" data-toggle="tab">Toggle</a>',
                 '</li>',
                 '<li role="presentation">',
-                    '<a href="#tabs{[A-Z]}" aria-controls="tabs{[A-Z]}" role="tab" data-toggle="tab">Profile</a>',
+                    '<a href="#tabs{{ [A-Z]+ }}" aria-controls="tabs{{ [A-Z]+ }}" role="tab" data-toggle="tab">Profile</a>',
                 '</li>',
             '</ul>',
             '<div class="tab-content">',
                 '<div role="tabpanel" class="tab-pane" id="toggle">Toggle Content</div>',
-                '<div role="tabpanel" class="tab-pane" id="tabs{[A-Z]}">Profile Content</div>',
+                '<div role="tabpanel" class="tab-pane" id="tabs{{ [A-Z]+ }}">Profile Content</div>',
             '</div>',
         ), $bp->toggle('tabs', $toggle, array(
             'align' => 'justified',
@@ -920,28 +914,28 @@ class BootstrapTest extends HTMLUnit_Framework_TestCase
     {
         $bp = Bootstrap::version(3);
         $this->assertEqualsRegExp(array(
-            '<div class="panel-group" id="accordion{[A-Z]}" role="tablist" aria-multiselectable="true">',
+            '<div class="panel-group" id="accordion{{ [A-Z]+ }}" role="tablist" aria-multiselectable="true">',
                 '<div class="panel panel-info">',
-                    '<div class="panel-heading" role="tab" id="heading{[A-Z]}">',
+                    '<div class="panel-heading" role="tab" id="heading{{ [A-Z]+ }}">',
                         '<h4 class="panel-title">',
-                            '<a role="button" data-toggle="collapse" data-parent="#accordion{[A-Z]}" href="#collapse{[A-Z]}" aria-expanded="true" aria-controls="collapse{[A-Z]}">',
+                            '<a role="button" data-toggle="collapse" data-parent="#accordion{{ [A-Z]+ }}" href="#collapse{{ [A-Z]+ }}" aria-expanded="true" aria-controls="collapse{{ [A-Z]+ }}">',
                                 '<span>Group</span> #1',
                             '</a>',
                         '</h4>',
                     '</div>',
-                    '<div id="collapse{[A-Z]}" class="panel-collapse collapse in" role="tabpanel" aria-labelledby="heading{[A-Z]}">',
+                    '<div id="collapse{{ [A-Z]+ }}" class="panel-collapse collapse in" role="tabpanel" aria-labelledby="heading{{ [A-Z]+ }}">',
                         '<div class="panel-body">Content One</div>',
                     '</div>',
                 '</div>',
                 '<div class="panel panel-info">',
-                    '<div class="panel-heading" role="tab" id="heading{[A-Z]}">',
+                    '<div class="panel-heading" role="tab" id="heading{{ [A-Z]+ }}">',
                         '<h4 class="panel-title">',
-                            '<a role="button" data-toggle="collapse" data-parent="#accordion{[A-Z]}" href="#collapse{[A-Z]}" aria-expanded="false" aria-controls="collapse{[A-Z]}">',
+                            '<a role="button" data-toggle="collapse" data-parent="#accordion{{ [A-Z]+ }}" href="#collapse{{ [A-Z]+ }}" aria-expanded="false" aria-controls="collapse{{ [A-Z]+ }}">',
                                 'Group #2',
                             '</a>',
                         '</h4>',
                     '</div>',
-                    '<div id="collapse{[A-Z]}" class="panel-collapse collapse" role="tabpanel" aria-labelledby="heading{[A-Z]}">',
+                    '<div id="collapse{{ [A-Z]+ }}" class="panel-collapse collapse" role="tabpanel" aria-labelledby="heading{{ [A-Z]+ }}">',
                         '<div class="panel-body">Content Two</div>',
                     '</div>',
                 '</div>',
@@ -956,10 +950,10 @@ class BootstrapTest extends HTMLUnit_Framework_TestCase
     {
         $bp = Bootstrap::version(3);
         $html = array(
-            '<div id="carousel{[A-Z]}" class="carousel slide" data-ride="carousel" data-interval="2000">',
+            '<div id="carousel{{ [A-Z]+ }}" class="carousel slide" data-ride="carousel" data-interval="2000">',
                 '<ol class="carousel-indicators">',
-                    '<li data-target="#carousel{[A-Z]}" data-slide-to="0" class="active"></li>',
-                    '<li data-target="#carousel{[A-Z]}" data-slide-to="1"></li>',
+                    '<li data-target="#carousel{{ [A-Z]+ }}" data-slide-to="0" class="active"></li>',
+                    '<li data-target="#carousel{{ [A-Z]+ }}" data-slide-to="1"></li>',
                 '</ol>',
                 '<div class="carousel-inner" role="listbox">',
                     '<div class="item active">',
@@ -971,10 +965,10 @@ class BootstrapTest extends HTMLUnit_Framework_TestCase
                         '<div class="carousel-caption"><p>Paragraph</p></div>',
                     '</div>',
                 '</div>',
-                '<a class="left carousel-control" href="#carousel{[A-Z]}" role="button" data-slide="prev">',
+                '<a class="left carousel-control" href="#carousel{{ [A-Z]+ }}" role="button" data-slide="prev">',
                     '<span aria-hidden="true" class="glyphicon glyphicon-chevron-left"></span> <span class="sr-only">Previous</span>',
                 '</a>',
-                '<a class="right carousel-control" href="#carousel{[A-Z]}" role="button" data-slide="next">',
+                '<a class="right carousel-control" href="#carousel{{ [A-Z]+ }}" role="button" data-slide="next">',
                     '<span aria-hidden="true" class="glyphicon glyphicon-chevron-right"></span> <span class="sr-only">Next</span>',
                 '</a>',
             '</div>',

@@ -34,9 +34,9 @@ class Component extends Blog
         } elseif ($template = $this->$method($params)) {
             $template = array_combine(array('file', 'vars'), $template);
             $template['default'] = __DIR__.'/theme/';
-            if ($template['file'] == 'blog-feed.tpl') {
+            if ($template['file'] == 'blog-feed.html.twig') {
                 $type = 'xml';
-                $xml = $this->theme->fetchSmarty($template);
+                $xml = $this->theme->fetchTwig($template);
                 if (preg_match('/<\/(?P<type>(rss|feed))>\s*$/', $xml, $matches)) {
                     $type = ($matches['type'] == 'rss') ? 'rss' : 'atom';
                 }
@@ -71,7 +71,7 @@ class Component extends Blog
         }
         $vars['breadcrumbs'][$vars['post']['title']] = $vars['post']['url'];
 
-        return array('blog-post.tpl', $vars);
+        return array('blog-post.html.twig', $vars);
     }
 
     private function listings($params, array $vars = array())
@@ -111,7 +111,7 @@ class Component extends Blog
             $vars['listings']['search'] = $search;
         }
 
-        return array('blog-listings.tpl', $vars);
+        return array('blog-listings.html.twig', $vars);
     }
 
     private function archives($params, array $vars = array())
@@ -153,11 +153,11 @@ class Component extends Blog
                 'Archives' => $path,
             ));
 
-            return array('blog-archives.tpl', $vars);
+            return array('blog-archives.html.twig', $vars);
         }
         $vars['listings']['archives'] = array($from, $to);
 
-        return array('blog-listings.tpl', $vars);
+        return array('blog-listings.html.twig', $vars);
     }
 
     private function authors($params, array $vars = array())
@@ -170,7 +170,7 @@ class Component extends Blog
             $page->enforce($page->url('blog/listings', $path));
             $vars['authors'] = $this->query('authors');
 
-            return array('blog-authors.tpl', $vars);
+            return array('blog-authors.html.twig', $vars);
         }
         $vars['author'] = $this->query('authors', $name);
         if (empty($vars['author'])) {
@@ -182,7 +182,7 @@ class Component extends Blog
         $vars['listings']['count'] = $vars['author']['count'];
         $vars['listings']['authors'] = $name;
 
-        return array('blog-listings.tpl', $vars);
+        return array('blog-listings.html.twig', $vars);
     }
 
     private function tags($params, array $vars = array())
@@ -195,7 +195,7 @@ class Component extends Blog
             $page->enforce($page->url('blog/listings', $path));
             $vars['tags'] = $this->query('tags');
 
-            return array('blog-tags.tpl', $vars);
+            return array('blog-tags.html.twig', $vars);
         }
         $vars['tag'] = $this->query('tags', $name);
         if (empty($vars['tag'])) {
@@ -207,7 +207,7 @@ class Component extends Blog
         $vars['listings']['count'] = $vars['tag']['count'];
         $vars['listings']['tags'] = $vars['tag']['path'];
 
-        return array('blog-listings.tpl', $vars);
+        return array('blog-listings.html.twig', $vars);
     }
 
     private function feed($params, array $vars = array())
@@ -216,7 +216,7 @@ class Component extends Blog
         $this->theme->globalVars('blog', array('page' => 'feed'));
         $vars['listings'] = array();
 
-        return array('blog-feed.tpl', $vars);
+        return array('blog-feed.html.twig', $vars);
     }
 
     private function breadcrumbs(array $links = array())

@@ -116,7 +116,7 @@ class Component
         $asset->cached = $page->dir($dir);
         $type = strtolower($page->url['format']);
         if ($type == 'html') {
-            $page->filter('page', array($asset, 'urls'), 'this');
+            $page->filter('page', array($asset, 'urls'));
 
             return false;
         } elseif (!preg_match('/^'.implode('', array(

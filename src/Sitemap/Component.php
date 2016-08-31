@@ -183,7 +183,7 @@ class Component
                     $sitemap->delete($page->url['path']);
                     unset($sitemap);
                 }
-            }, 404);
+            }, array(404));
 
             return false;
         }

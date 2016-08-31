@@ -15,7 +15,7 @@ $html = '';
 $page = Page::html();
 $blog = new Blog();
 if ($template = $blog->page()) {
-    $html = $blog->theme->fetchSmarty($template);
+    $html = $blog->theme->fetchTwig($template);
 }
 $html = $page->display($blog->theme->layout($html));
 */
@@ -25,7 +25,7 @@ class Blog
     /** @var BootPress\SQLite\Component The Blog's SQLite Database. */
     protected $db;
     
-    /** @var BootPress\Blog\Theme For creating the layout, and fetching Smarty templates. */
+    /** @var BootPress\Blog\Theme For creating the layout, and fetching Twig templates. */
     protected $theme;
     
     /** @var BootPress\Blog\Theme Where the Blog directory resides. */
@@ -148,7 +148,8 @@ class Blog
             if ($vars === false) {
                 return;
             }
-            $count = (is_object($params) && empty($params->limit)) ? false : true; // $params instanceof Pagination
+            // $count = (is_object($params) && empty($params->limit)) ? false : true; // $params instanceof Pagination
+            $count = (is_object($params) && !empty($params->limit)) ? false : true; // $params instanceof Pagination
             if ($count && isset($type['count'])) {
                 return $type['count'];
             }
@@ -454,7 +455,6 @@ class Blog
                 break;
 
             case 'categories': // (ordered by category name ASC) - no limit
-                // http://www.smarty.net/docs/en/language.function.function.tpl
                 if (is_array($params) && isset($params['nest']) && isset($params['tree'])) {
                     foreach ($params['nest'] as $id => $subs) {
                         $category = $params['tree'][$id];
@@ -674,10 +674,7 @@ class Blog
                     'summary' => '',
                     'listings' => 'blog',
                     'breadcrumb' => 'Blog',
-                ),
-                'themes' => array(
-                    'default' => 'default',
-                    'bootstrap' => '3.3.7',
+                    'theme' => 'default',
                 ),
             ) as $name => $config) {
                 foreach ($config as $key => $val) {
@@ -755,22 +752,20 @@ class Blog
             }
             $path = $seo;
         }
-        $file = $dir.$path.'/index.tpl';
+        $file = $dir.$path.'/index.html.twig';
         if (!is_file($file)) {
             return false;
         }
         $page->set(array(), 'reset');
-        if (preg_match('/^\s*{\*(?P<meta>.*)\*}/sU', file_get_contents($file), $matches)) {
+        if (preg_match('/^\s*{#(?P<meta>.*)#}/sU', file_get_contents($file), $matches)) {
             $values = Yaml::parse($matches['meta']);
             if (is_array($values)) {
                 $page->set($values);
             }
         }
-        $content = trim($this->theme->fetchSmarty($file));
-        if ($page->markdown === true) {
-            $content = $page->format('markdown', $content);
-        }
-        $page->markdown = null;
+        $content = trim($this->theme->fetchTwig($file));
+        // Urlify $page->thumb, and any other assets we want to pass along
+        $page->set($this->theme->asset($page->html));
         $published = $page->published;
         if (is_string($published) && ($date = strtotime($published))) {
             $published = $date * -1; // a post
@@ -805,7 +800,7 @@ class Blog
         $sitemap->reset('blog');
         $this->normalizeFolders();
         $finder = new Finder();
-        $finder->files()->in($this->folder.'content')->name('index.tpl')->sortByName();
+        $finder->files()->in($this->folder.'content')->name('index.html.twig')->sortByName();
         foreach ($finder as $file) {
             $path = str_replace('\\', '/', $file->getRelativePath());
             if ($info = $this->blogInfo($path)) {
@@ -928,9 +923,6 @@ class Blog
         // Blog
         $yaml['blog'] = $this->config('blog');
         
-        // Themes
-        $yaml['themes'] = $this->config('themes');
-
         // Authors
         $yaml['authors'] = array();
         $authors = $this->config('authors');

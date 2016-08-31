@@ -1,0 +1,33 @@
+<ul class="breadcrumb">
+{% for name, href in breadcrumbs %}
+    {% if loop.last %}
+        <li class="active">{{ name }}</li>
+    {% else %}
+        <li><a href="{{ href }}">{{ name }}</a></li>
+    {% endif %}
+{% endfor %}
+</ul>
+
+{{ page.set({
+    'title': 'The Archives at ' ~ blog.name,
+    'description': 'All of the blog posts at ' ~ blog.name ~ '.  Archived in the order they were received.'
+}) }}
+
+<h2>The Archives</h2>
+
+{% for Y, years in archives %}
+    <h3><a href="{{ years.url }}">{{ Y }}</a> <span class="label label-primary">{{ years.count }}</span></h3>
+    <div class="row">
+    {% set columns = [] %}
+    {% for M, months in years.months %}
+        <div class="col-sm-1 text-center">
+            <a href="{{ months.url }}" class="btn btn-link btn-block">{{ M }}
+            {% if months.count > 0 %}
+                <br> <span class="label label-primary">{{ months.count }} </span>
+            {% endif %}
+            </a>
+        </div>
+    {% endfor %}
+    </div>
+    <br>
+{% endfor %}

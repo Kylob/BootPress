@@ -5,7 +5,7 @@ namespace BootPress\Tests;
 use BootPress\Page\Component as Page;
 use Symfony\Component\HttpFoundation\Request;
 
-class PageTest extends \PHPUnit_Framework_TestCase
+class PageTest extends HTMLUnit_Framework_TestCase
 {
     public function testHtmlStaticMethod()
     {
@@ -254,7 +254,7 @@ class PageTest extends \PHPUnit_Framework_TestCase
         $page = Page::html();
         $this->assertEquals('lo-siento-no-hablo-espanol', $page->format('url', 'Lo siento, no hablo español.'));
         $this->assertEquals('This is a Messy Title. [Can You Fix It?]', $page->format('title', 'this IS a messy title. [can you fix it?]'));
-        $this->assertEquals('<p>There is no &quot;I&quot; in den<strong>i</strong>al</p>', $page->format('markdown', 'There is no "I" in den**i**al'));
+        $this->assertEquals('<p>There is no &quot;I&quot; in den<strong>i</strong>al</p>', trim($page->format('markdown', 'There is no "I" in den**i**al')));
         $this->assertEquals('Same Thing', $page->format('bogus', 'Same Thing'));
     }
 
@@ -270,6 +270,25 @@ class PageTest extends \PHPUnit_Framework_TestCase
         $twitter = 'name="twitter:site" content="@bootpress"';
         $page->meta(array('name' => 'twitter:site', 'content' => '@bootpress'));
         $this->assertAttributeEquals(array('meta' => array($viewport, $twitter)), 'data', $page);
+        
+        $this->assertEqualsRegExp(array(
+            '<!doctype html>',
+            '<html lang="'.$page->language.'">',
+            '<head>',
+                '<meta charset="'.$page->charset.'">',
+                '<title>'.$page->title.'</title>',
+                '<meta name="description" content="'.$page->description.'">',
+                '<meta name="keywords" content="'.$page->keywords.'">',
+                '<meta name="robots" content="noindex, nofollow">',
+                '<meta name="viewport" content="width=device-width, initial-scale=1.0">',
+                '<meta name="twitter:site" content="@bootpress">',
+            '</head>',
+            '<body>',
+                '<p>Content</p>',
+            '</body>',
+            '</html>',
+        ), $page->display('<p>Content</p>'));
+        
         $html = $page->display('<p>Content</p>');
         $this->assertContains('<meta name="description" content="Meta Description">', $html);
         $this->assertContains('<meta name="keywords" content="Meta Keywords">', $html);
@@ -294,6 +313,34 @@ class PageTest extends \PHPUnit_Framework_TestCase
         $this->assertAttributeContains(array('<script>alert("Howdy Partner");</script>'), 'data', $page);
         $page->link('<!--[if IE6]>Special instructions for IE 6 here<![endif]-->');
         $this->assertAttributeContains(array('<!--[if IE6]>Special instructions for IE 6 here<![endif]-->'), 'data', $page);
+        
+        $this->assertEqualsRegExp(array(
+            '<!doctype html>',
+            '<html lang="'.$page->language.'">',
+            '<head>',
+                '<meta charset="'.$page->charset.'">',
+                '<title>'.$page->title.'</title>',
+                '<meta name="description" content="'.$page->description.'">',
+                '<meta name="keywords" content="'.$page->keywords.'">',
+                '<meta name="robots" content="noindex, nofollow">',
+                '<meta name="viewport" content="width=device-width, initial-scale=1.0">',
+                '<meta name="twitter:site" content="@bootpress">',
+                '<link rel="shortcut icon" href="favicon.ico">',
+                '<link rel="apple-touch-icon" href="icon.png">',
+                '<link rel="stylesheet" href="styles.css">',
+                '<style>body{background-color:#999;}</style>',
+                '<!--[if IE6]>Special instructions for IE 6 here<![endif]-->',
+            '</head>',
+            '<body>',
+                '<p>Content</p>',
+                '<script src="jquery.js"></script>',
+                '<script src="script.js#fancy"></script>',
+                '<script src="custom.js"></script>',
+                '<script>alert("Howdy Partner");</script>',
+            '</body>',
+            '</html>',
+        ), $page->display('<p>Content</p>'));
+        
         $html = $page->display('<p>Content</p>');
         $this->assertContains('<link rel="shortcut icon" href="favicon.ico">', $html);
         $this->assertContains('<link rel="apple-touch-icon" href="icon.png">', $html);
@@ -336,13 +383,7 @@ class PageTest extends \PHPUnit_Framework_TestCase
     {
         $page = Page::html();
         $page->jquery('$("p.neat").show();');
-        $page->jquery($page->url['base'].'jquery.dependent.js', 'prepend');
-        $page->jquery = '//code.jquery.com/jquery-1.11.3.min.js';
-        $page->jquery('ui', '//code.jquery.com/ui/1.11.4/jquery-ui.min.js');
         $html = $page->display('<p>Content</p>');
-        $this->assertContains('<script src="//code.jquery.com/jquery-1.11.3.min.js"></script>', $html);
-        $this->assertContains('<script src="//code.jquery.com/ui/1.11.4/jquery-ui.min.js"></script>', $html);
-        $this->assertContains('<script src="'.$page->url['base'].'jquery.dependent.js"></script>', $html);
         $this->assertContains('$("p.neat").show();', $html);
     }
 
@@ -395,36 +436,6 @@ class PageTest extends \PHPUnit_Framework_TestCase
         $this->assertInstanceOf('BootPress\Page\Component', $page->load($file, array('class')));
     }
 
-    public function testSaveMethod()
-    {
-        $page = Page::html();
-        $page->save('plugin', 'key', 'value');
-        $page->save('plugin', array('foo' => 'bar'));
-        $page->save('plugin', array('check' => 'me'));
-        $page->save('plugin', 'out');
-        $this->assertAttributeEquals(array(
-            'plugin' => array(
-                'key' => 'value',
-                array('foo' => 'bar'),
-                array('check' => 'me'),
-                'out',
-            ),
-        ), 'saved', $page);
-    }
-
-    public function testInfoMethod()
-    {
-        $page = Page::html();
-        $this->assertEquals('value', $page->info('plugin', 'key'));
-        $this->assertNull($page->info('plugin', 'foo'));
-        $this->assertEquals(array(
-            array('foo' => 'bar'),
-            array('check' => 'me'),
-            'out',
-        ), $page->info('plugin'));
-        $this->assertEquals(array(), $page->info('nonexistant'));
-    }
-
     public static function javascriptFilter(array $js)
     {
         $js[] = 'filter.js';
@@ -435,44 +446,26 @@ class PageTest extends \PHPUnit_Framework_TestCase
     public function testFilterAndSendMethods()
     {
         $page = Page::html();
-        $page->filter('content', 'prepend', '<a>link</a>');
-        $page->filter('content', 'append', '<a>nother</a>', 6);
-        $page->filter('css', 'append', 'script.css');
-        $page->filter('css', 'prepend', 'bootstrap.css');
-        $page->filter('javascript', 'append', 'script.js');
-        $page->filter('javascript', 'prepend', 'bootstrap.js');
-        $page->filter('javascript', __NAMESPACE__.'\PageTest::javascriptFilter', 'this', 5);
+        $page->filter('javascript', __NAMESPACE__.'\PageTest::javascriptFilter', array('this'), 5);
         $this->assertAttributeEquals(array(
-            'content' => array(
-                array('function' => 'prepend', 'params' => '<a>link</a>', 'order' => 10, 'key' => ''),
-                array('function' => 'append', 'params' => '<a>nother</a>', 'order' => 6, 'key' => ''),
-            ),
-            'append' => array(
-                'css' => array('script.css'),
-                'javascript' => array('script.js'),
-            ),
-            'prepend' => array(
-                'css' => array('bootstrap.css'),
-                'javascript' => array('bootstrap.js'),
-            ),
             'javascript' => array(
                 array('function' => __NAMESPACE__.'\PageTest::javascriptFilter', 'params' => array('this'), 'order' => 5, 'key' => 0),
             ),
         ), 'filters', $page);
         $html = $page->display('<p>Content</p>');
-        $this->assertContains('<a>link</a>', $html);
-        $this->assertContains('<a>nother</a>', $html);
-        $this->assertContains('<link rel="stylesheet" href="script.css">', $html);
         $this->assertContains('<script src="filter.js"></script>', $html);
         $page->filter('response', function ($page, $response, $type) {
             return $response->setContent($type); // 'html'
         }, array('html', 200));
         $page->filter('response', function ($page, $response) {
             return $response->setContent('json');
-        }, 'json');
+        }, array('json'));
         $page->filter('response', function ($page, $response) {
             return $response->setContent(404);
-        }, 404);
+        }, array(404));
+        $page->filter('response', function ($page, $response) {
+            return $response; // removes 'this' from the default $params we're not including
+        });
         $response = $page->send('content');
         $this->assertInstanceOf('Symfony\Component\HttpFoundation\Response', $response);
         $this->assertEquals('html', $response->getContent());
@@ -488,56 +481,64 @@ class PageTest extends \PHPUnit_Framework_TestCase
         $this->assertInstanceOf('Symfony\Component\HttpFoundation\JsonResponse', $page->sendJson(array('json' => 'data')));
     }
 
-    public function testFilterNumericCallableException()
-    {
-        $page = Page::html();
-        $this->setExpectedException('\LogicException');
-        $page->filter('response', 'response');
-    }
-
     public function testFilterMethodSectionException()
     {
         $page = Page::html();
         $this->setExpectedException('\LogicException');
-        $page->filter('section', 'append', 'bogus');
-    }
-
-    public function testFilterMethodAppendException()
-    {
-        $page = Page::html();
-        $this->setExpectedException('\LogicException');
-        $page->filter('content', 'append', array('not' => 'working'));
+        $page->filter('section', function(){}, array('bogus'));
     }
 
     public function testFilterMethodThisException()
     {
         $page = Page::html();
         $this->setExpectedException('\LogicException');
-        $page->filter('javascript', array($this, 'testFilterMethod'), array('that', 'other'), 5);
-    }
-
-    public function testFilterMethodCallableException()
-    {
-        $page = Page::html();
-        $this->setExpectedException('\LogicException');
-        $page->filter('javascript', array($this, 'testFilterMethodology'), 'this', 5);
+        $page->filter('javascript', function(){}, array('that', 'other'), 5);
     }
 
     public function testDisplayMethod()
     {
-        $page = Page::html();
-        $html = $page->display('<p>Content</p>');
-        $this->assertContains('<head>', $html);
-        $this->assertContains('</head>', $html);
-        $this->assertContains('<body>', $html);
-        $this->assertContains('<p>Content</p>', $html);
-        $this->assertContains('</body>', $html);
-        $this->assertContains('</html>', $html);
-        // $page->document()
-        $this->assertContains($page->doctype, $html);
-        $this->assertContains('<html lang="'.$page->language.'">', $html);
-        // $page->metadata()
-        $this->assertContains('<meta charset="'.$page->charset.'">', $html);
-        $this->assertContains('<title>'.$page->title.'</title>', $html);
+        $request = Request::create('http://website.com/listings.html', 'GET');
+        $page = Page::isolated(array('suffix' => '.html'), $request);
+        $this->assertEqualsRegExp(array(
+            '<!doctype html>',
+            '<html lang="'.$page->language.'">',
+            '<head>',
+                '<meta charset="'.$page->charset.'">',
+                '<title>'.$page->title.'</title>',
+            '</head>',
+            '<body>',
+                '<p>Content</p>',
+            '</body>',
+            '</html>',
+        ), $page->display('<p>Content</p>'));
+        $content = <<<'EOT'
+	<  !doctype html>
+<html   >
+<HEad>< title>Broken</tit
+	<meta attr="blah" charset =foo NAME = bar />
+<META name=  bar sdf content= foo > <meta content="name" name=" author ">
+<meta name  = "KEYwords" content  =  " php documentation ">
+<meta name=  "DESCRIPTION" content="  a php manual  ">
+	</ head>  <body style="color:#333;">
+	
+	I'm in the body!</body>
+< /html>
+EOT;
+        $this->assertEqualsRegExp(array(
+            '<  !doctype html>',
+            '<html   >',
+            '<HEad>',
+                '< title>Broken</tit',
+                '<meta attr="blah" charset =foo NAME = bar />',
+                '<META name=  bar sdf content= foo >',
+                '<meta content="name" name=" author ">',
+                '<meta name  = "KEYwords" content  =  " php documentation ">',
+                '<meta name=  "DESCRIPTION" content="  a php manual  ">',
+            '</head>',
+            '<body style="color:#333;">',
+                'I\'m in the body!',
+            '</body>',
+            '</html>',
+        ), $page->display($content));
     }
 }

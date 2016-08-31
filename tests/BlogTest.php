@@ -21,7 +21,8 @@ class BlogTest extends HTMLUnit_Framework_TestCase
         $dir = __DIR__.'/page/';
         foreach (array(
             $dir.'blog/content/undefined',
-            $dir.'blog/smarty',
+            $dir.'blog/cache',
+            $dir.'blog/plugins',
             $dir.'blog/themes',
             $dir.'blog/Blog.db',
             $dir.'blog/config.yml',
@@ -94,7 +95,7 @@ class BlogTest extends HTMLUnit_Framework_TestCase
         )), trim(file_get_contents(static::$config)));
         
         static::$folder = $page->dir('blog/content');
-        $unpublished = static::$folder.'category/unpublished-post/index.tpl';
+        $unpublished = static::$folder.'category/unpublished-post/index.html.twig';
         self::remove(dirname($unpublished));
         
         $db = $page->file('blog/Blog.db');
@@ -117,18 +118,17 @@ class BlogTest extends HTMLUnit_Framework_TestCase
     public function testAboutPage()
     {
         $template = $this->blogPage('about.html');
-        $file = static::$folder.'about/index.tpl';
+        $file = static::$folder.'about/index.html.twig';
         ##
-        #  {*
+        #  {#
         #  title: About
         #  published: true
-        #  markdown: false
-        #  *}
-        #
+        #  #}
+        #  
         #  This is my website.
         ##
-        $this->assertEqualsRegExp('This is my website.', static::$blog->theme->fetchSmarty($template));
-        $this->assertEquals('blog-post.tpl', $template['file']);
+        $this->assertEqualsRegExp('This is my website.', static::$blog->theme->fetchTwig($template));
+        $this->assertEquals('blog-post.html.twig', $template['file']);
         $this->assertEquals(array(
             'post' => array(
                 'page' => true,
@@ -154,19 +154,22 @@ class BlogTest extends HTMLUnit_Framework_TestCase
     public function testCategorySimplePost()
     {
         $template = $this->blogPage('category/simple-post.html');
-        $file = static::$folder.'category/simple-post/index.tpl';
+        $file = static::$folder.'category/simple-post/index.html.twig';
         ##
-        #  {*
+        #  {#
         #  title: A Simple Post
         #  keywords: Simple, Markdown
         #  published: Aug 3, 2010
-        #  author:  Joe Bloggs
-        #  markdown: true
-        #  *}
-        #
+        #  author: Joe Bloggs
+        #  #}
+        #  
+        #  {% markdown %}
+        #  
         #  ### Header
-        #
+        #  
         #  Paragraph
+        #  
+        #  {% endmarkdown %}
         ##
         $this->assertEqualsRegExp(array(
             '<div itemscope itemtype="http://schema.org/Article">',
@@ -181,15 +184,15 @@ class BlogTest extends HTMLUnit_Framework_TestCase
                 '</p>',
                 '<p>',
                     'Published:',
-                    '<a href="http://website.com/blog/archives/2010/08/03.html" itemprop="datePublished">August  3, 2010</a>',
+                    '<a href="http://website.com/blog/archives/2010/08/03.html" itemprop="datePublished">August 3, 2010</a>',
                     'by <a href="http://website.com/blog/authors/joe-bloggs.html" itemprop="author">Joe Bloggs</a>',
                 '</p>',
             '</div>',
             '<ul class="pager">',
                 '<li class="next"><a href="http://website.com/category/subcategory/flowery-post.html">A Flowery Post &raquo;</a></li>',
             '</ul>',
-        ), static::$blog->theme->fetchSmarty($template));
-        $this->assertEquals('blog-post.tpl', $template['file']);
+        ), static::$blog->theme->fetchTwig($template));
+        $this->assertEquals('blog-post.html.twig', $template['file']);
         $this->assertEqualsRegExp('<h3>Header</h3><p>Paragraph</p>', $template['vars']['post']['content']);
         unset($template['vars']['post']['content']);
         $this->assertEquals(array(
@@ -249,20 +252,23 @@ class BlogTest extends HTMLUnit_Framework_TestCase
     public function testCategorySubcategoryFeaturedPost()
     {
         $template = $this->blogPage('category/subcategory/featured-post.html');
-        $file = static::$folder.'category/subcategory/featured-post/index.tpl';
+        $file = static::$folder.'category/subcategory/featured-post/index.html.twig';
         ##
-        #  {*
+        #  {#
         #  title: A Featured Post
         #  keywords: Featured, markdown
         #  published: Sep 12, 2010
         #  author: jOe bLoGgS
         #  featured: true
-        #  markdown: true
-        #  *}
-        #
+        #  #}
+        #  
+        #  {% markdown %}
+        #  
         #  1. One
         #  2. Two
         #  3. Three
+        #  
+        #  {% endmarkdown %}
         ##
         $this->assertEqualsRegExp(array(
             '<div itemscope itemtype="http://schema.org/Article">',
@@ -284,8 +290,8 @@ class BlogTest extends HTMLUnit_Framework_TestCase
                     'by <a href="http://website.com/blog/authors/joe-bloggs.html" itemprop="author">Joe Bloggs</a>',
                 '</p>',
             '</div>',
-        ), static::$blog->theme->fetchSmarty($template));
-        $this->assertEquals('blog-post.tpl', $template['file']);
+        ), static::$blog->theme->fetchTwig($template));
+        $this->assertEquals('blog-post.html.twig', $template['file']);
         $this->assertEqualsRegExp('<ol><li>One</li><li>Two</li><li>Three</li></ol>', $template['vars']['post']['content']);
         unset($template['vars']['post']['content']);
         $this->assertEquals(array(
@@ -349,19 +355,19 @@ class BlogTest extends HTMLUnit_Framework_TestCase
     public function testCategorySubcategoryFloweryPost()
     {
         $template = $this->blogPage('category/subcategory/flowery-post.html');
-        $file = static::$folder.'category/subcategory/flowery-post/index.tpl';
+        $file = static::$folder.'category/subcategory/flowery-post/index.html.twig';
         ##
-        #  {*
+        #  {#
         #  Title: A Flowery Post
         #  Description: Aren't they beautiful?
         #  Keywords: Flowers, nature
         #  Published: Sep 12, 2010
-        #  *}
-        #
-        #  {$page->title}
-        #
-        #  <img src="{'flowers.jpg'|asset}">
-        #
+        #  #}
+        #  
+        #  {{ page.title }}
+        #  
+        #  <img src="{{ 'flowers.jpg'|asset }}">
+        #  
         #  Aren't they beautiful?
         ##
         $image = Page::html()->url('page', 'blog/content/category/subcategory/flowery-post/flowers.jpg');
@@ -386,8 +392,8 @@ class BlogTest extends HTMLUnit_Framework_TestCase
                 '<li class="previous"><a href="http://website.com/category/simple-post.html">&laquo; A Simple Post</a></li>',
                 '<li class="next"><a href="http://website.com/uncategorized-post.html">Uncategorized Post &raquo;</a></li>',
             '</ul>',
-        ), static::$blog->theme->fetchSmarty($template));
-        $this->assertEquals('blog-post.tpl', $template['file']);
+        ), static::$blog->theme->fetchTwig($template));
+        $this->assertEquals('blog-post.html.twig', $template['file']);
         $image = Page::html()->url('page', 'blog/content/category/subcategory/flowery-post/flowers.jpg');
         $this->assertEqualsRegExp(array(
             'A Flowery Post',
@@ -461,19 +467,22 @@ class BlogTest extends HTMLUnit_Framework_TestCase
     public function testIndexPage()
     {
         $template = $this->blogPage('');
-        $file = static::$folder.'index/index.tpl';
+        $file = static::$folder.'index/index.html.twig';
         ##
-        #  {*
+        #  {#
         #  title: Welcome to My Website
         #  keywords: simple, markDown
         #  published: true
-        #  markdown: true
-        #  *}
-        #
+        #  #}
+        #  
+        #  {% markdown %}
+        #  
         #  This is the index page.
+        #  
+        #  {% endmarkdown %}
         ##
-        $this->assertEqualsRegExp('<p>This is the index page.</p>', static::$blog->theme->fetchSmarty($template));
-        $this->assertEquals('blog-post.tpl', $template['file']);
+        $this->assertEqualsRegExp('<p>This is the index page.</p>', static::$blog->theme->fetchTwig($template));
+        $this->assertEquals('blog-post.html.twig', $template['file']);
         $this->assertEquals(array(
             'post' => array(
                 'page' => true,
@@ -512,13 +521,13 @@ class BlogTest extends HTMLUnit_Framework_TestCase
     public function testUncategorizedPost()
     {
         $template = $this->blogPage('uncategorized-post.html');
-        $file = static::$folder.'uncategorized-post/index.tpl';
+        $file = static::$folder.'uncategorized-post/index.html.twig';
         ##
-        #  {*
+        #  {#
         #  Title: Uncategorized Post
         #  Published: Oct 3, 2010
-        #  *}
-        #
+        #  #}
+        #  
         #  A post without a category
         ##
         $this->assertEqualsRegExp(array(
@@ -529,14 +538,14 @@ class BlogTest extends HTMLUnit_Framework_TestCase
                 '</div>',
                 '<p>',
                     'Published:',
-                    '<a href="http://website.com/blog/archives/2010/10/03.html" itemprop="datePublished">October  3, 2010</a>',
+                    '<a href="http://website.com/blog/archives/2010/10/03.html" itemprop="datePublished">October 3, 2010</a>',
                 '</p>',
             '</div>',
             '<ul class="pager">',
                 '<li class="previous"><a href="http://website.com/category/subcategory/flowery-post.html">&laquo; A Flowery Post</a></li>',
             '</ul>',
-        ), static::$blog->theme->fetchSmarty($template));
-        $this->assertEquals('blog-post.tpl', $template['file']);
+        ), static::$blog->theme->fetchTwig($template));
+        $this->assertEquals('blog-post.html.twig', $template['file']);
         $this->assertEquals(array(
             'post' => array(
                 'page' => false,
@@ -584,8 +593,8 @@ class BlogTest extends HTMLUnit_Framework_TestCase
             '<p itemscope itemtype="http://schema.org/Article">',
                 '<big itemprop="name"><a href="http://website.com/category/simple-post.html">A Simple Post</a></big>',
             '</p>',
-        ), static::$blog->theme->fetchSmarty($template));
-        $this->assertEquals('blog-listings.tpl', $template['file']);
+        ), static::$blog->theme->fetchTwig($template));
+        $this->assertEquals('blog-listings.html.twig', $template['file']);
         $this->assertEquals(array(
             'listings' => array(),
             'breadcrumbs' => array(
@@ -608,13 +617,13 @@ class BlogTest extends HTMLUnit_Framework_TestCase
         $search = '"simple post"';
         $template = $this->blogPage('blog.html', array('search' => $search));
         $this->assertEqualsRegExp(array(
-            '<h2>Search Results for \'"simple post"\'</h2>',
+            '<h2>Search Results for ""simple post""</h2>',
             '<p itemscope itemtype="http://schema.org/Article">',
                 '<big itemprop="name"><a href="http://website.com/category/simple-post.html">A Simple Post</a></big>',
                 '<br>A <b>Simple</b> <b>Post</b>',
             '</p>',
-        ), static::$blog->theme->fetchSmarty($template));
-        $this->assertEquals('blog-listings.tpl', $template['file']);
+        ), static::$blog->theme->fetchTwig($template));
+        $this->assertEquals('blog-listings.html.twig', $template['file']);
         $this->assertEquals(array(
             'listings' => array(
                 'search' => $search,
@@ -646,13 +655,13 @@ class BlogTest extends HTMLUnit_Framework_TestCase
                 '<li><a href="http://website.com/category.html">Category</a></li>',
                 '<li class="active">Search</li>',
             '</ul>',
-            '<h2>Search Results for \'beauty\'</h2>',
+            '<h2>Search Results for "beauty"</h2>',
             '<p itemscope itemtype="http://schema.org/Article">',
                 '<big itemprop="name"><a href="http://website.com/category/subcategory/flowery-post.html">A Flowery Post</a></big>',
                 '<br>Aren\'t they <b>beautiful</b>?',
             '</p>',
-        ), static::$blog->theme->fetchSmarty($template));
-        $this->assertEquals('blog-listings.tpl', $template['file']);
+        ), static::$blog->theme->fetchTwig($template));
+        $this->assertEquals('blog-listings.html.twig', $template['file']);
         $this->assertEquals(array(
             'listings' => array(
                 'categories' => array(1, 2),
@@ -773,8 +782,8 @@ class BlogTest extends HTMLUnit_Framework_TestCase
             '<p itemscope itemtype="http://schema.org/Article">',
                 '<big itemprop="name"><a href="http://website.com/category/simple-post.html">A Simple Post</a></big>',
             '</p>',
-        ), static::$blog->theme->fetchSmarty($template));
-        $this->assertEquals('blog-listings.tpl', $template['file']);
+        ), static::$blog->theme->fetchTwig($template));
+        $this->assertEquals('blog-listings.html.twig', $template['file']);
         $this->assertEquals(array(
             'listings' => array(
                 'categories' => array(1, 2),
@@ -832,8 +841,8 @@ class BlogTest extends HTMLUnit_Framework_TestCase
                 '<big itemprop="name"><a href="http://website.com/category/subcategory/flowery-post.html">A Flowery Post</a></big>',
                 '<br><span itemprop="headline">Aren\'t they beautiful?</span>',
             '</p>',
-        ), static::$blog->theme->fetchSmarty($template));
-        $this->assertEquals('blog-listings.tpl', $template['file']);
+        ), static::$blog->theme->fetchTwig($template));
+        $this->assertEquals('blog-listings.html.twig', $template['file']);
         $this->assertEquals(array(
             'listings' => array(
                 'categories' => array(2),
@@ -877,45 +886,45 @@ class BlogTest extends HTMLUnit_Framework_TestCase
             '<h3><a href="http://website.com/blog/archives/2010.html">2010</a> <span class="label label-primary">4</span></h3>',
             '<div class="row">',
                 '<div class="col-sm-1 text-center">',
-                    '<a href="http://website.com/blog/archives/2010/01.html" class="btn btn-link btn-block">Jan </a>',
+                    '<a href="http://website.com/blog/archives/2010/01.html" class="btn btn-link btn-block">Jan', '</a>',
                 '</div>',
                 '<div class="col-sm-1 text-center">',
-                    '<a href="http://website.com/blog/archives/2010/02.html" class="btn btn-link btn-block">Feb </a>',
+                    '<a href="http://website.com/blog/archives/2010/02.html" class="btn btn-link btn-block">Feb', '</a>',
                 '</div>',
                 '<div class="col-sm-1 text-center">',
-                    '<a href="http://website.com/blog/archives/2010/03.html" class="btn btn-link btn-block">Mar </a>',
+                    '<a href="http://website.com/blog/archives/2010/03.html" class="btn btn-link btn-block">Mar', '</a>',
                 '</div>',
                 '<div class="col-sm-1 text-center">',
-                    '<a href="http://website.com/blog/archives/2010/04.html" class="btn btn-link btn-block">Apr </a>',
+                    '<a href="http://website.com/blog/archives/2010/04.html" class="btn btn-link btn-block">Apr', '</a>',
                 '</div>',
                 '<div class="col-sm-1 text-center">',
-                    '<a href="http://website.com/blog/archives/2010/05.html" class="btn btn-link btn-block">May </a>',
+                    '<a href="http://website.com/blog/archives/2010/05.html" class="btn btn-link btn-block">May', '</a>',
                 '</div>',
                 '<div class="col-sm-1 text-center">',
-                    '<a href="http://website.com/blog/archives/2010/06.html" class="btn btn-link btn-block">Jun </a>',
+                    '<a href="http://website.com/blog/archives/2010/06.html" class="btn btn-link btn-block">Jun', '</a>',
                 '</div>',
                 '<div class="col-sm-1 text-center">',
-                    '<a href="http://website.com/blog/archives/2010/07.html" class="btn btn-link btn-block">Jul </a>',
+                    '<a href="http://website.com/blog/archives/2010/07.html" class="btn btn-link btn-block">Jul', '</a>',
                 '</div>',
                 '<div class="col-sm-1 text-center">',
-                    '<a href="http://website.com/blog/archives/2010/08.html" class="btn btn-link btn-block">Aug  <br> <span class="label label-primary">1</span> </a>',
+                    '<a href="http://website.com/blog/archives/2010/08.html" class="btn btn-link btn-block">Aug', '<br> <span class="label label-primary">1 </span>', '</a>',
                 '</div>',
                 '<div class="col-sm-1 text-center">',
-                    '<a href="http://website.com/blog/archives/2010/09.html" class="btn btn-link btn-block">Sep  <br> <span class="label label-primary">2</span> </a>',
+                    '<a href="http://website.com/blog/archives/2010/09.html" class="btn btn-link btn-block">Sep', '<br> <span class="label label-primary">2 </span>', '</a>',
                 '</div>',
                 '<div class="col-sm-1 text-center">',
-                    '<a href="http://website.com/blog/archives/2010/10.html" class="btn btn-link btn-block">Oct  <br> <span class="label label-primary">1</span> </a>',
+                    '<a href="http://website.com/blog/archives/2010/10.html" class="btn btn-link btn-block">Oct', '<br> <span class="label label-primary">1 </span>', '</a>',
                 '</div>',
                 '<div class="col-sm-1 text-center">',
-                    '<a href="http://website.com/blog/archives/2010/11.html" class="btn btn-link btn-block">Nov </a>',
+                    '<a href="http://website.com/blog/archives/2010/11.html" class="btn btn-link btn-block">Nov', '</a>',
                 '</div>',
                 '<div class="col-sm-1 text-center">',
-                    '<a href="http://website.com/blog/archives/2010/12.html" class="btn btn-link btn-block">Dec </a>',
+                    '<a href="http://website.com/blog/archives/2010/12.html" class="btn btn-link btn-block">Dec', '</a>',
                 '</div>',
             '</div>',
             '<br>',
-        ), static::$blog->theme->fetchSmarty($template));
-        $this->assertEquals('blog-archives.tpl', $template['file']);
+        ), static::$blog->theme->fetchTwig($template));
+        $this->assertEquals('blog-archives.html.twig', $template['file']);
         $this->assertEquals(array(
             'archives' => array(
                 2010 => array(
@@ -1015,8 +1024,8 @@ class BlogTest extends HTMLUnit_Framework_TestCase
             '<p itemscope itemtype="http://schema.org/Article">',
                 '<big itemprop="name"><a href="http://website.com/category/simple-post.html">A Simple Post</a></big>',
             '</p>',
-        ), static::$blog->theme->fetchSmarty($template));
-        $this->assertEquals('blog-listings.tpl', $template['file']);
+        ), static::$blog->theme->fetchTwig($template));
+        $this->assertEquals('blog-listings.html.twig', $template['file']);
         $this->assertEquals(array(
             'archive' => array(
                 'date' => 1262304000,
@@ -1059,8 +1068,8 @@ class BlogTest extends HTMLUnit_Framework_TestCase
                 '<big itemprop="name"><a href="http://website.com/category/subcategory/flowery-post.html">A Flowery Post</a></big>',
                 '<br><span itemprop="headline">Aren\'t they beautiful?</span>',
             '</p>',
-        ), static::$blog->theme->fetchSmarty($template));
-        $this->assertEquals('blog-listings.tpl', $template['file']);
+        ), static::$blog->theme->fetchTwig($template));
+        $this->assertEquals('blog-listings.html.twig', $template['file']);
         $this->assertEquals(array(
             'archive' => array(
                 'date' => mktime(0,0,0,9,1,2010),
@@ -1100,8 +1109,8 @@ class BlogTest extends HTMLUnit_Framework_TestCase
             '<p itemscope itemtype="http://schema.org/Article">',
                 '<big itemprop="name"><a href="http://website.com/uncategorized-post.html">Uncategorized Post</a></big>',
             '</p>',
-        ), static::$blog->theme->fetchSmarty($template));
-        $this->assertEquals('blog-listings.tpl', $template['file']);
+        ), static::$blog->theme->fetchTwig($template));
+        $this->assertEquals('blog-listings.html.twig', $template['file']);
         $this->assertEquals(array(
             'archive' => array(
                 'date' => mktime(0,0,0,10,3,2010),
@@ -1137,8 +1146,8 @@ class BlogTest extends HTMLUnit_Framework_TestCase
             '</ul>',
             '<h2>Authors</h2>',
             '<p><a href="http://website.com/blog/authors/joe-bloggs.html">Joe Bloggs <span class="badge">2</span></a></p>',
-        ), static::$blog->theme->fetchSmarty($template));
-        $this->assertEquals('blog-authors.tpl', $template['file']);
+        ), static::$blog->theme->fetchTwig($template));
+        $this->assertEquals('blog-authors.html.twig', $template['file']);
         $this->assertEquals(array(
             'breadcrumbs' => array(
                 'Blog' => 'http://website.com/blog.html',
@@ -1188,8 +1197,8 @@ class BlogTest extends HTMLUnit_Framework_TestCase
             '<p itemscope itemtype="http://schema.org/Article">',
                 '<big itemprop="name"><a href="http://website.com/category/simple-post.html">A Simple Post</a></big>',
             '</p>',
-        ), static::$blog->theme->fetchSmarty($template));
-        $this->assertEquals('blog-listings.tpl', $template['file']);
+        ), static::$blog->theme->fetchTwig($template));
+        $this->assertEquals('blog-listings.html.twig', $template['file']);
         $this->assertEquals(array(
             'breadcrumbs' => array(
                 'Blog' => 'http://website.com/blog.html',
@@ -1234,8 +1243,8 @@ class BlogTest extends HTMLUnit_Framework_TestCase
                 '<a class="text-primary" style="font-size:15px; padding:0px 5px;" href="http://website.com/blog/tags/nature.html">nature</a>',
                 '<a class="text-success" style="font-size:21px; padding:0px 5px;" href="http://website.com/blog/tags/simple.html">Simple</a>',
             '</p>',
-        ), static::$blog->theme->fetchSmarty($template));
-        $this->assertEquals('blog-tags.tpl', $template['file']);
+        ), static::$blog->theme->fetchTwig($template));
+        $this->assertEquals('blog-tags.html.twig', $template['file']);
         $this->assertEquals(array(
             'breadcrumbs' => array(
                 'Blog' => 'http://website.com/blog.html',
@@ -1335,8 +1344,8 @@ class BlogTest extends HTMLUnit_Framework_TestCase
             '<p itemscope itemtype="http://schema.org/Article">',
                 '<big itemprop="name"><a href="http://website.com/">Welcome to My Website</a></big>',
             '</p>',
-        ), static::$blog->theme->fetchSmarty($template));
-        $this->assertEquals('blog-listings.tpl', $template['file']);
+        ), static::$blog->theme->fetchTwig($template));
+        $this->assertEquals('blog-listings.html.twig', $template['file']);
         $this->assertEquals(array(
             'breadcrumbs' => array(
                 'Blog' => 'http://website.com/blog.html',
@@ -1370,12 +1379,11 @@ class BlogTest extends HTMLUnit_Framework_TestCase
     {
         $template = $this->blogPage('blog/feed.xml');
         $this->assertInstanceOf('Symfony\Component\HttpFoundation\Response', $template);
-        $this->assertEquals('application/rss+xml', $template->headers->get('Content-Type'));
         $this->assertEqualsRegExp(array(
             '<?xml version="1.0"?>',
             '<rss version="2.0">',
             '<channel>',
-                '<title>{.*}</title>',
+                '<title>{{ .* }}</title>',
                 '<link>http://website.com/blog.html</link>',
                 '<description></description>',
                     '<item>',
@@ -1424,29 +1432,30 @@ class BlogTest extends HTMLUnit_Framework_TestCase
                 '</channel>',
             '</rss>',
         ), $template->getContent());
+        $this->assertEquals('application/rss+xml', $template->headers->get('Content-Type'));
     }
 
     public function testNewPageInsertUpdateDelete()
     {
-        $file = str_replace('/', DIRECTORY_SEPARATOR, static::$folder.'category/unpublished-post/index.tpl');
+        $file = str_replace('/', DIRECTORY_SEPARATOR, static::$folder.'category/unpublished-post/index.html.twig');
         if (!is_dir(dirname($file))) {
             mkdir(dirname($file), 0755, true);
         }
         self::remove($file);
         file_put_contents($file, implode("\n", array(
-            '{*',
+            '{#',
             'title: Unpublished Post',
             'keywords: Unpublished',
             'published: true', // will add to sitemap
             'author: anonymous',
-            '*}',
+            '#}',
             '',
-            'Hello {if} Smarty',
+            'Twig {% if %} Error',
         )));
         $template = $this->blogPage('category/unpublished-post.html');
         $sitemap = new Sitemap();
         $this->assertEquals(1, $sitemap->db->value('SELECT COUNT(*) FROM sitemap WHERE path = ?', 'category/unpublished-post'));
-        $this->assertEquals('blog-post.tpl', $template['file']);
+        $this->assertEquals('blog-post.html.twig', $template['file']);
         $this->assertEquals(array(
             'post' => array(
                 'page' => true,
@@ -1455,7 +1464,7 @@ class BlogTest extends HTMLUnit_Framework_TestCase
                 'thumb' => '',
                 'title' => 'Unpublished Post',
                 'description' => '',
-                'content' => '<p>Syntax error in template "file:blog/content/category/unpublished-post/index.tpl"  on line 8 "Hello {if} Smarty" missing if condition</p>',
+                'content' => '<p>Unexpected token "end of statement block" of value "" in "content/category/unpublished-post/index.html.twig" at line 8.</p>',
                 'updated' => filemtime($file),
                 'featured' => false,
                 'published' => true,
@@ -1483,18 +1492,18 @@ class BlogTest extends HTMLUnit_Framework_TestCase
             ),
         ), $template['vars']);
         file_put_contents($file, implode("\n", array(
-            '{*',
+            '{#',
             'title: Unpublished Post',
             'keywords: Unpublished',
             'published: false', // will remove from sitemap
-            '*}',
+            '#}',
             '',
-            'Hello Smarty Pants',
+            'The "{{ _self.getTemplateName() }}" Template',
         )));
         $template = $this->blogPage('category/unpublished-post.html');
         $this->assertEquals(0, $sitemap->db->value('SELECT COUNT(*) FROM sitemap WHERE path = ?', 'category/unpublished-post'));
         unset($sitemap);
-        $this->assertEquals('blog-post.tpl', $template['file']);
+        $this->assertEquals('blog-post.html.twig', $template['file']);
         $this->assertEquals(array(
             'post' => array(
                 'page' => true,
@@ -1503,7 +1512,7 @@ class BlogTest extends HTMLUnit_Framework_TestCase
                 'thumb' => '',
                 'title' => 'Unpublished Post',
                 'description' => '',
-                'content' => 'Hello Smarty Pants',
+                'content' => 'The "content/category/unpublished-post/index.html.twig" Template',
                 'updated' => filemtime($file),
                 'featured' => false,
                 'published' => false,
@@ -1555,9 +1564,7 @@ class BlogTest extends HTMLUnit_Framework_TestCase
             "    summary: ''",
             '    listings: blog',
             '    breadcrumb: Blog',
-            'themes:',
-            '    default: default',
-            '    bootstrap: 3.3.7',
+            '    theme: default',
             'authors:',
             '    joe-bloggs:',
             "        name: 'Joe Bloggs'",
@@ -1594,10 +1601,7 @@ class BlogTest extends HTMLUnit_Framework_TestCase
                 'summary' => '',
                 'listings' => 'blog',
                 'breadcrumb' => 'Blog',
-            ),
-            'themes' => array(
-                'default' => 'default',
-                'bootstrap' => '3.3.7',
+                'theme' => 'default',
             ),
             'authors' => array(
                 'joe-bloggs' => array(
@@ -1649,6 +1653,7 @@ class BlogTest extends HTMLUnit_Framework_TestCase
             'summary' => '',
             'listings' => 'blog',
             'breadcrumb' => 'Blog',
+            'theme' => 'default',
         ), static::$blog->config('blog'));
         $this->assertEquals('blog', static::$blog->config('blog', 'listings'));
         $this->assertEquals('Joe Bloggs', static::$blog->config('authors', 'joe-bloggs', 'name'));
@@ -1672,6 +1677,7 @@ class BlogTest extends HTMLUnit_Framework_TestCase
                 'summary' => '',
                 'listings' => 'blog',
                 'breadcrumb' => 'Blog',
+                'theme' => 'default',
             ),
         ), 'vars', static::$blog->theme);
         static::$blog->theme->globalVars('foo', 'bar');
@@ -1684,6 +1690,7 @@ class BlogTest extends HTMLUnit_Framework_TestCase
                 'summary' => '',
                 'listings' => 'blog',
                 'breadcrumb' => 'Blog',
+                'theme' => 'default',
             ),
         ), 'vars', static::$blog->theme);
     }
@@ -1695,36 +1702,36 @@ class BlogTest extends HTMLUnit_Framework_TestCase
         static::$blog->theme->addPageMethod('amigo', 'Hello');
     }
     
-    public function testThemeFetchSmartyBlogFoldersException()
+    public function testThemeFetchTwigBlogFoldersException()
     {
         $this->setExpectedException('\LogicException');
-        static::$blog->theme->fetchSmarty('');
+        static::$blog->theme->fetchTwig('');
     }
     
-    public function testThemeFetchSmartyMissingFileException()
+    public function testThemeFetchTwigMissingFileException()
     {
         $this->setExpectedException('\LogicException');
-        static::$blog->theme->fetchSmarty(static::$folder.'missing.tpl');
+        static::$blog->theme->fetchTwig(static::$folder.'missing.html.twig');
     }
     
-    public function testThemeFetchSmartyDefaultFile()
+    public function testThemeFetchTwigDefaultFile()
     {
         $page = Page::html();
-        $default = $page->file('default.tpl');
-        file_put_contents($default, 'Default {template}');
+        $default = $page->file('default.html.twig');
+        file_put_contents($default, 'Default {% template %}');
         
         // Syntax Error
-        $this->assertEquals('<p>Syntax error in template "file:blog/themes/default/default.tpl"  on line 1 "Default {template}" unknown tag "template"</p>', static::$blog->theme->fetchSmarty(array(
+        $this->assertEquals('<p>Unknown "template" tag in "themes/default/default.html.twig" at line 1.</p>', static::$blog->theme->fetchTwig(array(
             'default' => $page->dir(),
             'vars' => array('syntax'=>'error'),
-            'file' => 'default.tpl',
+            'file' => 'default.html.twig',
         )));
         
         // Testing Mode
         unlink($default);
-        $default = $page->file('blog/themes/default/default.tpl');
+        $default = $page->file('blog/themes/default/default.html.twig');
         $this->assertFileExists($default);
-        $this->assertEquals('Syntax error in template "file:blog/themes/default/default.tpl"  on line 1 "Default {template}" unknown tag "template"', static::$blog->theme->fetchSmarty($default, array('syntax'=>'error'), 'testing'));
+        $this->assertEquals('<p>Unknown "template" tag in "themes/default/default.html.twig" at line 1.</p>', static::$blog->theme->fetchTwig($default, array('syntax'=>'error'), 'testing'));
         unlink($default);
         
         // Theme::asset($path) array
@@ -1744,15 +1751,12 @@ class BlogTest extends HTMLUnit_Framework_TestCase
         $layout = $page->dir('blog/themes/default');
         $this->assertFileExists($layout); // should be created automatically
         $this->assertEquals('<p>Content</p>', static::$blog->theme->layout('<p>Content</p>'));
-        file_put_contents($layout.'index.tpl', implode("\n", array(
-            '{$page->amigo} {$page->hello()} War {$bp->version}',
-            '{$bp->icon("thumbs-up")} {$content}',
-            '{$page->filter("content", "invalid", "error")}',
-            '{$page->filter("content", "prepend", "SPECIAL MESSAGE")}',
+        file_put_contents($layout.'index.html.twig', implode("\n", array(
+            '{{ page.amigo }} {{ page.hello() }} War',
+            '{{ content }}',
         )));
         $this->assertEqualsRegExp(array(
-            'World War 3.3.7',
-            '<span class="glyphicon glyphicon-thumbs-up"></span>',
+            'World War',
             '<p>Content</p>',
         ), static::$blog->theme->layout('<p>Content</p>'));
         
@@ -1761,16 +1765,15 @@ class BlogTest extends HTMLUnit_Framework_TestCase
         $page->theme = 'default/child';
         file_put_contents($layout.'config.yml', 'default: theme'."\n".'name: Parent');
         file_put_contents($layout.'child/config.yml', 'name: Child');
-        file_put_contents($layout.'child/index.tpl', '{$config.name} {$bp->framework} {$config.default}');
-        $this->assertEquals('Child bootstrap theme', static::$blog->theme->layout(''));
-        // $this->assertEquals('http://website.com/page/temp/theme/asset.css', $page->url('theme', 'asset.css'));
+        file_put_contents($layout.'child/index.html.twig', '{{ config.name }} {{ config.default }}');
+        $this->assertEquals('Child theme', static::$blog->theme->layout(''));
         
         // No Theme
         $page->theme = false;
         $this->assertEquals('HTML', static::$blog->theme->layout('HTML'));
         
         // Callable Theme
-        $page->theme = function($content, $bp, $vars) {
+        $page->theme = function($content, $vars) {
             return 'Callable '.$content;
         };
         $this->assertEquals('Callable HTML', static::$blog->theme->layout('HTML'));

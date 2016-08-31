@@ -34,6 +34,7 @@ class PaginationTest extends HTMLUnit_Framework_TestCase
         $this->assertEquals('', $pagination->previous_url);
         $this->assertEquals('http://example.com?page=2of10', $pagination->next_url);
         $this->assertNull($pagination->start);
+        $this->assertFalse(isset($pagination->start));
         
     }
 

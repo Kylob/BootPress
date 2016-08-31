@@ -1,0 +1,20 @@
+<ul class="breadcrumb">
+{% for name, href in breadcrumbs %}
+    {% if loop.last %}
+        <li class="active">{{ name }}</li>
+    {% else %}
+        <li><a href="{{ href }}">{{ name }}</a></li>
+    {% endif %}
+{% endfor %}
+</ul>
+
+{{ page.set({
+    'title': 'Authors at ' ~ blog.name,
+    'description': 'View all of the authors who have submitted blog posts at ' ~ blog.name
+}) }}
+
+<h2>Authors</h2>
+
+{% for author in authors %}
+    <p><a href="{{ author.url }}">{{ author.name }} <span class="badge">{{ author.count }}</span></a></p>
+{% endfor %}
