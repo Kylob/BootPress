@@ -6,7 +6,7 @@ use BootPress\Page\Component as Page;
 use BootPress\Bootstrap3\Component as Bootstrap;
 use Symfony\Component\HttpFoundation\Request;
 
-class Bootstrap3Test extends HTMLUnit_Framework_TestCase
+class Bootstrap3Test extends \BootPress\HTMLUnit\Component
 {
     use \BootPress\Bootstrap3\Base;
 

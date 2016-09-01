@@ -7,7 +7,7 @@ use BootPress\Form\Component as Form;
 use BootPress\Validator\Component as Validator;
 use Symfony\Component\HttpFoundation\Request;
 
-class FormTest extends HTMLUnit_Framework_TestCase
+class FormTest extends \BootPress\HTMLUnit\Component
 {
     public static function setUpBeforeClass()
     {

@@ -23,11 +23,11 @@
         "jbroadway/urlify": "^1.0",
         "spartz/text-formatter": "^1.0",
         "altorouter/altorouter": "^1.0",
-        "twig/twig": "^1.18",
-        "aptoma/twig-markdown": "^2.0"
+        "aptoma/twig-markdown": "^2.0",
+        "twig/twig": "^1.18"
     },
     "require-dev": {
-        "phpunit/phpunit": "^4.0",
+        "bootpress/htmlunit": "^1.0",
         "friendsofphp/php-cs-fixer": "^1.0",
         "squizlabs/php_codesniffer": "^2.5"
     },

@@ -4,7 +4,7 @@ namespace BootPress\Tests;
 
 use BootPress\Pagination\Component as Pagination;
 
-class PaginationTest extends HTMLUnit_Framework_TestCase
+class PaginationTest extends \BootPress\HTMLUnit\Component
 {
     public function testBootstrapLinks()
     {

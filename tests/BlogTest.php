@@ -10,7 +10,7 @@ use BootPress\Pagination\Component as Pagination;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Yaml\Yaml;
 
-class BlogTest extends HTMLUnit_Framework_TestCase
+class BlogTest extends \BootPress\HTMLUnit\Component
 {
     protected static $blog;
     protected static $config;

@@ -4,7 +4,7 @@ namespace BootPress\Tests;
 
 use BootPress\Table\Component as Table;
 
-class TableTest extends HTMLUnit_Framework_TestCase
+class TableTest extends \BootPress\HTMLUnit\Component
 {
     public function testTableClass()
     {

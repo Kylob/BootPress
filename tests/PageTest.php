@@ -5,7 +5,7 @@ namespace BootPress\Tests;
 use BootPress\Page\Component as Page;
 use Symfony\Component\HttpFoundation\Request;
 
-class PageTest extends HTMLUnit_Framework_TestCase
+class PageTest extends \BootPress\HTMLUnit\Component
 {
     public function testHtmlStaticMethod()
     {

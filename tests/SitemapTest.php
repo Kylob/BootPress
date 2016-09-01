@@ -7,7 +7,7 @@ use BootPress\Asset\Component as Asset;
 use BootPress\Sitemap\Component as Sitemap;
 use Symfony\Component\HttpFoundation\Request;
 
-class SitemapTest extends HTMLUnit_Framework_TestCase
+class SitemapTest extends \BootPress\HTMLUnit\Component
 {
     protected static $page;
 
