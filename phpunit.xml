@@ -10,7 +10,7 @@
             <file>tests/SqliteTest.php</file>
             <file>tests/ValidatorTest.php</file>
             <file>tests/FormTest.php</file>
-            <file>tests/BootstrapTest.php</file>
+            <file>tests/Bootstrap3Test.php</file>
             <file>tests/TableTest.php</file>
             <file>tests/PaginationTest.php</file>
             <file>tests/HierarchyTest.php</file>

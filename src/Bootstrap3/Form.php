@@ -1,10 +1,8 @@
 <?php
 
-namespace BootPress\Bootstrap;
+namespace BootPress\Bootstrap3;
 
-use BootPress\Form\Component as Form;
-
-class Bootstrap3Form extends Form
+class Form extends \BootPress\Form\Component
 {
     use Base;
 
@@ -20,7 +18,7 @@ class Bootstrap3Form extends Form
     /**
      * {@inheritdoc}
      */
-    public function __construct($name, $method, Bootstrap3 $bp)
+    public function __construct($name, $method, Component $bp)
     {
         parent::__construct($name, $method);
         $this->bp = $bp;

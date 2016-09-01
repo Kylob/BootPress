@@ -1,38 +1,32 @@
 <?php
 
-namespace BootPress\Bootstrap;
+namespace BootPress\Bootstrap3;
 
 use BootPress\Page\Component as Page;
-use BootPress\Form\Component as Form;
+use BootPress\Form\Component as BPForm;
 
-class Bootstrap3
+class Component
 {
     use Base;
 
-    protected $framework;
-    protected $version;
     protected $page;
     private $table;
     private $navbar;
+    private $pagination;
 
     public function __construct($version = null)
     {
-        $this->framework = 'bootstrap';
-        $this->version = $version;
         $this->page = Page::html();
     }
 
     public function __get($name)
     {
         switch ($name) {
-            case 'framework':
-            case 'version':
-                return $this->$name;
-            break;
             case 'table':
             case 'navbar':
+            case 'pagination':
                 if (is_null($this->$name)) {
-                    $class = 'BootPress\Bootstrap\Bootstrap3'.ucfirst($name);
+                    $class = 'BootPress\\Bootstrap3\\'.ucfirst($name);
                     $this->$name = new $class();
                 }
 
@@ -203,7 +197,7 @@ class Bootstrap3
         $button = $form['button'];
         $size = $form['size'];
         unset($form['placeholder'], $form['button'], $form['size']);
-        $form = new Form($form);
+        $form = new BPForm($form);
         $form->validator->set($form->header['name'], 'required');
         if (!empty($button)) {
             if (strpos($button, '<button') === false) {
@@ -237,7 +231,7 @@ class Bootstrap3
      */
     public function form($name, $method = 'post')
     {
-        return new Bootstrap3Form($name, $method, $this);
+        return new Form($name, $method, $this);
     }
 
     /**

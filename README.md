@@ -1,4 +1,4 @@
-# BootPress
+# BootPress Components
 
 [![Latest Version on Packagist](https://img.shields.io/packagist/v/bootpress/components.svg?style=flat-square)](https://packagist.org/packages/bootpress/components)
 [![Software License](https://img.shields.io/badge/license-MIT-brightgreen.svg?style=flat-square)](LICENSE.md)
@@ -11,7 +11,7 @@ Jump start your code with these decoupled PHP components that can be used in any
 - **Asset** - Caches and delivers assets of every sort, from any location, with hands-off versioning.  Manipulates images on-the-fly.  Minifies and combines (on-demand) css and javascript files.
 - **Auth** - Manages users and logs them in securely using the definitive best practices known to man.
 - **Blog** - A file based blog that can be implemented in any project with full-text searching, featured and similar posts, pages, listings, archives, authors, tags, categories, sitemap and feed.
-- **Bootstrap** - Create Bootstrap grids, tables, forms, buttons, dropdowns, groups, navs, breadcrumbs, pagination, panels, accordions, carousels, etc ... all without touching a single div!
+- **Bootstrap3** - Create Bootstrap grids, tables, forms, buttons, dropdowns, groups, navs, breadcrumbs, pagination, panels, accordions, carousels, etc ... all without touching a single div!
 - **Database** - A PDO wrapper with lazy connections, query profiling, and convenience methods that simplify and speed up your queries.
 - **Form** - Coordinates form validation, errors, messages, values, and inputs in a DRY KISS way.
 - **Hierarchy** - Nested Set benefits with Adjacency List effort.  Retrieve the children, counts, levels, paths, trees, nests, and leaves from your category nodes.
@@ -22,7 +22,10 @@ Jump start your code with these decoupled PHP components that can be used in any
 - **Table** - Builds HTML tables that are easy to visualize and see what is going on.
 - **Validator** - Form validation that is designed to simplify and work seamlessly with Jorn's jQuery Validation Plugin.
 
-Documentation is forth-coming, and will be completed by v1.0.  If you star this project at GitHub it will spur me on knowing that someone cares.
+
+## Head Up!
+
+This code is under heavy development.  The classes themselves are solid, and are unlikely to be changed much, but the organization of them definitely will.  Every component above is being fully documented and put into it's own GitHub repo.  This repo itself will be going the way of all the earth ie. die a slow, silent death - so don't rely on it too much.  It has nearly fulfilled the measure of it's creation, and the plug is about to be pulled in order to make all of this code more usable for you!  I have been using it myself for years now, and I just want to share the wealth.  If you star this project at GitHub, it will spur me on knowing that someone cares.
 
 
 ## Install

@@ -1,8 +1,8 @@
 <?php
 
-namespace BootPress\Bootstrap;
+namespace BootPress\Bootstrap3;
 
-class Bootstrap3Navbar extends Bootstrap3
+class Navbar extends Component
 {
     /**
      * This will open a new navbar.

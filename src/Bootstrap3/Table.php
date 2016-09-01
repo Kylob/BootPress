@@ -1,10 +1,8 @@
 <?php
 
-namespace BootPress\Bootstrap;
+namespace BootPress\Bootstrap3;
 
-use BootPress\Table\Component as Table;
-
-class Bootstrap3Table extends Table
+class Table extends \BootPress\Table\Component
 {
     use Base;
 

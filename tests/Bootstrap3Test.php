@@ -3,12 +3,12 @@
 namespace BootPress\Tests;
 
 use BootPress\Page\Component as Page;
-use BootPress\Bootstrap\Component as Bootstrap;
+use BootPress\Bootstrap3\Component as Bootstrap;
 use Symfony\Component\HttpFoundation\Request;
 
-class BootstrapTest extends HTMLUnit_Framework_TestCase
+class Bootstrap3Test extends HTMLUnit_Framework_TestCase
 {
-    use \BootPress\Bootstrap\Base;
+    use \BootPress\Bootstrap3\Base;
 
     protected static $page;
 
@@ -45,24 +45,14 @@ class BootstrapTest extends HTMLUnit_Framework_TestCase
 
     public function testConstructor()
     {
-        $bp = Bootstrap::version('3.3.6');
-        $this->assertEquals('bootstrap', $bp->framework);
-        $this->assertEquals('3.3.6', $bp->version);
+        $bp = new Bootstrap();
         $this->assertAttributeInstanceOf('BootPress\Page\Component', 'page', $bp);
         $this->assertNull($bp->attribute);
     }
 
-    /**
-     * @expectedException Exception
-     */
-    public function testException()
-    {
-        $bp = Bootstrap::version('2.1.4');
-    }
-
     public function testFormObject()
     {
-        $bp = Bootstrap::version(3);
+        $bp = new Bootstrap();
         $form = $bp->form('example', 'post');
         
         // private getters default values
@@ -242,13 +232,13 @@ class BootstrapTest extends HTMLUnit_Framework_TestCase
 
     public function testTableObject()
     {
-        $bp = Bootstrap::version(3);
+        $bp = new Bootstrap();
         $this->assertEqualsRegExp('<table class="table table-responsive">', $bp->table->open('class=responsive'));
     }
 
     public function testNavbarObject()
     {
-        $bp = Bootstrap::version(3);
+        $bp = new Bootstrap();
 
         // open and close
         $html = array(
@@ -296,9 +286,15 @@ class BootstrapTest extends HTMLUnit_Framework_TestCase
         $this->assertEquals('<p class="navbar-text">You <a href="#" class="navbar-link">link</a> me</p>', trim($bp->navbar->text('You <a href="#">link</a> me')));
     }
 
+    public function testPaginationObject()
+    {
+        $bp = new Bootstrap();
+        $this->assertInstanceOf('BootPress\Pagination\Component', $bp->pagination);
+    }
+
     public function testRowColMethods()
     {
-        $bp = Bootstrap::version(3);
+        $bp = new Bootstrap();
         $this->assertEqualsRegExp(array(
             '<div class="row">',
                 '<div class="col-sm-3">left</div>',
@@ -326,7 +322,7 @@ class BootstrapTest extends HTMLUnit_Framework_TestCase
 
     public function testListerMethod()
     {
-        $bp = Bootstrap::version(3);
+        $bp = new Bootstrap();
         $this->assertEqualsRegExp(array(
             '<ul class="list-unstyled">',
                 '<li>one</li>',
@@ -360,7 +356,7 @@ class BootstrapTest extends HTMLUnit_Framework_TestCase
 
     public function testSearchMethod()
     {
-        $bp = Bootstrap::version(3);
+        $bp = new Bootstrap();
         $this->assertEqualsRegExp(array(
             '<form name="search" method="get" action="http://website.com/" accept-charset="utf-8" autocomplete="off" role="search" class="form-horizontal">',
                 '<div class="input-group">',
@@ -384,21 +380,21 @@ class BootstrapTest extends HTMLUnit_Framework_TestCase
 
     public function testImgMethod()
     {
-        $bp = Bootstrap::version(3);
+        $bp = new Bootstrap();
         $this->assertEquals('No Image', $bp->img('', 'width="75"', 'No Image', '#seo.jpg'));
         $this->assertEquals('<img src="/image.jpg#seo.jpg" width="75">', $bp->img('/image.jpg', 'width="75"', 'No Image', '#seo.jpg'));
     }
 
     public function testIconMethod()
     {
-        $bp = Bootstrap::version(3);
+        $bp = new Bootstrap();
         $this->assertEquals('<span class="glyphicon glyphicon-search"></span>', $bp->icon('search'));
         $this->assertEquals('<span class="large fa fa-search"></span>', $bp->icon('search', 'fa', 'span class="large"'));
     }
 
     public function testButtonMethod()
     {
-        $bp = Bootstrap::version(3);
+        $bp = new Bootstrap();
         $this->assertEquals('<button type="button" class="btn btn-primary">Primary</button>', $bp->button('primary', 'Primary'));
         
         $this->assertEquals('<a href="#" class="btn btn-xs btn-success">Link</a>', $bp->button('xs success', 'Link', array('href' => '#')));
@@ -439,7 +435,7 @@ class BootstrapTest extends HTMLUnit_Framework_TestCase
 
     public function testGroupMethod()
     {
-        $bp = Bootstrap::version(3);
+        $bp = new Bootstrap();
         $this->assertEqualsRegExp(array(
             '<div class="btn-group" role="group">',
                 '<button type="button" class="btn btn-primary">Btn</button>',
@@ -485,7 +481,7 @@ class BootstrapTest extends HTMLUnit_Framework_TestCase
 
     public function testLinksMethod()
     {
-        $bp = Bootstrap::version(3);
+        $bp = new Bootstrap();
         $url = self::$page->url('delete', '', '?');
         $urlquery = self::$page->url();
         $this->assertEqualsRegExp(array(
@@ -520,7 +516,7 @@ class BootstrapTest extends HTMLUnit_Framework_TestCase
 
     public function testTabsMethod()
     {
-        $bp = Bootstrap::version(3);
+        $bp = new Bootstrap();
         $this->assertEqualsRegExp(array(
             '<ul class="nav nav-tabs nav-justified">',
                 '<li role="presentation" class="active"><a href="#">Nav</a></li>',
@@ -548,7 +544,7 @@ class BootstrapTest extends HTMLUnit_Framework_TestCase
 
     public function testPillsMethod()
     {
-        $bp = Bootstrap::version(3);
+        $bp = new Bootstrap();
         
         $this->assertEqualsRegExp(array(
             '<ul class="nav nav-pills nav-justified">',
@@ -602,7 +598,7 @@ class BootstrapTest extends HTMLUnit_Framework_TestCase
 
     public function testBreadcrumbsMethod()
     {
-        $bp = Bootstrap::version(3);
+        $bp = new Bootstrap();
         
         $this->assertEquals('', $bp->breadcrumbs(array()));
         
@@ -642,19 +638,19 @@ class BootstrapTest extends HTMLUnit_Framework_TestCase
 
     public function testLabelMethod()
     {
-        $bp = Bootstrap::version(3);
+        $bp = new Bootstrap();
         $this->assertEquals('<span class="label label-primary">New</span>', $bp->label('primary', 'New'));
     }
 
     public function testBadgeMethod()
     {
-        $bp = Bootstrap::version(3);
+        $bp = new Bootstrap();
         $this->assertEquals('<span class="badge pull-right">13</span>', $bp->badge(13, 'right'));
     }
 
     public function testAlertMethod()
     {
-        $bp = Bootstrap::version(3);
+        $bp = new Bootstrap();
         $this->assertEqualsRegExp(array(
             '<div class="alert alert-danger" role="alert">',
                 '<strong>Danger</strong> Alert',
@@ -677,7 +673,7 @@ class BootstrapTest extends HTMLUnit_Framework_TestCase
 
     public function testProgressMethod()
     {
-        $bp = Bootstrap::version(3);
+        $bp = new Bootstrap();
         $this->assertEqualsRegExp(array(
             '<div class="progress">',
                 '<div class="progress-bar progress-bar-info" style="width:60%;" role="progressbar" aria-valuenow="60" aria-valuemin="0" aria-valuemax="100">60%</div>',
@@ -697,7 +693,7 @@ class BootstrapTest extends HTMLUnit_Framework_TestCase
 
     public function testMediaMethod()
     {
-        $bp = Bootstrap::version(3);
+        $bp = new Bootstrap();
         // parent => child => array()
         $multi = $bp->media(array(
             0 => array(
@@ -748,7 +744,7 @@ class BootstrapTest extends HTMLUnit_Framework_TestCase
 
     public function testListGroupMethod()
     {
-        $bp = Bootstrap::version(3);
+        $bp = new Bootstrap();
         $this->assertEqualsRegExp(array(
             '<ul class="list-group">',
                 '<li class="list-group-item">Unordered</li>',
@@ -791,7 +787,7 @@ class BootstrapTest extends HTMLUnit_Framework_TestCase
 
     public function testPanelMethod()
     {
-        $bp = Bootstrap::version(3);
+        $bp = new Bootstrap();
         $this->assertEqualsRegExp(array(
             '<div class="panel panel-success">',
                 '<div class="panel-heading">Header</div>',
@@ -819,7 +815,7 @@ class BootstrapTest extends HTMLUnit_Framework_TestCase
 
     public function testToggleMethod()
     {
-        $bp = Bootstrap::version(3);
+        $bp = new Bootstrap();
         $toggle = array(
             'Toggle#toggle' => 'Toggle Content',
             'Profile' => 'Profile Content',
@@ -912,7 +908,7 @@ class BootstrapTest extends HTMLUnit_Framework_TestCase
 
     public function testAccordionMethod()
     {
-        $bp = Bootstrap::version(3);
+        $bp = new Bootstrap();
         $this->assertEqualsRegExp(array(
             '<div class="panel-group" id="accordion{{ [A-Z]+ }}" role="tablist" aria-multiselectable="true">',
                 '<div class="panel panel-info">',
@@ -948,7 +944,7 @@ class BootstrapTest extends HTMLUnit_Framework_TestCase
 
     public function testCarouselMethod()
     {
-        $bp = Bootstrap::version(3);
+        $bp = new Bootstrap();
         $html = array(
             '<div id="carousel{{ [A-Z]+ }}" class="carousel slide" data-ride="carousel" data-interval="2000">',
                 '<ol class="carousel-indicators">',

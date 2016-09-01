@@ -5,7 +5,7 @@ namespace BootPress\Tests;
 use BootPress\Page\Component as Page;
 use BootPress\Database\Component as Database;
 use BootPress\Hierarchy\Component as Hierarchy;
-use BootPress\Bootstrap\Component as Bootstrap;
+use BootPress\Bootstrap3\Component as Bootstrap;
 use Symfony\Component\HttpFoundation\Request;
 
 class HierarchyTest extends \PHPUnit_Framework_TestCase
@@ -207,7 +207,7 @@ class HierarchyTest extends \PHPUnit_Framework_TestCase
                 '2 Way Radios',
             ),
         ), $array);
-        $bp = Bootstrap::version(3);
+        $bp = new Bootstrap();
         $html = '<ol>';
         $html .= '<li>Portable Electronics<ol>';
         $html .= '<li>MP3 Players<ol>';

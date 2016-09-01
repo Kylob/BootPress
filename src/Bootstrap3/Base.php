@@ -1,6 +1,6 @@
 <?php
 
-namespace BootPress\Bootstrap;
+namespace BootPress\Bootstrap3;
 
 trait Base
 {
