@@ -13,6 +13,7 @@
     "require": {
         "php": ">=5.4",
         "ext-sqlite3": "*",
+        "bootpress/page": "^1.0",
         "symfony/yaml": "^2.3||^3.0",
         "symfony/finder": "^2.3||^3.0",
         "symfony/http-foundation": "^2.3||^3.0",
@@ -24,7 +25,8 @@
         "spartz/text-formatter": "^1.0",
         "altorouter/altorouter": "^1.0",
         "aptoma/twig-markdown": "^2.0",
-        "twig/twig": "^1.18"
+        "twig/twig": "^1.18",
+        "paragonie/random_compat": "^2.0"
     },
     "require-dev": {
         "bootpress/htmlunit": "^1.0",
@@ -34,21 +36,6 @@
     "suggest": {
         "paragonie/random_compat": "PHP 5.x polyfill for random_bytes() and random_int() from PHP 7",
         "ircmaxell/password-compat": "PHP 5.5 password_* functions, with forward-compatible support."
-    },
-    "replace": {
-        "bootpress/asset": "self.version",
-        "bootpress/auth": "self.version",
-        "bootpress/blog": "self.version",
-        "bootpress/bootstrap": "self.version",
-        "bootpress/database": "self.version",
-        "bootpress/form": "self.version",
-        "bootpress/hierarchy": "self.version",
-        "bootpress/page": "self.version",
-        "bootpress/pagination": "self.version",
-        "bootpress/sitemap": "self.version",
-        "bootpress/sqlite": "self.version",
-        "bootpress/table": "self.version",
-        "bootpress/validator": "self.version"
     },
     "autoload": {
         "psr-4": { "BootPress\\": "src/" }

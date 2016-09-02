@@ -340,17 +340,6 @@ class PageTest extends \BootPress\HTMLUnit\Component
             '</body>',
             '</html>',
         ), $page->display('<p>Content</p>'));
-        
-        $html = $page->display('<p>Content</p>');
-        $this->assertContains('<link rel="shortcut icon" href="favicon.ico">', $html);
-        $this->assertContains('<link rel="apple-touch-icon" href="icon.png">', $html);
-        $this->assertContains('<link rel="stylesheet" href="styles.css">', $html);
-        $this->assertContains('<style>body{background-color:#999;}</style>', $html);
-        $this->assertContains('<!--[if IE6]>Special instructions for IE 6 here<![endif]-->', $html);
-        $this->assertContains('<script src="jquery.js"></script>', $html);
-        $this->assertContains('<script src="script.js#fancy"></script>', $html);
-        $this->assertContains('<script src="custom.js"></script>', $html);
-        $this->assertContains('<script>alert("Howdy Partner");</script>', $html);
     }
 
     public function testStyleMethod()
@@ -446,6 +435,8 @@ class PageTest extends \BootPress\HTMLUnit\Component
     public function testFilterAndSendMethods()
     {
         $page = Page::html();
+        
+        // Test filters
         $page->filter('javascript', __NAMESPACE__.'\PageTest::javascriptFilter', array('this'), 5);
         $this->assertAttributeEquals(array(
             'javascript' => array(
@@ -466,13 +457,22 @@ class PageTest extends \BootPress\HTMLUnit\Component
         $page->filter('response', function ($page, $response) {
             return $response; // removes 'this' from the default $params we're not including
         });
+        
+        // Send a 200 (default - not specified) response
         $response = $page->send('content');
         $this->assertInstanceOf('Symfony\Component\HttpFoundation\Response', $response);
         $this->assertEquals('html', $response->getContent());
+        
+        // Send a 404 response
         $response = $page->send(404);
         $this->assertInstanceOf('Symfony\Component\HttpFoundation\Response', $response);
         $this->assertEquals(404, $response->getStatusCode());
         $this->assertEquals('404', $response->getContent());
+        
+        // Send an HTML response
+        $response = $page->send('Content', 200, array('Content-Type'=>'text/html'));
+        $this->assertEquals(200, $response->getStatusCode());
+        $this->assertEquals('Content', $response->getContent());
     }
 
     public function testSendJsonMethod()
