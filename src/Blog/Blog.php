@@ -600,10 +600,10 @@ class Blog
             '  a.id AS author_id, a.path AS author_path, a.name AS author_name,',
             '  (SELECT p.path || "," || p.title FROM blog AS p WHERE p.featured = b.featured AND p.published > b.published AND p.published < 0 ORDER BY p.featured, p.published ASC LIMIT 1) AS previous,',
             '  (SELECT n.path || "," || n.title FROM blog AS n WHERE n.featured = b.featured AND n.published < b.published AND n.published < 0 ORDER BY n.featured, n.published DESC LIMIT 1) AS next,',
-            '  (SELECT GROUP_CONCAT(p.path) FROM categories AS c INNER JOIN categories AS p WHERE c.lft BETWEEN p.lft AND p.rgt AND c.id = b.category_id ORDER BY c.lft) AS category_paths,',
-            '  (SELECT GROUP_CONCAT(p.name) FROM categories AS c INNER JOIN categories AS p WHERE c.lft BETWEEN p.lft AND p.rgt AND c.id = b.category_id ORDER BY c.lft) AS category_names,',
-            '  (SELECT GROUP_CONCAT(t.path) FROM tagged INNER JOIN tags AS t ON tagged.tag_id = t.id WHERE tagged.blog_id = b.id) AS tag_paths,',
-            '  (SELECT GROUP_CONCAT(t.name) FROM tagged INNER JOIN tags AS t ON tagged.tag_id = t.id WHERE tagged.blog_id = b.id) AS tag_names',
+            '  (SELECT GROUP_CONCAT(p.path, "<!--delimiter-->") FROM categories AS c INNER JOIN categories AS p WHERE c.lft BETWEEN p.lft AND p.rgt AND c.id = b.category_id ORDER BY c.lft) AS category_paths,',
+            '  (SELECT GROUP_CONCAT(p.name, "<!--delimiter-->") FROM categories AS c INNER JOIN categories AS p WHERE c.lft BETWEEN p.lft AND p.rgt AND c.id = b.category_id ORDER BY c.lft) AS category_names,',
+            '  (SELECT GROUP_CONCAT(t.path, "<!--delimiter-->") FROM tagged INNER JOIN tags AS t ON tagged.tag_id = t.id WHERE tagged.blog_id = b.id) AS tag_paths,',
+            '  (SELECT GROUP_CONCAT(t.name, "<!--delimiter-->") FROM tagged INNER JOIN tags AS t ON tagged.tag_id = t.id WHERE tagged.blog_id = b.id) AS tag_names',
             'FROM blog AS b',
             'LEFT JOIN authors AS a ON b.author_id = a.id',
             'WHERE b.id IN('.implode(', ', $ids).')',
@@ -623,13 +623,19 @@ class Blog
                 'tags' => array(),
             );
             if (!empty($row['category_paths'])) {
-                $cats = array_combine(explode(',', $row['category_paths']), explode(',', $row['category_names']));
+                $cats = array_combine(
+                    explode('<!--delimiter-->', $row['category_paths']), 
+                    explode('<!--delimiter-->', $row['category_names'])
+                );
                 foreach ($cats as $path => $name) {
                     $post['categories'][] = $this->configInfo('categories', $path, $name);
                 }
             }
             if (!empty($row['tag_paths'])) {
-                $tags = array_combine(explode(',', $row['tag_paths']), explode(',', $row['tag_names']));
+                $tags = array_combine(
+                    explode('<!--delimiter-->', $row['tag_paths']),
+                    explode('<!--delimiter-->', $row['tag_names'])
+                );
                 foreach ($tags as $path => $name) {
                     $post['tags'][] = $this->configInfo('tags', $path, $name);
                 }

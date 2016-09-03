@@ -1464,7 +1464,7 @@ class BlogTest extends \BootPress\HTMLUnit\Component
                 'thumb' => '',
                 'title' => 'Unpublished Post',
                 'description' => '',
-                'content' => '<p>Unexpected token "end of statement block" of value "" in "content/category/unpublished-post/index.html.twig" at line 8.</p>',
+                'content' => '<p>Unexpected token "end of statement block" of value "" in "blog/content/category/unpublished-post/index.html.twig" at line 8.</p>',
                 'updated' => filemtime($file),
                 'featured' => false,
                 'published' => true,
@@ -1512,7 +1512,7 @@ class BlogTest extends \BootPress\HTMLUnit\Component
                 'thumb' => '',
                 'title' => 'Unpublished Post',
                 'description' => '',
-                'content' => 'The "content/category/unpublished-post/index.html.twig" Template',
+                'content' => 'The "blog/content/category/unpublished-post/index.html.twig" Template',
                 'updated' => filemtime($file),
                 'featured' => false,
                 'published' => false,
@@ -1721,7 +1721,7 @@ class BlogTest extends \BootPress\HTMLUnit\Component
         file_put_contents($default, 'Default {% template %}');
         
         // Syntax Error
-        $this->assertEquals('<p>Unknown "template" tag in "themes/default/default.html.twig" at line 1.</p>', static::$blog->theme->fetchTwig(array(
+        $this->assertEquals('<p>Unknown "template" tag in "blog/themes/default/default.html.twig" at line 1.</p>', static::$blog->theme->fetchTwig(array(
             'default' => $page->dir(),
             'vars' => array('syntax'=>'error'),
             'file' => 'default.html.twig',
@@ -1731,10 +1731,12 @@ class BlogTest extends \BootPress\HTMLUnit\Component
         unlink($default);
         $default = $page->file('blog/themes/default/default.html.twig');
         $this->assertFileExists($default);
-        $this->assertEquals('<p>Unknown "template" tag in "themes/default/default.html.twig" at line 1.</p>', static::$blog->theme->fetchTwig($default, array('syntax'=>'error'), 'testing'));
+        $this->assertEquals('<p>Unknown "template" tag in "blog/themes/default/default.html.twig" at line 1.</p>', static::$blog->theme->fetchTwig($default, array('syntax'=>'error'), 'testing'));
         unlink($default);
-        
-        // Theme::asset($path) array
+    }
+    
+    public function testThemeAssetMethod()
+    {
         $path = array(
             'image.jpg?query=string' => '.jpg image',
             'png image.png' => 'path/image.png',
@@ -1743,6 +1745,16 @@ class BlogTest extends \BootPress\HTMLUnit\Component
             'http://website.com/page/blog/themes/default/image.jpg?query=string' => '.jpg image',
             'png image.png' => 'http://website.com/page/blog/themes/default/path/image.png',
         ), static::$blog->theme->asset($path));
+    }
+    
+    public function testThemeDumpMethod()
+    {
+        $this->assertContains('Sfdump = window.Sfdump', static::$blog->theme->dump());
+        $this->assertContains('BootPress\Blog\Component Object', static::$blog->theme->dump(static::$blog));
+        $this->assertContains('BootPress\Blog\Component Object', static::$blog->theme->dump(array(
+            'blog' => static::$blog,
+            'vars' => array(),
+        )));
     }
     
     public function testThemeLayoutMethod()

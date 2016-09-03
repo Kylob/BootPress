@@ -6,23 +6,26 @@ use BootPress\Page\Component as Page;
 use BootPress\Asset\Component as Asset;
 use BootPress\Pagination\Component as Pagination;
 use Symfony\Component\Yaml\Yaml;
+use Symfony\Component\VarDumper\Cloner\VarCloner;
+use Symfony\Component\VarDumper\Dumper\HtmlDumper;
 use Aptoma\Twig\Extension\MarkdownExtension;
 use Aptoma\Twig\Extension\MarkdownEngine\PHPLeagueCommonMarkEngine;
 
 class Theme
 {
+    public static $templates = array();
+    private $vars = array();
     private $blog;
     private $page;
     private $twig;
     private $asset;
-    private $vars = array();
 
     public function __construct(Blog $blog)
     {
         $this->blog = $blog;
         $this->page = new PageClone();
     }
-
+    
     /**
      * Establishes global vars that will be accessible to all of your Twig templates.
      *
@@ -71,22 +74,25 @@ class Theme
      */
     public function fetchTwig($file, array $vars = array())
     {
+        $page = Page::html();
         if (is_null($this->twig)) {
             foreach (array('content', 'plugins', 'themes') as $dir) {
                 if (!is_dir($this->blog->folder.$dir)) {
                     mkdir($this->blog->folder.$dir, 0755, true);
                 }
             }
-            $loader = new \Twig_Loader_Filesystem($this->blog->folder);
+            $loader = new \Twig_Loader_Filesystem($page->dir());
             $loader->addPath($this->blog->folder.'plugins/', 'plugin');
             $this->twig = new \Twig_Environment($loader, array(
                 'cache' => $this->blog->folder.'cache/twig/',
+                'auto_reload' => true,
                 'autoescape' => false,
             ));
-            $this->twig->addFilter(new \Twig_SimpleFilter('asset', array($this, 'asset')));
             $this->twig->addGlobal('page', $this->page);
             $this->twig->addGlobal('pagination', new Pagination());
+            $this->twig->addFilter(new \Twig_SimpleFilter('asset', array($this, 'asset')));
             $this->twig->addExtension(new MarkdownExtension(new PHPLeagueCommonMarkEngine()));
+            $this->twig->addFunction(new \Twig_SimpleFunction('dump', array($this, 'dump'), array('is_safe'=>'html')));
             /*
             $twig->registerUndefinedFunctionCallback(function ($name) {
                 switch ($name) {
@@ -140,7 +146,6 @@ class Theme
             });
             */
         }
-
         if (is_array($file)) {
             $vars = (isset($file['vars']) && is_array($file['vars'])) ? $file['vars'] : array();
             $default = (isset($file['default']) && is_dir($file['default'])) ? rtrim($file['default'], '/').'/' : null;
@@ -149,11 +154,7 @@ class Theme
                 $file = array_pop($template);
             }
         }
-        $page = Page::html();
-        if (strpos($file, $this->blog->folder.'content/') === 0) {
-            $dir = dirname($file).'/';
-            $file = basename($file);
-        } elseif (strpos($file, $this->blog->folder.'themes/') === 0) {
+        if (strpos($file, $this->blog->folder.'themes/') === 0) {
             $dir = $this->blog->folder.'themes/';
             $file = substr($file, strlen($dir));
             $theme = strstr($file, '/', true).'/';
@@ -161,22 +162,26 @@ class Theme
             $file = substr($file, strlen($theme));
             $loader = $this->twig->getLoader();
             $loader->addPath($dir, 'theme');
+        } elseif (strpos($file, $page->dir()) === 0) {
+            $dir = dirname($file).'/';
+            $file = basename($file);
         } else {
-            $file = str_replace($page->dir['page'], '', $file);
-            throw new \LogicException("'{$file}' is not in the Blog's 'content' or 'themes' folders.");
+            throw new \LogicException("The '{$file}' is not in your website's Page::dir folder.");
         }
         if (!is_file($dir.$file)) {
-            $file = substr($file, strlen($this->blog->folder));
-            throw new \LogicException("The Blog's '{$file}' file does not exist.");
+            $file = substr($file, strlen($page->dir()));
+            throw new \LogicException("The '{$file}' file does not exist.");
         }
         $this->asset = array(
             'url' => $page->path('page', substr($dir, strlen($page->dir['page']), -1)),
             'chars' => $page->url['chars'],
         );
-        $vars = array_merge($vars, $this->vars);
+        $template = substr($dir.$file, strlen($page->dir()));
+        $vars = array_merge($this->vars, $vars);
         unset($vars['page']);
+        self::$templates[] = array('template'=>$template, 'vars'=>$vars);
         try {
-            $html = $this->twig->render(substr($dir.$file, strlen($this->blog->folder)), $vars);
+            $html = $this->twig->render($template, $vars);
         } catch (\Exception $e) {
             $html = '<p>'.$e->getMessage().'</p>';
         }
@@ -210,6 +215,35 @@ class Theme
         }
 
         return (isset($asset)) ? $asset : $path;
+    }
+    
+    /**
+     * Dumps a beautifully formatted debug string of your $var.
+     * 
+     * @param mixed $var If you don't have one, then we will pass the current template name and vars that we initially gave you.  Objects will only be named, and not displayed.
+     * 
+     * @return string
+     */
+    public function dump($var = null)
+    {
+        if (func_num_args() == 0) {
+            $var = array_slice(self::$templates, -1);
+            $var = array_shift($var);
+        } elseif (is_object($var)) {
+            $var = get_class($var).' Object';
+        } elseif (is_array($var)) {
+            array_walk_recursive($var, function (&$value) {
+                $value = is_object($value) ? get_class($value).' Object' : $value;
+            });
+        }
+        $dumper = new HtmlDumper();
+        $cloner = new VarCloner();
+        $cloner->setMaxString(100);
+        $output = '';
+        $dumper->dump($cloner->cloneVar($var), function ($line, $depth) use (&$output) {
+            $output .= ($depth >= 0) ? str_repeat("    ", $depth).$line."\n" : '';
+        });
+        return trim($output);
     }
 
     /**
