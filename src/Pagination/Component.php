@@ -27,6 +27,10 @@ class Component
     public function __get($name)
     {
         switch ($name) {
+            case 'pager':
+            case 'links':
+                return $this->$name;
+                break;
             case 'limit':
                 return ($this->get) ? ' LIMIT '.$this->start.', '.$this->limit : '';
                 break;
@@ -60,6 +64,8 @@ class Component
     public function __isset($name)
     {
         switch ($name) {
+            case 'pager':
+            case 'links':
             case 'limit':
             case 'last_page':
             case 'current_page':

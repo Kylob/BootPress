@@ -23,7 +23,7 @@ class Theme
     public function __construct(Blog $blog)
     {
         $this->blog = $blog;
-        $this->page = new PageClone();
+        $this->page = new \BootPress\Blog\Page();
     }
     
     /**

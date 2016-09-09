@@ -522,8 +522,9 @@ class Component
         $update = array();
         $stmt = $this->db->prepare(array(
             'SELECT f.id AS file_id, f.updated, p.tiny, p.id AS path_id',
-            'FROM files AS f INNER JOIN paths AS p ON f.id = p.file_id',
+            'FROM files AS f INNER JOIN paths AS p ON f.path_id = p.id',
             'WHERE f.file = ? AND f.query = ?',
+            'ORDER BY f.id ASC LIMIT 1',
         ), 'assoc');
         foreach ($cache as $dir => $files) {
             foreach ($files as $path => $tiny) {

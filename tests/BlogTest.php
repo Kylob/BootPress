@@ -381,7 +381,7 @@ class BlogTest extends \BootPress\HTMLUnit\Component
                 '</div>',
                 '<p>Tagged:',
                     '&nbsp;<a href="http://website.com/blog/tags/flowers.html" itemprop="keywords">Flowers</a>',
-                    '&nbsp;<a href="http://website.com/blog/tags/nature.html" itemprop="keywords">nature</a>',
+                    '&nbsp;<a href="http://website.com/blog/tags/nature.html" itemprop="keywords">Nature</a>',
                 '</p>',
                 '<p>',
                     'Published:',
@@ -434,7 +434,7 @@ class BlogTest extends \BootPress\HTMLUnit\Component
                         'thumb' => '',
                     ),
                     array(
-                        'name' => 'nature',
+                        'name' => 'Nature',
                         'path' => 'nature',
                         'url' => 'http://website.com/blog/tags/nature.html',
                         'thumb' => '',
@@ -467,7 +467,7 @@ class BlogTest extends \BootPress\HTMLUnit\Component
     public function testIndexPage()
     {
         $template = $this->blogPage('');
-        $file = static::$folder.'index/index.html.twig';
+        $file = static::$folder.'index.html.twig';
         ##
         #  {#
         #  title: Welcome to My Website
@@ -486,7 +486,7 @@ class BlogTest extends \BootPress\HTMLUnit\Component
         $this->assertEquals(array(
             'post' => array(
                 'page' => true,
-                'path' => 'index',
+                'path' => '',
                 'url' => 'http://website.com/',
                 'thumb' => '',
                 'title' => 'Welcome to My Website',
@@ -720,6 +720,22 @@ class BlogTest extends \BootPress\HTMLUnit\Component
         $this->assertEquals(array(2), array_keys($posts));
         $posts = static::$blog->query('similar', array(5 => 'not-exists'));
         $this->assertEquals(array(), $posts); // no results
+    }
+    
+    public function testFeaturedQuery()
+    {
+        $posts = static::$blog->query('featured');
+        $this->assertEquals(array(3), array_keys($posts));
+        // 3 - featured (Sep 12 2008) category/subcategory - keywords: Featured, markdown
+    }
+    
+    public function testRecentQuery()
+    {
+        $posts = static::$blog->query('recent');
+        $this->assertEquals(array(6,4,2), array_keys($posts));
+        // 6 - uncategorized (Oct 3 2010)
+        // 4 - flowery (Sep 12 2008) category/subcategory
+        // 2 - simple (Aug 3 2008) category - keywords: Simple, Markdown
     }
 
     public function testPostsQuery()
@@ -1240,7 +1256,7 @@ class BlogTest extends \BootPress\HTMLUnit\Component
                 '<a class="text-primary" style="font-size:15px; padding:0px 5px;" href="http://website.com/blog/tags/featured.html">Featured</a>',
                 '<a class="text-primary" style="font-size:15px; padding:0px 5px;" href="http://website.com/blog/tags/flowers.html">Flowers</a>',
                 '<a class="text-danger" style="font-size:27px; padding:0px 5px;" href="http://website.com/blog/tags/markdown.html">Markdown</a>',
-                '<a class="text-primary" style="font-size:15px; padding:0px 5px;" href="http://website.com/blog/tags/nature.html">nature</a>',
+                '<a class="text-primary" style="font-size:15px; padding:0px 5px;" href="http://website.com/blog/tags/nature.html">Nature</a>',
                 '<a class="text-success" style="font-size:21px; padding:0px 5px;" href="http://website.com/blog/tags/simple.html">Simple</a>',
             '</p>',
         ), static::$blog->theme->fetchTwig($template));
@@ -1279,7 +1295,7 @@ class BlogTest extends \BootPress\HTMLUnit\Component
                     'rank' => 5,
                 ),
                 array(
-                    'name' => 'nature',
+                    'name' => 'Nature',
                     'path' => 'nature',
                     'url' => 'http://website.com/blog/tags/nature.html',
                     'thumb' => '',
@@ -1586,7 +1602,7 @@ class BlogTest extends \BootPress\HTMLUnit\Component
             '    markdown:',
             '        name: Markdown',
             '    nature:',
-            '        name: nature',
+            '        name: Nature',
             '    simple:',
             '        name: Simple',
             '    unpublished:',
@@ -1634,7 +1650,7 @@ class BlogTest extends \BootPress\HTMLUnit\Component
                     'name' => 'Markdown',
                 ),
                 'nature' => array(
-                    'name' => 'nature',
+                    'name' => 'Nature',
                 ),
                 'simple' => array(
                     'name' => 'Simple',

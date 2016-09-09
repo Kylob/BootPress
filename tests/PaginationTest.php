@@ -6,6 +6,26 @@ use BootPress\Pagination\Component as Pagination;
 
 class PaginationTest extends \BootPress\HTMLUnit\Component
 {
+    
+    public function testDefaultLinks()
+    {
+        $pagination = new Pagination;
+        $this->assertEquals(array(
+            'wrapper' => '<ul class="pagination">%s</ul>',
+            'link' => '<li><a href="%s">%s</a></li>',
+            'active' => '<li class="active"><span>%s</span></li>',
+            'disabled' => '<li class="disabled"><span>%s</span></li>',
+            'previous' => '&laquo;',
+            'next' => '&raquo;',
+            'dots' => '&hellip;',
+        ), $pagination->links);
+        $this->assertEquals(array(
+            'wrapper' => '<ul class="pager">%s</ul>',
+            'previous' => '<li class="previous"><a href="%s">&laquo; %s</a></li>',
+            'next' => '<li class="next"><a href="%s">%s &raquo;</a></li>',
+        ), $pagination->pager);
+    }
+    
     public function testBootstrapLinks()
     {
         $pagination = new Pagination('bootstrap');
@@ -35,7 +55,6 @@ class PaginationTest extends \BootPress\HTMLUnit\Component
         $this->assertEquals('http://example.com?page=2of10', $pagination->next_url);
         $this->assertNull($pagination->start);
         $this->assertFalse(isset($pagination->start));
-        
     }
 
     public function testZurbFoundationLinks()

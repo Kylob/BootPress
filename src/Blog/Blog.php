@@ -122,6 +122,41 @@ class Blog
         }
     }
 
+    /**
+     * Executes common queries on the Blog database.
+     *
+     * If ``$type`` is:
+     * 
+     * - An ``array()`` - We will return an array of listings (ie. Blog posts or "The Loop") IF ``$params`` is a BootPress\Pagination\Component object (so we can know how many you want at a time), otherwise this will return the total number of listings.  If your array has one of the following keys, then it will only return the applicable listing's array (posts) or integer (count).
+     *   - '**archives**' - An ``array($from, $to)`` of UNIX timestamps.
+     *   - '**authors**' - An authors path (url) string eg. 'joe-bloggs'.
+     *   - '**tags**' - A tag path (url) string eg. 'tagged'.
+     *   - '**categories**' - A category path (url) string eg. 'category/subcategory'.
+     *   - '**search**' - A search term eg. 'search'.  This does not apply to 'archives', 'authors', or 'tags'.
+     *     - You "Loop" will also now contain a '**snippet**' string, and '**words**' array so that you can show the relevancy of your results.
+     *     - If you really want to get fancy, then include a ``$type['weights']`` array of numbers to give more or less "weight" to the following (in order now): 'path', 'title', 'description', 'keywords', and 'content'.  The default weights are ``array(1,1,1,1,1)``, every field being of equal importance.
+     *   - If by chance you already have the total count and want to save yourself a heap of time, you can include ``$type['count']`` with a total to help us out.
+     * - '**similar**' - Returns an array of similarly tagged listings for the current, comma-separated ``$page->keywords`` string.  Ordered by rank.
+     *   - (required) Set ``$params`` to the maximum number you want to return.
+     *   - To specify the keywords, then set the $params to an ``array((int) 3, (string) 'custom, tags')`` for example.
+     * - '**featured**' - Returns an array of featured blog posts.  Ordered by published date descending.
+     *   - (optional) Set ``$params`` to the maximum number you want to return.
+     * - '**recent**' - Returns an array of recent blog posts, and excludes any featured posts.  Ordered by published date descending.
+     *   - (optional) Set ``$params`` to the maximum number you want to return.  The default is 3.
+     * - '**posts**' - Get an array of ``$params`` listings, where $params is an array of posts (blog url paths) that you want.  Limit and order inherent.
+     * - '**archives**' - Returns an array of archive information for creating a menu of links.  Ordered by year descending (then months in order), and only includes years if count is greater than 0.
+     *   - (optional) Set ``$params`` to an array of 'Y' years eg. ``array(2015, 2016)``
+     * - '**authors**' - Returns an array of author information for creating a menu of links.  Ordered by count descending, then author name ascending.
+     *   - (optional) Set ``$params`` to the maximum number you want to return, or to a single author's url path eg. 'joe-bloggs'
+     * - '**tags**' - Returns an array of tag information for creating a menu of links.  Ordered by count descending, then tag name ascending.
+     *   - (optional) Set ``$params`` to the maximum number you want to return, or to a single tag's url path eg. 'tagged'
+     * - '**categories**' - Returns an array of category information for creating a menu of links.  Ordered by category name ascending.
+     *
+     * @param array|string $type 
+     * @param mixed $params  
+     * 
+     * @return mixed
+     */
     public function query($type, $params = null)
     {
         $posts = array();
@@ -320,9 +355,6 @@ class Blog
                     }
                     if (!empty($keywords)) {
                         $current = Page::html()->url['path'];
-                        if (empty($current)) {
-                            $current = 'index';
-                        }
                         $sitemap = new Sitemap();
                         foreach ($sitemap->search('"'.implode('" OR "', $keywords).'"', 'blog', $limit, array(0, 0, 0, 1, 0), 'AND m.path != "'.$current.'"') as $row) {
                             $posts[] = $row['id'];
@@ -332,7 +364,25 @@ class Blog
                     }
                 }
                 break;
-
+                
+            case 'featured':
+                $limit = (is_numeric($params)) ? ' LIMIT '.$params : '';
+                $posts = $this->info($this->db->ids(array(
+                    'SELECT id FROM blog',
+                    'WHERE featured < 0 AND published < 0',
+                    'ORDER BY featured, published ASC'.$limit,
+                )));
+                break;
+                
+            case 'recent':
+                $limit = (is_numeric($params)) ? $params : 3;
+                $posts = $this->info($this->db->ids(array(
+                    'SELECT id FROM blog',
+                    'WHERE featured = 0 AND published < 0',
+                    'ORDER BY featured, published ASC LIMIT '.$limit,
+                )));
+                break;
+                
             case 'posts': // (array) paths (limit and order inherent)
                 if (!empty($params)) {
                     foreach ((array) $params as $path) {
@@ -349,7 +399,7 @@ class Blog
                 }
                 break;
 
-            case 'archives': // optional (array) years (ordered by month DESC, and only starts if count > 0) - default all, no limit
+            case 'archives': // optional (array) years (ordered by year DESC, and only starts if count > 0) - default all, no limit
                 $years = (is_array($params)) ? $params : array();
                 if (empty($years)) {
                     $times = $this->db->row('SELECT ABS(MAX(published)) AS begin, ABS(MIN(published)) AS end FROM blog WHERE featured <= 0 AND published < 0', '', 'assoc');
@@ -513,9 +563,6 @@ class Blog
      */
     public function file($path)
     {
-        if (empty($path)) {
-            $path = 'index';
-        }
         $blog = $this->db->row('SELECT id, path, updated, search, content FROM blog WHERE path = ?', $path, 'assoc');
         if (!$current = $this->blogInfo($path)) {
             if ($blog) { // then remove
@@ -758,7 +805,7 @@ class Blog
             }
             $path = $seo;
         }
-        $file = $dir.$path.'/index.html.twig';
+        $file = (empty($path)) ? $dir.'index.html.twig' : $dir.$path.'/index.html.twig';
         if (!is_file($file)) {
             return false;
         }
@@ -800,6 +847,7 @@ class Blog
 
     private function updateDatabase()
     {
+        set_time_limit(0);
         $blog = $this->db->insert('blog', array('path', 'title', 'description', 'keywords', 'theme', 'thumb', 'featured', 'published', 'updated', 'author_id', 'category_id', 'search', 'content'));
         $tagged = $this->db->insert('tagged', array('blog_id', 'tag_id'));
         $sitemap = new Sitemap();
@@ -842,6 +890,11 @@ class Blog
         $this->updateConfig();
     }
 
+    /**
+     * Recursively goes through the blog's 'content' folder, and fixes any malnamed directories.
+     * 
+     * @param <type> $path There is nothing to see here.  This value gets passed within the method itself.
+     */
     private function normalizeFolders($path = null)
     {
         $page = Page::html();
@@ -860,6 +913,14 @@ class Blog
         }
     }
 
+    /**
+     * Gets the ID of the ``$table``'s ('categories', 'authors', or 'tags') ``$value``.  If the ``$value`` had not yet been set, then it will be now.  You can know if that is the case by calling ``$this->getId('updated', $table)``.  If the ``$table`` doesn't exist, then we'll let you know if anything has been updated.
+     * 
+     * @param string $table
+     * @param string $value
+     * 
+     * @return int|bool
+     */
     private function getId($table, $value)
     {
         if (is_null($this->ids)) {
@@ -890,7 +951,12 @@ class Blog
                 $this->ids[$table][$row['path']] = $row['id'];
             }
         }
-        $path = Page::html()->format('url', $value, ($table == 'categories') ? 'slashes' : false);
+        $page = Page::html();
+        $path = $value;
+        if (preg_match('/[^a-z0-9-\/]/', $value)) {
+            // Categories should never get here as folder names have already been enforced
+            $path = $page->format('url', $value);
+        }
         if (!isset($this->ids[$table][$path])) {
             $this->ids['updated'][$table] = true;
             if ($table == 'categories') {
@@ -911,6 +977,8 @@ class Blog
             } else {
                 if ($name = $this->config($table, $path, 'name')) {
                     $value = $name;
+                } elseif (strtolower($value) == $value) { // no uppercase characters
+                    $value = $page->format('title', $value);
                 }
                 $this->ids[$table][$path] = $this->db->insert($table, array('path' => $path, 'name' => $value));
             }
