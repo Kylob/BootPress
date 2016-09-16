@@ -9,11 +9,183 @@ use Symfony\Component\Yaml\Yaml;
 use Symfony\Component\VarDumper\Cloner\VarCloner;
 use Symfony\Component\VarDumper\Dumper\HtmlDumper;
 use Aptoma\Twig\Extension\MarkdownExtension;
+use Aptoma\Twig\Extension\MarkdownEngineInterface;
 use Aptoma\Twig\Extension\MarkdownEngine\PHPLeagueCommonMarkEngine;
 
 class Theme
 {
     public static $templates = array();
+    public static $functions = array(
+        // Array Functions
+        'array_​change_​key_​case', // Changes the case of all keys in an array
+        'array_​chunk', // Split an array into chunks
+        'array_​column', // Return the values from a single column in the input array
+        'array_​combine', // Creates an array by using one array for keys and another for its values
+        'array_​count_​values', // Counts all the values of an array
+        'array_​diff_​assoc', // Computes the difference of arrays with additional index check
+        'array_​diff_​key', // Computes the difference of arrays using keys for comparison
+        'array_​diff', // Computes the difference of arrays
+        'array_​fill_​keys', // Fill an array with values, specifying keys
+        'array_​fill', // Fill an array with values
+        'array_​filter', // Filters elements of an array using a callback function
+        'array_​flip', // Exchanges all keys with their associated values in an array
+        'array_​intersect_​assoc', // Computes the intersection of arrays with additional index check
+        'array_​intersect_​key', // Computes the intersection of arrays using keys for comparison
+        'array_​intersect', // Computes the intersection of arrays
+        'array_​key_​exists', // Checks if the given key or index exists in the array
+        'array_​keys', // Return all the keys or a subset of the keys of an array
+        'array_​map', // Applies the callback to the elements of the given arrays
+        'array_​merge_​recursive', // Merge two or more arrays recursively
+        'array_​merge', // Merge one or more arrays
+        'array_​multisort', // Sort multiple or multi-dimensional arrays
+        'array_​pad', // Pad array to the specified length with a value
+        'array_​pop', // Pop the element off the end of array
+        'array_​product', // Calculate the product of values in an array
+        'array_​push', // Push one or more elements onto the end of array
+        'array_​rand', // Pick one or more random entries out of an array
+        'array_​replace_​recursive', // Replaces elements from passed arrays into the first array recursively
+        'array_​replace', // Replaces elements from passed arrays into the first array
+        'array_​reverse', // Return an array with elements in reverse order
+        'array_​search', // Searches the array for a given value and returns the first corresponding key if successful
+        'array_​shift', // Shift an element off the beginning of array
+        'array_​slice', // Extract a slice of the array
+        'array_​splice', // Remove a portion of the array and replace it with something else
+        'array_​sum', // Calculate the sum of values in an array
+        'array_​unique', // Removes duplicate values from an array
+        'array_​unshift', // Prepend one or more elements to the beginning of an array
+        'array_​values', // Return all the values of an array
+        'array_​walk_​recursive', // Apply a user function recursively to every member of an array
+        'array_​walk', // Apply a user supplied function to every member of an array
+        // 'array', // Create an array
+        'arsort', // Sort an array in reverse order and maintain index association
+        'asort', // Sort an array and maintain index association
+        'compact', // Create array containing variables and their values
+        'count', // Count all elements in an array, or something in an object
+        'current', // Return the current element in an array
+        'each', // Return the current key and value pair from an array and advance the array cursor
+        'end', // Set the internal pointer of an array to its last element
+        // 'extract', // Import variables into the current symbol table from an array
+        'in_​array', // Checks if a value exists in an array
+        'key', // Fetch a key from an array
+        'krsort', // Sort an array by key in reverse order
+        'ksort', // Sort an array by key
+        // 'list', // Assign variables as if they were an array
+        'natcasesort', // Sort an array using a case insensitive "natural order" algorithm
+        'natsort', // Sort an array using a "natural order" algorithm
+        'next', // Advance the internal array pointer of an array
+        'prev', // Rewind the internal array pointer
+        'reset', // Set the internal pointer of an array to its first element
+        'rsort', // Sort an array in reverse order
+        'shuffle', // Shuffle an array
+        'sort', // Sort an array
+
+        // Date/Time Functions
+        'date_parse', // Returns associative array with detailed info about given date
+        'date_sun_info', // Returns an array with information about sunset/sunrise and twilight begin/end
+        'getdate', // Get date/time information
+        'gettimeofday', // Get current time
+        'gmdate', // Format a GMT/UTC date/time
+        'gmmktime', // Get Unix timestamp for a GMT date
+        'microtime', // Return current Unix timestamp with microseconds
+        'mktime', // Get Unix timestamp for a date
+        'strtotime', // Parse about any English textual datetime description into a Unix timestamp
+        'time', // Return current Unix timestamp
+        
+        // JSON Functions
+        'json_decode', // Decodes a JSON string
+        'json_encode', // Returns the JSON representation of a value
+        
+        // Misc Functions
+        'pack', //  Pack data into binary string
+        'unpack', // Unpack data from binary string
+        
+        // Multibyte String Functions
+        'mb_convert_case', // Perform case folding on a string
+        'mb_convert_encoding', // Convert character encoding
+        'mb_strimwidth', // Get truncated string with specified width
+        'mb_stripos', // Finds position of first occurrence of a string within another, case insensitive
+        'mb_stristr', // Finds first occurrence of a string within another, case insensitive
+        'mb_strlen', // Get string length
+        'mb_strpos', // Find position of first occurrence of string in a string
+        'mb_strrchr', // Finds the last occurrence of a character in a string within another
+        'mb_strrichr', // Finds the last occurrence of a character in a string within another, case insensitive
+        'mb_strripos', // Finds position of last occurrence of a string within another, case insensitive
+        'mb_strrpos', // Find position of last occurrence of a string in a string
+        'mb_strstr', // Finds first occurrence of a string within another
+        'mb_strtolower', // Make a string lowercase
+        'mb_strtoupper', // Make a string uppercase
+        'mb_strwidth', // Return width of string
+        'mb_substr_count', // Count the number of substring occurrences
+        'mb_substr', // Get part of string
+        
+        // PCRE Functions
+        'preg_filter', // Perform a regular expression search and replace
+        'preg_grep', // Return array entries that match the pattern
+        'preg_match_all', // Perform a global regular expression match
+        'preg_match', // Perform a regular expression match
+        'preg_quote', // Quote regular expression characters
+        'preg_replace', // Perform a regular expression search and replace
+        'preg_split', // Split string by a regular expression
+        
+        // String Functions
+        'bin2hex', // Convert binary data into hexadecimal representation
+        'chr', // Return a specific character - complements ord()
+        'chunk_split', // Split a string into smaller chunks
+        'explode', // Split a string by string
+        'hex2bin', // Decodes a hexadecimally encoded binary string
+        'htmlspecialchars', // Convert special characters to HTML entities
+        'implode', // Join array elements with a string
+        'lcfirst', // Make a string's first character lowercase
+        'ltrim', // Strip whitespace (or other characters) from the beginning of a string
+        'nl2br', // Inserts HTML line breaks before all newlines in a string
+        'number_format', // Format a number with grouped thousands
+        'ord', // Return ASCII value of character - complements chr()
+        'rtrim', // Strip whitespace (or other characters) from the end of a string
+        'str_ireplace', // Case-insensitive version of str_replace()
+        'str_pad', // Pad a string to a certain length with another string
+        'str_repeat', // Repeat a string
+        'str_replace', // Replace all occurrences of the search string with the replacement string
+        'str_rot13', // Perform the rot13 transform on a string
+        'str_shuffle', // Randomly shuffles a string
+        'str_split', // Convert a string to an array
+        'str_word_count', // Return information about words used in a string
+        'strip_tags', // Strip HTML and PHP tags from a string
+        'stripos', // Find the position of the first occurrence of a case-insensitive substring in a string
+        'stristr', // Case-insensitive strstr()
+        'strlen', // Get string length
+        'strpos', // Find the position of the first occurrence of a substring in a string
+        'strrchr', // Find the last occurrence of a character in a string
+        'strrev', // Reverse a string
+        'strripos', // Find the position of the last occurrence of a case-insensitive substring in a string
+        'strrpos', // Find the position of the last occurrence of a substring in a string
+        'strstr', // Find the first occurrence of a string
+        'strtok', // Tokenize string
+        'strtolower', // Make a string lowercase
+        'strtoupper', // Make a string uppercase
+        'strtr', // Translate characters or replace substrings
+        'substr_count', // Count the number of substring occurrences
+        'substr', // Return part of a string
+        'trim', // Strip whitespace (or other characters) from the beginning and end of a string
+        'ucfirst', // Make a string's first character uppercase
+        'ucwords', // Uppercase the first character of each word in a string
+        'wordwrap', // Wraps a string to a given number of characters
+        
+        // Variable handling Functions
+        'empty', // Determine whether a variable is empty
+        'gettype', // Get the type of a variable
+        'is_array', // Finds whether a variable is an array
+        'is_bool', // Finds out whether a variable is a boolean
+        'is_float', // Finds whether the type of a variable is float
+        'is_int', // Find whether the type of a variable is integer
+        'is_null', // Finds whether a variable is NULL
+        'is_numeric', // Finds whether a variable is a number or a numeric string
+        'is_string', // Find whether the type of a variable is string
+        'isset', // Determine if a variable is set and is not NULL
+        'serialize', // Generates a storable representation of a value
+        'settype', // Set the type of a variable
+        'unserialize', // Creates a PHP value from a stored representation
+        'unset', // Unset a given variable
+    );
     private $vars = array();
     private $blog;
     private $page;
@@ -90,61 +262,16 @@ class Theme
             ));
             $this->twig->addGlobal('page', $this->page);
             $this->twig->addGlobal('pagination', new Pagination());
+            $this->twig->addExtension(new MarkdownExtension(new Markdown($this)));
             $this->twig->addFilter(new \Twig_SimpleFilter('asset', array($this, 'asset')));
-            $this->twig->addExtension(new MarkdownExtension(new PHPLeagueCommonMarkEngine()));
             $this->twig->addFunction(new \Twig_SimpleFunction('dump', array($this, 'dump'), array('is_safe'=>'html')));
-            /*
-            $twig->registerUndefinedFunctionCallback(function ($name) {
-                switch ($name) {
-                    case 'isset': // null test
-                    case 'empty': // empty test
-                    case 'count': // length filter ?
-                    case 'in_array': // 
-                    case 'is_array': // 
-                    case 'date': // date function ?
-                    case 'time': // 
-                    case 'nl2br': // nl2br filter
-                    case 'var_dump': // dump function
-                    case 'preg_replace': // 
-                    case 'number_format': // number_format filter
-                    case 'implode': // join filter
-                    case 'explode': // split filter
-                    case 'array_keys': // keys filter
-                    case 'array_values': // 
-                    case 'array_flip': // 
-                    case 'array_reverse': // reverse filter
-                    case 'array_shift': // 
-                    case 'array_unshift': // 
-                    case 'array_pop': // 
-                    case 'array_push': // 
-                    case 'array_combine': // 
-                    case 'array_merge': // merge filter
-                    
-                    // PCRE Functions
-                    case 'preg_filter': // Perform a regular expression search and replace
-                    case 'preg_grep': // Return array entries that match the pattern
-                    case 'preg_match_all': // Perform a global regular expression match
-                    case 'preg_match': // Perform a regular expression match
-                    case 'preg_quote': // Quote regular expression characters
-                    case 'preg_replace': // Perform a regular expression search and replace
-                    case 'preg_split': // Split string by a regular expression
-                    
-                    // String Functions
-                    case 'ltrim': // Strip whitespace (or other characters) from the beginning of a string
-                    case 'rtrim': // Strip whitespace (or other characters) from the end of a string
-                    case 'str_pad': // Pad a string to a certain length with another string
-                    case 'str_repeat': // Repeat a string
-                    case 'strpos': // Find the position of the first occurrence of a substring in a string
-                    case 'strrpos': // Find the position of the last occurrence of a substring in a string
-                    case 'strstr': // Find the first occurrence of a string
-                    case 'wordwrap': // Wraps a string to a given number of characters
-
-                        return new Twig_SimpleFunction($name, $name);
-                        break;
+            $this->twig->registerUndefinedFunctionCallback(function ($name) {
+                if (in_array($name, self::$functions)) {
+                    return new \Twig_SimpleFunction($name, $name);
                 }
+
                 return false;
             });
-            */
         }
         if (is_array($file)) {
             $vars = (isset($file['vars']) && is_array($file['vars'])) ? $file['vars'] : array();
@@ -187,6 +314,25 @@ class Theme
         }
 
         return $html;
+    }
+
+    /**
+     * Returns an HTML Markdown string from $content, and allows you to set your preferred Markdown provider.
+     * 
+     * @param string|callable $content 
+     * 
+     * @return string|null
+     */
+    public function markdown($content)
+    {
+        static $markdown = null;
+        if ($content instanceof MarkdownEngineInterface) {
+            $markdown = $content;
+        } elseif (is_null($markdown)) {
+            $markdown = new PHPLeagueCommonMarkEngine;
+        }
+
+        return (is_string($content)) ? $markdown->transform($content) : null;
     }
 
     /**

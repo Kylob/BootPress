@@ -9,6 +9,8 @@ use BootPress\Hierarchy\Component as Hierarchy;
 use BootPress\Pagination\Component as Pagination;
 use Symfony\Component\Finder\Finder;
 use Symfony\Component\Yaml\Yaml;
+use Spartz\TextFormatter\TextFormatter;
+use URLify; // jbroadway/urlify
 
 /*
 $html = '';
@@ -714,6 +716,43 @@ class Blog
         return ($single) ? array_shift($posts) : $posts;
     }
 
+    /**
+     * Slugifies a folder path suitable for urls.
+     * 
+     * @param string $path    The path you would like to slugify
+     * @param mixed  $slashes If anything but false, it will allow your path to have slashes.
+     * 
+     * @return string
+     */
+    public function url($path, $slashes = false)
+    {
+        $path = ($slashes !== false) ? explode('/', $path) : array($path);
+        foreach ($path as $key => $value) {
+            $path[$key] = URLify::filter($value);
+        }
+
+        return implode('/', $path);
+    }
+
+    /**
+     * Properly formats a title string.
+     * 
+     * @param string $string 
+     * 
+     * @return string
+     */
+    public function title($string)
+    {
+        $string = explode(' ', $string);
+        foreach ($string as $key => $value) {
+            if (!empty($value) && mb_strtoupper($value) == $value) {
+                $string[$key] = mb_strtolower($value);
+            }
+        }
+
+        return TextFormatter::titleCase(implode(' ', $string));
+    }
+
     public function config($table = null, $path = null, $value = null)
     {
         if (is_null($this->config)) {
@@ -799,7 +838,7 @@ class Blog
         $page = Page::html();
         $dir = $this->folder.'content/';
         if (preg_match('/[^a-z0-9-\/]/', $path)) {
-            $seo = $page->format('url', $path, 'slashes');
+            $seo = $this->url($path, 'slashes');
             if (is_dir($dir.$path)) {
                 rename($dir.$path, $dir.$seo);
             }
@@ -901,7 +940,7 @@ class Blog
         $dir = $this->folder.'content/';
         // normalize
         if ($path && preg_match('/[^a-z0-9-\/]/', $path)) {
-            $seo = $page->format('url', $path, 'slashes');
+            $seo = $this->url($path, 'slashes');
             if (is_dir($dir.$path)) {
                 rename($dir.$path, $dir.$seo);
             }
@@ -955,7 +994,7 @@ class Blog
         $path = $value;
         if (preg_match('/[^a-z0-9-\/]/', $value)) {
             // Categories should never get here as folder names have already been enforced
-            $path = $page->format('url', $value);
+            $path = $this->url($value);
         }
         if (!isset($this->ids[$table][$path])) {
             $this->ids['updated'][$table] = true;
@@ -978,7 +1017,7 @@ class Blog
                 if ($name = $this->config($table, $path, 'name')) {
                     $value = $name;
                 } elseif (strtolower($value) == $value) { // no uppercase characters
-                    $value = $page->format('title', $value);
+                    $value = $this->title($value);
                 }
                 $this->ids[$table][$path] = $this->db->insert($table, array('path' => $path, 'name' => $value));
             }

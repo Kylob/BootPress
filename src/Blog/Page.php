@@ -12,7 +12,7 @@ class Page
 
     public function __construct()
     {
-        $this->methods = array('set', 'url', 'get', 'post', 'tag', 'format', 'meta', 'link', 'style', 'script', 'jquery', 'id');
+        $this->methods = array('set', 'url', 'get', 'post', 'tag', 'meta', 'link', 'style', 'script', 'jquery', 'id');
     }
 
     public function __get($name)

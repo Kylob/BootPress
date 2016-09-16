@@ -4,11 +4,11 @@ namespace BootPress\Tests;
 
 use BootPress\Page\Component as Page;
 use BootPress\Blog\Component as Blog;
-use BootPress\Blog\Component as Theme;
 use BootPress\Sitemap\Component as Sitemap;
 use BootPress\Pagination\Component as Pagination;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Yaml\Yaml;
+use Aptoma\Twig\Extension\MarkdownEngine\PHPLeagueCommonMarkEngine;
 
 class BlogTest extends \BootPress\HTMLUnit\Component
 {
@@ -58,6 +58,13 @@ class BlogTest extends \BootPress\HTMLUnit\Component
         ))); // the category doesn't exist
         
         $blog->db->connection()->close(); // releases Blog.db so it can be deleted
+        
+        // Test url() method
+        $this->assertEquals('lo-siento-no-hablo-espanol', $blog->url('Lo siento, no hablo español.'));
+        
+        // Test title() method
+        $this->assertEquals('This is a Messy Title. [Can You Fix It?]', $blog->title('this IS a messy title. [can you fix it?]'));
+        
         unset($blog);
         self::remove($folder);
     }
@@ -1466,7 +1473,7 @@ class BlogTest extends \BootPress\HTMLUnit\Component
             'author: anonymous',
             '#}',
             '',
-            'Twig {% if %} Error',
+            'Twig {{ file_get_contents("../undefined.txt") }} Error',
         )));
         $template = $this->blogPage('category/unpublished-post.html');
         $sitemap = new Sitemap();
@@ -1480,7 +1487,7 @@ class BlogTest extends \BootPress\HTMLUnit\Component
                 'thumb' => '',
                 'title' => 'Unpublished Post',
                 'description' => '',
-                'content' => '<p>Unexpected token "end of statement block" of value "" in "blog/content/category/unpublished-post/index.html.twig" at line 8.</p>',
+                'content' => '<p>Unknown "file_get_contents" function in "blog/content/category/unpublished-post/index.html.twig" at line 8.</p>',
                 'updated' => filemtime($file),
                 'featured' => false,
                 'published' => true,
@@ -1514,7 +1521,7 @@ class BlogTest extends \BootPress\HTMLUnit\Component
             'published: false', // will remove from sitemap
             '#}',
             '',
-            'The "{{ _self.getTemplateName() }}" Template',
+            'The "{{ _self.getTemplateName() }}" {{ strtoupper("Template") }}',
         )));
         $template = $this->blogPage('category/unpublished-post.html');
         $this->assertEquals(0, $sitemap->db->value('SELECT COUNT(*) FROM sitemap WHERE path = ?', 'category/unpublished-post'));
@@ -1528,7 +1535,7 @@ class BlogTest extends \BootPress\HTMLUnit\Component
                 'thumb' => '',
                 'title' => 'Unpublished Post',
                 'description' => '',
-                'content' => 'The "blog/content/category/unpublished-post/index.html.twig" Template',
+                'content' => 'The "blog/content/category/unpublished-post/index.html.twig" TEMPLATE',
                 'updated' => filemtime($file),
                 'featured' => false,
                 'published' => false,
@@ -1749,6 +1756,14 @@ class BlogTest extends \BootPress\HTMLUnit\Component
         $this->assertFileExists($default);
         $this->assertEquals('<p>Unknown "template" tag in "blog/themes/default/default.html.twig" at line 1.</p>', static::$blog->theme->fetchTwig($default, array('syntax'=>'error'), 'testing'));
         unlink($default);
+    }
+    
+    public function testThemeMarkdownMethod()
+    {
+        $this->assertEquals('<p>There is no &quot;I&quot; in den<strong>i</strong>al</p>', trim(static::$blog->theme->markdown('There is no "I" in den**i**al')));
+        $engine = new \BootPress\Blog\Markdown(static::$blog->theme);
+        $this->assertEquals('Blog\Markdown', $engine->getName());
+        $this->assertNull(static::$blog->theme->markdown(new PHPLeagueCommonMarkEngine));
     }
     
     public function testThemeAssetMethod()

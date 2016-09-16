@@ -249,15 +249,6 @@ class PageTest extends \BootPress\HTMLUnit\Component
         $this->assertEquals('<p>One Two Three</p>', $page->tag('p', array('class' => ''), 'One', 'Two', 'Three'));
     }
 
-    public function testFormatMethod()
-    {
-        $page = Page::html();
-        $this->assertEquals('lo-siento-no-hablo-espanol', $page->format('url', 'Lo siento, no hablo español.'));
-        $this->assertEquals('This is a Messy Title. [Can You Fix It?]', $page->format('title', 'this IS a messy title. [can you fix it?]'));
-        $this->assertEquals('<p>There is no &quot;I&quot; in den<strong>i</strong>al</p>', trim($page->format('markdown', 'There is no "I" in den**i**al')));
-        $this->assertEquals('Same Thing', $page->format('bogus', 'Same Thing'));
-    }
-
     public function testMetaMethod()
     {
         $page = Page::html();
