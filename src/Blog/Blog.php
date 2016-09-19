@@ -838,7 +838,7 @@ class Blog
             if (isset($value[$key])) {
                 $value = $value[$key];
             } else {
-                return;
+                return null;
             }
         }
 
