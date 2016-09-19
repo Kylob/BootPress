@@ -797,6 +797,7 @@ class Blog
      */
     public function config($key = null)
     {
+        $args = func_get_args(); // In PHP7, func_get_args() are changed by the time we use them, so we call it now
         if (is_null($this->config)) {
             $file = $this->folder.'config.yml';
             $this->config = (is_file($file)) ? (array) Yaml::parse(file_get_contents($file)) : array();
@@ -835,7 +836,7 @@ class Blog
             }
         }
         $value = $this->config;
-        foreach (func_get_args() as $key) {
+        foreach ($args as $key) {
             if (isset($value[$key])) {
                 $value = $value[$key];
             } else {
