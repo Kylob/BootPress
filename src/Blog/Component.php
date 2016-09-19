@@ -9,6 +9,18 @@ use BootPress\Hierarchy\Component as Hierarchy;
 
 class Component extends Blog
 {
+    
+    /**
+     * Takes the current path and determines if there is any Blog content associated with it.
+     * 
+     * 
+     * @return array|bool False if there is not, or a ``$template`` array suitable for passing to ``$this->fetchTwig($template)`` with the following keys:
+     *
+     * - '**file**' - The appropriate TWIG template to process the 'vars'.
+     * - '**type**' - The kind of Blog page you are working with.  Either 'page', 'txt', 'json', 'xml', 'rdf', 'rss', 'atom', 'post', 'category', 'index', 'archives', 'authors', or 'tags'
+     * - '**vars**' - 
+     * - '**default**' - 
+     */
     public function page()
     {
         $page = Page::html();
@@ -20,7 +32,6 @@ class Component extends Blog
             $listings,
             $listings.'/[archives:path]/[i:year]?/[i:month]?/[i:day]?',
             $listings.'/[authors|tags:path]/[:name]?',
-            $listings.'/[feed:path].xml',
             '[**:category]',
         ))) {
             $params = $route['params'];
@@ -32,15 +43,11 @@ class Component extends Blog
         if (!isset($method) || (isset($params['category']) && !is_dir($this->folder.'content/'.$params['category']))) {
             $template = false;
         } elseif ($template = $this->$method($params)) {
-            $template = array_combine(array('file', 'vars'), $template);
+            $template = array_combine(array('file', 'type', 'vars'), $template);
             $template['default'] = __DIR__.'/theme/';
-            if ($template['file'] == 'blog-feed.html.twig') {
-                $type = 'xml';
-                $xml = $this->theme->fetchTwig($template);
-                if (preg_match('/<\/(?P<type>(rss|feed))>\s*$/', $xml, $matches)) {
-                    $type = ($matches['type'] == 'rss') ? 'rss' : 'atom';
-                }
-                $template = $page->send(Asset::dispatch($type, $xml));
+            $this->theme->globalVars('blog', array('page' => $template['type']));
+            if (empty($template['file']) && $template['type'] != 'html') {
+                
             }
         }
 
@@ -53,7 +60,13 @@ class Component extends Blog
         extract($params); // 'id' and 'path'
         $page->enforce($path);
         $info = $this->info($id);
-        $this->theme->globalVars('blog', array('page' => ($info['page'] ? 'page' : 'post')));
+        if (is_bool($info['published'])) { // a page of some sort
+            if ($dot = strpos($path, '.')) {
+                return array('', substr($path, $dot + 1), array('content'=>$info['content']));
+            } else {
+                return array('blog-page.html.twig', 'post', $info);
+            }
+        }
         $vars['post'] = $info;
         if ($search = $page->request->query->get('search')) {
             $sitemap = new Sitemap();
@@ -71,7 +84,7 @@ class Component extends Blog
         }
         $vars['breadcrumbs'][$vars['post']['title']] = $vars['post']['url'];
 
-        return array('blog-post.html.twig', $vars);
+        return array('blog-post.html.twig', 'post', $vars);
     }
 
     private function listings($params, array $vars = array())
@@ -84,7 +97,7 @@ class Component extends Blog
             $url = $page->url('blog/listings');
         }
         $page->enforce($url);
-        $this->theme->globalVars('blog', array('page' => (isset($category) ? 'category' : 'index')));
+        $type = (isset($category)) ? 'category' : 'index';
         $vars['listings'] = array();
         $vars['breadcrumbs'] = $this->breadcrumbs();
         if (isset($category)) {
@@ -111,13 +124,12 @@ class Component extends Blog
             $vars['listings']['search'] = $search;
         }
 
-        return array('blog-listings.html.twig', $vars);
+        return array('blog-listings.html.twig', $type, $vars);
     }
 
     private function archives($params, array $vars = array())
     {
         $page = Page::html();
-        $this->theme->globalVars('blog', array('page' => 'archives'));
         list($path, $Y, $m, $d) = array_pad(array_values($params), 4, '');
         if (!empty($d)) {
             list($from, $to) = $this->range($Y, $m, $d);
@@ -153,24 +165,23 @@ class Component extends Blog
                 'Archives' => $path,
             ));
 
-            return array('blog-archives.html.twig', $vars);
+            return array('blog-archives.html.twig', 'archives', $vars);
         }
         $vars['listings']['archives'] = array($from, $to);
 
-        return array('blog-listings.html.twig', $vars);
+        return array('blog-listings.html.twig', 'archives', $vars);
     }
 
     private function authors($params, array $vars = array())
     {
         $page = Page::html();
         extract($params); // 'path' and 'name'?
-        $this->theme->globalVars('blog', array('page' => 'authors'));
         $vars['breadcrumbs'] = $this->breadcrumbs(array('Authors' => $path));
         if (!isset($name)) { // just authors, no posts
             $page->enforce($page->url('blog/listings', $path));
             $vars['authors'] = $this->query('authors');
 
-            return array('blog-authors.html.twig', $vars);
+            return array('blog-authors.html.twig', 'authors', $vars);
         }
         $vars['author'] = $this->query('authors', $name);
         if (empty($vars['author'])) {
@@ -182,20 +193,19 @@ class Component extends Blog
         $vars['listings']['count'] = $vars['author']['count'];
         $vars['listings']['authors'] = $name;
 
-        return array('blog-listings.html.twig', $vars);
+        return array('blog-listings.html.twig', 'authors', $vars);
     }
 
     private function tags($params, array $vars = array())
     {
         $page = Page::html();
         extract($params); // 'path' and 'name'?
-        $this->theme->globalVars('blog', array('page' => 'tags'));
         $vars['breadcrumbs'] = $this->breadcrumbs(array('Tags' => $path));
         if (!isset($name)) { // search all tags and get a frequency count
             $page->enforce($page->url('blog/listings', $path));
             $vars['tags'] = $this->query('tags');
 
-            return array('blog-tags.html.twig', $vars);
+            return array('blog-tags.html.twig', 'tags', $vars);
         }
         $vars['tag'] = $this->query('tags', $name);
         if (empty($vars['tag'])) {
@@ -207,16 +217,7 @@ class Component extends Blog
         $vars['listings']['count'] = $vars['tag']['count'];
         $vars['listings']['tags'] = $vars['tag']['path'];
 
-        return array('blog-listings.html.twig', $vars);
-    }
-
-    private function feed($params, array $vars = array())
-    {
-        Page::html()->enforce(Page::html()->url('blog/listings', 'feed.xml'));
-        $this->theme->globalVars('blog', array('page' => 'feed'));
-        $vars['listings'] = array();
-
-        return array('blog-feed.html.twig', $vars);
+        return array('blog-listings.html.twig', 'tags', $vars);
     }
 
     private function breadcrumbs(array $links = array())

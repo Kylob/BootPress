@@ -56,7 +56,6 @@ class Theme
         'array_​values', // Return all the values of an array
         'array_​walk_​recursive', // Apply a user function recursively to every member of an array
         'array_​walk', // Apply a user supplied function to every member of an array
-        // 'array', // Create an array
         'arsort', // Sort an array in reverse order and maintain index association
         'asort', // Sort an array and maintain index association
         'compact', // Create array containing variables and their values
@@ -203,8 +202,6 @@ class Theme
      *
      * @param string|array $name  The vars variable.  You can make this an ``array($name => $value, ...)`` to set multiple vars at once.
      * @param mixed        $value Of your vars $name if it is not an array.
-     *
-     * @return <type>
      */
     public function globalVars($name, $value = null)
     {
@@ -279,6 +276,9 @@ class Theme
             $file = (isset($file['file']) && is_string($file['file'])) ? $file['file'] : '';
             if ($default && $template = $this->getFiles($file, $default)) {
                 $file = array_pop($template);
+            }
+            if (empty($file)) {
+                return (isset($vars['content'])) ? $vars['content'] : '';
             }
         }
         if (strpos($file, $this->blog->folder.'themes/') === 0) {

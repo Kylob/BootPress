@@ -7,7 +7,7 @@
     <description>{{ blog.summary }}</description>
     
     {{ pagination.set('page', 20) }}
-    {% for post in page.blog(listings, pagination) %}
+    {% for post in page.blog([], pagination) %}
         <item>
             <title>{{ post.title }}</title>
             <link>{{ post.url }}</link>

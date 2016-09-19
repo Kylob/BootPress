@@ -20,6 +20,8 @@ class BlogTest extends \BootPress\HTMLUnit\Component
     {
         $dir = __DIR__.'/page/';
         foreach (array(
+            $dir.'blog/content/category/unpublished-post',
+            $dir.'blog/content/category/future-post',
             $dir.'blog/content/undefined',
             $dir.'blog/cache',
             $dir.'blog/plugins',
@@ -31,7 +33,7 @@ class BlogTest extends \BootPress\HTMLUnit\Component
             self::remove($target);
         }
     }
-
+    
     public function testConstructorWithoutDir()
     {
         $request = Request::create('http://website.com/');
@@ -135,26 +137,21 @@ class BlogTest extends \BootPress\HTMLUnit\Component
         #  This is my website.
         ##
         $this->assertEqualsRegExp('This is my website.', static::$blog->theme->fetchTwig($template));
-        $this->assertEquals('blog-post.html.twig', $template['file']);
+        $this->assertEquals('blog-page.html.twig', $template['file']);
         $this->assertEquals(array(
-            'post' => array(
-                'page' => true,
-                'path' => 'about',
-                'url' => 'http://website.com/about.html',
-                'thumb' => '',
+            'page' => array(
                 'title' => 'About',
-                'description' => '',
-                'content' => 'This is my website.',
-                'updated' => filemtime($file),
-                'featured' => false,
                 'published' => true,
-                'categories' => array(),
-                'tags' => array(),
             ),
-            'breadcrumbs' => array(
-                'Blog' => 'http://website.com/blog.html',
-                'About' => 'http://website.com/about.html',
-            ),
+            'path' => 'about',
+            'url' => 'http://website.com/about.html',
+            'title' => 'About',
+            'content' => 'This is my website.',
+            'updated' => filemtime($file),
+            'featured' => false,
+            'published' => true,
+            'categories' => array(),
+            'tags' => array(),
         ), $template['vars']);
     }
 
@@ -204,12 +201,15 @@ class BlogTest extends \BootPress\HTMLUnit\Component
         unset($template['vars']['post']['content']);
         $this->assertEquals(array(
             'post' => array(
-                'page' => false,
+                'page' => array(
+                    'title' => 'A Simple Post',
+                    'keywords' => 'Simple, Markdown',
+                    'published' => 'Aug 3, 2010',
+                    'author' => 'Joe Bloggs',
+                ),
                 'path' => 'category/simple-post',
                 'url' => 'http://website.com/category/simple-post.html',
-                'thumb' => '',
                 'title' => 'A Simple Post',
-                'description' => '',
                 'updated' => filemtime($file),
                 'featured' => false,
                 'published' => strtotime('Aug 3, 2010'),
@@ -303,12 +303,16 @@ class BlogTest extends \BootPress\HTMLUnit\Component
         unset($template['vars']['post']['content']);
         $this->assertEquals(array(
             'post' => array(
-                'page' => false,
+                'page' => array(
+                    'title' => 'A Featured Post',
+                    'keywords' => 'Featured, markdown',
+                    'published' => 'Sep 12, 2010',
+                    'author' => 'jOe bLoGgS',
+                    'featured' => true,
+                ),
                 'path' => 'category/subcategory/featured-post',
                 'url' => 'http://website.com/category/subcategory/featured-post.html',
-                'thumb' => '',
                 'title' => 'A Featured Post',
-                'description' => '',
                 'updated' => filemtime($file),
                 'featured' => true,
                 'published' => strtotime('Sep 12, 2010'),
@@ -410,12 +414,15 @@ class BlogTest extends \BootPress\HTMLUnit\Component
         unset($template['vars']['post']['content']);
         $this->assertEquals(array(
             'post' => array(
-                'page' => false,
+                'page' => array(
+                    'title' => 'A Flowery Post',
+                    'description' => 'Aren\'t they beautiful?',
+                    'keywords' => 'Flowers, nature',
+                    'published' => 'Sep 12, 2010',
+                ),
                 'path' => 'category/subcategory/flowery-post',
                 'url' => 'http://website.com/category/subcategory/flowery-post.html',
-                'thumb' => '',
                 'title' => 'A Flowery Post',
-                'description' => 'Aren\'t they beautiful?',
                 'updated' => filemtime($file),
                 'featured' => false,
                 'published' => strtotime('Sep 12, 2010'),
@@ -489,38 +496,34 @@ class BlogTest extends \BootPress\HTMLUnit\Component
         #  {% endmarkdown %}
         ##
         $this->assertEqualsRegExp('<p>This is the index page.</p>', static::$blog->theme->fetchTwig($template));
-        $this->assertEquals('blog-post.html.twig', $template['file']);
+        $this->assertEquals('blog-page.html.twig', $template['file']);
         $this->assertEquals(array(
-            'post' => array(
-                'page' => true,
-                'path' => '',
-                'url' => 'http://website.com/',
-                'thumb' => '',
+            'page' => array(
                 'title' => 'Welcome to My Website',
-                'description' => '',
-                'content' => '<p>This is the index page.</p>',
-                'updated' => filemtime($file),
-                'featured' => false,
+                'keywords' => 'simple, markDown',
                 'published' => true,
-                'categories' => array(),
-                'tags' => array(
-                    array(
-                        'name' => 'Simple',
-                        'path' => 'simple',
-                        'url' => 'http://website.com/blog/tags/simple.html',
-                        'thumb' => '',
-                    ),
-                    array(
-                        'name' => 'Markdown',
-                        'path' => 'markdown',
-                        'url' => 'http://website.com/blog/tags/markdown.html',
-                        'thumb' => '',
-                    ),
-                ),
             ),
-            'breadcrumbs' => array(
-                'Blog' => 'http://website.com/blog.html',
-                'Welcome to My Website' => 'http://website.com/',
+            'path' => '',
+            'url' => 'http://website.com/',
+            'title' => 'Welcome to My Website',
+            'content' => '<p>This is the index page.</p>',
+            'updated' => filemtime($file),
+            'featured' => false,
+            'published' => true,
+            'categories' => array(),
+            'tags' => array(
+                array(
+                    'name' => 'Simple',
+                    'path' => 'simple',
+                    'url' => 'http://website.com/blog/tags/simple.html',
+                    'thumb' => '',
+                ),
+                array(
+                    'name' => 'Markdown',
+                    'path' => 'markdown',
+                    'url' => 'http://website.com/blog/tags/markdown.html',
+                    'thumb' => '',
+                ),
             ),
         ), $template['vars']);
     }
@@ -555,12 +558,13 @@ class BlogTest extends \BootPress\HTMLUnit\Component
         $this->assertEquals('blog-post.html.twig', $template['file']);
         $this->assertEquals(array(
             'post' => array(
-                'page' => false,
+                'page' => array(
+                    'title' => 'Uncategorized Post',
+                    'published' => 'Oct 3, 2010',
+                ),
                 'path' => 'uncategorized-post',
                 'url' => 'http://website.com/uncategorized-post.html',
-                'thumb' => '',
                 'title' => 'Uncategorized Post',
-                'description' => '',
                 'content' => 'A post without a category',
                 'updated' => filemtime($file),
                 'featured' => false,
@@ -1400,8 +1404,7 @@ class BlogTest extends \BootPress\HTMLUnit\Component
 
     public function testFeedListings()
     {
-        $template = $this->blogPage('blog/feed.xml');
-        $this->assertInstanceOf('Symfony\Component\HttpFoundation\Response', $template);
+        $template = $this->blogPage('blog/feed.rss');
         $this->assertEqualsRegExp(array(
             '<?xml version="1.0"?>',
             '<rss version="2.0">',
@@ -1454,8 +1457,12 @@ class BlogTest extends \BootPress\HTMLUnit\Component
                     '</item>',
                 '</channel>',
             '</rss>',
-        ), $template->getContent());
-        $this->assertEquals('application/rss+xml', $template->headers->get('Content-Type'));
+        ), static::$blog->theme->fetchTwig($template));
+        unset($template['vars']['content']);
+        $this->assertEquals('', $template['file']);
+        $this->assertEquals('rss', $template['type']);
+        $this->assertEquals(array(), $template['vars']);
+        $this->assertFileExists($template['default']);
     }
 
     public function testNewPageInsertUpdateDelete()
@@ -1478,40 +1485,36 @@ class BlogTest extends \BootPress\HTMLUnit\Component
         $template = $this->blogPage('category/unpublished-post.html');
         $sitemap = new Sitemap();
         $this->assertEquals(1, $sitemap->db->value('SELECT COUNT(*) FROM sitemap WHERE path = ?', 'category/unpublished-post'));
-        $this->assertEquals('blog-post.html.twig', $template['file']);
+        $this->assertEquals('blog-page.html.twig', $template['file']);
         $this->assertEquals(array(
-            'post' => array(
-                'page' => true,
-                'path' => 'category/unpublished-post',
-                'url' => 'http://website.com/category/unpublished-post.html',
-                'thumb' => '',
+            'page' => array(
                 'title' => 'Unpublished Post',
-                'description' => '',
-                'content' => '<p>Unknown "file_get_contents" function in "blog/content/category/unpublished-post/index.html.twig" at line 8.</p>',
-                'updated' => filemtime($file),
-                'featured' => false,
+                'keywords' => 'Unpublished',
                 'published' => true,
-                'categories' => array(
-                    array(
-                        'name' => 'Category',
-                        'path' => 'category',
-                        'url' => 'http://website.com/category.html',
-                        'thumb' => '',
-                    ),
-                ),
-                'tags' => array(
-                    array(
-                        'name' => 'Unpublished',
-                        'path' => 'unpublished',
-                        'url' => 'http://website.com/blog/tags/unpublished.html',
-                        'thumb' => '',
-                    ),
+                'author' => 'anonymous',
+            ),
+            'path' => 'category/unpublished-post',
+            'url' => 'http://website.com/category/unpublished-post.html',
+            'title' => 'Unpublished Post',
+            'content' => '<p>Unknown "file_get_contents" function in "blog/content/category/unpublished-post/index.html.twig" at line 8.</p>',
+            'updated' => filemtime($file),
+            'featured' => false,
+            'published' => true,
+            'categories' => array(
+                array(
+                    'name' => 'Category',
+                    'path' => 'category',
+                    'url' => 'http://website.com/category.html',
+                    'thumb' => '',
                 ),
             ),
-            'breadcrumbs' => array(
-                'Blog' => 'http://website.com/blog.html',
-                'Category' => 'http://website.com/category.html',
-                'Unpublished Post' => 'http://website.com/category/unpublished-post.html',
+            'tags' => array(
+                array(
+                    'name' => 'Unpublished',
+                    'path' => 'unpublished',
+                    'url' => 'http://website.com/blog/tags/unpublished.html',
+                    'thumb' => '',
+                ),
             ),
         ), $template['vars']);
         file_put_contents($file, implode("\n", array(
@@ -1526,44 +1529,37 @@ class BlogTest extends \BootPress\HTMLUnit\Component
         $template = $this->blogPage('category/unpublished-post.html');
         $this->assertEquals(0, $sitemap->db->value('SELECT COUNT(*) FROM sitemap WHERE path = ?', 'category/unpublished-post'));
         unset($sitemap);
-        $this->assertEquals('blog-post.html.twig', $template['file']);
+        $this->assertEquals('blog-page.html.twig', $template['file']);
         $this->assertEquals(array(
-            'post' => array(
-                'page' => true,
-                'path' => 'category/unpublished-post',
-                'url' => 'http://website.com/category/unpublished-post.html',
-                'thumb' => '',
+            'page' => array(
                 'title' => 'Unpublished Post',
-                'description' => '',
-                'content' => 'The "blog/content/category/unpublished-post/index.html.twig" TEMPLATE',
-                'updated' => filemtime($file),
-                'featured' => false,
+                'keywords' => 'Unpublished',
                 'published' => false,
-                'categories' => array(
-                    array(
-                        'name' => 'Category',
-                        'path' => 'category',
-                        'url' => 'http://website.com/category.html',
-                        'thumb' => '',
-                    ),
-                ),
-                'tags' => array(
-                    array(
-                        'name' => 'Unpublished',
-                        'path' => 'unpublished',
-                        'url' => 'http://website.com/blog/tags/unpublished.html',
-                        'thumb' => '',
-                    ),
+            ),
+            'path' => 'category/unpublished-post',
+            'url' => 'http://website.com/category/unpublished-post.html',
+            'title' => 'Unpublished Post',
+            'content' => 'The "blog/content/category/unpublished-post/index.html.twig" TEMPLATE',
+            'updated' => filemtime($file),
+            'featured' => false,
+            'published' => false,
+            'categories' => array(
+                array(
+                    'name' => 'Category',
+                    'path' => 'category',
+                    'url' => 'http://website.com/category.html',
+                    'thumb' => '',
                 ),
             ),
-            'breadcrumbs' => array(
-                'Blog' => 'http://website.com/blog.html',
-                'Category' => 'http://website.com/category.html',
-                'Unpublished Post' => 'http://website.com/category/unpublished-post.html',
+            'tags' => array(
+                array(
+                    'name' => 'Unpublished',
+                    'path' => 'unpublished',
+                    'url' => 'http://website.com/blog/tags/unpublished.html',
+                    'thumb' => '',
+                ),
             ),
         ), $template['vars']);
-        
-        
         $template = $this->blogPage('category/unpublished-post.html'); // is not updated
         
         // verify seo folders enforced on a single access
@@ -1575,6 +1571,50 @@ class BlogTest extends \BootPress\HTMLUnit\Component
         
         self::remove(dirname($file));
         $this->assertFalse($this->blogPage('category/unpublished-post.html')); // an orphaned directory
+    }
+
+    public function testFuturePost()
+    {
+        $file = str_replace('/', DIRECTORY_SEPARATOR, static::$folder.'category/future-post/index.html.twig');
+        if (!is_dir(dirname($file))) {
+            mkdir(dirname($file), 0755, true);
+        }
+        self::remove($file);
+        
+        // Set a post published date an hour into the future
+        $now = time();
+        file_put_contents($file, implode("\n", array(
+            '{#',
+            'title: Future Post',
+            'published: '.date('M j Y h:i:s a', $now + 3600),
+            '#}',
+            '',
+            "I'm from 'da future",
+        )));
+        touch($file, $now - 3600); // so the file will re-update itself
+        $template = $this->blogPage('category/future-post.html');
+        $this->assertEquals($now + 3600, static::$blog->future_post);
+        $this->assertNull($template['vars']['post']['previous']);
+        
+        // Reset it to now
+        file_put_contents($file, implode("\n", array(
+            '{#',
+            'title: Future Post',
+            'published: '.date('M j Y h:i:s a', $now),
+            '#}',
+            '',
+            "I'm from 'da future",
+        )));
+        $template = $this->blogPage('category/future-post.html');
+        
+        // Set the future_post time to an hour past
+        static::$blog->db->settings('future_post', $now - 3600);
+        $template = $this->blogPage('category/future-post.html');
+        $this->assertNull(static::$blog->future_post);
+        $this->assertFalse(static::$blog->db->settings('future_post'));
+        $this->assertEquals('Uncategorized Post', $template['vars']['post']['previous']['title']);
+        self::remove(dirname($file));
+        $this->assertFalse($this->blogPage('category/future-post.html')); // an orphaned directory
     }
 
     public function testUpdatedConfigFile()

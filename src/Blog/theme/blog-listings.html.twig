@@ -59,7 +59,7 @@
     {% endif %}
     
     {{ page.set({
-        'title': date~ ' Archives at ' ~ blog.name,
+        'title': date ~ ' Archives at ' ~ blog.name,
         'description': 'All of the blog posts at ' ~ blog.name ~ ' that were published ' ~ archive|length == 4 ? 'on' : 'in' ~ date
     }) }}
     
@@ -96,8 +96,8 @@
         <big itemprop="name"><a href="{{ post.url }}">{{ post.title }}</a></big>
         {% if search %}
             <br>{{ post.snippet }}
-        {% elseif post.description %}
-            <br><span itemprop="headline">{{ post.description }}</span>
+        {% elseif post.page.description %}
+            <br><span itemprop="headline">{{ post.page.description }}</span>
         {% endif %}
     </p>
 {% endfor %}

@@ -13,29 +13,40 @@ use Spartz\TextFormatter\TextFormatter;
 use URLify; // jbroadway/urlify
 
 /*
+use BootPress\Page\Component as Page;
+use BootPress\Asset\Component as Asset;
+
 $html = '';
 $page = Page::html();
 $blog = new Blog();
 if ($template = $blog->page()) {
-    $html = $blog->theme->fetchTwig($template);
+    if (empty($template['file'])) { // A 'txt', 'json', 'xml', 'rdf', 'rss', or 'atom' page
+        $page->send(Asset::dispatch($template['type'], $template['vars']['content']));
+    } else { // An 'html' file
+        $html = $blog->theme->fetchTwig($template);
+    }
 }
 $html = $page->display($blog->theme->layout($html));
+$page->send(Asset::dispatch('html', $html));
 */
 
 class Blog
 {
+    /** @var string The current version. */
+    const VERSION = '0.9';
+
     /** @var BootPress\SQLite\Component The Blog's SQLite Database. */
     protected $db;
-    
+
     /** @var BootPress\Blog\Theme For creating the layout, and fetching Twig templates. */
     protected $theme;
-    
-    /** @var BootPress\Blog\Theme Where the Blog directory resides. */
+
+    /** @var string Where the Blog directory resides. */
     protected $folder;
-    
+
     /** @var array All of the Blog's saved config values. */
     private $config;
-    
+
     /** @var array Saved id's so we don't have to look them up twice. */
     private $ids;
 
@@ -54,9 +65,18 @@ class Blog
             case 'folder':
                 return $this->$name;
                 break;
+            default:
+                $value = $this->db->settings($name);
+                return ($value !== false) ? $value : null;
+                break;
         }
     }
 
+    /**
+     * Gets the Blog all set up and ready to go.
+     * 
+     * @param string $folder Where you want the blog to go, relative to ``$page->dir()``.
+     */
     public function __construct($folder = 'blog')
     {
         $page = Page::html();
@@ -80,15 +100,13 @@ class Blog
 
         // $this->db
         $this->db = new SQLite($this->folder.'Blog.db');
-        if ($this->db->created) {
+        if ($this->db->created || version_compare(self::VERSION, $this->db->settings('version'), '>')) {
+            $this->db->settings('version', self::VERSION);
             $this->db->create('blog', array(
                 'id' => 'INTEGER PRIMARY KEY',
+                'page' => 'TEXT NOT NULL DEFAULT "'.serialize(array()).'"',
                 'path' => 'TEXT UNIQUE COLLATE NOCASE',
                 'title' => 'TEXT NOT NULL DEFAULT ""',
-                'description' => 'TEXT NOT NULL DEFAULT ""',
-                'keywords' => 'TEXT NOT NULL DEFAULT ""',
-                'theme' => 'TEXT NOT NULL DEFAULT ""',
-                'thumb' => 'TEXT NOT NULL DEFAULT ""',
                 'featured' => 'INTEGER NOT NULL DEFAULT 0',
                 'published' => 'INTEGER NOT NULL DEFAULT 0',
                 'updated' => 'INTEGER NOT NULL DEFAULT 0',
@@ -120,7 +138,20 @@ class Blog
                 'blog_id' => 'INTEGER NOT NULL DEFAULT 0',
                 'tag_id' => 'INTEGER NOT NULL DEFAULT 0',
             ), array('unique' => 'blog_id, tag_id'));
-            $this->updateDatabase();
+            if ($this->db->created) {
+                $this->updateDatabase();
+            }
+        }
+        if (($next = $this->db->settings('future_post')) && $next < time()) {
+            $this->db->exec(array(
+                'UPDATE blog SET published = published * -1',
+                'WHERE featured <= 0 AND published > 1 AND published < ?',
+            ), time());
+            $this->db->settings('future_post', $this->db->value(array(
+                'SELECT published FROM blog',
+                'WHERE featured <= 0 AND published > 1',
+                'ORDER BY published ASC LIMIT 1',
+            )));
         }
     }
 
@@ -154,8 +185,8 @@ class Blog
      *   - (optional) Set ``$params`` to the maximum number you want to return, or to a single tag's url path eg. 'tagged'
      * - '**categories**' - Returns an array of category information for creating a menu of links.  Ordered by category name ascending.
      *
-     * @param array|string $type 
-     * @param mixed $params  
+     * @param array|string $type
+     * @param mixed        $params
      * 
      * @return mixed
      */
@@ -366,7 +397,7 @@ class Blog
                     }
                 }
                 break;
-                
+
             case 'featured':
                 $limit = (is_numeric($params)) ? ' LIMIT '.$params : '';
                 $posts = $this->info($this->db->ids(array(
@@ -375,7 +406,7 @@ class Blog
                     'ORDER BY featured, published ASC'.$limit,
                 )));
                 break;
-                
+
             case 'recent':
                 $limit = (is_numeric($params)) ? $params : 3;
                 $posts = $this->info($this->db->ids(array(
@@ -384,7 +415,7 @@ class Blog
                     'ORDER BY featured, published ASC LIMIT '.$limit,
                 )));
                 break;
-                
+
             case 'posts': // (array) paths (limit and order inherent)
                 if (!empty($params)) {
                     foreach ((array) $params as $path) {
@@ -559,20 +590,23 @@ class Blog
     /**
      * Analyzes the blog file $path and performes any database CRUD operations that may be needed.  We do this every time a blog page is visited, but this helps to speed up the process if you are doing things programatically.  If you are making lots of changes, then just delete the Blog.db file and everything will be updated.
      * 
-     * @param string $path The url (seo) path, NOT a file system path.
+     * @param string $path Either a folder (html) or file (txt|json|xml|rdf|rss|atom).
      * 
      * @return false|int False if the $path does not exist, or the database id if it does.
      */
     public function file($path)
     {
+        $html = (strpos($path, '.') === false) ? true : false;
         $blog = $this->db->row('SELECT id, path, updated, search, content FROM blog WHERE path = ?', $path, 'assoc');
         if (!$current = $this->blogInfo($path)) {
             if ($blog) { // then remove
                 $this->db->exec('DELETE FROM blog WHERE id = ?', $blog['id']);
-                $this->db->exec('DELETE FROM tagged WHERE blog_id = ?', $blog['id']);
-                $sitemap = new Sitemap();
-                $sitemap->delete($blog['path']);
-                unset($sitemap);
+                if ($html) {
+                    $this->db->exec('DELETE FROM tagged WHERE blog_id = ?', $blog['id']);
+                    $sitemap = new Sitemap();
+                    $sitemap->delete($blog['path']);
+                    unset($sitemap);
+                }
             }
 
             return false;
@@ -594,36 +628,39 @@ class Blog
             $blog['id'] = $this->db->insert('blog', $current);
         }
 
-        if (!empty($current['keywords'])) {
-            $tags = array_filter(array_map('trim', explode(',', $current['keywords'])));
-            foreach ($tags as $tag) {
-                $this->db->insert('tagged', array(
-                    'blog_id' => $blog['id'],
-                    'tag_id' => $this->getId('tags', $tag),
+        if ($html) {
+            $page = unserialize($current['page']);
+            if (isset($page['keywords'])) {
+                $tags = array_filter(array_map('trim', explode(',', $page['keywords'])));
+                foreach ($tags as $tag) {
+                    $this->db->insert('tagged', array(
+                        'blog_id' => $blog['id'],
+                        'tag_id' => $this->getId('tags', $tag),
+                    ));
+                }
+            }
+            $sitemap = new Sitemap();
+            if (!$current['search']) {
+                $sitemap->delete($blog['path']);
+            } else {
+                $category = 'blog';
+                if ($current['category_id'] > 0) {
+                    $category .= '/'.array_search($current['category_id'], $this->ids['categories']);
+                }
+                $sitemap->upsert($category, array(
+                    'id' => $blog['id'],
+                    'path' => $blog['path'],
+                    'title' => $current['title'],
+                    'description' => (isset($page['description'])) ? (string) $page['description'] : '',
+                    'keywords' => (isset($page['keywords'])) ? (string) $page['keywords'] : '',
+                    'thumb' => (isset($page['thumb'])) ? (string) $page['thumb'] : '',
+                    'content' => $current['content'],
+                    'updated' => $current['updated'],
                 ));
             }
+            unset($sitemap);
+            $this->updateConfig();
         }
-        $sitemap = new Sitemap();
-        if (!$current['search']) {
-            $sitemap->delete($blog['path']);
-        } else {
-            $category = 'blog';
-            if ($current['category_id'] > 0) {
-                $category .= '/'.array_search($current['category_id'], $this->ids['categories']);
-            }
-            $sitemap->upsert($category, array(
-                'id' => $blog['id'],
-                'path' => $blog['path'],
-                'title' => $current['title'],
-                'description' => $current['description'],
-                'keywords' => $current['keywords'],
-                'thumb' => $current['thumb'],
-                'content' => $current['content'],
-                'updated' => $current['updated'],
-            ));
-        }
-        unset($sitemap);
-        $this->updateConfig();
 
         return $blog['id'];
     }
@@ -645,7 +682,7 @@ class Blog
         $ids = (array) $ids;
         $posts = array_flip($ids);
         foreach ($this->db->all(array(
-            'SELECT b.id, b.path, b.thumb, b.title, b.description, b.content, ABS(b.updated) AS updated, ABS(b.featured) AS featured, ABS(b.published) AS published,',
+            'SELECT b.id, b.page, b.path, b.title, b.content, ABS(b.updated) AS updated, ABS(b.featured) AS featured, ABS(b.published) AS published,',
             '  a.id AS author_id, a.path AS author_path, a.name AS author_name,',
             '  (SELECT p.path || "," || p.title FROM blog AS p WHERE p.featured = b.featured AND p.published > b.published AND p.published < 0 ORDER BY p.featured, p.published ASC LIMIT 1) AS previous,',
             '  (SELECT n.path || "," || n.title FROM blog AS n WHERE n.featured = b.featured AND n.published < b.published AND n.published < 0 ORDER BY n.featured, n.published DESC LIMIT 1) AS next,',
@@ -658,12 +695,10 @@ class Blog
             'WHERE b.id IN('.implode(', ', $ids).')',
         ), '', 'assoc') as $row) {
             $post = array(
-                'page' => true, // until proven otherwise
+                'page' => unserialize($row['page']),
                 'path' => $row['path'],
                 'url' => $page->url('base', $row['path']),
-                'thumb' => $row['thumb'],
                 'title' => $row['title'],
-                'description' => $row['description'],
                 'content' => $row['content'],
                 'updated' => $row['updated'],
                 'featured' => ($row['featured'] > 0) ? true : false,
@@ -673,7 +708,7 @@ class Blog
             );
             if (!empty($row['category_paths'])) {
                 $cats = array_combine(
-                    explode('<!--delimiter-->', $row['category_paths']), 
+                    explode('<!--delimiter-->', $row['category_paths']),
                     explode('<!--delimiter-->', $row['category_names'])
                 );
                 foreach ($cats as $path => $name) {
@@ -690,7 +725,6 @@ class Blog
                 }
             }
             if ($row['published'] > 1) {
-                $post['page'] = false;
                 $post['author'] = $this->configInfo('authors', $row['author_path'], $row['author_name']);
                 $post['archive'] = $page->url('blog/listings', 'archives', date('Y/m/d/', $row['published']));
                 $post['previous'] = $row['previous'];
@@ -737,7 +771,7 @@ class Blog
     /**
      * Properly formats a title string.
      * 
-     * @param string $string 
+     * @param string $string
      * 
      * @return string
      */
@@ -753,7 +787,14 @@ class Blog
         return TextFormatter::titleCase(implode(' ', $string));
     }
 
-    public function config($table = null, $path = null, $value = null)
+    /**
+     * Retrieves any config value found in the Blog's config.yml file.
+     * 
+     * @param string $key The config array key whose value you would like to retrieve.  For every arg you include we will keep working our way up the config array to find just what you are looking for.
+     * 
+     * @return mixed The config key(s) value, or null if not found.
+     */
+    public function config($key = null)
     {
         if (is_null($this->config)) {
             $file = $this->folder.'config.yml';
@@ -792,24 +833,27 @@ class Blog
                 file_put_contents($file, Yaml::dump($this->config, 3));
             }
         }
-        switch (func_num_args()) {
-            case 0:
-                $param = $this->config;
-                break;
-            case 1:
-                $param = (isset($this->config[$table])) ? $this->config[$table] : null;
-                break;
-            case 2:
-                $param = (isset($this->config[$table][$path])) ? $this->config[$table][$path] : null;
-                break;
-            default:
-                $param = (isset($this->config[$table][$path][$value])) ? $this->config[$table][$path][$value] : null;
-                break;
+        $value = $this->config;
+        foreach (func_get_args() as $key) {
+            if (isset($value[$key])) {
+                $value = $value[$key];
+            } else {
+                return;
+            }
         }
 
-        return $param;
+        return $value;
     }
 
+    /**
+     * Compiles an array of useful information.
+     * 
+     * @param string $table Either 'authors', 'categories', or 'tags'.
+     * @param string $path  The ``$table``'s key (a url path).
+     * @param string $name  The default ``$table[$path]``'s name if one is not specified.
+     * 
+     * @return array Either an empty one if not found, or the 'name', 'path', 'url', and 'thumb' of the ``$table[$path]``.
+     */
     private function configInfo($table, $path, $name)
     {
         if (empty($path)) {
@@ -833,11 +877,34 @@ class Blog
         return $config;
     }
 
+    /**
+     * Looks up a file, and gleans the information in it.
+     * 
+     * @param string $path Either a folder (html) or file (txt|json|xml|rdf|rss|atom).
+     * 
+     * @return array|bool An array if the $path was found, or false if not.
+     */
     private function blogInfo($path)
     {
         $page = Page::html();
+        if (preg_match('/\.(txt|json|xml|rdf|rss|atom)$/', $path)) {
+            $file = $this->folder.'content/'.$path.'.twig';
+
+            return (is_file($file)) ? array(
+                'page' => serialize(array()),
+                'path' => $path,
+                'title' => '',
+                'featured' => 0,
+                'published' => 1,
+                'updated' => filemtime($file) * -1,
+                'author_id' => 0,
+                'category_id' => 0,
+                'search' => 0,
+                'content' => trim($this->theme->fetchTwig($file)),
+            ) : false;
+        }
         $dir = $this->folder.'content/';
-        if (preg_match('/[^a-z0-9-\/]/', $path)) {
+        if (preg_match('/[^'.$page->url['chars'].'\/]/', $path)) {
             $seo = $this->url($path, 'slashes');
             if (is_dir($dir.$path)) {
                 rename($dir.$path, $dir.$seo);
@@ -849,6 +916,7 @@ class Blog
             return false;
         }
         $page->set(array(), 'reset');
+        $default = $page->html;
         if (preg_match('/^\s*{#(?P<meta>.*)#}/sU', file_get_contents($file), $matches)) {
             $values = Yaml::parse($matches['meta']);
             if (is_array($values)) {
@@ -858,9 +926,21 @@ class Blog
         $content = trim($this->theme->fetchTwig($file));
         // Urlify $page->thumb, and any other assets we want to pass along
         $page->set($this->theme->asset($page->html));
+        $set = $page->html;
+        foreach ($default as $key => $value) {
+            if (isset($set[$key]) && $set[$key] == $value) {
+                unset($set[$key]); // no need to save the same thing over and over again
+            }
+        }
         $published = $page->published;
         if (is_string($published) && ($date = strtotime($published))) {
-            $published = $date * -1; // a post
+            if ($date > time()) {
+                $published = $date; // a future post
+                $next = ($date = $this->db->settings('future_post')) ? min($date, $published) : $published;
+                $this->db->settings('future_post', $next);
+            } else {
+                $published = $date * -1; // a post
+            }
         } elseif ($published === true) {
             $published = 1; // a page
         } else {
@@ -868,12 +948,9 @@ class Blog
         }
 
         return array(
+            'page' => serialize($set),
             'path' => $path,
             'title' => (string) $page->title,
-            'description' => (string) $page->description,
-            'keywords' => (string) $page->keywords,
-            'theme' => (string) $page->theme,
-            'thumb' => (string) $page->thumb,
             'featured' => ($page->featured === true) ? -1 : 0,
             'published' => $published,
             'updated' => filemtime($file) * -1,
@@ -884,41 +961,48 @@ class Blog
         );
     }
 
+    /**
+     * Puts everything into the database at once.  It's only called if ``$this->db->created``.
+     */
     private function updateDatabase()
     {
         set_time_limit(0);
-        $blog = $this->db->insert('blog', array('path', 'title', 'description', 'keywords', 'theme', 'thumb', 'featured', 'published', 'updated', 'author_id', 'category_id', 'search', 'content'));
+        $blog = $this->db->insert('blog', array('page', 'path', 'title', 'featured', 'published', 'updated', 'author_id', 'category_id', 'search', 'content'));
         $tagged = $this->db->insert('tagged', array('blog_id', 'tag_id'));
         $sitemap = new Sitemap();
         $sitemap->reset('blog');
         $this->normalizeFolders();
         $finder = new Finder();
-        $finder->files()->in($this->folder.'content')->name('index.html.twig')->sortByName();
+        $finder->files()->in($this->folder.'content')->name('index.html.twig')->name('/^['.Page::html()->url['chars'].']+\.(txt|json|xml|rdf|rss|atom)\.twig$/')->sortByName();
         foreach ($finder as $file) {
-            $path = str_replace('\\', '/', $file->getRelativePath());
-            if ($info = $this->blogInfo($path)) {
+            $html = (substr($file->getRelativePathname(), -15) == 'index.html.twig') ? true : false;
+            $path = ($html) ? $file->getRelativePath() : $file->getRelativePathname();
+            if ($info = $this->blogInfo(str_replace('\\', '/', $path))) {
                 $id = $this->db->insert($blog, array_values($info));
-                if (!empty($info['keywords'])) {
-                    $tags = array_filter(array_map('trim', explode(',', $info['keywords'])));
-                    foreach ($tags as $tag) {
-                        $this->db->insert($tagged, array($id, $this->getId('tags', $tag)));
+                if ($html) {
+                    $page = unserialize($info['page']);
+                    if (isset($page['keywords']) && !empty($page['keywords'])) {
+                        $tags = array_filter(array_map('trim', explode(',', $page['keywords'])));
+                        foreach ($tags as $tag) {
+                            $this->db->insert($tagged, array($id, $this->getId('tags', $tag)));
+                        }
                     }
-                }
-                $category = 'blog';
-                if ($info['category_id'] > 0) {
-                    $category .= '/'.array_search($info['category_id'], $this->ids['categories']);
-                }
-                if ($info['search']) {
-                    $sitemap->upsert($category, array(
-                        'id' => $id,
-                        'path' => $info['path'],
-                        'title' => $info['title'],
-                        'description' => $info['description'],
-                        'keywords' => $info['keywords'],
-                        'thumb' => $info['thumb'],
-                        'content' => $info['content'],
-                        'updated' => $info['updated'],
-                    ));
+                    $category = 'blog';
+                    if ($info['category_id'] > 0) {
+                        $category .= '/'.array_search($info['category_id'], $this->ids['categories']);
+                    }
+                    if ($info['search']) {
+                        $sitemap->upsert($category, array(
+                            'id' => $id,
+                            'path' => $info['path'],
+                            'title' => $info['title'],
+                            'description' => (isset($page['description'])) ? (string) $page['description'] : '',
+                            'keywords' => (isset($page['keywords'])) ? (string) $page['keywords'] : '',
+                            'thumb' => (isset($page['thumb'])) ? (string) $page['thumb'] : '',
+                            'content' => $info['content'],
+                            'updated' => $info['updated'],
+                        ));
+                    }
                 }
             }
         }
@@ -932,14 +1016,14 @@ class Blog
     /**
      * Recursively goes through the blog's 'content' folder, and fixes any malnamed directories.
      * 
-     * @param <type> $path There is nothing to see here.  This value gets passed within the method itself.
+     * @param string $path There is nothing to see here.  This value gets passed within the method itself.
      */
     private function normalizeFolders($path = null)
     {
         $page = Page::html();
         $dir = $this->folder.'content/';
         // normalize
-        if ($path && preg_match('/[^a-z0-9-\/]/', $path)) {
+        if ($path && preg_match('/[^'.$page->url['chars'].'\/]/', $path)) {
             $seo = $this->url($path, 'slashes');
             if (is_dir($dir.$path)) {
                 rename($dir.$path, $dir.$seo);
@@ -992,7 +1076,7 @@ class Blog
         }
         $page = Page::html();
         $path = $value;
-        if (preg_match('/[^a-z0-9-\/]/', $value)) {
+        if (preg_match('/[^'.$page->url['chars'].'\/]/', $value)) {
             // Categories should never get here as folder names have already been enforced
             $path = $this->url($value);
         }
@@ -1026,6 +1110,9 @@ class Blog
         return $this->ids[$table][$path];
     }
 
+    /**
+     * Updates the Blog's config.yml file if anything has changed.
+     */
     private function updateConfig()
     {
         if ($this->getId('updated', 'anything') === false) {
@@ -1035,7 +1122,7 @@ class Blog
 
         // Blog
         $yaml['blog'] = $this->config('blog');
-        
+
         // Authors
         $yaml['authors'] = array();
         $authors = $this->config('authors');
@@ -1097,7 +1184,7 @@ class Blog
         foreach ($tags as $path => $values) {
             $yaml['tags'][$path] = $values;
         }
-        
+
         file_put_contents($this->folder.'config.yml', Yaml::dump($yaml, 3));
     }
 }
