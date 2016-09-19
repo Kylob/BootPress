@@ -92,6 +92,7 @@ class Blog
         $listings = $this->config('blog', 'listings');
         $page->url('set', 'blog/listings', ($listings ? $blog.$listings.'/' : $blog));
         $page->url('set', 'blog/config', $blog.'page/'.substr($this->folder, strlen($page->dir['page'])));
+        print_r([$listings, $page->url('blog/listings'), $page->url('blog/config')]);
 
         // $this->theme
         $this->theme = new Theme($this);
