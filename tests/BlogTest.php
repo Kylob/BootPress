@@ -615,11 +615,11 @@ class BlogTest extends \BootPress\HTMLUnit\Component
         $pagination = new Pagination();
         $listings = static::$blog->query($template['vars']['listings'], $pagination);
         $this->assertEquals(4, static::$blog->query($template['vars']['listings'], 'count'));
-        $this->assertEquals(array(3,6,4,2), array_keys($listings));
-        // 3 - featured (Sep 12 2008) category/subcategory
-        // 6 - uncategorized (Oct 3 2010)
-        // 4 - flowery (Sep 12 2008) category/subcategory
-        // 2 - simple (Aug 3 2008) category
+        $this->assertEquals(array(4,7,5,3), array_keys($listings));
+        // 4 - featured (Sep 12 2008) category/subcategory
+        // 7 - uncategorized (Oct 3 2010)
+        // 5 - flowery (Sep 12 2008) category/subcategory
+        // 3 - simple (Aug 3 2008) category
     }
 
     public function testBlogListingsSearch()
@@ -649,10 +649,10 @@ class BlogTest extends \BootPress\HTMLUnit\Component
         $listings = static::$blog->query($template['vars']['listings'], $pagination);
         unset($template['vars']['listings']['count']); // to test the actual query
         $this->assertEquals(1, static::$blog->query($template['vars']['listings'], 'count'));
-        $this->assertEquals(array(2), array_keys($listings));
-        // 2 - simple (Aug 3 2008) category
-        $this->assertEquals('A <b>Simple</b> <b>Post</b>', $listings[2]['snippet']);
-        $this->assertEquals(array('simple post'), $listings[2]['words']);
+        $this->assertEquals(array(3), array_keys($listings));
+        // 3 - simple (Aug 3 2008) category
+        $this->assertEquals('A <b>Simple</b> <b>Post</b>', $listings[3]['snippet']);
+        $this->assertEquals(array('simple post'), $listings[3]['words']);
     }
 
     public function testBlogCategoriesSearch()
@@ -710,25 +710,25 @@ class BlogTest extends \BootPress\HTMLUnit\Component
         $listings = static::$blog->query($template['vars']['listings'], $pagination);
         unset($template['vars']['listings']['count']); // to test the actual query
         $this->assertEquals(1, static::$blog->query($template['vars']['listings'], 'count'));
-        $this->assertEquals(array(4), array_keys($listings));
-        // 4 - flowery (Sep 12 2008) category/subcategory
-        $this->assertEquals('Aren\'t they <b>beautiful</b>?', $listings[4]['snippet']);
-        $this->assertEquals(array('beautiful'), $listings[4]['words']);
+        $this->assertEquals(array(5), array_keys($listings));
+        // 5 - flowery (Sep 12 2008) category/subcategory
+        $this->assertEquals('Aren\'t they <b>beautiful</b>?', $listings[5]['snippet']);
+        $this->assertEquals(array('beautiful'), $listings[5]['words']);
     }
 
     public function testSimilarQuery()
     {
         $template = $this->blogPage(''); // keywords: simple, markDown
         $posts = static::$blog->query('similar', 10); // determined via $page->keywords
-        $this->assertEquals(array(2,3), array_keys($posts));
-        // 2 - simple (Aug 3 2008) category - keywords: Simple, Markdown
-        // 3 - featured (Sep 12 2008) category/subcategory - keywords: Featured, markdown
+        $this->assertEquals(array(3,4), array_keys($posts));
+        // 3 - simple (Aug 3 2008) category - keywords: Simple, Markdown
+        // 4 - featured (Sep 12 2008) category/subcategory - keywords: Featured, markdown
         
         // manual query
         $posts = static::$blog->query('similar', array(5, 'simple')); // specify keywords to use
-        $this->assertEquals(array(2), array_keys($posts));
+        $this->assertEquals(array(3), array_keys($posts));
         $posts = static::$blog->query('similar', array(5 => 'simple')); // specify keywords to use
-        $this->assertEquals(array(2), array_keys($posts));
+        $this->assertEquals(array(3), array_keys($posts));
         $posts = static::$blog->query('similar', array(5 => 'not-exists'));
         $this->assertEquals(array(), $posts); // no results
     }
@@ -736,17 +736,17 @@ class BlogTest extends \BootPress\HTMLUnit\Component
     public function testFeaturedQuery()
     {
         $posts = static::$blog->query('featured');
-        $this->assertEquals(array(3), array_keys($posts));
-        // 3 - featured (Sep 12 2008) category/subcategory - keywords: Featured, markdown
+        $this->assertEquals(array(4), array_keys($posts));
+        // 4 - featured (Sep 12 2008) category/subcategory - keywords: Featured, markdown
     }
     
     public function testRecentQuery()
     {
         $posts = static::$blog->query('recent');
-        $this->assertEquals(array(6,4,2), array_keys($posts));
-        // 6 - uncategorized (Oct 3 2010)
-        // 4 - flowery (Sep 12 2008) category/subcategory
-        // 2 - simple (Aug 3 2008) category - keywords: Simple, Markdown
+        $this->assertEquals(array(7,5,3), array_keys($posts));
+        // 7 - uncategorized (Oct 3 2010)
+        // 5 - flowery (Sep 12 2008) category/subcategory
+        // 3 - simple (Aug 3 2008) category - keywords: Simple, Markdown
     }
 
     public function testPostsQuery()
@@ -757,10 +757,10 @@ class BlogTest extends \BootPress\HTMLUnit\Component
             'category/subcategory/flowery-post',
             'category/subcategory/featured-post',
         ));
-        $this->assertEquals(array(6,4,3), array_keys($posts));
-        // 6 - uncategorized (Oct 3 2010)
-        // 4 - flowery (Sep 12 2008) category/subcategory
-        // 3 - featured (Sep 12 2008) category/subcategory
+        $this->assertEquals(array(7,5,4), array_keys($posts));
+        // 7 - uncategorized (Oct 3 2010)
+        // 5 - flowery (Sep 12 2008) category/subcategory
+        // 4 - featured (Sep 12 2008) category/subcategory
     }
 
     public function testCategoriesQuery()
@@ -845,10 +845,10 @@ class BlogTest extends \BootPress\HTMLUnit\Component
         $listings = static::$blog->query($template['vars']['listings'], $pagination);
         $this->assertEquals(3, static::$blog->query($template['vars']['listings'], 'count'));
         $this->assertEquals(3, static::$blog->query(array('categories' => 'category'), 'count')); // to test string conversion
-        $this->assertEquals(array(3,4,2), array_keys($listings));
-        // 3 - featured (Sep 12 2008) category/subcategory
-        // 4 - flowery (Sep 12 2008) category/subcategory
-        // 2 - simple (Aug 3 2008) category
+        $this->assertEquals(array(4,5,3), array_keys($listings));
+        // 4 - featured (Sep 12 2008) category/subcategory
+        // 5 - flowery (Sep 12 2008) category/subcategory
+        // 3 - simple (Aug 3 2008) category
     }
 
     public function testBlogCategorySubcategoryListings()
@@ -896,9 +896,9 @@ class BlogTest extends \BootPress\HTMLUnit\Component
         $pagination = new Pagination();
         $listings = static::$blog->query($template['vars']['listings'], $pagination);
         $this->assertEquals(2, static::$blog->query($template['vars']['listings'], 'count'));
-        $this->assertEquals(array(3,4), array_keys($listings));
-        // 3 - featured (Sep 12 2008) category/subcategory
-        // 4 - flowery (Sep 12 2008) category/subcategory
+        $this->assertEquals(array(4,5), array_keys($listings));
+        // 4 - featured (Sep 12 2008) category/subcategory
+        // 5 - flowery (Sep 12 2008) category/subcategory
     }
 
     public function testArchivesListings()
@@ -1070,11 +1070,11 @@ class BlogTest extends \BootPress\HTMLUnit\Component
         $pagination = new Pagination();
         $listings = static::$blog->query($template['vars']['listings'], $pagination);
         $this->assertEquals(4, static::$blog->query($template['vars']['listings'], 'count'));
-        $this->assertEquals(array(3,6,4,2), array_keys($listings));
-        // 3 - featured (Sep 12 2008) category/subcategory
-        // 6 - uncategorized (Oct 3 2010)
-        // 4 - flowery (Sep 12 2008) category/subcategory
-        // 2 - simple (Aug 3 2008) category
+        $this->assertEquals(array(4,7,5,3), array_keys($listings));
+        // 4 - featured (Sep 12 2008) category/subcategory
+        // 7 - uncategorized (Oct 3 2010)
+        // 5 - flowery (Sep 12 2008) category/subcategory
+        // 3 - simple (Aug 3 2008) category
     }
 
     public function testArchivesMonthlyListings()
@@ -1116,9 +1116,9 @@ class BlogTest extends \BootPress\HTMLUnit\Component
         $pagination = new Pagination();
         $listings = static::$blog->query($template['vars']['listings'], $pagination);
         $this->assertEquals(2, static::$blog->query($template['vars']['listings'], 'count'));
-        $this->assertEquals(array(3,4), array_keys($listings));
-        // 3 - featured (Sep 12 2008) category/subcategory
-        // 4 - flowery (Sep 12 2008) category/subcategory
+        $this->assertEquals(array(4,5), array_keys($listings));
+        // 4 - featured (Sep 12 2008) category/subcategory
+        // 5 - flowery (Sep 12 2008) category/subcategory
     }
 
     public function testArchivesDailyListings()
@@ -1159,8 +1159,8 @@ class BlogTest extends \BootPress\HTMLUnit\Component
         $pagination = new Pagination();
         $listings = static::$blog->query($template['vars']['listings'], $pagination);
         $this->assertEquals(1, static::$blog->query($template['vars']['listings'], 'count'));
-        $this->assertEquals(array(6), array_keys($listings));
-        // 6 - uncategorized (Oct 3 2010)
+        $this->assertEquals(array(7), array_keys($listings));
+        // 7 - uncategorized (Oct 3 2010)
     }
 
     public function testAuthorsListings()
@@ -1249,9 +1249,9 @@ class BlogTest extends \BootPress\HTMLUnit\Component
         $listings = static::$blog->query($template['vars']['listings'], $pagination);
         unset($template['vars']['listings']['count']); // to test the actual query
         $this->assertEquals(2, static::$blog->query($template['vars']['listings'], 'count'));
-        $this->assertEquals(array(3,2), array_keys($listings));
-        // 3 - featured (Sep 12 2008) category/subcategory
-        // 2 - simple (Aug 3 2008) category
+        $this->assertEquals(array(4,3), array_keys($listings));
+        // 4 - featured (Sep 12 2008) category/subcategory
+        // 3 - simple (Aug 3 2008) category
     }
 
     public function testTagsListings()
@@ -1396,10 +1396,10 @@ class BlogTest extends \BootPress\HTMLUnit\Component
         $listings = static::$blog->query($template['vars']['listings'], $pagination);
         unset($template['vars']['listings']['count']); // to test the actual query
         $this->assertEquals(3, static::$blog->query($template['vars']['listings'], 'count'));
-        $this->assertEquals(array(3,2,5), array_keys($listings));
-        // 3 - featured (Sep 12 2008) category/subcategory
-        // 2 - simple (Aug 3 2008) category
-        // 5 - index
+        $this->assertEquals(array(4,3,6), array_keys($listings));
+        // 4 - featured (Sep 12 2008) category/subcategory
+        // 3 - simple (Aug 3 2008) category
+        // 6 - index
     }
 
     public function testFeedListings()

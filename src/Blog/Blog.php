@@ -976,7 +976,7 @@ class Blog
         $finder->files()->in($this->folder.'content')->name('index.html.twig')->name('/^['.Page::html()->url['chars'].']+\.(txt|json|xml|rdf|rss|atom)\.twig$/')->sortByName();
         foreach ($finder as $file) {
             $html = (substr($file->getRelativePathname(), -15) == 'index.html.twig') ? true : false;
-            $path = ($html) ? $file->getRelativePath() : $file->getRelativePathname();
+            $path = ($html) ? $file->getRelativePath() : substr($file->getRelativePathname(), 0, -5); // remove .twig
             if ($info = $this->blogInfo(str_replace('\\', '/', $path))) {
                 $id = $this->db->insert($blog, array_values($info));
                 if ($html) {
