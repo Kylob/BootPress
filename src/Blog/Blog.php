@@ -14,6 +14,7 @@ use URLify; // jbroadway/urlify
 
 /*
 use BootPress\Page\Component as Page;
+use BootPress\Blog\Component as Blog;
 use BootPress\Asset\Component as Asset;
 
 $html = '';
