@@ -18,12 +18,15 @@ use BootPress\Asset\Component as Asset;
 
 $html = '';
 $page = Page::html();
+if ($asset = Asset::cached('assets')) {
+    $page->send($asset);
+}
 $blog = new Blog();
 if ($template = $blog->page()) {
     if (empty($template['file'])) { // A 'txt', 'json', 'xml', 'rdf', 'rss', or 'atom' page
         $page->send(Asset::dispatch($template['type'], $template['vars']['content']));
     } else { // An 'html' file
-        $html = $blog->theme->fetchTwig($template);
+        $html = $blog->theme->renderTwig($template);
     }
 }
 $html = $page->display($blog->theme->layout($html));
@@ -901,7 +904,7 @@ class Blog
                 'author_id' => 0,
                 'category_id' => 0,
                 'search' => 0,
-                'content' => trim($this->theme->fetchTwig($file)),
+                'content' => trim($this->theme->renderTwig($file)),
             ) : false;
         }
         $dir = $this->folder.'content/';
@@ -924,7 +927,7 @@ class Blog
                 $page->set($values);
             }
         }
-        $content = trim($this->theme->fetchTwig($file));
+        $content = trim($this->theme->renderTwig($file));
         // Urlify $page->thumb, and any other assets we want to pass along
         $page->set($this->theme->asset($page->html));
         $set = $page->html;

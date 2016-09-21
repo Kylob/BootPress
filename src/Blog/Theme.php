@@ -190,6 +190,7 @@ class Theme
     private $page;
     private $twig;
     private $asset;
+    private $plugin;
 
     public function __construct(Blog $blog)
     {
@@ -197,6 +198,108 @@ class Theme
         $this->page = new \BootPress\Blog\Page();
     }
     
+    /**
+     * Gets the Twig_Environment instance.  If you get to this before we do, then you can customize the ``$options``.
+     * 
+     * @param array $options An array of options.
+     * 
+     * @return object
+     *
+     * @link http://twig.sensiolabs.org/doc/api.html#environment-options
+     */
+    public function getTwig(array $options = array())
+    {
+        if (is_null($this->twig)) {
+            $page = Page::html();
+            foreach (array('content', 'plugins', 'themes') as $dir) {
+                if (!is_dir($this->blog->folder.$dir)) {
+                    mkdir($this->blog->folder.$dir, 0755, true);
+                }
+            }
+            $loader = new \Twig_Loader_Filesystem($page->dir());
+            $loader->addPath($this->blog->folder.'plugins/', 'plugin');
+            $this->twig = new \Twig_Environment($loader, array_merge(array(
+                'cache' => $this->blog->folder.'cache/twig/',
+                'auto_reload' => true,
+                'autoescape' => false,
+            ), $options));
+            $this->twig->addGlobal('page', $this->page);
+            $this->twig->addGlobal('pagination', new Pagination());
+            $this->twig->addExtension(new MarkdownExtension(new Markdown($this)));
+            $this->twig->addFilter(new \Twig_SimpleFilter('asset', array($this, 'asset')));
+            $this->twig->addFunction(new \Twig_SimpleFunction('this', array($this, 'this')));
+            $this->twig->addFunction(new \Twig_SimpleFunction('dump', array($this, 'dump'), array('is_safe'=>'html')));
+            $this->twig->registerUndefinedFunctionCallback(function ($name) {
+                if (in_array($name, self::$functions)) {
+                    return new \Twig_SimpleFunction($name, $name);
+                }
+
+                return false;
+            });
+        }
+
+        return $this->twig;
+    }
+    
+    /**
+     * Renders a Twig template $file.
+     *
+     * @param string|array $file The template file.
+     * @param array        $vars To pass to the Twig template.
+     *
+     * @return string
+     *
+     * @throws LogicException If the $file does not exist, or if it is not in the Blog's 'content' or 'themes' folders.
+     */
+    public function renderTwig($file, array $vars = array())
+    {
+        $page = Page::html();
+        if (is_array($file)) {
+            $vars = (isset($file['vars']) && is_array($file['vars'])) ? $file['vars'] : array();
+            $default = (isset($file['default']) && is_dir($file['default'])) ? rtrim($file['default'], '/').'/' : null;
+            $file = (isset($file['file']) && is_string($file['file'])) ? $file['file'] : '';
+            if ($default && $template = $this->getFiles($file, $default)) {
+                $file = array_pop($template);
+            }
+            if (empty($file)) {
+                return (isset($vars['content'])) ? $vars['content'] : '';
+            }
+        }
+        if (strpos($file, $this->blog->folder.'themes/') === 0) {
+            $dir = $this->blog->folder.'themes/';
+            $file = substr($file, strlen($dir));
+            $theme = strstr($file, '/', true).'/';
+            $dir .= $theme;
+            $file = substr($file, strlen($theme));
+            $loader = $this->getTwig()->getLoader();
+            $loader->addPath($dir, 'theme');
+        } elseif (strpos($file, $page->dir()) === 0) {
+            $dir = dirname($file).'/';
+            $file = basename($file);
+        } else {
+            throw new \LogicException("The '{$file}' is not in your website's Page::dir folder.");
+        }
+        if (!is_file($dir.$file)) {
+            $file = substr($dir.$file, strlen($page->dir()));
+            throw new \LogicException("The '{$file}' file does not exist.");
+        }
+        $this->asset = array(
+            'dir' => $dir,
+            'chars' => $page->url['chars'],
+        );
+        $template = substr($dir.$file, strlen($page->dir()));
+        $vars = array_merge($this->vars, $vars);
+        unset($vars['page']);
+        self::$templates[] = array('template'=>$template, 'vars'=>$vars);
+        try {
+            $html = $this->getTwig()->render($template, $vars);
+        } catch (\Exception $e) {
+            $html = '<p>'.$e->getMessage().'</p>';
+        }
+
+        return $html;
+    }
+
     /**
      * Establishes global vars that will be accessible to all of your Twig templates.
      *
@@ -230,92 +333,7 @@ class Theme
         }
         $this->page->additional[$name] = $function;
     }
-
-    /**
-     * Fetches a Twig template $file.
-     *
-     * @param string|array $file The template file.
-     * @param array        $vars To pass to the Twig template.
-     *
-     * @return string
-     *
-     * @throws LogicException If the $file does not exist, or if it is not in the Blog's 'content' or 'themes' folders.
-     */
-    public function fetchTwig($file, array $vars = array())
-    {
-        $page = Page::html();
-        if (is_null($this->twig)) {
-            foreach (array('content', 'plugins', 'themes') as $dir) {
-                if (!is_dir($this->blog->folder.$dir)) {
-                    mkdir($this->blog->folder.$dir, 0755, true);
-                }
-            }
-            $loader = new \Twig_Loader_Filesystem($page->dir());
-            $loader->addPath($this->blog->folder.'plugins/', 'plugin');
-            $this->twig = new \Twig_Environment($loader, array(
-                'cache' => $this->blog->folder.'cache/twig/',
-                'auto_reload' => true,
-                'autoescape' => false,
-            ));
-            $this->twig->addGlobal('page', $this->page);
-            $this->twig->addGlobal('pagination', new Pagination());
-            $this->twig->addExtension(new MarkdownExtension(new Markdown($this)));
-            $this->twig->addFilter(new \Twig_SimpleFilter('asset', array($this, 'asset')));
-            $this->twig->addFunction(new \Twig_SimpleFunction('dump', array($this, 'dump'), array('is_safe'=>'html')));
-            $this->twig->registerUndefinedFunctionCallback(function ($name) {
-                if (in_array($name, self::$functions)) {
-                    return new \Twig_SimpleFunction($name, $name);
-                }
-
-                return false;
-            });
-        }
-        if (is_array($file)) {
-            $vars = (isset($file['vars']) && is_array($file['vars'])) ? $file['vars'] : array();
-            $default = (isset($file['default']) && is_dir($file['default'])) ? rtrim($file['default'], '/').'/' : null;
-            $file = (isset($file['file']) && is_string($file['file'])) ? $file['file'] : '';
-            if ($default && $template = $this->getFiles($file, $default)) {
-                $file = array_pop($template);
-            }
-            if (empty($file)) {
-                return (isset($vars['content'])) ? $vars['content'] : '';
-            }
-        }
-        if (strpos($file, $this->blog->folder.'themes/') === 0) {
-            $dir = $this->blog->folder.'themes/';
-            $file = substr($file, strlen($dir));
-            $theme = strstr($file, '/', true).'/';
-            $dir .= $theme;
-            $file = substr($file, strlen($theme));
-            $loader = $this->twig->getLoader();
-            $loader->addPath($dir, 'theme');
-        } elseif (strpos($file, $page->dir()) === 0) {
-            $dir = dirname($file).'/';
-            $file = basename($file);
-        } else {
-            throw new \LogicException("The '{$file}' is not in your website's Page::dir folder.");
-        }
-        if (!is_file($dir.$file)) {
-            $file = substr($file, strlen($page->dir()));
-            throw new \LogicException("The '{$file}' file does not exist.");
-        }
-        $this->asset = array(
-            'url' => $page->path('page', substr($dir, strlen($page->dir['page']), -1)),
-            'chars' => $page->url['chars'],
-        );
-        $template = substr($dir.$file, strlen($page->dir()));
-        $vars = array_merge($this->vars, $vars);
-        unset($vars['page']);
-        self::$templates[] = array('template'=>$template, 'vars'=>$vars);
-        try {
-            $html = $this->twig->render($template, $vars);
-        } catch (\Exception $e) {
-            $html = '<p>'.$e->getMessage().'</p>';
-        }
-
-        return $html;
-    }
-
+    
     /**
      * Returns an HTML Markdown string from $content, and allows you to set your preferred Markdown provider.
      * 
@@ -336,13 +354,14 @@ class Theme
     }
 
     /**
-     * Takes an asset string (eg. image.jpg) that is relative to the main index.html.twig being fetched, and prepends the url path to it.
+     * Prepends a url to ``$path``, relative to the main index.html.twig being fetched.
      *
-     * @param string|array $path
+     * @param string|array $path An asset string eg. image.jpg
+     * @param object       $twig ``_self`` if the $path is relative to the current template.  This is useful for plugin macros and child themes.
      *
      * @return string|array Whatever the $path was.  If the $path's string is not a relative asset, then it is just returned as is.  If the $path is an array, then every key and value in it will be turned into a url if it is a relative asset, and the rest of the array will remain the same.
      */
-    public function asset($path)
+    public function asset($path, \Twig_Template $twig = null)
     {
         if (is_string($path)) {
             if ($this->asset && preg_match('/^'.implode('', array(
@@ -351,16 +370,54 @@ class Theme
                 '\.('.Asset::PREG_TYPES.')',
                 '.*',
             )).'$/i', ltrim($path), $matches)) {
-                $asset = $this->asset['url'].ltrim($matches[0], './');
+                $page = Page::html();
+                $dir = ($twig) ? str_replace('\\', '/', dirname($this->getTwig()->getLoader()->getCacheKey($twig->getTemplateName()))) : $this->asset['dir'];
+                $asset = $page->url('page', substr($dir, strlen($page->dir['page'])), ltrim($matches[0], './'));
             }
         } elseif ($this->asset && is_array($path)) {
             $asset = array();
             foreach ($path as $key => $value) {
-                $asset[$this->asset($key)] = $this->asset($value);
+                $asset[$this->asset($key, $twig)] = $this->asset($value, $twig);
             }
         }
 
         return (isset($asset)) ? $asset : $path;
+    }
+    
+    /**
+     * A reference to the current template, sort of.  This enables your plugin macros to behave more like a class, and these are your properties.
+     * 
+     * @param object $twig  ``_self`` so we know who you are.
+     * @param mixed  $key   What you want to either set or retrieve.  Pass ``null`` to remove them all.  Make it an array to set multiple values at once.
+     * @param mixed  $value Of the ``$key`` if you are setting it.  Pass ``null`` to remove only this one.
+     * 
+     * @return mixed If you don't specify ``$key`` or ``$value``, then all of the "properties" (an array) will be returned.  If you don't include a ``$value``, then the ``$key`` will be returned if it exists.  Otherwise you get ``null``.
+     *
+     * ```twig
+     * {{ this(_self, 'key', 'value') }}
+     * ```
+     */
+    public function this(\Twig_Template $twig, $key = null, $value = null)
+    {
+        $name = $twig->getTemplateName();
+        if (!isset($this->plugin[$name])) {
+            $this->plugin[$name] = array();
+        }
+        if (func_num_args() == 1) {
+            return $this->plugin[$name]; // return all values
+        } elseif (is_null($key)) {
+            $this->plugin[$name] = array(); // remove all values
+        } elseif (is_array($key)) {
+            $this->plugin[$name] = $key + $this->plugin[$name]; // set multiple values
+        } elseif (func_num_args() == 3) {
+            if (is_null($value)) {
+                unset($this->plugin[$name][$key]); // remove a single value
+            } else {
+                $this->plugin[$name][$key] = $value; // set a single value
+            }
+        } elseif (isset($this->plugin[$name][$key])) {
+            return $this->plugin[$name][$key]; // return a single value
+        }
     }
     
     /**
@@ -387,7 +444,7 @@ class Theme
         $cloner->setMaxString(100);
         $output = '';
         $dumper->dump($cloner->cloneVar($var), function ($line, $depth) use (&$output) {
-            $output .= ($depth >= 0) ? str_repeat("    ", $depth).$line."\n" : '';
+            $output .= ($depth >= 0) ? str_repeat('    ', $depth).$line."\n" : '';
         });
         return trim($output);
     }
@@ -425,7 +482,7 @@ class Theme
             }
         }
 
-        return $this->fetchTwig(array_pop($index), $vars);
+        return $this->renderTwig(array_pop($index), $vars);
     }
 
     /**

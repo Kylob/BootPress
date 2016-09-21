@@ -136,7 +136,7 @@ class BlogTest extends \BootPress\HTMLUnit\Component
         #  
         #  This is my website.
         ##
-        $this->assertEqualsRegExp('This is my website.', static::$blog->theme->fetchTwig($template));
+        $this->assertEqualsRegExp('This is my website.', static::$blog->theme->renderTwig($template));
         $this->assertEquals('blog-page.html.twig', $template['file']);
         $this->assertEquals(array(
             'page' => array(
@@ -195,7 +195,7 @@ class BlogTest extends \BootPress\HTMLUnit\Component
             '<ul class="pager">',
                 '<li class="next"><a href="http://website.com/category/subcategory/flowery-post.html">A Flowery Post &raquo;</a></li>',
             '</ul>',
-        ), static::$blog->theme->fetchTwig($template));
+        ), static::$blog->theme->renderTwig($template));
         $this->assertEquals('blog-post.html.twig', $template['file']);
         $this->assertEqualsRegExp('<h3>Header</h3><p>Paragraph</p>', $template['vars']['post']['content']);
         unset($template['vars']['post']['content']);
@@ -297,7 +297,7 @@ class BlogTest extends \BootPress\HTMLUnit\Component
                     'by <a href="http://website.com/blog/authors/joe-bloggs.html" itemprop="author">Joe Bloggs</a>',
                 '</p>',
             '</div>',
-        ), static::$blog->theme->fetchTwig($template));
+        ), static::$blog->theme->renderTwig($template));
         $this->assertEquals('blog-post.html.twig', $template['file']);
         $this->assertEqualsRegExp('<ol><li>One</li><li>Two</li><li>Three</li></ol>', $template['vars']['post']['content']);
         unset($template['vars']['post']['content']);
@@ -403,7 +403,7 @@ class BlogTest extends \BootPress\HTMLUnit\Component
                 '<li class="previous"><a href="http://website.com/category/simple-post.html">&laquo; A Simple Post</a></li>',
                 '<li class="next"><a href="http://website.com/uncategorized-post.html">Uncategorized Post &raquo;</a></li>',
             '</ul>',
-        ), static::$blog->theme->fetchTwig($template));
+        ), static::$blog->theme->renderTwig($template));
         $this->assertEquals('blog-post.html.twig', $template['file']);
         $image = Page::html()->url('page', 'blog/content/category/subcategory/flowery-post/flowers.jpg');
         $this->assertEqualsRegExp(array(
@@ -495,7 +495,7 @@ class BlogTest extends \BootPress\HTMLUnit\Component
         #  
         #  {% endmarkdown %}
         ##
-        $this->assertEqualsRegExp('<p>This is the index page.</p>', static::$blog->theme->fetchTwig($template));
+        $this->assertEqualsRegExp('<p>This is the index page.</p>', static::$blog->theme->renderTwig($template));
         $this->assertEquals('blog-page.html.twig', $template['file']);
         $this->assertEquals(array(
             'page' => array(
@@ -554,7 +554,7 @@ class BlogTest extends \BootPress\HTMLUnit\Component
             '<ul class="pager">',
                 '<li class="previous"><a href="http://website.com/category/subcategory/flowery-post.html">&laquo; A Flowery Post</a></li>',
             '</ul>',
-        ), static::$blog->theme->fetchTwig($template));
+        ), static::$blog->theme->renderTwig($template));
         $this->assertEquals('blog-post.html.twig', $template['file']);
         $this->assertEquals(array(
             'post' => array(
@@ -604,7 +604,7 @@ class BlogTest extends \BootPress\HTMLUnit\Component
             '<p itemscope itemtype="http://schema.org/Article">',
                 '<big itemprop="name"><a href="http://website.com/category/simple-post.html">A Simple Post</a></big>',
             '</p>',
-        ), static::$blog->theme->fetchTwig($template));
+        ), static::$blog->theme->renderTwig($template));
         $this->assertEquals('blog-listings.html.twig', $template['file']);
         $this->assertEquals(array(
             'listings' => array(),
@@ -633,7 +633,7 @@ class BlogTest extends \BootPress\HTMLUnit\Component
                 '<big itemprop="name"><a href="http://website.com/category/simple-post.html">A Simple Post</a></big>',
                 '<br>A <b>Simple</b> <b>Post</b>',
             '</p>',
-        ), static::$blog->theme->fetchTwig($template));
+        ), static::$blog->theme->renderTwig($template));
         $this->assertEquals('blog-listings.html.twig', $template['file']);
         $this->assertEquals(array(
             'listings' => array(
@@ -671,7 +671,7 @@ class BlogTest extends \BootPress\HTMLUnit\Component
                 '<big itemprop="name"><a href="http://website.com/category/subcategory/flowery-post.html">A Flowery Post</a></big>',
                 '<br>Aren\'t they <b>beautiful</b>?',
             '</p>',
-        ), static::$blog->theme->fetchTwig($template));
+        ), static::$blog->theme->renderTwig($template));
         $this->assertEquals('blog-listings.html.twig', $template['file']);
         $this->assertEquals(array(
             'listings' => array(
@@ -809,7 +809,7 @@ class BlogTest extends \BootPress\HTMLUnit\Component
             '<p itemscope itemtype="http://schema.org/Article">',
                 '<big itemprop="name"><a href="http://website.com/category/simple-post.html">A Simple Post</a></big>',
             '</p>',
-        ), static::$blog->theme->fetchTwig($template));
+        ), static::$blog->theme->renderTwig($template));
         $this->assertEquals('blog-listings.html.twig', $template['file']);
         $this->assertEquals(array(
             'listings' => array(
@@ -868,7 +868,7 @@ class BlogTest extends \BootPress\HTMLUnit\Component
                 '<big itemprop="name"><a href="http://website.com/category/subcategory/flowery-post.html">A Flowery Post</a></big>',
                 '<br><span itemprop="headline">Aren\'t they beautiful?</span>',
             '</p>',
-        ), static::$blog->theme->fetchTwig($template));
+        ), static::$blog->theme->renderTwig($template));
         $this->assertEquals('blog-listings.html.twig', $template['file']);
         $this->assertEquals(array(
             'listings' => array(
@@ -950,7 +950,7 @@ class BlogTest extends \BootPress\HTMLUnit\Component
                 '</div>',
             '</div>',
             '<br>',
-        ), static::$blog->theme->fetchTwig($template));
+        ), static::$blog->theme->renderTwig($template));
         $this->assertEquals('blog-archives.html.twig', $template['file']);
         $this->assertEquals(array(
             'archives' => array(
@@ -1051,7 +1051,7 @@ class BlogTest extends \BootPress\HTMLUnit\Component
             '<p itemscope itemtype="http://schema.org/Article">',
                 '<big itemprop="name"><a href="http://website.com/category/simple-post.html">A Simple Post</a></big>',
             '</p>',
-        ), static::$blog->theme->fetchTwig($template));
+        ), static::$blog->theme->renderTwig($template));
         $this->assertEquals('blog-listings.html.twig', $template['file']);
         $this->assertEquals(array(
             'archive' => array(
@@ -1095,7 +1095,7 @@ class BlogTest extends \BootPress\HTMLUnit\Component
                 '<big itemprop="name"><a href="http://website.com/category/subcategory/flowery-post.html">A Flowery Post</a></big>',
                 '<br><span itemprop="headline">Aren\'t they beautiful?</span>',
             '</p>',
-        ), static::$blog->theme->fetchTwig($template));
+        ), static::$blog->theme->renderTwig($template));
         $this->assertEquals('blog-listings.html.twig', $template['file']);
         $this->assertEquals(array(
             'archive' => array(
@@ -1136,7 +1136,7 @@ class BlogTest extends \BootPress\HTMLUnit\Component
             '<p itemscope itemtype="http://schema.org/Article">',
                 '<big itemprop="name"><a href="http://website.com/uncategorized-post.html">Uncategorized Post</a></big>',
             '</p>',
-        ), static::$blog->theme->fetchTwig($template));
+        ), static::$blog->theme->renderTwig($template));
         $this->assertEquals('blog-listings.html.twig', $template['file']);
         $this->assertEquals(array(
             'archive' => array(
@@ -1173,7 +1173,7 @@ class BlogTest extends \BootPress\HTMLUnit\Component
             '</ul>',
             '<h2>Authors</h2>',
             '<p><a href="http://website.com/blog/authors/joe-bloggs.html">Joe Bloggs <span class="badge">2</span></a></p>',
-        ), static::$blog->theme->fetchTwig($template));
+        ), static::$blog->theme->renderTwig($template));
         $this->assertEquals('blog-authors.html.twig', $template['file']);
         $this->assertEquals(array(
             'breadcrumbs' => array(
@@ -1224,7 +1224,7 @@ class BlogTest extends \BootPress\HTMLUnit\Component
             '<p itemscope itemtype="http://schema.org/Article">',
                 '<big itemprop="name"><a href="http://website.com/category/simple-post.html">A Simple Post</a></big>',
             '</p>',
-        ), static::$blog->theme->fetchTwig($template));
+        ), static::$blog->theme->renderTwig($template));
         $this->assertEquals('blog-listings.html.twig', $template['file']);
         $this->assertEquals(array(
             'breadcrumbs' => array(
@@ -1270,7 +1270,7 @@ class BlogTest extends \BootPress\HTMLUnit\Component
                 '<a class="text-primary" style="font-size:15px; padding:0px 5px;" href="http://website.com/blog/tags/nature.html">Nature</a>',
                 '<a class="text-success" style="font-size:21px; padding:0px 5px;" href="http://website.com/blog/tags/simple.html">Simple</a>',
             '</p>',
-        ), static::$blog->theme->fetchTwig($template));
+        ), static::$blog->theme->renderTwig($template));
         $this->assertEquals('blog-tags.html.twig', $template['file']);
         $this->assertEquals(array(
             'breadcrumbs' => array(
@@ -1371,7 +1371,7 @@ class BlogTest extends \BootPress\HTMLUnit\Component
             '<p itemscope itemtype="http://schema.org/Article">',
                 '<big itemprop="name"><a href="http://website.com/">Welcome to My Website</a></big>',
             '</p>',
-        ), static::$blog->theme->fetchTwig($template));
+        ), static::$blog->theme->renderTwig($template));
         $this->assertEquals('blog-listings.html.twig', $template['file']);
         $this->assertEquals(array(
             'breadcrumbs' => array(
@@ -1457,7 +1457,7 @@ class BlogTest extends \BootPress\HTMLUnit\Component
                     '</item>',
                 '</channel>',
             '</rss>',
-        ), static::$blog->theme->fetchTwig($template));
+        ), static::$blog->theme->renderTwig($template));
         unset($template['vars']['content']);
         $this->assertEquals('', $template['file']);
         $this->assertEquals('rss', $template['type']);
@@ -1768,13 +1768,13 @@ class BlogTest extends \BootPress\HTMLUnit\Component
     public function testThemeFetchTwigBlogFoldersException()
     {
         $this->setExpectedException('\LogicException');
-        static::$blog->theme->fetchTwig('');
+        static::$blog->theme->renderTwig('');
     }
     
     public function testThemeFetchTwigMissingFileException()
     {
         $this->setExpectedException('\LogicException');
-        static::$blog->theme->fetchTwig(static::$folder.'missing.html.twig');
+        static::$blog->theme->renderTwig(static::$folder.'missing.html.twig');
     }
     
     public function testThemeFetchTwigDefaultFile()
@@ -1784,7 +1784,7 @@ class BlogTest extends \BootPress\HTMLUnit\Component
         file_put_contents($default, 'Default {% template %}');
         
         // Syntax Error
-        $this->assertEquals('<p>Unknown "template" tag in "blog/themes/default/default.html.twig" at line 1.</p>', static::$blog->theme->fetchTwig(array(
+        $this->assertEquals('<p>Unknown "template" tag in "blog/themes/default/default.html.twig" at line 1.</p>', static::$blog->theme->renderTwig(array(
             'default' => $page->dir(),
             'vars' => array('syntax'=>'error'),
             'file' => 'default.html.twig',
@@ -1794,7 +1794,7 @@ class BlogTest extends \BootPress\HTMLUnit\Component
         unlink($default);
         $default = $page->file('blog/themes/default/default.html.twig');
         $this->assertFileExists($default);
-        $this->assertEquals('<p>Unknown "template" tag in "blog/themes/default/default.html.twig" at line 1.</p>', static::$blog->theme->fetchTwig($default, array('syntax'=>'error'), 'testing'));
+        $this->assertEquals('<p>Unknown "template" tag in "blog/themes/default/default.html.twig" at line 1.</p>', static::$blog->theme->renderTwig($default, array('syntax'=>'error'), 'testing'));
         unlink($default);
     }
     
@@ -1806,16 +1806,49 @@ class BlogTest extends \BootPress\HTMLUnit\Component
         $this->assertNull(static::$blog->theme->markdown(new PHPLeagueCommonMarkEngine));
     }
     
-    public function testThemeAssetMethod()
+    public function testThemeAssetAndThisMethods()
     {
-        $path = array(
+        $asset = array(
             'image.jpg?query=string' => '.jpg image',
             'png image.png' => 'path/image.png',
         );
         $this->assertEquals(array(
             'http://website.com/page/blog/themes/default/image.jpg?query=string' => '.jpg image',
             'png image.png' => 'http://website.com/page/blog/themes/default/path/image.png',
-        ), static::$blog->theme->asset($path));
+        ), static::$blog->theme->asset($asset));
+        
+        // Twig_Template instance
+        $twig = static::$blog->theme->getTwig()->loadTemplate('blog/content/index.html.twig');
+        $this->assertInstanceOf('\Twig_Template', $twig);
+        $this->assertEquals(array(
+            'http://website.com/page/blog/content/image.jpg?query=string' => '.jpg image',
+            'png image.png' => 'http://website.com/page/blog/content/path/image.png',
+        ), static::$blog->theme->asset($asset, $twig));
+        
+        // Test "this"
+        $this->assertEquals(array(), static::$blog->theme->this($twig)); // return all values
+        $this->assertNull(static::$blog->theme->this($twig, 'key', 'value')); // set a single value
+        $this->assertNull(static::$blog->theme->this($twig, array(
+            'one' => 1,
+            'two' => 2,
+            'three' => 3,
+        ))); // set multiple values
+        $this->assertEquals(2, static::$blog->theme->this($twig, 'two')); // return a single value
+        $this->assertNull(static::$blog->theme->this($twig, 'two', null)); // remove a single value
+        $this->assertAttributeEquals(array(
+            'blog/content/index.html.twig' => array(
+                'one' => 1,
+                'three' => 3,
+                'key' => 'value',
+            ),
+        ), 'plugin', static::$blog->theme);
+        $this->assertEquals(array(
+            'one' => 1,
+            'three' => 3,
+            'key' => 'value',
+        ), static::$blog->theme->this($twig));
+        $this->assertNull(static::$blog->theme->this($twig, null)); // remove all values
+        $this->assertEquals(array(), static::$blog->theme->this($twig));
     }
     
     public function testThemeDumpMethod()
