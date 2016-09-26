@@ -1336,7 +1336,7 @@ class BlogTest extends \BootPress\HTMLUnit\Component
                 'thumb' => '',
                 'latest' => strtotime('Sep 12, 2010'),
                 'count' => 2,
-                'rank' => 5.0,
+                'rank' => 1,
             ),
         ), static::$blog->query('tags', 1)); // limit 1 tag - for 2 or more the rank becomes ambiguous
     }
