@@ -23,7 +23,7 @@ Jump start your code with these decoupled PHP components that can be used in any
 - **Validator** - Form validation that is designed to simplify and work seamlessly with Jorn's jQuery Validation Plugin.
 
 
-## Head Up!
+## Heads Up!
 
 This code is under heavy development.  The classes themselves are solid, and are unlikely to be changed much, but the organization of them definitely will.  Every component above is being fully documented and put into it's own GitHub repo.  This repo itself will be going the way of all the earth ie. die a slow, silent death - so don't rely on it too much.  It has nearly fulfilled the measure of it's creation, and the plug is about to be pulled in order to make all of this code more usable for you!  I have been using it myself for years now, and I just want to share the wealth.  If you star this project at GitHub, it will spur me on knowing that someone cares.
 
