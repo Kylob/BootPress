@@ -238,7 +238,7 @@ class Blog
                         $posts = $this->db->ids(array(
                             'SELECT id FROM blog',
                             'WHERE featured <= 0 AND published >= ? AND published <= ?',
-                            'ORDER BY featured, published ASC'.$params->limit,
+                            'ORDER BY featured, published, updated ASC'.$params->limit,
                         ), $vars);
                     }
                     break;
@@ -255,7 +255,7 @@ class Blog
                             'SELECT b.id FROM blog AS b',
                             'INNER JOIN authors ON b.author_id = authors.id',
                             'WHERE b.featured <= 0 AND b.published < 0 AND b.updated < 0 AND authors.path = ?',
-                            'ORDER BY b.featured, b.published ASC'.$params->limit,
+                            'ORDER BY b.featured, b.published, b.updated ASC'.$params->limit,
                         ), $vars);
                     }
                     break;
@@ -266,7 +266,7 @@ class Blog
                             'SELECT COUNT(*) FROM tagged AS t',
                             'INNER JOIN blog AS b ON t.blog_id = b.id',
                             'INNER JOIN tags ON t.tag_id = tags.id',
-                            'WHERE b.featured <= 0 AND b.published != 0 AND tags.path = ?',
+                            'WHERE b.featured <= 0 AND b.published < 0 AND tags.path = ?',
                             'GROUP BY tags.id',
                         ), $vars);
                     } else {
@@ -274,7 +274,7 @@ class Blog
                             'SELECT b.id FROM tagged AS t',
                             'INNER JOIN blog AS b ON t.blog_id = b.id',
                             'INNER JOIN tags ON t.tag_id = tags.id',
-                            'WHERE b.featured <= 0 AND b.published != 0 AND tags.path = ?',
+                            'WHERE b.featured <= 0 AND b.published < 0 AND tags.path = ?',
                             'ORDER BY b.featured, b.published, b.updated ASC'.$params->limit,
                         ), $vars);
                     }
@@ -325,12 +325,12 @@ class Blog
                     if ($count) {
                         return $this->db->value(array(
                             'SELECT COUNT(*) FROM blog',
-                            'WHERE featured <= 0 AND published != 0 AND category_id IN('.$categories.')',
+                            'WHERE featured <= 0 AND published < 0 AND category_id IN('.$categories.')',
                         ), $vars);
                     } else {
                         $posts = $this->db->ids(array(
                             'SELECT id FROM blog',
-                            'WHERE featured <= 0 AND published != 0 AND category_id IN('.$categories.')',
+                            'WHERE featured <= 0 AND published < 0 AND category_id IN('.$categories.')',
                             'ORDER BY featured, published, updated ASC'.$params->limit,
                         ), $vars);
                     }
@@ -371,7 +371,7 @@ class Blog
                         $posts = $this->db->ids(array(
                             'SELECT id FROM blog',
                             'WHERE featured <= 0 AND published < 0',
-                            'ORDER BY featured, published ASC'.$params->limit,
+                            'ORDER BY featured, published, updated ASC'.$params->limit,
                         ), $vars);
                     }
                     break;
@@ -407,7 +407,7 @@ class Blog
                 $posts = $this->info($this->db->ids(array(
                     'SELECT id FROM blog',
                     'WHERE featured < 0 AND published < 0',
-                    'ORDER BY featured, published ASC'.$limit,
+                    'ORDER BY featured, published, updated ASC'.$limit,
                 )));
                 break;
 
@@ -416,7 +416,7 @@ class Blog
                 $posts = $this->info($this->db->ids(array(
                     'SELECT id FROM blog',
                     'WHERE featured = 0 AND published < 0',
-                    'ORDER BY featured, published ASC LIMIT '.$limit,
+                    'ORDER BY featured, published, updated ASC LIMIT '.$limit,
                 )));
                 break;
 
@@ -507,7 +507,7 @@ class Blog
                     'FROM tagged AS t',
                     'INNER JOIN blog AS b ON t.blog_id = b.id',
                     'INNER JOIN tags ON t.tag_id = tags.id',
-                    'WHERE b.featured <= 0 AND b.published != 0 AND tags.path '.$operator.' ?',
+                    'WHERE b.featured <= 0 AND b.published < 0 AND tags.path '.$operator.' ?',
                     'GROUP BY tags.id',
                     'ORDER BY tags.name ASC',
                 ), $path, 'assoc');

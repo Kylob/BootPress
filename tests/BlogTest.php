@@ -1268,7 +1268,7 @@ class BlogTest extends \BootPress\HTMLUnit\Component
                 '<a class="text-primary" style="font-size:15px; padding:0px 5px;" href="http://website.com/blog/tags/flowers.html">Flowers</a>',
                 '<a class="text-danger" style="font-size:27px; padding:0px 5px;" href="http://website.com/blog/tags/markdown.html">Markdown</a>',
                 '<a class="text-primary" style="font-size:15px; padding:0px 5px;" href="http://website.com/blog/tags/nature.html">Nature</a>',
-                '<a class="text-success" style="font-size:21px; padding:0px 5px;" href="http://website.com/blog/tags/simple.html">Simple</a>',
+                '<a class="text-primary" style="font-size:15px; padding:0px 5px;" href="http://website.com/blog/tags/simple.html">Simple</a>',
             '</p>',
         ), static::$blog->theme->renderTwig($template));
         $this->assertEquals('blog-tags.html.twig', $template['file']);
@@ -1302,8 +1302,8 @@ class BlogTest extends \BootPress\HTMLUnit\Component
                     'url' => 'http://website.com/blog/tags/markdown.html',
                     'thumb' => '',
                     'latest' => strtotime('Sep 12, 2010'),
-                    'count' => 3,
-                    'rank' => 5,
+                    'count' => 2,
+                    'rank' => 5.0,
                 ),
                 array(
                     'name' => 'Nature',
@@ -1320,8 +1320,8 @@ class BlogTest extends \BootPress\HTMLUnit\Component
                     'url' => 'http://website.com/blog/tags/simple.html',
                     'thumb' => '',
                     'latest' => strtotime('Aug 3, 2010'),
-                    'count' => 2,
-                    'rank' => 3,
+                    'count' => 1,
+                    'rank' => 1.0,
                 ),
             ),
         ), $template['vars']);
@@ -1335,8 +1335,8 @@ class BlogTest extends \BootPress\HTMLUnit\Component
                 'url' => 'http://website.com/blog/tags/markdown.html',
                 'thumb' => '',
                 'latest' => strtotime('Sep 12, 2010'),
-                'count' => 3,
-                'rank' => 5,
+                'count' => 2,
+                'rank' => 5.0,
             ),
             array(
                 'name' => 'Simple',
@@ -1344,8 +1344,8 @@ class BlogTest extends \BootPress\HTMLUnit\Component
                 'url' => 'http://website.com/blog/tags/simple.html',
                 'thumb' => '',
                 'latest' => strtotime('Aug 3, 2010'),
-                'count' => 2,
-                'rank' => 1,
+                'count' => 1,
+                'rank' => 1.0,
             ),
         ), static::$blog->query('tags', 2)); // limit 2 tags
     }
@@ -1368,9 +1368,6 @@ class BlogTest extends \BootPress\HTMLUnit\Component
             '<p itemscope itemtype="http://schema.org/Article">',
                 '<big itemprop="name"><a href="http://website.com/category/simple-post.html">A Simple Post</a></big>',
             '</p>',
-            '<p itemscope itemtype="http://schema.org/Article">',
-                '<big itemprop="name"><a href="http://website.com/">Welcome to My Website</a></big>',
-            '</p>',
         ), static::$blog->theme->renderTwig($template));
         $this->assertEquals('blog-listings.html.twig', $template['file']);
         $this->assertEquals(array(
@@ -1385,21 +1382,20 @@ class BlogTest extends \BootPress\HTMLUnit\Component
                 'url' => 'http://website.com/blog/tags/markdown.html',
                 'thumb' => '',
                 'latest' => strtotime('Sep 12, 2010'),
-                'count' => 3,
+                'count' => 2,
             ),
             'listings' => array(
-                'count' => 3,
+                'count' => 2,
                 'tags' => 'markdown',
             ),
         ), $template['vars']);
         $pagination = new Pagination();
         $listings = static::$blog->query($template['vars']['listings'], $pagination);
         unset($template['vars']['listings']['count']); // to test the actual query
-        $this->assertEquals(3, static::$blog->query($template['vars']['listings'], 'count'));
-        $this->assertEquals(array(4,3,6), array_keys($listings));
+        $this->assertEquals(2, static::$blog->query($template['vars']['listings'], 'count'));
+        $this->assertEquals(array(4,3), array_keys($listings));
         // 4 - featured (Sep 12 2008) category/subcategory
         // 3 - simple (Aug 3 2008) category
-        // 6 - index
     }
 
     public function testFeedListings()
