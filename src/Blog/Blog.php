@@ -516,9 +516,6 @@ class Blog
                     $tagged[$tag['path']] = $tag['count'];
                 }
                 arsort($tagged);
-                
-                print_r($tagged);
-                
                 if (is_int($params)) {
                     $tagged = array_slice($tagged, 0, $params, true);
                 }

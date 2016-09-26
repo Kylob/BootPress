@@ -1303,7 +1303,7 @@ class BlogTest extends \BootPress\HTMLUnit\Component
                     'thumb' => '',
                     'latest' => strtotime('Sep 12, 2010'),
                     'count' => 2,
-                    'rank' => 5.0,
+                    'rank' => 5,
                 ),
                 array(
                     'name' => 'Nature',
@@ -1321,7 +1321,7 @@ class BlogTest extends \BootPress\HTMLUnit\Component
                     'thumb' => '',
                     'latest' => strtotime('Aug 3, 2010'),
                     'count' => 1,
-                    'rank' => 1.0,
+                    'rank' => 1,
                 ),
             ),
         ), $template['vars']);
@@ -1338,16 +1338,7 @@ class BlogTest extends \BootPress\HTMLUnit\Component
                 'count' => 2,
                 'rank' => 5.0,
             ),
-            array(
-                'name' => 'Simple',
-                'path' => 'simple',
-                'url' => 'http://website.com/blog/tags/simple.html',
-                'thumb' => '',
-                'latest' => strtotime('Aug 3, 2010'),
-                'count' => 1,
-                'rank' => 1.0,
-            ),
-        ), static::$blog->query('tags', 2)); // limit 2 tags
+        ), static::$blog->query('tags', 1)); // limit 1 tag - for 2 or more the rank becomes ambiguous
     }
 
     public function testTagsIndividualListings()
