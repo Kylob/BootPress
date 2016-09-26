@@ -311,7 +311,7 @@ class Component
     }
 
     /**
-     * Delivers the search results for the $phrase given form the most relevant to the least.
+     * Delivers the search results for the $phrase given from the most relevant to the least.
      * 
      * @param string      $phrase   The search term.
      * @param string      $category A specific sitemap section.

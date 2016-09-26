@@ -138,8 +138,7 @@ class Component
             'SELECT p.tiny, f.file, f.query',
             'FROM paths as p',
             'INNER JOIN files AS f ON p.file_id = f.id',
-            'WHERE p.tiny IN('.implode(', ', $paths).')',
-            $asset->db->orderIn('p.tiny', $paths),
+            'WHERE '.$asset->db->inOrder('p.tiny', $paths),
         ), '', 'assoc')) {
             while ($row = $asset->db->fetch($stmt)) {
                 if ($type == strtolower(pathinfo($row['file'], PATHINFO_EXTENSION))) {

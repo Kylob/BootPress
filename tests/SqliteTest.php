@@ -18,12 +18,18 @@ class SqliteTest extends \PHPUnit_Framework_TestCase
         self::$db = new Sqlite();
     }
 
+    public static function tearDownAfterClass()
+    {
+        $page = Page::html();
+        if (is_file($page->file('databases.yml'))) {
+            unlink($page->file('databases.yml'));
+        }
+    }
+
     public function testConstructor()
     {
         $db = new Sqlite();
         $this->assertAttributeInstanceOf('SQLite3', 'connection', $db);
-        $this->assertInstanceOf ('SQLite3', $db->connection); // via magic getter
-        $this->assertNull($db->missing);
         $this->assertTrue($db->created);
         $file = __DIR__.'/temp/sqlite-test.db';
         if (is_file($file)) {
@@ -86,23 +92,22 @@ class SqliteTest extends \PHPUnit_Framework_TestCase
     public function testSettingsMethod()
     {
         $this->assertEquals(array(), self::$db->settings());
+        $this->assertNull(self::$db->settings('version'));
+        $this->assertNull(self::$db->settings('version', false));
         $this->assertFalse(self::$db->settings('version'));
+        $this->assertNull(self::$db->settings('version', null));
+        $this->assertNull(self::$db->settings('version'));
         $this->assertNull(self::$db->settings('version', '1.3.1'));
         $this->assertEquals('1.3.1', self::$db->settings('version'));
         $this->assertGreaterThan(1, self::$db->settings('version'));
         $this->assertLessThan(2, self::$db->settings('version'));
         $this->assertArrayHasKey('version', self::$db->settings());
         $this->assertNull(self::$db->settings('version', false));
-        $this->assertFalse(self::$db->settings('version'));
     }
 
-    public function testOrderInMethod()
+    public function testInOrderMethod()
     {
-        $this->assertEquals('', self::$db->orderIn('id', array()));
-        $orderIn = 'ORDER BY CASE id WHEN 102 THEN 1 WHEN 103 THEN 2 ELSE NULL END ASC';
-        $this->assertEquals($orderIn, self::$db->orderIn('id', array(102, 103)));
-        $query = self::$db->debug('SELECT * FROM employees WHERE title = ? '.$orderIn, "Co'mpl''ex \"st'\"ring");
-        $this->assertEquals("SELECT * FROM employees WHERE title = 'Co''mpl''''ex \"st''\"ring' {$orderIn}", $query);
+        $this->assertEquals('id IN(102,103) ORDER BY CASE id WHEN 102 THEN 0 WHEN 103 THEN 1 ELSE NULL END ASC', self::$db->inOrder('id', array(102, 103)));
     }
 
     public function testFtsCreateMethod()

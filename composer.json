@@ -12,7 +12,6 @@
     ],
     "require": {
         "php": ">=5.4",
-        "ext-sqlite3": "*",
         "symfony/yaml": "^2.3||^3.0",
         "symfony/finder": "^2.3||^3.0",
         "symfony/var-dumper": "^2.3||^3.0",
@@ -27,7 +26,8 @@
         "aptoma/twig-markdown": "^2.0",
         "twig/twig": "^1.18",
         "bootpress/page": "^1.0",
-        "bootpress/database": "^1.0"
+        "bootpress/database": "^1.0",
+        "bootpress/sqlite": "^1.0"
     },
     "require-dev": {
         "bootpress/htmlunit": "^1.0",
