@@ -85,7 +85,7 @@ class BlogTest extends \BootPress\HTMLUnit\Component
         file_put_contents(static::$config, Yaml::dump(array(
             'authors' => array(
                 'joe-bloggs' => array(
-                    'thumb' => 'user.jpg',
+                    'image' => 'user.jpg',
                 ),
                 'anonymous' => 'anonymous',
             ),
@@ -95,7 +95,7 @@ class BlogTest extends \BootPress\HTMLUnit\Component
         $this->assertEquals(implode("\n", array(
             'authors:',
             '    joe-bloggs:',
-            '        thumb: user.jpg',
+            '        image: user.jpg',
             '    anonymous: anonymous',
             'categories:',
             '    unknown: UnKnown',
@@ -218,7 +218,7 @@ class BlogTest extends \BootPress\HTMLUnit\Component
                         'name' => 'Category',
                         'path' => 'category',
                         'url' => 'http://website.com/category.html',
-                        'thumb' => '',
+                        'image' => '',
                     ),
                 ),
                 'tags' => array(
@@ -226,20 +226,20 @@ class BlogTest extends \BootPress\HTMLUnit\Component
                         'name' => 'Simple',
                         'path' => 'simple',
                         'url' => 'http://website.com/blog/tags/simple.html',
-                        'thumb' => '',
+                        'image' => '',
                     ),
                     array(
                         'name' => 'Markdown',
                         'path' => 'markdown',
                         'url' => 'http://website.com/blog/tags/markdown.html',
-                        'thumb' => '',
+                        'image' => '',
                     ),
                 ),
                 'author' => array(
                     'name' => 'Joe Bloggs',
                     'path' => 'joe-bloggs',
                     'url' => 'http://website.com/blog/authors/joe-bloggs.html',
-                    'thumb' => 'http://website.com/page/blog/user.jpg',
+                    'image' => 'http://website.com/page/blog/user.jpg',
                 ),
                 'archive' => 'http://website.com/blog/archives/2010/08/03.html',
                 'previous' => null,
@@ -321,13 +321,13 @@ class BlogTest extends \BootPress\HTMLUnit\Component
                         'name' => 'Category',
                         'path' => 'category',
                         'url' => 'http://website.com/category.html',
-                        'thumb' => '',
+                        'image' => '',
                     ),
                     array(
                         'name' => 'Subcategory',
                         'path' => 'category/subcategory',
                         'url' => 'http://website.com/category/subcategory.html',
-                        'thumb' => '',
+                        'image' => '',
                     ),
                 ),
                 'tags' => array(
@@ -335,20 +335,20 @@ class BlogTest extends \BootPress\HTMLUnit\Component
                         'name' => 'Markdown',
                         'path' => 'markdown',
                         'url' => 'http://website.com/blog/tags/markdown.html',
-                        'thumb' => '',
+                        'image' => '',
                     ),
                     array(
                         'name' => 'Featured',
                         'path' => 'featured',
                         'url' => 'http://website.com/blog/tags/featured.html',
-                        'thumb' => '',
+                        'image' => '',
                     ),
                 ),
                 'author' => array(
                     'name' => 'Joe Bloggs',
                     'path' => 'joe-bloggs',
                     'url' => 'http://website.com/blog/authors/joe-bloggs.html',
-                    'thumb' => 'http://website.com/page/blog/user.jpg',
+                    'image' => 'http://website.com/page/blog/user.jpg',
                 ),
                 'archive' => 'http://website.com/blog/archives/2010/09/12.html',
                 'previous' => null,
@@ -431,13 +431,13 @@ class BlogTest extends \BootPress\HTMLUnit\Component
                         'name' => 'Category',
                         'path' => 'category',
                         'url' => 'http://website.com/category.html',
-                        'thumb' => '',
+                        'image' => '',
                     ),
                     array(
                         'name' => 'Subcategory',
                         'path' => 'category/subcategory',
                         'url' => 'http://website.com/category/subcategory.html',
-                        'thumb' => '',
+                        'image' => '',
                     ),
                 ),
                 'tags' => array(
@@ -445,13 +445,13 @@ class BlogTest extends \BootPress\HTMLUnit\Component
                         'name' => 'Flowers',
                         'path' => 'flowers',
                         'url' => 'http://website.com/blog/tags/flowers.html',
-                        'thumb' => '',
+                        'image' => '',
                     ),
                     array(
                         'name' => 'Nature',
                         'path' => 'nature',
                         'url' => 'http://website.com/blog/tags/nature.html',
-                        'thumb' => '',
+                        'image' => '',
                     ),
                 ),
                 'author' => array(),
@@ -516,13 +516,13 @@ class BlogTest extends \BootPress\HTMLUnit\Component
                     'name' => 'Simple',
                     'path' => 'simple',
                     'url' => 'http://website.com/blog/tags/simple.html',
-                    'thumb' => '',
+                    'image' => '',
                 ),
                 array(
                     'name' => 'Markdown',
                     'path' => 'markdown',
                     'url' => 'http://website.com/blog/tags/markdown.html',
-                    'thumb' => '',
+                    'image' => '',
                 ),
             ),
         ), $template['vars']);
@@ -691,14 +691,14 @@ class BlogTest extends \BootPress\HTMLUnit\Component
                     'name' => 'Category',
                     'path' => 'category',
                     'url' => 'http://website.com/category.html',
-                    'thumb' => '',
+                    'image' => '',
                     'count' => 3,
                     'subs' => array(
                         array(
                             'name' => 'Subcategory',
                             'path' => 'category/subcategory',
                             'url' => 'http://website.com/category/subcategory.html',
-                            'thumb' => '',
+                            'image' => '',
                             'count' => 2,
                         ),
                     ),
@@ -770,14 +770,14 @@ class BlogTest extends \BootPress\HTMLUnit\Component
                 'name' => 'Category',
                 'path' => 'category',
                 'url' => 'http://website.com/category.html',
-                'thumb' => '',
+                'image' => '',
                 'count' => 3,
                 'subs' => array(
                     array(
                         'name' => 'Subcategory',
                         'path' => 'category/subcategory',
                         'url' => 'http://website.com/category/subcategory.html',
-                        'thumb' => '',
+                        'image' => '',
                         'count' => 2,
                     ),
                 ),
@@ -827,14 +827,14 @@ class BlogTest extends \BootPress\HTMLUnit\Component
                     'name' => 'Category',
                     'path' => 'category',
                     'url' => 'http://website.com/category.html',
-                    'thumb' => '',
+                    'image' => '',
                     'count' => 3,
                     'subs' => array(
                         array(
                             'name' => 'Subcategory',
                             'path' => 'category/subcategory',
                             'url' => 'http://website.com/category/subcategory.html',
-                            'thumb' => '',
+                            'image' => '',
                             'count' => 2,
                         ),
                     ),
@@ -888,7 +888,7 @@ class BlogTest extends \BootPress\HTMLUnit\Component
                     'name' => 'Subcategory',
                     'path' => 'category/subcategory',
                     'url' => 'http://website.com/category/subcategory.html',
-                    'thumb' => '',
+                    'image' => '',
                     'count' => 2,
                 ),
             ),
@@ -1185,7 +1185,7 @@ class BlogTest extends \BootPress\HTMLUnit\Component
                     'name' => 'Joe Bloggs',
                     'path' => 'joe-bloggs',
                     'url' => 'http://website.com/blog/authors/joe-bloggs.html',
-                    'thumb' => 'http://website.com/page/blog/user.jpg',
+                    'image' => 'http://website.com/page/blog/user.jpg',
                     'latest' => strtotime('Sep 12, 2010'),
                     'count' => 2,
                 ),
@@ -1199,7 +1199,7 @@ class BlogTest extends \BootPress\HTMLUnit\Component
                 'name' => 'Joe Bloggs',
                 'path' => 'joe-bloggs',
                 'url' => 'http://website.com/blog/authors/joe-bloggs.html',
-                'thumb' => 'http://website.com/page/blog/user.jpg',
+                'image' => 'http://website.com/page/blog/user.jpg',
                 'latest' => strtotime('Sep 12, 2010'),
                 'count' => 2,
             ),
@@ -1236,7 +1236,7 @@ class BlogTest extends \BootPress\HTMLUnit\Component
                 'name' => 'Joe Bloggs',
                 'path' => 'joe-bloggs',
                 'url' => 'http://website.com/blog/authors/joe-bloggs.html',
-                'thumb' => 'http://website.com/page/blog/user.jpg',
+                'image' => 'http://website.com/page/blog/user.jpg',
                 'latest' => strtotime('Sep 12, 2010'),
                 'count' => 2,
             ),
@@ -1282,7 +1282,7 @@ class BlogTest extends \BootPress\HTMLUnit\Component
                     'name' => 'Featured',
                     'path' => 'featured',
                     'url' => 'http://website.com/blog/tags/featured.html',
-                    'thumb' => '',
+                    'image' => '',
                     'latest' => strtotime('Sep 12, 2010'),
                     'count' => 1,
                     'rank' => 1,
@@ -1291,7 +1291,7 @@ class BlogTest extends \BootPress\HTMLUnit\Component
                     'name' => 'Flowers',
                     'path' => 'flowers',
                     'url' => 'http://website.com/blog/tags/flowers.html',
-                    'thumb' => '',
+                    'image' => '',
                     'latest' => strtotime('Sep 12, 2010'),
                     'count' => 1,
                     'rank' => 1,
@@ -1300,7 +1300,7 @@ class BlogTest extends \BootPress\HTMLUnit\Component
                     'name' => 'Markdown',
                     'path' => 'markdown',
                     'url' => 'http://website.com/blog/tags/markdown.html',
-                    'thumb' => '',
+                    'image' => '',
                     'latest' => strtotime('Sep 12, 2010'),
                     'count' => 2,
                     'rank' => 5,
@@ -1309,7 +1309,7 @@ class BlogTest extends \BootPress\HTMLUnit\Component
                     'name' => 'Nature',
                     'path' => 'nature',
                     'url' => 'http://website.com/blog/tags/nature.html',
-                    'thumb' => '',
+                    'image' => '',
                     'latest' => strtotime('Sep 12, 2010'),
                     'count' => 1,
                     'rank' => 1,
@@ -1318,7 +1318,7 @@ class BlogTest extends \BootPress\HTMLUnit\Component
                     'name' => 'Simple',
                     'path' => 'simple',
                     'url' => 'http://website.com/blog/tags/simple.html',
-                    'thumb' => '',
+                    'image' => '',
                     'latest' => strtotime('Aug 3, 2010'),
                     'count' => 1,
                     'rank' => 1,
@@ -1333,7 +1333,7 @@ class BlogTest extends \BootPress\HTMLUnit\Component
                 'name' => 'Markdown',
                 'path' => 'markdown',
                 'url' => 'http://website.com/blog/tags/markdown.html',
-                'thumb' => '',
+                'image' => '',
                 'latest' => strtotime('Sep 12, 2010'),
                 'count' => 2,
                 'rank' => 1,
@@ -1371,7 +1371,7 @@ class BlogTest extends \BootPress\HTMLUnit\Component
                 'name' => 'Markdown',
                 'path' => 'markdown',
                 'url' => 'http://website.com/blog/tags/markdown.html',
-                'thumb' => '',
+                'image' => '',
                 'latest' => strtotime('Sep 12, 2010'),
                 'count' => 2,
             ),
@@ -1492,7 +1492,7 @@ class BlogTest extends \BootPress\HTMLUnit\Component
                     'name' => 'Category',
                     'path' => 'category',
                     'url' => 'http://website.com/category.html',
-                    'thumb' => '',
+                    'image' => '',
                 ),
             ),
             'tags' => array(
@@ -1500,7 +1500,7 @@ class BlogTest extends \BootPress\HTMLUnit\Component
                     'name' => 'Unpublished',
                     'path' => 'unpublished',
                     'url' => 'http://website.com/blog/tags/unpublished.html',
-                    'thumb' => '',
+                    'image' => '',
                 ),
             ),
         ), $template['vars']);
@@ -1535,7 +1535,7 @@ class BlogTest extends \BootPress\HTMLUnit\Component
                     'name' => 'Category',
                     'path' => 'category',
                     'url' => 'http://website.com/category.html',
-                    'thumb' => '',
+                    'image' => '',
                 ),
             ),
             'tags' => array(
@@ -1543,7 +1543,7 @@ class BlogTest extends \BootPress\HTMLUnit\Component
                     'name' => 'Unpublished',
                     'path' => 'unpublished',
                     'url' => 'http://website.com/blog/tags/unpublished.html',
-                    'thumb' => '',
+                    'image' => '',
                 ),
             ),
         ), $template['vars']);
@@ -1610,7 +1610,7 @@ class BlogTest extends \BootPress\HTMLUnit\Component
         $this->assertEquals(implode("\n", array(
             'blog:',
             "    name: 'Another { BootPress } Site'",
-            "    thumb: ''",
+            "    image: ''",
             "    summary: ''",
             '    listings: blog',
             '    breadcrumb: Blog',
@@ -1618,7 +1618,7 @@ class BlogTest extends \BootPress\HTMLUnit\Component
             'authors:',
             '    joe-bloggs:',
             "        name: 'Joe Bloggs'",
-            '        thumb: user.jpg',
+            '        image: user.jpg',
             '    anonymous:',
             '        name: anonymous',
             'categories:',
@@ -1647,7 +1647,7 @@ class BlogTest extends \BootPress\HTMLUnit\Component
         $this->assertEquals(array(
             'blog' => array(
                 'name' => 'Another { BootPress } Site',
-                'thumb' => '',
+                'image' => '',
                 'summary' => '',
                 'listings' => 'blog',
                 'breadcrumb' => 'Blog',
@@ -1656,7 +1656,7 @@ class BlogTest extends \BootPress\HTMLUnit\Component
             'authors' => array(
                 'joe-bloggs' => array(
                     'name' => 'Joe Bloggs',
-                    'thumb' => 'user.jpg',
+                    'image' => 'user.jpg',
                 ),
                 'anonymous' => array(
                     'name' => 'anonymous',
@@ -1699,7 +1699,7 @@ class BlogTest extends \BootPress\HTMLUnit\Component
         ), static::$blog->config());
         $this->assertEquals(array(
             'name' => 'Another { BootPress } Site',
-            'thumb' => '',
+            'image' => '',
             'summary' => '',
             'listings' => 'blog',
             'breadcrumb' => 'Blog',
@@ -1707,7 +1707,7 @@ class BlogTest extends \BootPress\HTMLUnit\Component
         ), static::$blog->config('blog'));
         $this->assertEquals('blog', static::$blog->config('blog', 'listings'));
         $this->assertEquals('Joe Bloggs', static::$blog->config('authors', 'joe-bloggs', 'name'));
-        $this->assertNull(static::$blog->config('authors', 'anonymous', 'thumb'));
+        $this->assertNull(static::$blog->config('authors', 'anonymous', 'image'));
     }
     
     public function testThemeGlobalVarsMethod()
@@ -1723,7 +1723,7 @@ class BlogTest extends \BootPress\HTMLUnit\Component
             'hodge' => 'podge',
             'blog' => array(
                 'name' => 'Another { BootPress } Site',
-                'thumb' => '',
+                'image' => '',
                 'summary' => '',
                 'listings' => 'blog',
                 'breadcrumb' => 'Blog',
@@ -1736,7 +1736,7 @@ class BlogTest extends \BootPress\HTMLUnit\Component
             'hodge' => 'podge',
             'blog' => array(
                 'name' => 'Another { BootPress } Site',
-                'thumb' => '',
+                'image' => '',
                 'summary' => '',
                 'listings' => 'blog',
                 'breadcrumb' => 'Blog',

@@ -657,7 +657,7 @@ class Blog
                     'title' => $current['title'],
                     'description' => (isset($page['description'])) ? (string) $page['description'] : '',
                     'keywords' => (isset($page['keywords'])) ? (string) $page['keywords'] : '',
-                    'thumb' => (isset($page['thumb'])) ? (string) $page['thumb'] : '',
+                    'image' => (isset($page['image'])) ? (string) $page['image'] : '',
                     'content' => $current['content'],
                     'updated' => $current['updated'],
                 ));
@@ -808,7 +808,7 @@ class Blog
             foreach (array(
                 'blog' => array(
                     'name' => 'Another { BootPress } Site',
-                    'thumb' => '',
+                    'image' => '',
                     'summary' => '',
                     'listings' => 'blog',
                     'breadcrumb' => 'Blog',
@@ -857,7 +857,7 @@ class Blog
      * @param string $path  The ``$table``'s key (a url path).
      * @param string $name  The default ``$table[$path]``'s name if one is not specified.
      * 
-     * @return array Either an empty one if not found, or the 'name', 'path', 'url', and 'thumb' of the ``$table[$path]``.
+     * @return array Either an empty one if not found, or the 'name', 'path', 'url', and 'image' of the ``$table[$path]``.
      */
     private function configInfo($table, $path, $name)
     {
@@ -873,10 +873,10 @@ class Blog
             'name' => $name,
             'path' => $path,
             'url' => ($table == 'categories') ? $page->url('base', $path) : $page->url('blog/listings', $table, $path),
-            'thumb' => '',
+            'image' => '',
         ), $config);
-        if (!empty($config['thumb'])) {
-            $config['thumb'] = $page->url('blog/config', $config['thumb']);
+        if (!empty($config['image'])) {
+            $config['image'] = $page->url('blog/config', $config['image']);
         }
 
         return $config;
@@ -929,7 +929,7 @@ class Blog
             }
         }
         $content = trim($this->theme->renderTwig($file));
-        // Urlify $page->thumb, and any other assets we want to pass along
+        // Urlify $page->image, and any other assets we want to pass along
         $page->set($this->theme->asset($page->html));
         $set = $page->html;
         foreach ($default as $key => $value) {
@@ -1003,7 +1003,7 @@ class Blog
                             'title' => $info['title'],
                             'description' => (isset($page['description'])) ? (string) $page['description'] : '',
                             'keywords' => (isset($page['keywords'])) ? (string) $page['keywords'] : '',
-                            'thumb' => (isset($page['thumb'])) ? (string) $page['thumb'] : '',
+                            'image' => (isset($page['image'])) ? (string) $page['image'] : '',
                             'content' => $info['content'],
                             'updated' => $info['updated'],
                         ));
@@ -1142,7 +1142,7 @@ class Blog
             $merge = (isset($authors[$row['path']])) ? $authors[$row['path']] : array();
             $yaml['authors'][$row['path']] = array_merge(array(
                 'name' => $row['name'],
-                'thumb' => '',
+                'image' => '',
             ), $merge);
             unset($authors[$row['path']]);
         }
