@@ -315,7 +315,7 @@ class Blog
                     }
                     if (!is_array($vars)) {
                         $hier = new Hierarchy($this->db, 'categories');
-                        $vars = array_keys($hier->tree(array('path'), array('where' => 'path = '.$vars)));
+                        $vars = array_keys($hier->tree(array('path'), 'path', $vars));
                         unset($hier);
                     }
                     if (empty($vars)) {

@@ -5,7 +5,6 @@ namespace BootPress\Tests;
 use BootPress\Page\Component as Page;
 use BootPress\Database\Component as Database;
 use BootPress\Hierarchy\Component as Hierarchy;
-use BootPress\Bootstrap3\Component as Bootstrap;
 use Symfony\Component\HttpFoundation\Request;
 
 class HierarchyTest extends \PHPUnit_Framework_TestCase
@@ -16,22 +15,22 @@ class HierarchyTest extends \PHPUnit_Framework_TestCase
     public static function setUpBeforeClass()
     {
         $request = Request::create('http://website.com/');
-        Page::html(array('dir' => __DIR__.'/page', 'suffix'=>'.html'), $request, 'overthrow');
+        Page::html(array('dir' => __DIR__.'/page', 'suffix' => '.html'), $request, 'overthrow');
     }
 
     public function testConstructMethod()
     {
         self::$db = new Database('sqlite::memory:');
-        self::$db->connection()->exec(implode("\n", array(
+        self::$db->exec(array(
             'CREATE TABLE category (',
-            '  id INTEGER PRIMARY KEY,',
-            '  name TEXT NOT NULL DEFAULT "",',
-            '  parent INTEGER NOT NULL DEFAULT 0,',
-            '  level INTEGER NOT NULL DEFAULT 0,',
-            '  lft INTEGER NOT NULL DEFAULT 0,',
-            '  rgt INTEGER NOT NULL DEFAULT 0',
+            '    id INTEGER PRIMARY KEY,',
+            '    name TEXT NOT NULL DEFAULT "",',
+            '    parent INTEGER NOT NULL DEFAULT 0,',
+            '    level INTEGER NOT NULL DEFAULT 0,',
+            '    lft INTEGER NOT NULL DEFAULT 0,',
+            '    rgt INTEGER NOT NULL DEFAULT 0',
             ')',
-        )));
+        ));
         if ($stmt = self::$db->insert('category', array('id', 'name', 'parent'))) {
             self::$db->insert($stmt, array(1, 'Electronics', 0));
             self::$db->insert($stmt, array(2, 'Televisions', 1));
@@ -71,12 +70,18 @@ class HierarchyTest extends \PHPUnit_Framework_TestCase
 
     public function testPathMethod()
     {
-        $this->assertEquals(array(), self::$hier->path(array('level', 'name', 'parent'), array()));
+        $this->assertEquals(array(
+            1 => 'Electronics',
+            6 => 'Portable Electronics',
+            7 => 'MP3 Players',
+            8 => 'Flash',
+        ), self::$hier->path('name', 'Flash'));
         $this->assertEquals(array(
             1 => array('level' => 0, 'name' => 'Electronics', 'parent' => 0),
             6 => array('level' => 1, 'name' => 'Portable Electronics', 'parent' => 1),
             9 => array('level' => 2, 'name' => 'CD Players', 'parent' => 6),
-        ), self::$hier->path(array('level', 'name', 'parent'), array('where' => 'id = 9')));
+        ), self::$hier->path('id', 9, array('level', 'name', 'parent')));
+        $this->assertEquals(array(), self::$hier->path('id', 15, array('level', 'name', 'parent')));
     }
 
     public function testChildrenMethod()
@@ -115,14 +120,14 @@ class HierarchyTest extends \PHPUnit_Framework_TestCase
 
     public function testCountsMethod()
     {
-        self::$db->connection()->exec(implode("\n", array(
-            'CREATE TABLE product (',
-            '  id INTEGER PRIMARY KEY,',
-            '  category_id INTEGER NOT NULL DEFAULT 0,',
-            '  name TEXT NOT NULL DEFAULT ""',
+        self::$db->exec(array(
+            'CREATE TABLE products (',
+            '    id INTEGER PRIMARY KEY,',
+            '    category_id INTEGER NOT NULL DEFAULT 0,',
+            '    name TEXT NOT NULL DEFAULT ""',
             ')',
-        )));
-        if ($stmt = self::$db->insert('product', array('category_id', 'name'))) {
+        ));
+        if ($stmt = self::$db->insert('products', array('category_id', 'name'))) {
             self::$db->insert($stmt, array(3, '20" TV'));
             self::$db->insert($stmt, array(3, '36" TV'));
             self::$db->insert($stmt, array(4, 'Super-LCD 42"'));
@@ -146,10 +151,10 @@ class HierarchyTest extends \PHPUnit_Framework_TestCase
             8 => 1, // Flash
             9 => 2, // CD Players
             10 => 1 // 2 Way Radios
-        ), self::$hier->counts('product', 'category_id'));
-        $this->assertEquals(5, self::$hier->counts('product', 'category_id', 2));
-        $this->assertEquals(2, self::$hier->counts('product', 'category_id', 7));
-        $this->assertEquals(0, self::$hier->counts('product', 'category_id', 27));
+        ), self::$hier->counts('products', 'category_id'));
+        $this->assertEquals(5, self::$hier->counts('products', 'category_id', 2));
+        $this->assertEquals(2, self::$hier->counts('products', 'category_id', 7));
+        $this->assertEquals(0, self::$hier->counts('products', 'category_id', 27));
     }
 
     public function testTreeMethod()
@@ -165,25 +170,33 @@ class HierarchyTest extends \PHPUnit_Framework_TestCase
             8 => array('name' => 'Flash', 'parent' => 7, 'depth' => 3),
             9 => array('name' => 'CD Players', 'parent' => 6, 'depth' => 2),
             10 => array('name' => '2 Way Radios', 'parent' => 6, 'depth' => 2),
-        ), self::$hier->tree(array('name')));
+        ), self::$hier->tree('name'));
         $this->assertEquals(array(
             6 => array('name' => 'Portable Electronics', 'parent' => 1, 'depth' => 0),
             7 => array('name' => 'MP3 Players', 'parent' => 6, 'depth' => 1),
             8 => array('name' => 'Flash', 'parent' => 7, 'depth' => 2),
             9 => array('name' => 'CD Players', 'parent' => 6, 'depth' => 1),
             10 => array('name' => '2 Way Radios', 'parent' => 6, 'depth' => 1),
-        ), self::$hier->tree(array('name'), array('where' => 'id=6')));
+        ), self::$hier->tree(array('name'), 'id', 6));
         $this->assertEquals(array(
-            8 => array('name' => 'Flash', 'parent' => 7, 'depth' => 2),
-        ), self::$hier->tree(array('name'), array('having' => 'depth > 1', 'where' => 'id = 6')));
+            8 => array('name' => 'Flash', 'parent' => 7, 'depth' => 3),
+        ), self::$hier->tree(array('name'), 'depth > 2'));
     }
 
     public function testNestifyFlattenAndListerMethods()
     {
-        $tree = self::$hier->tree(array('name'), array('where' => 'id=6'));
+        $tree = self::$hier->tree('name', 'id', 6);
+        $this->assertEquals(array( // lister($tree)
+            'Portable Electronics' => array(
+                'MP3 Players' => array(
+                    'Flash',
+                ),
+                'CD Players',
+                '2 Way Radios',
+            ),
+        ), self::$hier->lister($tree));
         $nest = self::$hier->nestify($tree);
         $flat = self::$hier->flatten($nest);
-        $array = self::$hier->lister($tree);
         $this->assertEquals(array( // nestify($tree)
             6 => array(
                 7 => array(
@@ -198,25 +211,5 @@ class HierarchyTest extends \PHPUnit_Framework_TestCase
             array(6, 9),
             array(6, 10),
         ), $flat);
-        $this->assertEquals(array( // lister($tree)
-            'Portable Electronics' => array(
-                'MP3 Players' => array(
-                    'Flash',
-                ),
-                'CD Players',
-                '2 Way Radios',
-            ),
-        ), $array);
-        $bp = new Bootstrap();
-        $html = '<ol>';
-        $html .= '<li>Portable Electronics<ol>';
-        $html .= '<li>MP3 Players<ol>';
-        $html .= '<li>Flash</li>';
-        $html .= '</ol></li>';
-        $html .= '<li>CD Players</li>';
-        $html .= '<li>2 Way Radios</li>';
-        $html .= '</ol></li>';
-        $html .= '</ol>';
-        $this->assertEquals($html, $bp->lister('ol', $array));
     }
 }

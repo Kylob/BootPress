@@ -102,11 +102,11 @@ class Component extends Blog
         $vars['breadcrumbs'] = $this->breadcrumbs();
         if (isset($category)) {
             $hier = new Hierarchy($this->db, 'categories');
-            $path = $hier->path(array('path', 'name'), array('where' => 'path = '.$category));
+            $path = $hier->path('path', $category, array('path', 'name'));
             if (empty($path)) {
                 return false;
             }
-            $tree = $hier->tree(array('path', 'name'), array('where' => 'path = '.$category));
+            $tree = $hier->tree(array('path', 'name'), 'path', $category);
             $counts = $hier->counts('blog', 'category_id');
             foreach ($tree as $id => $fields) {
                 $tree[$id]['count'] = $counts[$id];
