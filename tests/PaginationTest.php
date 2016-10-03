@@ -11,18 +11,18 @@ class PaginationTest extends \BootPress\HTMLUnit\Component
     {
         $pagination = new Pagination;
         $this->assertEquals(array(
-            'wrapper' => '<ul class="pagination">%s</ul>',
-            'link' => '<li><a href="%s">%s</a></li>',
-            'active' => '<li class="active"><span>%s</span></li>',
-            'disabled' => '<li class="disabled"><span>%s</span></li>',
-            'previous' => '&laquo;',
-            'next' => '&raquo;',
-            'dots' => '&hellip;',
+                'wrapper' => '<ul class="pagination">{{ value }}</ul>',
+                'link' => '<li><a href="{{ url }}">{{ value }}</a></li>',
+                'active' => '<li class="active"><span>{{ value }}</span></li>',
+                'disabled' => '<li class="disabled"><span>{{ value }}</span></li>',
+                'previous' => '&laquo;',
+                'next' => '&raquo;',
+                'dots' => '&hellip;',
         ), $pagination->links);
         $this->assertEquals(array(
-            'wrapper' => '<ul class="pager">%s</ul>',
-            'previous' => '<li class="previous"><a href="%s">&laquo; %s</a></li>',
-            'next' => '<li class="next"><a href="%s">%s &raquo;</a></li>',
+                'wrapper' => '<ul class="pager">{{ value }}</ul>',
+                'previous' => '<li class="previous"><a href="{{ url }}">&laquo; {{ value }}</a></li>',
+                'next' => '<li class="next"><a href="{{ url }}">{{ value }} &raquo;</a></li>',
         ), $pagination->pager);
     }
     
@@ -263,23 +263,6 @@ class PaginationTest extends \BootPress\HTMLUnit\Component
                 '<li class="active"><span>10</span></li>',
             '</ul>',
         ), $pagination->links());
-    }
-
-    public function testLinksArray()
-    {
-        $pagination = new Pagination();
-        $pagination->set('page', 10, 'http://example.com?page=3of10');
-        $this->assertEquals(array(
-            '<li><a href="http://example.com">1</a></li>',
-            '<li><a href="http://example.com?page=2of10">2</a></li>',
-            '<li class="active"><span>3</span></li>',
-            '<li><a href="http://example.com?page=4of10">4</a></li>',
-            '<li><a href="http://example.com?page=5of10">5</a></li>',
-            '<li><a href="http://example.com?page=6of10">6</a></li>',
-            '<li><a href="http://example.com?page=7of10">7</a></li>',
-            '<li class="disabled"><span>&hellip;</span></li>',
-            '<li><a href="http://example.com?page=10of10">10</a></li>',
-        ), $pagination->links(3, 'array'));
     }
 
     public function testPagerTitles()

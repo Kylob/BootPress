@@ -30,7 +30,8 @@
         "bootpress/sqlite": "^1.0",
         "bootpress/asset": "^1.0",
         "bootpress/hierarchy": "^1.0",
-        "bootpress/sitemap": "^1.0"
+        "bootpress/sitemap": "^1.0",
+        "bootpress/pagination": "^1.0"
     },
     "require-dev": {
         "bootpress/htmlunit": "^1.0",
