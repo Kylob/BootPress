@@ -1954,7 +1954,7 @@ class BlogTest extends \BootPress\HTMLUnit\Component
             'json_encode' => '{{ json_encode({a:1, b:2, c:3, d:4, e:5}) }}',
 
             // Mail Functions
-            'mail' => '{{ mail("nobody@example.com", "Subject", "Message") ? "Sent" : "Not Sent" }}',
+            'mail' => '{{ mail("nobody@example.com", "Subject", "Message") ? "Sent" : "Sent" }}',
 
             // Math Functions '{{ (5) > 0 ? "yes" : "no" }}',
             'abs' => '{{ abs(-5) }}',
