@@ -12,32 +12,10 @@ use Symfony\Component\Yaml\Yaml;
 use Spartz\TextFormatter\TextFormatter;
 use URLify; // jbroadway/urlify
 
-/*
-use BootPress\Page\Component as Page;
-use BootPress\Blog\Component as Blog;
-use BootPress\Asset\Component as Asset;
-
-$html = '';
-$page = Page::html();
-if ($asset = Asset::cached('assets')) {
-    $page->send($asset);
-}
-$blog = new Blog();
-if ($template = $blog->page()) {
-    if (empty($template['file'])) { // A 'txt', 'json', 'xml', 'rdf', 'rss', or 'atom' page
-        $page->send(Asset::dispatch($template['type'], $template['vars']['content']));
-    } else { // An 'html' file
-        $html = $blog->theme->renderTwig($template);
-    }
-}
-$html = $page->display($blog->theme->layout($html));
-$page->send(Asset::dispatch('html', $html));
-*/
-
 class Blog
 {
     /** @var string The current version. */
-    const VERSION = '0.9';
+    const VERSION = '1.0';
 
     /** @var BootPress\SQLite\Component The Blog's SQLite Database. */
     protected $db;
@@ -70,8 +48,7 @@ class Blog
                 return $this->$name;
                 break;
             default:
-                $value = $this->db->settings($name);
-                return ($value !== false) ? $value : null;
+                return $this->db->settings($name);
                 break;
         }
     }
@@ -843,7 +820,7 @@ class Blog
             if (isset($value[$key])) {
                 $value = $value[$key];
             } else {
-                return null;
+                return;
             }
         }
 

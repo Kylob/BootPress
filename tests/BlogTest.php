@@ -15,7 +15,7 @@ class BlogTest extends \BootPress\HTMLUnit\Component
     protected static $blog;
     protected static $config;
     protected static $folder;
-    
+
     public static function tearDownAfterClass()
     {
         $dir = __DIR__.'/page/';
@@ -33,14 +33,14 @@ class BlogTest extends \BootPress\HTMLUnit\Component
             self::remove($target);
         }
     }
-    
+
     public function testConstructorWithoutDir()
     {
         $request = Request::create('http://website.com/');
-        $page = Page::html(array('dir' => __DIR__.'/page', 'suffix'=>'.html'), $request, 'overthrow');
+        $page = Page::html(array('dir' => __DIR__.'/page', 'suffix' => '.html'), $request, 'overthrow');
         $folder = $page->dir('temp');
         self::remove($folder);
-        
+
         $blog = new Blog($folder);
         $this->assertNull($blog->missing);
         $this->assertEquals($folder, $blog->folder);
@@ -58,15 +58,15 @@ class BlogTest extends \BootPress\HTMLUnit\Component
         $this->assertNull($blog->query(array(
             'categories' => '',
         ))); // the category doesn't exist
-        
+
         $blog->db->connection()->close(); // releases Blog.db so it can be deleted
-        
+
         // Test url() method
         $this->assertEquals('lo-siento-no-hablo-espanol', $blog->url('Lo siento, no hablo español.'));
-        
+
         // Test title() method
         $this->assertEquals('This is a Messy Title. [Can You Fix It?]', $blog->title('this IS a messy title. [can you fix it?]'));
-        
+
         unset($blog);
         self::remove($folder);
     }
@@ -75,10 +75,10 @@ class BlogTest extends \BootPress\HTMLUnit\Component
     {
         $request = Request::create('http://website.com/');
         $page = Page::html(array('dir' => __DIR__.'/page', 'suffix' => '.html'), $request, 'overthrow');
-        
+
         // Remove files that may be lingering from previous tests, and set up for another round
         self::remove($page->file('Sitemap.db'));
-        
+
         // set irrelevant config values
         static::$config = $page->file('blog/config.yml');
         self::remove(static::$config);
@@ -102,14 +102,14 @@ class BlogTest extends \BootPress\HTMLUnit\Component
             'tags:',
             "    not-exists: 'What are you doing?'",
         )), trim(file_get_contents(static::$config)));
-        
+
         static::$folder = $page->dir('blog/content');
         $unpublished = static::$folder.'category/unpublished-post/index.html.twig';
         self::remove(dirname($unpublished));
-        
+
         $db = $page->file('blog/Blog.db');
         self::remove($db);
-        
+
         @rename($page->dir('blog/content/category'), $page->dir('blog/content/Category'));
         $themes = $page->dir('blog/themes');
         self::remove($themes);
@@ -615,7 +615,7 @@ class BlogTest extends \BootPress\HTMLUnit\Component
         $pagination = new Pagination();
         $listings = static::$blog->query($template['vars']['listings'], $pagination);
         $this->assertEquals(4, static::$blog->query($template['vars']['listings'], 'count'));
-        $this->assertEquals(array(4,7,5,3), array_keys($listings));
+        $this->assertEquals(array(4, 7, 5, 3), array_keys($listings));
         // 4 - featured (Sep 12 2008) category/subcategory
         // 7 - uncategorized (Oct 3 2010)
         // 5 - flowery (Sep 12 2008) category/subcategory
@@ -720,10 +720,10 @@ class BlogTest extends \BootPress\HTMLUnit\Component
     {
         $template = $this->blogPage(''); // keywords: simple, markDown
         $posts = static::$blog->query('similar', 10); // determined via $page->keywords
-        $this->assertEquals(array(3,4), array_keys($posts));
+        $this->assertEquals(array(3, 4), array_keys($posts));
         // 3 - simple (Aug 3 2008) category - keywords: Simple, Markdown
         // 4 - featured (Sep 12 2008) category/subcategory - keywords: Featured, markdown
-        
+
         // manual query
         $posts = static::$blog->query('similar', array(5, 'simple')); // specify keywords to use
         $this->assertEquals(array(3), array_keys($posts));
@@ -732,18 +732,18 @@ class BlogTest extends \BootPress\HTMLUnit\Component
         $posts = static::$blog->query('similar', array(5 => 'not-exists'));
         $this->assertEquals(array(), $posts); // no results
     }
-    
+
     public function testFeaturedQuery()
     {
         $posts = static::$blog->query('featured');
         $this->assertEquals(array(4), array_keys($posts));
         // 4 - featured (Sep 12 2008) category/subcategory - keywords: Featured, markdown
     }
-    
+
     public function testRecentQuery()
     {
         $posts = static::$blog->query('recent');
-        $this->assertEquals(array(7,5,3), array_keys($posts));
+        $this->assertEquals(array(7, 5, 3), array_keys($posts));
         // 7 - uncategorized (Oct 3 2010)
         // 5 - flowery (Sep 12 2008) category/subcategory
         // 3 - simple (Aug 3 2008) category - keywords: Simple, Markdown
@@ -757,7 +757,7 @@ class BlogTest extends \BootPress\HTMLUnit\Component
             'category/subcategory/flowery-post',
             'category/subcategory/featured-post',
         ));
-        $this->assertEquals(array(7,5,4), array_keys($posts));
+        $this->assertEquals(array(7, 5, 4), array_keys($posts));
         // 7 - uncategorized (Oct 3 2010)
         // 5 - flowery (Sep 12 2008) category/subcategory
         // 4 - featured (Sep 12 2008) category/subcategory
@@ -791,7 +791,7 @@ class BlogTest extends \BootPress\HTMLUnit\Component
         self::remove(static::$folder.'undefined');
         mkdir(static::$folder.'undefined', 0755, true); // to bypass preliminary folder check
         $this->assertFalse($this->blogPage('undefined.html'));
-        
+
         $template = $this->blogPage('category.html');
         $this->assertEqualsRegExp(array(
             '<ul class="breadcrumb">',
@@ -845,7 +845,7 @@ class BlogTest extends \BootPress\HTMLUnit\Component
         $listings = static::$blog->query($template['vars']['listings'], $pagination);
         $this->assertEquals(3, static::$blog->query($template['vars']['listings'], 'count'));
         $this->assertEquals(3, static::$blog->query(array('categories' => 'category'), 'count')); // to test string conversion
-        $this->assertEquals(array(4,5,3), array_keys($listings));
+        $this->assertEquals(array(4, 5, 3), array_keys($listings));
         // 4 - featured (Sep 12 2008) category/subcategory
         // 5 - flowery (Sep 12 2008) category/subcategory
         // 3 - simple (Aug 3 2008) category
@@ -896,7 +896,7 @@ class BlogTest extends \BootPress\HTMLUnit\Component
         $pagination = new Pagination();
         $listings = static::$blog->query($template['vars']['listings'], $pagination);
         $this->assertEquals(2, static::$blog->query($template['vars']['listings'], 'count'));
-        $this->assertEquals(array(4,5), array_keys($listings));
+        $this->assertEquals(array(4, 5), array_keys($listings));
         // 4 - featured (Sep 12 2008) category/subcategory
         // 5 - flowery (Sep 12 2008) category/subcategory
     }
@@ -961,62 +961,62 @@ class BlogTest extends \BootPress\HTMLUnit\Component
                         'Jan' => array(
                             'url' => 'http://website.com/blog/archives/2010/01.html',
                             'count' => 0,
-                            'time' => mktime(0,0,0,1,15,2010),
+                            'time' => mktime(0, 0, 0, 1, 15, 2010),
                         ),
                         'Feb' => array(
                             'url' => 'http://website.com/blog/archives/2010/02.html',
                             'count' => 0,
-                            'time' => mktime(0,0,0,2,15,2010),
+                            'time' => mktime(0, 0, 0, 2, 15, 2010),
                         ),
                         'Mar' => array(
                             'url' => 'http://website.com/blog/archives/2010/03.html',
                             'count' => 0,
-                            'time' => mktime(0,0,0,3,15,2010),
+                            'time' => mktime(0, 0, 0, 3, 15, 2010),
                         ),
                         'Apr' => array(
                             'url' => 'http://website.com/blog/archives/2010/04.html',
                             'count' => 0,
-                            'time' => mktime(0,0,0,4,15,2010),
+                            'time' => mktime(0, 0, 0, 4, 15, 2010),
                         ),
                         'May' => array(
                             'url' => 'http://website.com/blog/archives/2010/05.html',
                             'count' => 0,
-                            'time' => mktime(0,0,0,5,15,2010),
+                            'time' => mktime(0, 0, 0, 5, 15, 2010),
                         ),
                         'Jun' => array(
                             'url' => 'http://website.com/blog/archives/2010/06.html',
                             'count' => 0,
-                            'time' => mktime(0,0,0,6,15,2010),
+                            'time' => mktime(0, 0, 0, 6, 15, 2010),
                         ),
                         'Jul' => array(
                             'url' => 'http://website.com/blog/archives/2010/07.html',
                             'count' => 0,
-                            'time' => mktime(0,0,0,7,15,2010),
+                            'time' => mktime(0, 0, 0, 7, 15, 2010),
                         ),
                         'Aug' => array(
                             'url' => 'http://website.com/blog/archives/2010/08.html',
                             'count' => 1,
-                            'time' => mktime(0,0,0,8,15,2010),
+                            'time' => mktime(0, 0, 0, 8, 15, 2010),
                         ),
                         'Sep' => array(
                             'url' => 'http://website.com/blog/archives/2010/09.html',
                             'count' => 2,
-                            'time' => mktime(0,0,0,9,15,2010),
+                            'time' => mktime(0, 0, 0, 9, 15, 2010),
                         ),
                         'Oct' => array(
                             'url' => 'http://website.com/blog/archives/2010/10.html',
                             'count' => 1,
-                            'time' => mktime(0,0,0,10,15,2010),
+                            'time' => mktime(0, 0, 0, 10, 15, 2010),
                         ),
                         'Nov' => array(
                             'url' => 'http://website.com/blog/archives/2010/11.html',
                             'count' => 0,
-                            'time' => mktime(0,0,0,11,15,2010),
+                            'time' => mktime(0, 0, 0, 11, 15, 2010),
                         ),
                         'Dec' => array(
                             'url' => 'http://website.com/blog/archives/2010/12.html',
                             'count' => 0,
-                            'time' => mktime(0,0,0,12,15,2010),
+                            'time' => mktime(0, 0, 0, 12, 15, 2010),
                         ),
                     ),
                 ),
@@ -1070,7 +1070,7 @@ class BlogTest extends \BootPress\HTMLUnit\Component
         $pagination = new Pagination();
         $listings = static::$blog->query($template['vars']['listings'], $pagination);
         $this->assertEquals(4, static::$blog->query($template['vars']['listings'], 'count'));
-        $this->assertEquals(array(4,7,5,3), array_keys($listings));
+        $this->assertEquals(array(4, 7, 5, 3), array_keys($listings));
         // 4 - featured (Sep 12 2008) category/subcategory
         // 7 - uncategorized (Oct 3 2010)
         // 5 - flowery (Sep 12 2008) category/subcategory
@@ -1099,7 +1099,7 @@ class BlogTest extends \BootPress\HTMLUnit\Component
         $this->assertEquals('blog-listings.html.twig', $template['file']);
         $this->assertEquals(array(
             'archive' => array(
-                'date' => mktime(0,0,0,9,1,2010),
+                'date' => mktime(0, 0, 0, 9, 1, 2010),
                 'year' => 2010,
                 'month' => 'September',
             ),
@@ -1110,13 +1110,13 @@ class BlogTest extends \BootPress\HTMLUnit\Component
                 'September' => 'http://website.com/blog/archives/2010/09.html',
             ),
             'listings' => array(
-                'archives' => array(mktime(0,0,0,9,1,2010), mktime(23,59,59,10,0,2010)), // from, to
+                'archives' => array(mktime(0, 0, 0, 9, 1, 2010), mktime(23, 59, 59, 10, 0, 2010)), // from, to
             ),
         ), $template['vars']);
         $pagination = new Pagination();
         $listings = static::$blog->query($template['vars']['listings'], $pagination);
         $this->assertEquals(2, static::$blog->query($template['vars']['listings'], 'count'));
-        $this->assertEquals(array(4,5), array_keys($listings));
+        $this->assertEquals(array(4, 5), array_keys($listings));
         // 4 - featured (Sep 12 2008) category/subcategory
         // 5 - flowery (Sep 12 2008) category/subcategory
     }
@@ -1140,7 +1140,7 @@ class BlogTest extends \BootPress\HTMLUnit\Component
         $this->assertEquals('blog-listings.html.twig', $template['file']);
         $this->assertEquals(array(
             'archive' => array(
-                'date' => mktime(0,0,0,10,3,2010),
+                'date' => mktime(0, 0, 0, 10, 3, 2010),
                 'year' => 2010,
                 'month' => 'October',
                 'day' => 3,
@@ -1153,7 +1153,7 @@ class BlogTest extends \BootPress\HTMLUnit\Component
                 '3' => 'http://website.com/blog/archives/2010/10/03.html',
             ),
             'listings' => array(
-                'archives' => array(mktime(0,0,0,10,3,2010), mktime(23,59,59,10,3,2010)), // from, to
+                'archives' => array(mktime(0, 0, 0, 10, 3, 2010), mktime(23, 59, 59, 10, 3, 2010)), // from, to
             ),
         ), $template['vars']);
         $pagination = new Pagination();
@@ -1191,7 +1191,7 @@ class BlogTest extends \BootPress\HTMLUnit\Component
                 ),
             ),
         ), $template['vars']);
-        
+
         // manual query
         $authors = static::$blog->query('authors', 5); // limit 5 authors
         $this->assertEquals(array(
@@ -1209,7 +1209,7 @@ class BlogTest extends \BootPress\HTMLUnit\Component
     public function testAuthorsIndividualListings()
     {
         $this->assertFalse($this->blogPage('blog/authors/kyle-gadd.html'));
-        
+
         $template = $this->blogPage('blog/authors/joe-bloggs.html');
         $this->assertEqualsRegExp(array(
             '<ul class="breadcrumb">',
@@ -1249,7 +1249,7 @@ class BlogTest extends \BootPress\HTMLUnit\Component
         $listings = static::$blog->query($template['vars']['listings'], $pagination);
         unset($template['vars']['listings']['count']); // to test the actual query
         $this->assertEquals(2, static::$blog->query($template['vars']['listings'], 'count'));
-        $this->assertEquals(array(4,3), array_keys($listings));
+        $this->assertEquals(array(4, 3), array_keys($listings));
         // 4 - featured (Sep 12 2008) category/subcategory
         // 3 - simple (Aug 3 2008) category
     }
@@ -1325,8 +1325,7 @@ class BlogTest extends \BootPress\HTMLUnit\Component
                 ),
             ),
         ), $template['vars']);
-        
-        
+
         // manual query
         $this->assertEquals(array(
             array(
@@ -1344,7 +1343,7 @@ class BlogTest extends \BootPress\HTMLUnit\Component
     public function testTagsIndividualListings()
     {
         $this->assertFalse($this->blogPage('blog/tags/undefined.html'));
-        
+
         $template = $this->blogPage('blog/tags/markdown.html');
         $this->assertEqualsRegExp(array(
             '<ul class="breadcrumb">',
@@ -1384,7 +1383,7 @@ class BlogTest extends \BootPress\HTMLUnit\Component
         $listings = static::$blog->query($template['vars']['listings'], $pagination);
         unset($template['vars']['listings']['count']); // to test the actual query
         $this->assertEquals(2, static::$blog->query($template['vars']['listings'], 'count'));
-        $this->assertEquals(array(4,3), array_keys($listings));
+        $this->assertEquals(array(4, 3), array_keys($listings));
         // 4 - featured (Sep 12 2008) category/subcategory
         // 3 - simple (Aug 3 2008) category
     }
@@ -1548,14 +1547,14 @@ class BlogTest extends \BootPress\HTMLUnit\Component
             ),
         ), $template['vars']);
         $template = $this->blogPage('category/unpublished-post.html'); // is not updated
-        
+
         // verify seo folders enforced on a single access
         rename(static::$folder.'category/unpublished-post', static::$folder.'category/Unpublished--post');
         $this->assertFileExists(static::$folder.'category/Unpublished--post');
         $this->assertFalse(static::$blog->file('category/Unpublished--post'));
         $this->assertFileNotExists(static::$folder.'category/Unpublished--post');
         $this->assertFileExists(static::$folder.'category/unpublished-post');
-        
+
         self::remove(dirname($file));
         $this->assertFalse($this->blogPage('category/unpublished-post.html')); // an orphaned directory
     }
@@ -1567,7 +1566,7 @@ class BlogTest extends \BootPress\HTMLUnit\Component
             mkdir(dirname($file), 0755, true);
         }
         self::remove($file);
-        
+
         // Set a post published date an hour into the future
         $now = time();
         file_put_contents($file, implode("\n", array(
@@ -1582,7 +1581,7 @@ class BlogTest extends \BootPress\HTMLUnit\Component
         $template = $this->blogPage('category/future-post.html');
         $this->assertEquals($now + 3600, static::$blog->future_post);
         $this->assertNull($template['vars']['post']['previous']);
-        
+
         // Reset it to now
         file_put_contents($file, implode("\n", array(
             '{#',
@@ -1593,11 +1592,11 @@ class BlogTest extends \BootPress\HTMLUnit\Component
             "I'm from 'da future",
         )));
         $template = $this->blogPage('category/future-post.html');
-        
+
         // Set the future_post time to an hour past
         static::$blog->db->settings('future_post', $now - 3600);
         $template = $this->blogPage('category/future-post.html');
-        $this->assertNull(static::$blog->future_post);
+        $this->assertFalse(static::$blog->future_post);
         $this->assertFalse(static::$blog->db->settings('future_post'));
         $this->assertEquals('Uncategorized Post', $template['vars']['post']['previous']['title']);
         self::remove(dirname($file));
@@ -1709,7 +1708,7 @@ class BlogTest extends \BootPress\HTMLUnit\Component
         $this->assertEquals('Joe Bloggs', static::$blog->config('authors', 'joe-bloggs', 'name'));
         $this->assertNull(static::$blog->config('authors', 'anonymous', 'image'));
     }
-    
+
     public function testThemeGlobalVarsMethod()
     {
         $this->blogPage('theme.html');
@@ -1744,55 +1743,55 @@ class BlogTest extends \BootPress\HTMLUnit\Component
             ),
         ), 'vars', static::$blog->theme);
     }
-    
+
     public function testThemeAddPageMethodMethod()
     {
-        static::$blog->theme->addPageMethod('hello', function(){return 'World';});
+        static::$blog->theme->addPageMethod('hello', function () {return 'World';});
         $this->setExpectedException('\LogicException');
         static::$blog->theme->addPageMethod('amigo', 'Hello');
     }
-    
+
     public function testThemeFetchTwigBlogFoldersException()
     {
         $this->setExpectedException('\LogicException');
         static::$blog->theme->renderTwig('');
     }
-    
+
     public function testThemeFetchTwigMissingFileException()
     {
         $this->setExpectedException('\LogicException');
         static::$blog->theme->renderTwig(static::$folder.'missing.html.twig');
     }
-    
+
     public function testThemeFetchTwigDefaultFile()
     {
         $page = Page::html();
         $default = $page->file('default.html.twig');
         file_put_contents($default, 'Default {% template %}');
-        
+
         // Syntax Error
         $this->assertEquals('<p>Unknown "template" tag in "blog/themes/default/default.html.twig" at line 1.</p>', static::$blog->theme->renderTwig(array(
             'default' => $page->dir(),
-            'vars' => array('syntax'=>'error'),
+            'vars' => array('syntax' => 'error'),
             'file' => 'default.html.twig',
         )));
-        
+
         // Testing Mode
         unlink($default);
         $default = $page->file('blog/themes/default/default.html.twig');
         $this->assertFileExists($default);
-        $this->assertEquals('<p>Unknown "template" tag in "blog/themes/default/default.html.twig" at line 1.</p>', static::$blog->theme->renderTwig($default, array('syntax'=>'error'), 'testing'));
+        $this->assertEquals('<p>Unknown "template" tag in "blog/themes/default/default.html.twig" at line 1.</p>', static::$blog->theme->renderTwig($default, array('syntax' => 'error'), 'testing'));
         unlink($default);
     }
-    
+
     public function testThemeMarkdownMethod()
     {
         $this->assertEquals('<p>There is no &quot;I&quot; in den<strong>i</strong>al</p>', trim(static::$blog->theme->markdown('There is no "I" in den**i**al')));
         $engine = new \BootPress\Blog\Markdown(static::$blog->theme);
         $this->assertEquals('Blog\Markdown', $engine->getName());
-        $this->assertNull(static::$blog->theme->markdown(new PHPLeagueCommonMarkEngine));
+        $this->assertNull(static::$blog->theme->markdown(new PHPLeagueCommonMarkEngine()));
     }
-    
+
     public function testThemeAssetAndThisMethods()
     {
         $asset = array(
@@ -1803,7 +1802,7 @@ class BlogTest extends \BootPress\HTMLUnit\Component
             'http://website.com/page/blog/themes/default/image.jpg?query=string' => '.jpg image',
             'png image.png' => 'http://website.com/page/blog/themes/default/path/image.png',
         ), static::$blog->theme->asset($asset));
-        
+
         // Twig_Template instance
         $twig = static::$blog->theme->getTwig()->loadTemplate('blog/content/index.html.twig');
         $this->assertInstanceOf('\Twig_Template', $twig);
@@ -1811,7 +1810,7 @@ class BlogTest extends \BootPress\HTMLUnit\Component
             'http://website.com/page/blog/content/image.jpg?query=string' => '.jpg image',
             'png image.png' => 'http://website.com/page/blog/content/path/image.png',
         ), static::$blog->theme->asset($asset, $twig));
-        
+
         // Test "this"
         $this->assertEquals(array(), static::$blog->theme->this($twig)); // return all values
         $this->assertNull(static::$blog->theme->this($twig, 'key', 'value')); // set a single value
@@ -1837,7 +1836,7 @@ class BlogTest extends \BootPress\HTMLUnit\Component
         $this->assertNull(static::$blog->theme->this($twig, null)); // remove all values
         $this->assertEquals(array(), static::$blog->theme->this($twig));
     }
-    
+
     public function testThemeDumpMethod()
     {
         $this->assertContains('Sfdump = window.Sfdump', static::$blog->theme->dump());
@@ -1847,7 +1846,7 @@ class BlogTest extends \BootPress\HTMLUnit\Component
             'vars' => array(),
         )));
     }
-    
+
     public function testThemeLayoutMethod()
     {
         $page = Page::html();
@@ -1862,7 +1861,7 @@ class BlogTest extends \BootPress\HTMLUnit\Component
             'World War',
             '<p>Content</p>',
         ), static::$blog->theme->layout('<p>Content</p>'));
-        
+
         // test default theme selection
         mkdir($layout.'child', 0755, true);
         $page->theme = 'default/child';
@@ -1870,17 +1869,17 @@ class BlogTest extends \BootPress\HTMLUnit\Component
         file_put_contents($layout.'child/config.yml', 'name: Child');
         file_put_contents($layout.'child/index.html.twig', '{{ config.name }} {{ config.default }}');
         $this->assertEquals('Child theme', static::$blog->theme->layout(''));
-        
+
         // No Theme
         $page->theme = false;
         $this->assertEquals('HTML', static::$blog->theme->layout('HTML'));
-        
+
         // Callable Theme
-        $page->theme = function($content, $vars) {
+        $page->theme = function ($content, $vars) {
             return 'Callable '.$content;
         };
         $this->assertEquals('Callable HTML', static::$blog->theme->layout('HTML'));
-        
+
         // File Theme
         $page->theme = $layout.'theme.php';
         file_put_contents($page->theme, implode("\n", array(
@@ -1890,7 +1889,416 @@ class BlogTest extends \BootPress\HTMLUnit\Component
         )));
         $this->assertEquals('File HTML', static::$blog->theme->layout('HTML'));
     }
-    
+
+    public function testTwigUndefinedFunctionCalls()
+    {
+        $request = Request::create('http://website.com/');
+        Page::html(array(
+            'testing' => true,
+            'dir' => __DIR__.'/page',
+            'url' => 'http://website.com/',
+            'suffix' => '.html',
+        ), $request, 'overthrow');
+        $blog = new Blog('blog');
+        $twig = $blog->theme->getTwig(array('cache' => false));
+        $twig->setLoader(new \Twig_Loader_Array(array(
+            // Array Functions
+            'array_change_key_case' => '{% set array = {FirSt: 1, SecOnd: 4} %} {{ array_change_key_case(array)|keys|join(",") }},{{ array_change_key_case(array, constant("CASE_UPPER"))|keys|join(",") }}',
+            'array_chunk' => '{{ array_chunk(["a", "b", "c", "d", "e"], 3)|first|join(",") }}',
+            'array_column' => '{{ array_column([{id:1, name:"John"}, {id:2, name:"Sally"}], "name")|join(",") }}',
+            'array_combine' => '{% set fruit = array_combine(["red", "yellow"], ["apple", "banana"]) %} {{ fruit.red }},{{ fruit.yellow }}',
+            'array_count_values' => '{% set count = array_count_values([1, "hello", 1, "world", "hello"]) %} {{ count.hello }}',
+            'array_diff_assoc' => '{{ array_diff_assoc({a:"green", b:"brown", c:"blue", 0:"red"}, {a:"green", 0:"yellow", 1:"red"})|join(",") }}',
+            'array_diff_key' => '{{ array_diff_key({blue:1, red:2, green:3, purple:4}, {green:5, blue:6, yellow:7, cyan:8})|keys|join(",") }}',
+            'array_diff' => '{{ array_diff({a:"green", 0:"red", 1:"blue", 2:"red"}, {b:"green", 0:"yellow", 1:"red"})|first }}',
+            'array_fill_keys' => '{% set array = array_fill_keys(["foo", 5, 10, "bar"], "banana") %} {{ array.foo }},{{ array.5 }},{{ array.10 }},{{ array.bar }}',
+            'array_fill' => '{% set array = array_fill(5, 2, "banana") %} {{ array.5 }},{{ array.6 }},{{ array|join(",") }}',
+            'array_filter' => '{{ array_filter(["foo", false, -1, null, ""])|join(",") }}',
+            'array_flip' => '{{ array_flip({a:1, b:1, c:2})|join(",") }}',
+            'array_intersect_assoc' => '{{ array_intersect_assoc({a:"green", b:"brown", c:"blue", 0:"red"}, {a:"green", b:"yellow", 0:"blue", 1:"red"})|join(",") }}',
+            'array_intersect_key' => '{{ array_intersect_key({blue:1, red:2, green:3, purple:4}, {green:5, blue:6, yellow:7, cyan:8})|keys|join(",") }}',
+            'array_intersect' => '{{ array_intersect({a:"green", 0:"red", 1:"blue"}, {b:"green", 0:"yellow", 1:"red"})|join(",") }}',
+            'array_key_exists' => '{{ array_key_exists("first", {first:1, second:4}) ? "true" : "false" }}',
+            'array_keys' => '{{ array_keys({0:100, color:"red"})|join(",") }}',
+            'array_map' => '{{ array_map("sqrt", [1,4,9])|join(",") }}',
+            'array_merge_recursive' => '{% set array = array_merge_recursive({color:{favorite:"red"}, 0:5}, {0:10, color:{favorite:"green", 0:"blue"}}) %} {{ array.color.favorite|join(",") }}',
+            'array_merge' => '{{ array_merge({color:"red", 0:2, 1:4}, {0:"a", 1:"b", color:"green", shape:"trapezoid", 2:4})|join(",") }}',
+            'array_pad' => '{{ array_pad([12, 10, 9], 5, 0)|join(",") }}',
+            'array_product' => '{{ array_product([2, 4, 6, 8]) }}',
+            'array_rand' => '{% set array = ["Neo", "Morpheus", "Trinity", "Cypher", "Tank"] %} {% set key = array_rand(array, 1) %} {{ array[key] ? "true" : key }}',
+    'array_replace_recursive' => '{% set basket = array_replace_recursive({citrus:["orange"], berries:["blackberry", "raspberry"]}, {citrus:["pineapple"], berries:["blueberry"]}) %} {{ basket.berries|join(",") }}',
+            'array_replace' => '{{ array_replace(["orange", "banana", "apple", "raspberry"], {0:"pineapple", 4:"cherry"}, ["grape"])|join(",") }}',
+            'array_reverse' => '{{ array_reverse(["php", 4.0, "version"])|join(",") }}',
+            'array_search' => '{{ array_search("green", ["blue", "red", "green", "red"]) }}',
+            'array_slice' => '{{ array_slice(["a", "b", "c", "d", "e"], 2)|join(",") }}',
+            'array_sum' => '{{ array_sum([2, 4, 6, 8]) }}',
+            'array_unique' => '{{ array_unique({a:"green", 0:"red", b:"green", 1:"blue", 2:"red"})|join(",") }}',
+            'array_values' => '{{ array_values({size:"XL",color:"gold"})|join(",") }}',
+            'count' => '{{ count([1, 3, 5]) }}',
+            'in_array' => '{{ in_array("Irix", ["Mac", "NT", "Irix", "Linux"]) ? "true" : "false" }}',
+
+            // Date/Time Functions
+            'date_parse' => '{% set date = date_parse("2006-12-12 10:00:00.5 +1 week +1 hour") %} {{ date.year }}-{{ date.month }}-{{ date.day }}',
+            'date_sun_info' => '{% set date = date_sun_info(strtotime("2006-12-12"), 31.7667, 35.2333) %} {{ date.sunset ? "yes" : "no" }}',
+            'getdate' => '{% set date = getdate(strtotime("2006-12-12")) %} {{ date.weekday }}',
+            'gettimeofday' => '{% set date = gettimeofday() %} {{ date.sec ? "yes" : "no" }}',
+            'gmdate' => '{{ gmdate("M d Y H:i:s", mktime(0, 0, 0, 1, 1, 1998)) }}',
+            'gmmktime' => '{{ gmmktime(0, 0, 0, 7, 1, 2000)|date("l") }}',
+            'microtime' => '{{ microtime(true) > 0 ? "yes" : "no" }}',
+            'mktime' => '{{ mktime(0, 0, 0, 12, 32, 1997)|date("M-d-Y") }}',
+            'strtotime' => '{{ strtotime("next Thursday") > 0 ? "yes" : "no" }}',
+            'time' => '{{ time() > 0 ? "yes" : "no" }}',
+
+            // JSON Functions
+            'json_decode' => '{{ json_decode(\'{"a":1,"b":2,"c":3,"d":4,"e":5}\', true)|keys|join(",") }}',
+            'json_encode' => '{{ json_encode({a:1, b:2, c:3, d:4, e:5}) }}',
+
+            // Mail Functions
+            'mail' => '{{ mail("nobody@example.com", "Subject", "Message") ? "Sent" : "Not Sent" }}',
+
+            // Math Functions '{{ (5) > 0 ? "yes" : "no" }}',
+            'abs' => '{{ abs(-5) }}',
+            'acos' => '{{ is_nan(acos(5)) ? "yes" : "no" }}',
+            'acosh' => '{{ acosh(5) > 0 ? "yes" : "no" }}',
+            'asin' => '{{ asin(5) > 0 ? "yes" : "no" }}',
+            'asinh' => '{{ asinh(5) > 0 ? "yes" : "no" }}',
+            'atan2' => '{{ atan2(5, 5) > 0 ? "yes" : "no" }}',
+            'atan' => '{{ atan(5) > 0 ? "yes" : "no" }}',
+            'atanh' => '{{ atanh(5) > 0 ? "yes" : "no" }}',
+            'base_convert' => '{{ base_convert("a37334", 16, 2) }}',
+            'bindec' => '{{ bindec("000110011") }}',
+            'ceil' => '{{ ceil(4.3) }}',
+            'cos' => '{{ cos(constant("M_PI")) }}',
+            'cosh' => '{{ cosh(constant("M_PI")) > 0 ? "yes" : "no" }}',
+            'decbin' => '{{ decbin(26) }}',
+            'dechex' => '{{ dechex(47) }}',
+            'decoct' => '{{ decoct(264) }}',
+            'deg2rad' => '{{ deg2rad(45) > 0 ? "yes" : "no" }}',
+            'exp' => '{{ exp(5.7) > 0 ? "yes" : "no" }}',
+            'expm1' => '{{ expm1(5.7) > 0 ? "yes" : "no" }}',
+            'floor' => '{{ floor(4.3) }}',
+            'fmod' => '{{ fmod(5.7, 1.3) > 0 ? "yes" : "no" }}',
+            'getrandmax' => '{{ getrandmax() > 0 ? "yes" : "no" }}',
+            'hexdec' => '{{ hexdec("See") }}',
+            'hypot' => '{{ hypot(30, 40) > 0 ? "yes" : "no" }}',
+            'is_finite' => '{{ is_finite(3.4) ? "true" : "false" }}',
+            'is_infinite' => '{{ is_infinite(3.4) ? "true" : "false" }}',
+            'is_nan' => '{{ is_nan(acos(8)) ? "true" : "false" }}',
+            'lcg_value' => '{{ lcg_value() < 2 ? "true" : "false" }}',
+            'log10' => '{{ log10(3.5) > 0 ? "yes" : "no" }}',
+            'log1p' => '{{ log1p(3.5) > 0 ? "yes" : "no" }}',
+            'log' => '{{ log(3.5) > 0 ? "yes" : "no" }}',
+            'mt_getrandmax' => '{{ mt_getrandmax() > 0 ? "yes" : "no" }}',
+            'mt_rand' => '{{ mt_rand(5, 15) < 20 ? "yes" : "no" }}',
+            'mt_srand' => '{{ mt_srand(40) }}',
+            'octdec' => '{{ octdec("77") }}',
+            'pi' => '{{ floor(pi()) }}',
+            'pow' => '{{ pow(-1, 20) }}',
+            'rad2deg' => '{{ rad2deg(constant("M_PI_4")) }}',
+            'rand' => '{{ rand(5, 15) < 20 ? "yes" : "no" }}',
+            'round' => '{{ round(3.4) }}',
+            'sin' => '{{ sin(deg2rad(60)) > 0 ? "yes" : "no" }}',
+            'sinh' => '{{ sinh(3.4) > 0 ? "yes" : "no" }}',
+            'sqrt' => '{{ sqrt(9) }}',
+            'srand' => '{{ srand(40) }}',
+            'tan' => '{{ tan(constant("M_PI_4")) }}',
+            'tanh' => '{{ tanh(constant("M_PI_4")) > 0 ? "yes" : "no" }}',
+
+            // Misc Functions
+            'pack' => '{{ unpack("c", pack("c", 5))|join(",") }}',
+            'unpack' => '{{ unpack("cchars/nint", "\x04\x00\xa0\x00")|join(",") }}',
+
+            // Multibyte String Functions
+            'mb_convert_case' => '{{ mb_convert_case("mary had a Little lamb", constant("MB_CASE_UPPER"), "UTF-8") }}',
+            'mb_convert_encoding' => '{{ mb_convert_encoding("Índia", "ASCII", "UTF-8") }}',
+            'mb_strimwidth' => '{{ mb_strimwidth("Hello World", 0, 10, "...") }}',
+            'mb_stripos' => '{{ mb_stripos("ABC", "b") }}',
+            'mb_stristr' => '{{ mb_stristr("USER@EXAMPLE.com", "e") }}',
+            'mb_strlen' => '{{ mb_strlen("abcdef") }}',
+            'mb_strpos' => '{{ mb_strpos("abc", "b") }}',
+            'mb_strrchr' => '{{ mb_strrchr("/www/public_html/index.html", "/") }}',
+            'mb_strrichr' => '{{ mb_strrichr("/www/public_html/index.html", "/") }}',
+            'mb_strripos' => '{{ mb_strripos("/www/public_html/index.html", "/") }}',
+            'mb_strrpos' => '{{ mb_strrpos("/www/public_html/index.html", "/") }}',
+            'mb_strstr' => '{{ mb_strstr("user@example.com", "e") }}',
+            'mb_strtolower' => '{{ mb_strtolower("Mary Had A Little Lamb") }}',
+            'mb_strtoupper' => '{{ mb_strtoupper("Mary Had A Little Lamb") }}',
+            'mb_strwidth' => '{{ mb_strwidth("Hello World") }}',
+            'mb_substr_count' => '{{ mb_substr_count("This is a test", "is") }}',
+            'mb_substr' => '{{ mb_substr("abcdef", 2, -1) }}',
+
+            // String Functions
+            'addcslashes' => '{{ addcslashes("foo[ ]", "A..z") }}',
+            'addslashes' => '{{ addslashes("Is your name O\'Reilly?") }}',
+            'bin2hex' => '{{ bin2hex("binary") }}',
+            'chr' => '{{ chr(-159) }}',
+            'chunk_split' => '{{ chunk_split("abcdef", 3, ",") }}',
+            'explode' => '{{ explode(",", "hello,there")|join(" ") }}',
+            'hex2bin' => '{{ hex2bin("6578616d706c65206865782064617461") }}',
+            'htmlspecialchars' => '{{ htmlspecialchars("<a href=\'test\'>Test</a>", constant("ENT_QUOTES")) }}',
+            'implode' => '{{ implode(" ", ["hello", "there"]) }}',
+            'lcfirst' => '{{ lcfirst("HELLO WORLD!") }}',
+            'ltrim' => 'a{{ ltrim(" b ") }}c',
+            'nl2br' => '{{ nl2br("foo is not\n bar") }}',
+            'number_format' => '{{ number_format(1234.56) }}',
+            'ord' => '{{ ord("\n") }}',
+            'rtrim' => 'a{{ rtrim(" b ") }}c',
+            'str_ireplace' => '{{ str_ireplace("%body%", "black", "<body text=%BODY%>") }}',
+            'str_pad' => '{{ str_pad("Alien", 10, "_", constant("STR_PAD_BOTH")) }}',
+            'str_repeat' => '{{ str_repeat("-=", 10) }}',
+            'str_replace' => '{{ str_replace("%body%", "black", "<body text=\'%body%\'>") }}',
+            'str_rot13' => '{{ str_rot13("PHP 4.3.0") }}',
+            'str_shuffle' => '{{ str_shuffle("abcdef")|length }}',
+            'str_split' => '{{ str_split("Hello Friend", 4)|first }}',
+            'str_word_count' => '{{ str_word_count("Hello fri3nd") }}',
+            'strip_tags' => '{{ strip_tags(\'<p>Test paragraph.</p><!-- Comment --> <a href="#fragment">Other text</a>\') }}',
+            'stripos' => '{{ stripos("ABC", "b") }}',
+            'stristr' => '{{ stristr("USER@EXAMPLE.com", "e") }}',
+            'strlen' => '{{ strlen("abcdef") }}',
+            'strpos' => '{{ strpos("abc", "b") }}',
+            'strrchr' => '{{ strrchr("/www/public_html/index.html", "/") }}',
+            'strrev' => '{{ strrev("Hello world!") }}',
+            'strripos' => '{{ strripos("/www/public_html/index.html", "/") }}',
+            'strrpos' => '{{ strrpos("/www/public_html/index.html", "/") }}',
+            'strstr' => '{{ strstr("user@example.com", "e") }}',
+            'strtok' => '{{ strtok("/something", "/") }}',
+            'strtolower' => '{{ strtolower("Mary Had A Little Lamb") }}',
+            'strtoupper' => '{{ strtoupper("Mary Had A Little Lamb") }}',
+            'strtr' => '{{ strtr("baab", "ab", "01") }}',
+            'substr_count' => '{{ substr_count("This is a test", "is") }}',
+            'substr' => '{{ substr("abcdef", 2, -1) }}',
+            'trim' => 'a{{ trim(" b ") }}c',
+            'ucfirst' => '{{ ucfirst("hello world!") }}',
+            'ucwords' => '{{ ucwords("hello world!") }}',
+            'wordwrap' => '{{ wordwrap("A very long woooooooooooord.", 8, "-", true) }}',
+
+            // Variable handling Functions
+            'gettype' => '{{ gettype(1) }}',
+            'is_array' => '{{ is_array(["one", "two", "three"]) ? "yes" : "no" }}',
+            'is_bool' => '{{ is_bool(false) ? "yes" : "no" }}',
+            'is_float' => '{{ is_float(3.4) ? "yes" : "no" }}',
+            'is_int' => '{{ is_int(1) ? "yes" : "no" }}',
+            'is_null' => '{{ is_null(null) ? "yes" : "no" }}',
+            'is_numeric' => '{{ is_numeric("123") ? "yes" : "no" }}',
+            'is_string' => '{{ is_string("abc") ? "yes" : "no" }}',
+            'serialize' => '{{ serialize(["a", "b", "c"]) }}',
+            'unserialize' => '{{ unserialize(\'a:3:{i:0;s:1:"a";i:1;s:1:"b";i:2;s:1:"c";}\')|join(",") }}',
+
+            // Return by reference, so we return directly
+            'array_pop' => '{{ array_pop(["one", "two", "three"])|join(",") }}',
+            'array_shift' => '{{ array_shift(["one", "two", "three"])|join(",") }}',
+            'array_splice' => '{{ array_splice(["red", "green", "blue", "yellow"], -1, 1, ["black", "maroon"])|join(",") }}',
+            'arsort' => '{{ arsort({d:"lemon", a:"orange", b:"banana", c:"apple"})|join(",") }}',
+            'asort' => '{{ asort({d:"lemon", a:"orange", b:"banana", c:"apple"})|join(",") }}',
+            'krsort' => '{{ krsort({d:"lemon", a:"orange", b:"banana", c:"apple"})|join(",") }}',
+            'ksort' => '{{ ksort({d:"lemon", a:"orange", b:"banana", c:"apple"})|join(",") }}',
+            'natcasesort' => '{{ natcasesort(["IMG0.png", "img12.png", "img10.png", "img2.png", "img1.png", "IMG3.png"])|join(",") }}',
+            'natsort' => '{{ natsort(["img12.png", "img10.png", "img2.png", "img1.png"])|join(",") }}',
+            'rsort' => '{{ rsort(["lemon", "orange", "banana", "apple"])|join(",") }}',
+            'shuffle' => '{{ shuffle(range(1, 20))|length }}',
+            'sort' => '{{ sort(["IMG0.png", "img12.png", "img10.png", "img2.png", "img1.png", "IMG3.png"])|join(",") }}',
+            'settype' => '{{ settype("5bar", "integer") }}',
+
+            // PCRE Functions
+            'preg_filter' => '{{ preg_filter(["/[0-9]/", "/[a-z]/", "/[1a]/"], ["A:$0", "B:$0", "C:$0"], ["1", "a", "2", "b", "3", "A", "B", "4"])|join(",") }}',
+            'preg_grep' => '{{ preg_grep("/^([0-9]+)?\.[0-9]+$/", ["1.3", 200, ".78", "string"])|join(",") }}',
+            'preg_match_all' => '{% set match = preg_match_all("|<[^>]+>(.*)</[^>]+>|U", "<b>example: </b><div align=left>this is a test</div>") %} {{ match[1][0] }}, {{ match[1][1] }}',
+            'preg_match' => '{{ preg_match("/^def/", "def")|join(",") }}',
+            'preg_quote' => '{{ preg_quote("$40 for a g3/400", "/") }}',
+            'preg_replace' => '{{ preg_replace(["/[0-9]/", "/[a-z]/", "/[1a]/"], ["A:$0", "B:$0", "C:$0"], ["1", "a", "2", "b", "3", "A", "B", "4"])|join(",") }}',
+            'preg_split' => '{{ preg_split("/[\\\s,]+/", "hypertext language, programming")|join(",") }}',
+        )));
+        foreach (array(
+            'array_change_key_case' => 'first,second,FIRST,SECOND',
+            'array_chunk' => 'a,b,c',
+            'array_column' => 'John,Sally',
+            'array_combine' => 'apple,banana',
+            'array_count_values' => '2',
+            'array_diff_assoc' => 'brown,blue,red',
+            'array_diff_key' => 'red,purple',
+            'array_diff' => 'blue',
+            'array_fill_keys' => 'banana,banana,banana,banana',
+            'array_fill' => 'banana,banana,banana,banana',
+            'array_filter' => 'foo,-1',
+            'array_flip' => 'b,c',
+            'array_intersect_assoc' => 'green',
+            'array_intersect_key' => 'blue,green',
+            'array_intersect' => 'green,red',
+            'array_key_exists' => 'true',
+            'array_keys' => '0,color',
+            'array_map' => '1,2,3',
+            'array_merge_recursive' => 'red,green',
+            'array_merge' => 'green,2,4,a,b,trapezoid,4',
+            'array_pad' => '12,10,9,0,0',
+            'array_product' => '384',
+            'array_rand' => 'true',
+            'array_replace_recursive' => 'blueberry,raspberry',
+            'array_replace' => 'grape,banana,apple,raspberry,cherry',
+            'array_reverse' => 'version,4,php',
+            'array_search' => '2',
+            'array_slice' => 'c,d,e',
+            'array_sum' => '20',
+            'array_unique' => 'green,red,blue',
+            'array_values' => 'XL,gold',
+            'count' => '3',
+            'in_array' => 'true',
+            'date_parse' => '2006-12-12',
+            'date_sun_info' => 'yes',
+            'getdate' => 'Tuesday',
+            'gettimeofday' => 'yes',
+            'gmdate' => 'Jan 01 1998 00:00:00',
+            'gmmktime' => 'Saturday',
+            'microtime' => 'yes',
+            'mktime' => 'Jan-01-1998',
+            'strtotime' => 'yes',
+            'time' => 'yes',
+            'json_decode' => 'a,b,c,d,e',
+            'json_encode' => '{"a":1,"b":2,"c":3,"d":4,"e":5}',
+            'mail' => 'Sent',
+            'abs' => '5',
+            'acos' => 'yes',
+            'acosh' => 'yes',
+            'asin' => 'no',
+            'asinh' => 'yes',
+            'atan2' => 'yes',
+            'atan' => 'yes',
+            'atanh' => 'no',
+            'base_convert' => '101000110111001100110100',
+            'bindec' => '51',
+            'ceil' => '5',
+            'cos' => '-1',
+            'cosh' => 'yes',
+            'decbin' => '11010',
+            'dechex' => '2f',
+            'decoct' => '410',
+            'deg2rad' => 'yes',
+            'exp' => 'yes',
+            'expm1' => 'yes',
+            'floor' => '4',
+            'fmod' => 'yes',
+            'getrandmax' => 'yes',
+            'hexdec' => '238',
+            'hypot' => 'yes',
+            'is_finite' => 'true',
+            'is_infinite' => 'false',
+            'is_nan' => 'true',
+            'lcg_value' => 'true',
+            'log10' => 'yes',
+            'log1p' => 'yes',
+            'log' => 'yes',
+            'mt_getrandmax' => 'yes',
+            'mt_rand' => 'yes',
+            'mt_srand' => '',
+            'octdec' => '63',
+            'pi' => '3',
+            'pow' => '1',
+            'rad2deg' => '45',
+            'rand' => 'yes',
+            'round' => '3',
+            'sin' => 'yes',
+            'sinh' => 'yes',
+            'sqrt' => '3',
+            'srand' => '',
+            'tan' => '1',
+            'tanh' => 'yes',
+            'pack' => '5',
+            'unpack' => '4,160',
+            'mb_convert_case' => 'MARY HAD A LITTLE LAMB',
+            'mb_convert_encoding' => '?ndia',
+            'mb_strimwidth' => 'Hello W...',
+            'mb_stripos' => '1',
+            'mb_stristr' => 'ER@EXAMPLE.com',
+            'mb_strlen' => '6',
+            'mb_strpos' => '1',
+            'mb_strrchr' => '/index.html',
+            'mb_strrichr' => '/index.html',
+            'mb_strripos' => '16',
+            'mb_strrpos' => '16',
+            'mb_strstr' => 'er@example.com',
+            'mb_strtolower' => 'mary had a little lamb',
+            'mb_strtoupper' => 'MARY HAD A LITTLE LAMB',
+            'mb_strwidth' => '11',
+            'mb_substr_count' => '2',
+            'mb_substr' => 'cde',
+            'addcslashes' => '\f\o\o\[ \]',
+            'addslashes' => "Is your name O\'Reilly?",
+            'bin2hex' => '62696e617279',
+            'chr' => 'a',
+            'chunk_split' => 'abc,def,',
+            'explode' => 'hello there',
+            'hex2bin' => 'example hex data',
+            'htmlspecialchars' => '&lt;a href=&#039;test&#039;&gt;Test&lt;/a&gt;',
+            'implode' => 'hello there',
+            'lcfirst' => 'hELLO WORLD!',
+            'ltrim' => 'ab c',
+            'nl2br' => "foo is not<br />\n bar",
+            'number_format' => '1,235',
+            'ord' => '10',
+            'rtrim' => 'a bc',
+            'str_ireplace' => '<body text=black>',
+            'str_pad' => '__Alien___',
+            'str_repeat' => '-=-=-=-=-=-=-=-=-=-=',
+            'str_replace' => '<body text=\'black\'>',
+            'str_rot13' => 'CUC 4.3.0',
+            'str_shuffle' => '6',
+            'str_split' => 'Hell',
+            'str_word_count' => '3',
+            'strip_tags' => 'Test paragraph. Other text',
+            'stripos' => '1',
+            'stristr' => 'ER@EXAMPLE.com',
+            'strlen' => '6',
+            'strpos' => '1',
+            'strrchr' => '/index.html',
+            'strrev' => '!dlrow olleH',
+            'strripos' => '16',
+            'strrpos' => '16',
+            'strstr' => 'er@example.com',
+            'strtok' => 'something',
+            'strtolower' => 'mary had a little lamb',
+            'strtoupper' => 'MARY HAD A LITTLE LAMB',
+            'strtr' => '1001',
+            'substr_count' => '2',
+            'substr' => 'cde',
+            'trim' => 'abc',
+            'ucfirst' => 'Hello world!',
+            'ucwords' => 'Hello World!',
+            'wordwrap' => 'A very-long-wooooooo-ooooord.',
+            'gettype' => 'integer',
+            'is_array' => 'yes',
+            'is_bool' => 'yes',
+            'is_float' => 'yes',
+            'is_int' => 'yes',
+            'is_null' => 'yes',
+            'is_numeric' => 'yes',
+            'is_string' => 'yes',
+            'serialize' => 'a:3:{i:0;s:1:"a";i:1;s:1:"b";i:2;s:1:"c";}',
+            'unserialize' => 'a,b,c',
+            'array_pop' => 'one,two',
+            'array_shift' => 'two,three',
+            'array_splice' => 'red,green,blue,black,maroon',
+            'arsort' => 'orange,lemon,banana,apple',
+            'asort' => 'apple,banana,lemon,orange',
+            'krsort' => 'lemon,apple,banana,orange',
+            'ksort' => 'orange,banana,apple,lemon',
+            'natcasesort' => 'IMG0.png,img1.png,img2.png,IMG3.png,img10.png,img12.png',
+            'natsort' => 'img1.png,img2.png,img10.png,img12.png',
+            'rsort' => 'orange,lemon,banana,apple',
+            'shuffle' => '20',
+            'sort' => 'IMG0.png,IMG3.png,img1.png,img10.png,img12.png,img2.png',
+            'settype' => '5',
+            'preg_filter' => 'A:C:1,B:C:a,A:2,B:b,A:3,A:4',
+            'preg_grep' => '1.3,200,.78',
+            'preg_match_all' => 'example: , this is a test',
+            'preg_match' => 'def',
+            'preg_quote' => '\$40 for a g3\/400',
+            'preg_replace' => 'A:C:1,B:C:a,A:2,B:b,A:3,A,B,A:4',
+            'preg_split' => 'hypertext,language,programming',
+        ) as $function => $value) {
+            echo "\n".$function;
+            $this->assertEquals($function.': '.$value, $function.': '.trim($twig->render($function)));
+        }
+    }
+
     protected function blogPage($path, array $query = array())
     {
         $request = Request::create('http://website.com/'.$path, 'GET', $query);
@@ -1904,7 +2312,7 @@ class BlogTest extends \BootPress\HTMLUnit\Component
 
         return static::$blog->page();
     }
-    
+
     private static function remove($target)
     {
         if (is_dir($target)) {

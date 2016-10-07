@@ -6,7 +6,6 @@ use BootPress\Page\Component as PageClone;
 
 class Page
 {
-
     public $additional = array();
     private $methods = array();
 

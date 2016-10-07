@@ -3,13 +3,11 @@
 namespace BootPress\Blog;
 
 use BootPress\Page\Component as Page;
-use BootPress\Asset\Component as Asset;
 use BootPress\Sitemap\Component as Sitemap;
 use BootPress\Hierarchy\Component as Hierarchy;
 
 class Component extends Blog
 {
-    
     /**
      * Takes the current path and determines if there is any Blog content associated with it.
      * 
@@ -47,7 +45,6 @@ class Component extends Blog
             $template['default'] = __DIR__.'/theme/';
             $this->theme->globalVars('blog', array('page' => $template['type']));
             if (empty($template['file']) && $template['type'] != 'html') {
-                
             }
         }
 
@@ -62,7 +59,7 @@ class Component extends Blog
         $info = $this->info($id);
         if (is_bool($info['published'])) { // a page of some sort
             if ($dot = strpos($path, '.')) {
-                return array('', substr($path, $dot + 1), array('content'=>$info['content']));
+                return array('', substr($path, $dot + 1), array('content' => $info['content']));
             } else {
                 return array('blog-page.html.twig', 'post', $info);
             }
