@@ -1610,7 +1610,6 @@ class BlogTest extends \BootPress\HTMLUnit\Component
             'blog:',
             "    name: 'Another { BootPress } Site'",
             "    image: ''",
-            "    summary: ''",
             '    listings: blog',
             '    breadcrumb: Blog',
             '    theme: default',
@@ -1647,7 +1646,6 @@ class BlogTest extends \BootPress\HTMLUnit\Component
             'blog' => array(
                 'name' => 'Another { BootPress } Site',
                 'image' => '',
-                'summary' => '',
                 'listings' => 'blog',
                 'breadcrumb' => 'Blog',
                 'theme' => 'default',
@@ -1699,7 +1697,6 @@ class BlogTest extends \BootPress\HTMLUnit\Component
         $this->assertEquals(array(
             'name' => 'Another { BootPress } Site',
             'image' => '',
-            'summary' => '',
             'listings' => 'blog',
             'breadcrumb' => 'Blog',
             'theme' => 'default',
@@ -1723,7 +1720,6 @@ class BlogTest extends \BootPress\HTMLUnit\Component
             'blog' => array(
                 'name' => 'Another { BootPress } Site',
                 'image' => '',
-                'summary' => '',
                 'listings' => 'blog',
                 'breadcrumb' => 'Blog',
                 'theme' => 'default',
@@ -1736,7 +1732,6 @@ class BlogTest extends \BootPress\HTMLUnit\Component
             'blog' => array(
                 'name' => 'Another { BootPress } Site',
                 'image' => '',
-                'summary' => '',
                 'listings' => 'blog',
                 'breadcrumb' => 'Blog',
                 'theme' => 'default',

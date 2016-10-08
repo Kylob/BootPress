@@ -11,27 +11,7 @@
         }
     ],
     "require": {
-        "php": ">=5.4",
-        "symfony/yaml": "^2.3||^3.0",
-        "symfony/finder": "^2.3||^3.0",
-        "symfony/var-dumper": "^2.3||^3.0",
-        "symfony/http-foundation": "^2.3||^3.0",
-        "league/commonmark": "~0.7",
-        "league/glide-symfony": "^1.0",
-        "matthiasmullie/minify": "1.3.*",
-        "pguardiario/phpuri": "*",
-        "jbroadway/urlify": "^1.0",
-        "spartz/text-formatter": "^1.0",
-        "altorouter/altorouter": "^1.0",
-        "aptoma/twig-markdown": "^2.0",
-        "twig/twig": "^1.18",
-        "bootpress/page": "^1.0",
-        "bootpress/database": "^1.0",
-        "bootpress/sqlite": "^1.0",
-        "bootpress/asset": "^1.0",
-        "bootpress/hierarchy": "^1.0",
-        "bootpress/sitemap": "^1.0",
-        "bootpress/pagination": "^1.0"
+        "bootpress/blog": "^1.0"
     },
     "require-dev": {
         "bootpress/htmlunit": "^1.0",
