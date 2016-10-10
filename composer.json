@@ -1,8 +1,5 @@
 {
     "name": "bootpress/components",
-    "description": "Kick Your Websites Into High Gear",
-    "keywords": ["bootpress", "components", "framework"],
-    "homepage": "https://www.bootpress.org/",
     "license": "MIT",
     "authors": [
         {
