@@ -1,4 +1,4 @@
-# BootPress Components
+# BootPress
 
 [![Packagist][badge-version]][link-packagist]
 [![License MIT][badge-license]](LICENSE.md)
