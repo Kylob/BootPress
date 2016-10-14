@@ -2,7 +2,7 @@
 
 namespace BootPress\Bootstrap;
 
-class Navbar extends Component
+class Navbar extends Common
 {
     /**
      * This will open a new navbar.
