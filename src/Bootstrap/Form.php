@@ -18,7 +18,7 @@ class Form extends \BootPress\Form\Component
     /**
      * {@inheritdoc}
      */
-    public function __construct($name, $method, Component $bp)
+    public function __construct($name, $method, Common $bp)
     {
         parent::__construct($name, $method);
         $this->bp = $bp;
