@@ -1,6 +1,6 @@
 <?php
 
-namespace BootPress\Bootstrap3;
+namespace BootPress\Bootstrap;
 
 class Table extends \BootPress\Table\Component
 {

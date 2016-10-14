@@ -1,15 +1,16 @@
 <?php
 
-namespace BootPress\Bootstrap3;
+namespace BootPress\Bootstrap;
 
 use BootPress\Page\Component as Page;
 use BootPress\Form\Component as BPForm;
 
-class Component
+class Common
 {
     use Base;
 
     protected $page;
+    protected $version;
     private $table;
     private $navbar;
     private $pagination;
@@ -17,6 +18,7 @@ class Component
     public function __construct($version = null)
     {
         $this->page = Page::html();
+        $this->version = $version;
     }
 
     public function __get($name)
@@ -26,9 +28,10 @@ class Component
             case 'navbar':
             case 'pagination':
                 if (is_null($this->$name)) {
-                    $class = 'BootPress\\Bootstrap3\\'.ucfirst($name);
+                    $class = 'BootPress\\Bootstrap\\'.ucfirst($name);
                     $this->$name = new $class();
                 }
+            case 'version':
 
                 return $this->$name;
                 break;

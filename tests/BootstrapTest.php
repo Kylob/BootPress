@@ -3,12 +3,12 @@
 namespace BootPress\Tests;
 
 use BootPress\Page\Component as Page;
-use BootPress\Bootstrap3\Component as Bootstrap;
+use BootPress\Bootstrap\v3\Component as Bootstrap;
 use Symfony\Component\HttpFoundation\Request;
 
-class Bootstrap3Test extends \BootPress\HTMLUnit\Component
+class BootstrapTest extends \BootPress\HTMLUnit\Component
 {
-    use \BootPress\Bootstrap3\Base;
+    use \BootPress\Bootstrap\Base;
 
     protected static $page;
 
