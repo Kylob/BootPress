@@ -40,6 +40,21 @@ class Common
         return;
     }
 
+    public function __isset($name)
+    {
+        switch ($name) {
+            case 'table':
+            case 'navbar':
+            case 'pagination':
+            case 'version':
+
+                return true;
+                break;
+        }
+
+        return false;
+    }
+
     /**
      * This method works in conjunction with ``$bp->col()`` below.  It makes things a little less verbose, but much easier to edit, modify, and see at a glance what in the world is going on.
      * 
