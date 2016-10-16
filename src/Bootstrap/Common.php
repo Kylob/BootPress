@@ -14,7 +14,7 @@ class Common
     private $navbar;
     private $pagination;
 
-    public function __construct($version = null)
+    public function __construct()
     {
         $this->page = Page::html();
     }
