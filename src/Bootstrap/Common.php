@@ -10,7 +10,6 @@ class Common
     use Base;
 
     protected $page;
-    protected $version;
     private $table;
     private $navbar;
     private $pagination;
@@ -18,7 +17,6 @@ class Common
     public function __construct($version = null)
     {
         $this->page = Page::html();
-        $this->version = $version;
     }
 
     public function __get($name)
@@ -31,7 +29,6 @@ class Common
                     $class = 'BootPress\\Bootstrap\\'.ucfirst($name);
                     $this->$name = new $class();
                 }
-            case 'version':
 
                 return $this->$name;
                 break;
@@ -46,7 +43,6 @@ class Common
             case 'table':
             case 'navbar':
             case 'pagination':
-            case 'version':
 
                 return true;
                 break;
