@@ -1,0 +1,34 @@
+engines:
+    phpcodesniffer:
+        enabled: true
+        config:
+            file_extensions: "php"
+            standard: "PSR1,PSR2"
+        checks:
+            Generic Files LineLength TooLong:
+                enabled: false
+            Squiz WhiteSpace SuperfluousWhitespace EndLine:
+                enabled: false
+    phpmd:
+        enabled: true
+        config:
+            file_extensions: "php"
+            rulesets: "controversial,design,naming" # "cleancode,codesize,controversial,design,naming,unusedcode"
+        checks:
+            Controversial/CamelCaseParameterName:
+                enabled: false
+            Controversial/CamelCasePropertyName:
+                enabled: false
+            Controversial/CamelCaseVariableName:
+                enabled: false
+            Design/CouplingBetweenObjects:
+                enabled: false
+            Naming/ShortMethodName:
+                enabled: false
+            Naming/ShortVariable:
+                enabled: false
+ratings:
+    paths:
+        - "src/"
+exclude_paths:
+    - "tests/"

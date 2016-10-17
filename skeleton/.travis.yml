@@ -1,0 +1,26 @@
+language: php
+
+php:
+    - '5.4'
+    - '5.5'
+    - '5.6'
+    - '7.0'
+    - nightly
+    - hhvm
+
+before_script:
+    - composer install --dev
+    - if [[ $TRAVIS_PHP_VERSION == 5.4 ]]; then composer require codeclimate/php-test-reporter:dev-master; fi
+    
+script:
+    - if [[ $TRAVIS_PHP_VERSION == 5.4 ]];
+        then phpunit --debug --coverage-text --coverage-clover build/logs/clover.xml;
+        else phpunit --debug;
+      fi
+
+after_script:
+    - if [ $TRAVIS_PHP_VERSION == 5.4 ]; then ./vendor/bin/test-reporter; fi
+
+addons:
+    code_climate:
+        repo_token: 
