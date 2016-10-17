@@ -32,7 +32,6 @@ trait Base
             }
             if (is_string($class) && !empty($class)) {
                 $class = explode(' ', $class);
-                
                 preg_match_all('/<\s*(?P<tag>'.$tag.')(?P<attributes>[^>]*)>/i', $html, $matches);
                 foreach (array_unique($matches[0]) as $key => $add) {
                     $attributes = $matches['attributes'][$key];
@@ -54,27 +53,6 @@ trait Base
                     }
                     $rnr[$add] = '<'.$matches['tag'][$key].' '.trim($attributes).'>';
                 }
-                
-                /*
-                preg_match_all('/(\<'.$tag.'([^\>]*)\>)/i', $html, $matches);
-                foreach (array_unique($matches[0]) as $key => $add) {
-                    if ($this->firstTagAttributes($add, $match)) {
-                        list($add, $tag, $attributes) = $match;
-                        $merge = (isset($attributes['class'])) ? array_merge(explode(' ', $attributes['class']), $class) : $class;
-                        if ($prefix) {
-                            $prefix[2] = $merge;
-                            $attributes['class'] = call_user_func_array(array($this, 'prefixClasses'), $prefix);
-                        } else {
-                            $attributes['class'] = implode(' ', array_unique(array_filter($merge)));
-                        }
-                        foreach ($attributes as $key => $value) {
-                            $attributes[$key] = $key.'="'.$value.'"';
-                        }
-                        $rnr[$add] = '<'.$tag.' '.implode(' ', $attributes).'>';
-                    }
-                }
-                */
-                
             }
         }
 

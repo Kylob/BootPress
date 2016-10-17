@@ -47,6 +47,7 @@ class BootstrapTest extends \BootPress\HTMLUnit\Component
     {
         $bp = new Bootstrap();
         $this->assertAttributeInstanceOf('BootPress\Page\Component', 'page', $bp);
+        $this->assertFalse(isset($bp->attribute));
         $this->assertNull($bp->attribute);
     }
 
@@ -233,12 +234,14 @@ class BootstrapTest extends \BootPress\HTMLUnit\Component
     public function testTableObject()
     {
         $bp = new Bootstrap();
+        $this->assertTrue(isset($bp->table));
         $this->assertEqualsRegExp('<table class="table table-responsive">', $bp->table->open('class=responsive'));
     }
 
     public function testNavbarObject()
     {
         $bp = new Bootstrap();
+        $this->assertTrue(isset($bp->navbar));
 
         // open and close
         $html = array(
@@ -289,6 +292,7 @@ class BootstrapTest extends \BootPress\HTMLUnit\Component
     public function testPaginationObject()
     {
         $bp = new Bootstrap();
+        $this->assertTrue(isset($bp->pagination));
         $this->assertInstanceOf('BootPress\Pagination\Component', $bp->pagination);
     }
 
