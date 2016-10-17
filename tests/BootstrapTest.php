@@ -74,7 +74,7 @@ class BootstrapTest extends \BootPress\HTMLUnit\Component
                     '</button>',
                     'Custom message',
                 '</div>',
-                '<form name="example" method="post" action="http://website.com/path/to/folder.html?foo=bar&submitted=example" accept-charset="utf-8" autocomplete="off" class="form-horizontal">',
+                '<form name="example" method="post" action="http://website.com/path/to/folder.html?foo=bar&amp;submitted=example" accept-charset="utf-8" autocomplete="off" class="form-horizontal">',
         ), $form->header());
         $this->assertEqualsRegExp(array(
                 '</form>',

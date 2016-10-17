@@ -33,7 +33,7 @@ trait Base
             if (is_string($class) && !empty($class)) {
                 $class = explode(' ', $class);
                 
-                preg_match_all('/<\s*'.$tag.'(?P<attributes>[^>]*)>/i', $html, $matches);
+                preg_match_all('/<\s*(?P<tag>'.$tag.')(?P<attributes>[^>]*)>/i', $html, $matches);
                 foreach (array_unique($matches[0]) as $key => $add) {
                     $attributes = $matches['attributes'][$key];
                     if ($existing = preg_match('/\bclass\s*=\s*(["\'])([^"\'>]+)\\1/i', $attributes, $attr)) {
@@ -52,7 +52,7 @@ trait Base
                     } else {
                         $attributes .= ' class="'.$classes.'"';
                     }
-                    $rnr[$add] = '<'.$tag.' '.trim($attributes).'>';
+                    $rnr[$add] = '<'.$matches['tag'][$key].' '.trim($attributes).'>';
                 }
                 
                 /*
