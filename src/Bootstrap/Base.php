@@ -32,8 +32,32 @@ trait Base
             }
             if (is_string($class) && !empty($class)) {
                 $class = explode(' ', $class);
+                
+                preg_match_all('/<\s*'.$tag.'(?P<attributes>[^>]*)>/i', $html, $matches);
+                foreach (array_unique($matches[0]) as $key => $add) {
+                    $attributes = $matches['attributes'][$key];
+                    if ($existing = preg_match('/\bclass\s*=\s*(["\'])([^"\'>]+)\\1/i', $attributes, $attr)) {
+                        $merge = array_merge(explode(' ', $attr[2]), $class);
+                    } else {
+                        $merge = $class;
+                    }
+                    if ($prefix) {
+                        $prefix[2] = $merge;
+                        $classes = call_user_func_array(array($this, 'prefixClasses'), $prefix);
+                    } else {
+                        $classes = implode(' ', array_unique(array_filter($merge)));
+                    }
+                    if ($existing) {
+                        $attributes = str_replace($attr[0], 'class='.$attr[1].$classes.$attr[1], $attributes);
+                    } else {
+                        $attributes .= ' class="'.$classes.'"';
+                    }
+                    $rnr[$add] = '<'.$tag.' '.trim($attributes).'>';
+                }
+                
+                /*
                 preg_match_all('/(\<'.$tag.'([^\>]*)\>)/i', $html, $matches);
-                foreach (array_unique($matches[0]) as $add) {
+                foreach (array_unique($matches[0]) as $key => $add) {
                     if ($this->firstTagAttributes($add, $match)) {
                         list($add, $tag, $attributes) = $match;
                         $merge = (isset($attributes['class'])) ? array_merge(explode(' ', $attributes['class']), $class) : $class;
@@ -49,6 +73,8 @@ trait Base
                         $rnr[$add] = '<'.$tag.' '.implode(' ', $attributes).'>';
                     }
                 }
+                */
+                
             }
         }
 
