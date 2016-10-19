@@ -1,6 +1,5 @@
 # BootPress
 
-[![Packagist][badge-version]][link-packagist]
 [![License MIT][badge-license]](LICENSE.md)
 [![HHVM Tested][badge-hhvm]][link-travis]
 [![PHP 7 Supported][badge-php]][link-travis]
@@ -24,7 +23,6 @@ The MIT License (MIT). Please see [License File](LICENSE.md) for more informatio
 [badge-code-climate]: https://img.shields.io/codeclimate/github/Kylob/BootPress.svg?style=flat-square
 [badge-coverage]: https://img.shields.io/codeclimate/coverage/github/Kylob/BootPress.svg?style=flat-square
 
-[link-packagist]: https://packagist.org/packages/bootpress/components
 [link-travis]: https://travis-ci.org/Kylob/BootPress
 [link-code-climate]: https://codeclimate.com/github/Kylob/BootPress
 [link-coverage]: https://codeclimate.com/github/Kylob/BootPress/coverage
