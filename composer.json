@@ -8,7 +8,8 @@
         }
     ],
     "require": {
-        "bootpress/blog": "dev-master"
+        "bootpress/blog": "dev-master",
+        "bootpress/table": "^1.0"
     },
     "require-dev": {
         "bootpress/htmlunit": "^1.0",
