@@ -9,7 +9,8 @@
     ],
     "require": {
         "bootpress/blog": "dev-master",
-        "bootpress/table": "^1.0"
+        "bootpress/table": "^1.0",
+        "bootpress/validator": "^1.0"
     },
     "require-dev": {
         "bootpress/htmlunit": "^1.0",
