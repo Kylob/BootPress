@@ -36,11 +36,28 @@ class FormTest extends \BootPress\HTMLUnit\Component
         $this->assertInstanceOf('BootPress\Validator\Component', $form->validator);
         $this->assertAttributeInstanceOf('BootPress\Page\Component', 'page', $form);
     }
+    
+    public function testSetMethod()
+    {
+        $form = new Form('test');
+        $form->set('errors', 'testing', 'Custom Error');
+        $this->assertEquals('Custom Error', $form->validator->errors['testing']);
+        $form->set('values', 'testing', 'Custom Value');
+        $this->assertEquals('Custom Value', $form->values['testing']);
+        $form->set('header', 'testing', 'Custom Attribute');
+        $this->assertEquals('Custom Attribute', $form->header['testing']);
+        $form->set('footer', 'Custom HTML');
+        $this->assertEquals(array('Custom HTML'), $form->footer);
+        $form->set('hidden', 'testing', 'Custom Value');
+        $this->assertEquals('Custom Value', $form->hidden['testing']);
+        $this->assertNull($form->set('nothing', 'here'));
+    }
 
     public function testMenuMethod()
     {
         $form = new Form('test');
-        $this->assertEquals('1,2,3', $form->menu('transport', array('Fast' => array(1 => 'Airplane'), 'Slow' => array(2 => 'Boat', 3 => 'Submarine')), '&nbsp;'));
+        $this->assertNull($form->menu('transport', array('Fast' => array(1 => 'Airplane'), 'Slow' => array(2 => 'Boat', 3 => 'Submarine')), '&nbsp;'));
+        $this->assertEquals(array(1,2,3), $form->validator->menu['transport']);
         $this->assertAttributeEquals(array('transport' => '&nbsp;'), 'prepend', $form);
         $this->assertEquals(array('Fast' => array(1 => 'Airplane'), 'Slow' => array(2 => 'Boat', 3 => 'Submarine')), $form->menu('transport'));
     }
@@ -127,8 +144,8 @@ class FormTest extends \BootPress\HTMLUnit\Component
     {
         $form = new Form('test');
         $form->values['gender'] = 'M';
-        $gender = $form->menu('gender', array('M' => 'Male', 'F' => 'Female'));
-        $form->validator->set('gender', "required|inList[{$gender}]");
+        $form->menu('gender', array('M' => 'Male', 'F' => 'Female'));
+        $form->validator->set('gender', "required|inList");
         $this->assertEquals('<label><input type="radio" class="example" name="gender" value="M" checked="checked" data-rule-required="true" data-rule-inList="M,F"> Male</label> <label><input type="radio" class="example" name="gender" value="F"> Female</label>', $form->radio('gender', array('class' => 'example')));
         $this->assertEquals(array(
             '<input type="radio" class="example" name="gender" value="M" checked="checked" data-rule-required="true" data-rule-inList="M,F"> Male',
@@ -140,7 +157,7 @@ class FormTest extends \BootPress\HTMLUnit\Component
     {
         $form = new Form('test');
         $form->values['save[]'] = array(8, 15);
-        $save = $form->menu('save[]', array(
+        $form->menu('save[]', array(
             4 => 'John Locke',
             8 => 'Hugo Reyes',
             15 => 'James Ford',
@@ -148,7 +165,7 @@ class FormTest extends \BootPress\HTMLUnit\Component
             23 => 'Jack Shephard',
             42 => 'Jin & Sun Kwon',
         ));
-        $form->validator->set('save[]', "inList[{$save}]");
+        $form->validator->set('save[]', "inList");
         $this->assertEqualsRegExp('<select class="example" name="save[]" id="save{{ [A-Z]+ }}" multiple="multiple" size="6" data-rule-inList="4,8,15,16,23,42"><option value="4">John Locke</option><option value="8" selected="selected">Hugo Reyes</option><option value="15" selected="selected">James Ford</option><option value="16">Sayid Jarrah</option><option value="23">Jack Shephard</option><option value="42">Jin & Sun Kwon</option></select>', $form->select('save[]', array('class' => 'example')));
 
         $form->values['save[]'] = 8;
@@ -159,13 +176,13 @@ class FormTest extends \BootPress\HTMLUnit\Component
         $this->assertEqualsRegExp('<select name="transport" id="transport{{ [A-Z]+ }}"><option value="">&nbsp;</option><optgroup label="Fast"><option value="1">Airplane</option></optgroup><optgroup label="Slow"><option value="2" selected="selected">Boat</option><option value="3">Submarine</option></optgroup></select>', $form->select('transport'));
 
         $form->values['vehicle'] = 11;
-        $vehicles = $form->menu('vehicle', array(
+        $form->menu('vehicle', array(
             'hier' => 'transport',
             1 => array('Boeing' => array(4 => '777', 5 => '737'), 'Lockheed' => array(6 => 'L-1011', 7 => 'HC-130'), 8 => 'Douglas DC-3', 9 => 'Beechcraft'),
             2 => array(11 => 'Black Rock', 12 => 'Kahana', 13 => 'Elizabeth', 14 => 'Searcher'),
             3 => array(15 => 'Galaga', '16' => 'Yushio'),
         ), '&nbsp;');
-        $form->validator->set('vehicle', "inList[{$vehicles}]");
+        $form->validator->set('vehicle', "inList");
         $this->assertEqualsRegExp('<select name="vehicle" id="vehicle{{ [A-Z]+ }}" data-rule-inList="4,5,6,7,8,9,11,12,13,14,15,16"><option value="">&nbsp;</option><option value="11" selected="selected">Black Rock</option><option value="12">Kahana</option><option value="13">Elizabeth</option><option value="14">Searcher</option></select>', $form->select('vehicle'));
 
         $html = Page::html()->display('<p>Content</p>');

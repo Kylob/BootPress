@@ -7,70 +7,40 @@ use BootPress\Validator\Component as Validator;
 
 class Component
 {
-    /**
-     * @var \BootPress\Validator\Component
-     */
+    /** @var object BootPress\Validator\Component */
     public $validator;
 
-    /**
-     * If a form is submitted successfully then you should ``$page->eject()`` them using this value.
-     * 
-     * @var string
-     */
+    /** @var string If a form is submitted successfully then you should ``$page->eject()`` them using this value. */
     public $eject = '';
 
-    /**
-     * You should set this ``array($field => $value)`` to all of the default values for the form you are going to create.  Once the form has been submitted and passed validation, then these will be all of your filtered and validated values.
-     * 
-     * @var string[]
-     */
+    /** @var string[] You should set this ``array($field => $value)`` to all of the default values for the form you are going to create.  Once the form has been submitted and passed validation, then these will be all of your filtered and validated values. */
     public $values = array();
 
-    /**
-     * An array of attributes and their values that will be included in the opening ``<form>`` tag.
-     * 
-     * @var string[]
-     */
+    /** @var string[] An array of attributes and their values that will be included in the opening ``<form>`` tag. */
     public $header = array();
 
-    /**
-     * Any additional html that you want to be included just before the ``</form>`` tag.
-     * 
-     * @var string[]
-     */
+    /** @var string[] Any additional html that you want to be included just before the ``</form>`` tag. */
     public $footer = array();
 
-    /**
-     * All of your hidden form inputs that we put after ``$this->footer``.
-     * 
-     * @var string[]
-     */
+    /** @var string[] All of your hidden form inputs that we put after ``$this->footer``. */
     public $hidden = array();
 
-    /**
-     * Used by select menus to prepend a default value at the beginning eg. &nbsp;.
-     * 
-     * @var array
-     */
+    /** @var array Used by select menus to prepend a default value at the beginning eg. ``&nbsp;``. */
     protected $prepend = array();
 
-    /**
-     * Stores all of the values you submitted in ``$this->menu()`` for radio, checkbox, and select menus.
-     * 
-     * @var array
-     */
+    /** @var array Stores all of the values you submitted in ``$this->menu()`` for radio, checkbox, and select menus. */
     protected $menus = array();
 
-    /**
-     * @var \BootPress\Page\Component
-     */
+    /** @var object BootPress\Page\Component */
     protected $page;
 
     /**
-     * Creates a BootPress\Form\Component object.
+     * Creates the Form and Validator object instances.
      * 
      * @param string $name   The name of your form.
      * @param string $method How you would like the form to be sent ie. '**post**' or '**get**'
+     *
+     * @return object
      */
     public function __construct($name = 'form', $method = 'post')
     {
@@ -93,39 +63,49 @@ class Component
         $this->header = array_merge($this->header, $headers);
         $this->validator = new Validator($values);
     }
+    
+    /**
+     * Set public properties.  Useful for Twig templates that can't set them directly.
+     * 
+     * @param string       $property The one you want to set.
+     * @param string|array $name     Make this an array to set multiple values at once.
+     * @param mixed        $value    Only used if **$name** is a string, and you're not setting the '**footer**'.
+     */
+    public function set($property, $name, $value = null)
+    {
+        $set = (is_array($name)) ? $name : array($name => $value);
+        switch($property) {
+            case 'errors':
+                $this->validator->errors = array_merge($this->validator->errors, $set);
+                break;
+            case 'values':
+            case 'header':
+            case 'hidden':
+                $this->$property = array_merge($this->$property, $set);
+                break;
+            case 'footer':
+                foreach ((array) $name as $value) {
+                    $this->footer[] = $value;
+                }
+                break;
+        }
+    }
 
     /**
-     * This establishes the options for a checkbox, radio, or select menu field.
+     * This establishes the options for a checkbox, radio, or select menu field.  The values are passed to ``$this->validator->menu[$field]`` so that you can ``$this->validator->set($field, 'inList')`` with no params, and still be covered.
      * 
      * @param string $field   The name of the field.
      * @param array  $menu    An ``array($value => $options), ...)`` of options to display in the menu.
      * @param string $prepend An optional non-value to prepend to the menu eg. '&nbsp;'.  This is used for select menus when you would like a blank option up top.
      * 
-     * @return string A comma-separated list of values from your menu that is useful for using inList Validation.
-     * 
      * ```php
-     * $form->menu('save[]', array(
-     *     4 => 'John Locke',
-     *     8 => 'Hugo Reyes',
-     *     15 => 'James Ford',
-     *     16 => 'Sayid Jarrah',
-     *     23 => 'Jack Shephard',
-     *     42 => 'Jin & Sun Kwon'
-     * )); // A multiselect menu
+     * $form->menu('gender', array(
+     *     'M' => 'Male',
+     *     'F' => 'Female',
+     * )); // A radio menu
+     * $form->validator->set('gender', 'required|inList');
      * 
-     * $form->menu('transport', array(1=>'Airplane', 2=>'Boat', 3=>'Submarine'), '&nbsp;'); // A select menu
-     * 
-     * $form->menu('vehicle', array(
-     *     'hier' => 'transport',
-     *     1 => array('Boeing'=>array(4=>'777', 5=>'737'), 'Lockheed'=>array(6=>'L-1011', 7=>'HC-130'), 8=>'Douglas DC-3', 9=>'Beechcraft'),
-     *     2 => array(11=>'Black Rock', 12=>'Kahana', 13=>'Elizabeth', 14=>'Searcher'),
-     *     3 => array(15=>'Galaga', '16'=>'Yushio')
-     * ), '&nbsp;'); // A hierselect menu
-     * 
-     * $gender = $form->menu('gender', array('M'=>'Male', 'F'=>'Female')); // A radio menu
-     * $form->validator->set('gender', "required|inList[{$gender}]");
-     * 
-     * $form->menu('remember', array('Y'=>'Remember Me')); // A checkbox
+     * $form->menu('remember', array('Y' => 'Remember Me')); // A checkbox
      * ```
      */
     public function menu($field, array $menu = array(), $prepend = null)
@@ -139,8 +119,7 @@ class Component
         if (!empty($args)) {
             $this->prepend[$field] = array_shift($args);
         }
-
-        return implode(',', array_keys($this->flatten($this->menus[$field])));
+        $this->validator->menu[$field] = array_keys($this->flatten($this->menus[$field]));
     }
 
     /**
@@ -191,8 +170,8 @@ class Component
      * 
      * ```php
      * echo $form->fieldset('Sign In',
-     *     $form->field('text', 'username'),
-     *     $form->field('password', 'password')
+     *     $form->text('username'),
+     *     $form->password('password')
      * );
      * ```
      */
@@ -209,53 +188,6 @@ class Component
         }
 
         return "\n<fieldset><legend>{$legend}</legend>{$html}\n</fieldset>";
-    }
-
-    /**
-     * Retrieves an input's default value to display using the Validator::value method.  This is used internally when creating form fields using this class.
-     * 
-     * @param string      $field  The input's name.
-     * @param false|mixed $escape If set to anything but false, then we run the value(s) through ``htmlspecialchars``.
-     * 
-     * @return array|string The field's default value.
-     */
-    public function defaultValue($field, $escape = false)
-    {
-        if (null === $value = $this->validator->value($field)) {
-            $value = (isset($this->values[$field])) ? $this->values[$field] : '';
-        }
-        if ($escape === false) {
-            return $value;
-        }
-
-        return (is_array($value)) ? array_map('htmlspecialchars', $value) : htmlspecialchars($value);
-    }
-
-    /**
-     * This adds the jQuery Validation rules and messages set earlier to the input field's submitted attributes.  This is used internally when creating form fields using this class.
-     * 
-     * @param string $field      The input's name.
-     * @param array  $attributes The currently constituted attributes.
-     * 
-     * @return array The submitted attributes with the data rules and messages applied.
-     * 
-     * @see http://johnnycode.com/2014/03/27/using-jquery-validate-plugin-html5-data-attribute-rules/
-     * 
-     * ```php
-     * $form->validator->set('field', array('required' => 'Do this or else.'));
-     * $attributes = $form->validate('field', array('name' => 'field'));
-     * ```
-     */
-    public function validate($field, array $attributes = array())
-    {
-        foreach ($this->validator->rules($field) as $validate => $param) {
-            $attributes["data-rule-{$validate}"] = htmlspecialchars($param);
-        }
-        foreach ($this->validator->messages($field) as $rule => $message) {
-            $attributes["data-msg-{$rule}"] = htmlspecialchars($message);
-        }
-
-        return $attributes;
     }
 
     /**
@@ -291,8 +223,8 @@ class Component
      * $form->validator->set('name', 'required');
      * $form->validator->set('email', 'required|email');
      * 
-     * echo $form->field('name');
-     * echo $form->field('email');
+     * echo $form->text('name');
+     * echo $form->text('email');
      * ```
      */
     public function text($field, array $attributes = array())
@@ -316,8 +248,8 @@ class Component
      * $form->validator->set('password', 'required|alphaNumeric|minLength[5]|noWhiteSpace');
      * $form->validator->set('confirm', 'required|matches[password]');
      * 
-     * echo $form->field('password');
-     * echo $form->field('confirm');
+     * echo $form->password('password');
+     * echo $form->password('confirm');
      * ```
      */
     public function password($field, array $attributes = array())
@@ -428,7 +360,7 @@ class Component
      * @param string   $field      The select menu's name.
      * @param string[] $attributes Anything else you would like to add besides the 'name', 'id', and data validation attributes.
      * 
-     * @return string A ``<select ...>`` tag with all it's ``<option>``'s.
+     * @return string A ``<select>`` tag with all it's ``<option>``'s.
      * 
      * ```php
      * $save = $form->menu('save[]', array(
@@ -437,20 +369,43 @@ class Component
      *     15 => 'James Ford',
      *     16 => 'Sayid Jarrah',
      *     23 => 'Jack Shephard',
-     *     42 => 'Jin & Sun Kwon'
+     *     42 => 'Jin &amp; Sun Kwon'
      * )); // A multiselect menu
      * 
-     * $form->menu('transport', array(1=>'Airplane', 2=>'Boat', 3=>'Submarine'), '&nbsp;'); // A select menu
+     * $form->menu('transport', array(
+     *     1 => 'Airplane',
+     *     2 => 'Boat',
+     *     3 => 'Submarine',
+     * ), '&nbsp;'); // A select menu
      * 
      * $vehicles = $form->menu('vehicle', array(
      *     'hier' => 'transport',
-     *     1 => array('Boeing'=>array(4=>'777', 5=>'737'), 'Lockheed'=>array(6=>'L-1011', 7=>'HC-130'), 8=>'Douglas DC-3', 9=>'Beechcraft'),
-     *     2 => array(11=>'Black Rock', 12=>'Kahana', 13=>'Elizabeth', 14=>'Searcher'),
-     *     3 => array(15=>'Galaga', '16'=>'Yushio')
+     *     1 => array(
+     *         'Boeing' => array(
+     *             4 => '777',
+     *             5 => '737',
+     *         ),
+     *         'Lockheed' => array(
+     *             6 => 'L-1011',
+     *             7 => 'HC-130',
+     *         ),
+     *         8 => 'Douglas DC-3',
+     *         9 => 'Beechcraft',
+     *     ),
+     *     2 => array(
+     *         10 => 'Black Rock',
+     *         11 => 'Kahana',
+     *         12 => 'Elizabeth',
+     *         13 => 'Searcher',
+     *     ),
+     *     3 => array(
+     *         14 => 'Galaga',
+     *         15 => 'Yushio',
+     *     ),
      * ), '&nbsp;'); // A hierselect menu
      * 
      * $form->validator->set(array(
-     *     'save' => 'required|inList[{$save}]|minLength[2]',
+     *     'save[]' => "required|inList[{$save}]|minLength[2]",
      *     'vehicle' => "required|inList[{$vehicles}]",
      * ));
      * 
@@ -599,6 +554,53 @@ class Component
         }
 
         return $html."\n</form>";
+    }
+
+    /**
+     * Retrieves an input's default value to display using the Validator::value method.  This is used internally when creating form fields using this class.
+     * 
+     * @param string      $field  The input's name.
+     * @param false|mixed $escape If set to anything but false, then we run the value(s) through ``htmlspecialchars``.
+     * 
+     * @return array|string The field's default value.
+     */
+    public function defaultValue($field, $escape = false)
+    {
+        if (null === $value = $this->validator->value($field)) {
+            $value = (isset($this->values[$field])) ? $this->values[$field] : '';
+        }
+        if ($escape === false) {
+            return $value;
+        }
+
+        return (is_array($value)) ? array_map('htmlspecialchars', $value) : htmlspecialchars($value);
+    }
+
+    /**
+     * This adds the jQuery Validation rules and messages set earlier to the input field's submitted attributes.  This is used internally when creating form fields using this class.
+     * 
+     * @param string $field      The input's name.
+     * @param array  $attributes The currently constituted attributes.
+     * 
+     * @return array The submitted attributes with the data rules and messages applied.
+     * 
+     * @see http://johnnycode.com/2014/03/27/using-jquery-validate-plugin-html5-data-attribute-rules/
+     * 
+     * ```php
+     * $form->validator->set('field', array('required' => 'Do this or else.'));
+     * $attributes = $form->validate('field', array('name' => 'field'));
+     * ```
+     */
+    public function validate($field, array $attributes = array())
+    {
+        foreach ($this->validator->rules($field) as $validate => $param) {
+            $attributes["data-rule-{$validate}"] = htmlspecialchars($param);
+        }
+        foreach ($this->validator->messages($field) as $rule => $message) {
+            $attributes["data-msg-{$rule}"] = htmlspecialchars($message);
+        }
+
+        return $attributes;
     }
 
     /**

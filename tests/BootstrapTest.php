@@ -108,8 +108,8 @@ class BootstrapTest extends \BootPress\HTMLUnit\Component
 
         // radio method
         $form->values['gender'] = 'M';
-        $gender = $form->menu('gender', array('M' => 'Male', 'F' => 'Female'));
-        $form->validator->set('gender', "required|inList[{$gender}]");
+        $form->menu('gender', array('M' => 'Male', 'F' => 'Female'));
+        $form->validator->set('gender', "required|inList");
         $this->assertEqualsRegExp(array(
             '<div class="radio">',
                 '<label><input type="radio" name="gender" value="M" checked="checked" data-rule-required="true" data-rule-inList="M,F"> Male</label>',
