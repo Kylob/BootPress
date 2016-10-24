@@ -297,31 +297,33 @@ class Common
      * @param array  $options These are all of the attributes that you would like to include in the ``<button>`` tag, except if you include an 'href' key then it will be an ``<a>`` tag. Other potential options include: 'id', 'style', 'title', 'type', 'data-...', etc, but the ones we take notice of and do special things with are:
      * 
      * - '**dropdown**' - This is an ``array($name => $link, ...)`` of names and their associated links.
-     *   - If the $name is numeric (ie. not specified) then the $link will be a header (if it is not empty), or a divider if it is.
+     *   - If the **$name** is numeric (ie. not specified) then the **$link** will be a header (if it is not empty), or a divider if it is.
      * - '**dropup**' - The same as dropdown, only the caret and menu goes up instead of down.
-     * - '**active**' - This is to specify a $link that will receive the "active" class. You can set this value to either the $name or the $link of your dropdown menu, or a number (starting from 1). If you just want it to select the current page then you can specify '**url**' which will match the current url and uri, or '**urlquery**' which will match the current url, uri, and query string.
-     * - '**disabled**' - This is to specify a link that will receive the "disabled" class. You can set this value to either the $name or the $link of your dropdown menu.
+     * - '**active**' - This is to specify a $link that will receive the "active" class. You can set this value to either the **$name** or the **$link** of your dropdown menu, or a number (starting from 1). If you just want it to select the current page then you can specify '**url**' which will match the current url and uri, or '**urlquery**' which will match the current url, uri, and query string.
+     * - '**disabled**' - This is to specify a link that will receive the "disabled" class. You can set this value to either the **$name** or the **$link** of your dropdown menu.
      * - '**pull**' - Either 'left' (default) or 'right'. Where you would like the dropdown to be relative to the parent.
      * 
      * @return string
      * 
      * ```php
-     * echo $bp->button('primary', 'Primary'); // <button class="btn btn-primary" type="button">Primary</button>
+     * echo $bp->button('primary', 'Primary');
      * 
-     * echo $bp->button('xs success', 'Link', array('href'=>'#')); // <a class="btn btn-xs btn-success" href="#">Link</a>
+     * echo $bp->button('lg success', 'Link', array(
+     *     'href' => '#'
+     * ));
      * 
-     * echo $bp->button('danger', 'Dropdown', array(
+     * echo $bp->button('default', 'Dropdown', array(
      *     'dropdown' => array(
-     *         'Dropdown Header',
+     *         'Header',
      *         'Action' => '#',
      *         'Another action' => '#',
-     *         'Active Link' => '#', 
+     *         'Active link' => '#', 
      *         '',
-     *         'Separated Link' => '#',
-     *         'Disabled Link' => '#'
+     *         'Separated link' => '#',
+     *         'Disabled link' => '#'
      *     ),
-     *     'active' => 'Active Link',
-     *     'disabled' => 'Disabled Link'
+     *     'active' => 'Active link',
+     *     'disabled' => 'Disabled link'
      * ));
      * ```
      */
