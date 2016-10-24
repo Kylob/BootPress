@@ -258,32 +258,6 @@ class Common
     }
 
     /**
-     * Though not particularly a Bootstrap feature, this method is a natural for Smarty templates. It returns an ``<img>`` tag along with it's ``$params`` if the ``$src`` is not empty. If the ``$src`` is empty, then it skips the ``$params`` and heads for the ``$alt`` door.
-     * 
-     * @param string $src    The image src location.
-     * @param string $params Additional parameters you would like included in the ``<img>`` tag.
-     * @param string $alt    What to display if the ``$src`` is empty.
-     * @param string $frag   A #fragment to append to the end of ``$src`` (if any)
-     * 
-     * @return string
-     * 
-     * ```php
-     * echo $bp->img($image, 'width="75" class="pull-right" style="margin-left:10px;"', 'Sorry, I guess there is no authors image here.', '50x50/seo-name');
-     * ```
-     */
-    public function img($src, $params = '', $alt = '', $frag = '')
-    {
-        if (empty($src)) {
-            return $alt;
-        }
-        if (!empty($frag)) {
-            $src .= '#'.trim($frag, '#');
-        }
-
-        return trim('<img src="'.$src.'" '.$params).'>';
-    }
-
-    /**
      * This method helps you cut down on verbosity, but do you remember migrating from icon in v.2 to glyphicon in v.3? If that happens again, then we'll just change the ``$prefix`` default and that will be that.
      * 
      * @param string $symbol The icon you would like to display without the base and icon class prefix.
