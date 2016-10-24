@@ -669,7 +669,7 @@ class Common
     }
 
     /**
-     * Creates a Bootstrap badge, and is a bit more useful than ``$this->label()``. If **$count** equals 0, or if it's not numeric (null?), then it still includes the tag but leaves the value empty.
+     * Creates a Bootstrap badge, and is a bit more useful than ``$bp->label()``. If **$count** equals 0, or if it's not numeric (null?), then it still includes the tag but leaves the value empty.
      * 
      * @param int    $count The number you would like to display.
      * @param string $align This will pull your badge '**right**' or '**left**' or not (default). In a list group, badges are automatically positioned to the right.
@@ -853,29 +853,29 @@ class Common
     }
 
     /**
-     * Displays a Bootstrap list group. ``<h1-6>`` Headers and ``<p>`` paragraphs will automatically be classed appropriately.
+     * Creates a Bootstrap list group. ``<h1-6>`` Headers and ``<p>`` paragraphs will automatically be classed appropriately.
      * 
-     * @param array $links  If you would like to create an unordered list, then this is just an array of values. Otherwise this will be an ``array($name => $href, ...)`` of links. $name badges will automatically be positioned on the right.
-     * @param mixed $active This value can be either the $name, $href (link), or number (starting from 1) that you would like to be selected as "active".
+     * @param array $links  If you would like to create an unordered list, then this is just an array of values. Otherwise this will be an ``array($name => $href, ...)`` of links. **$name** badges will automatically be positioned on the right.
+     * @param mixed $active This value can be either the **$name**, **$href** (link), or number (starting from 1) that you would like to be selected as "active".
      * 
      * @return string
      * 
      * ```php
      * $bp->list_group(array(
-     *     'Unordered',
+     *     'Basic',
      *     'List',
-     *     $bp->badge(1) . 'Group'
+     *     $bp->badge(1) . ' Group',
      * ));
      * 
      * $bp->list_group(array(
-     *     'Anchor' => '#',
+     *     'Linked' => '#',
      *     'List' => '#',
-     *     'Group' . $bp->badge(2) => '#'
-     * ), 'Anchor');
+     *     'Group ' . $bp->badge(2) => '#',
+     * ), 'Linked');
      * 
      * $bp->list_group(array(
-     *     '<h4>Custom Content</h4><p>Donec id elit non mi porta gravida.</p>' => '#',
-     *     $bp->badge(3) . '<h4>Linked List Group</h4><p>Donec id elit non mi porta gravida.</p>' => '#'
+     *     '<h4>Custom</h4> <p>List</p>' => '#',
+     *     $bp->badge(3) . ' <h4>Group</h4> <p>Linked</p>' => '#',
      * ), 1);
      * ```
      */
@@ -921,13 +921,19 @@ class Common
      * @return string
      * 
      * ```php
-     * echo $bp->row('sm', array(
-     *     $bp->col(2, $bp->panel('default', array('header'=>'Header', 'body'=>'Default', 'footer'=>'Footer'))),
-     *     $bp->col(2, $bp->panel('primary', array('header'=>'Header', 'body'=>'Primary', 'footer'=>'Footer'))),
-     *     $bp->col(2, $bp->panel('success', array('header'=>'Header', 'body'=>'Success', 'footer'=>'Footer'))),
-     *     $bp->col(2, $bp->panel('info', array('header'=>'Header', 'body'=>'Info', 'footer'=>'Footer'))),
-     *     $bp->col(2, $bp->panel('warning', array('header'=>'Header', 'body'=>'Warning', 'footer'=>'Footer'))),
-     *     $bp->col(2, $bp->panel('danger', array('header'=>'Header', 'body'=>'Danger', 'footer'=>'Footer'))),
+     * echo $bp->panel('primary', array(
+     *     'header' => '<h3>Title</h3>',
+     *     'body'' => 'Content',
+     *     'footer'' => '<a href="#">Link</a>',
+     * ));
+     * 
+     * echo $bp->panel('default', array(
+     *     'header': 'List group',
+     *     $bp->listGroup(array(
+     *         'One',
+     *         'Two',
+     *         'Three',
+     *     )),
      * ));
      * ```
      */
@@ -960,27 +966,30 @@ class Common
     }
 
     /**
-     * This is for creating toggleable tabs and pills for transitioning through panes of local content.
+     * Creates toggleable tabs and pills for transitioning through panes of local content.
      * 
      * @param string $type    Specify either '**tabs**' or '**pills**'.
      * @param array  $links   An ``array($name => $html, ...)`` of content to toggle through. If $html is an array unto itself, then it will be turned into a dropdown menu with the same header and divider rules applied as with ``$bp->buttons()``.
      * @param array  $options The available options are:
      * 
      * - '**fade**' - No key, just the value. Will give your panes a fade in effect while toggling.
-     * - '**active**' and '**disabled**' => $name, $html (if you dare), or number (starting from 1)
+     * - '**active**' and '**disabled**' => **$name**, **$html** (if you dare), or number (starting from 1)
      * - 'align' => '**justified**', '**left**', or '**right**'
      * 
      * @return string
      * 
      * ```php
      * echo $bp->toggle('tabs', array(
-     *     'Toggle' => 'Raw denim you probably haven\'t heard of them jean shorts Austin. Nesciunt tofu stumptown aliqua, retro synth master cleanse. Mustache cliche tempor, williamsburg carles vegan helvetica. Reprehenderit butcher retro keffiyeh dreamcatcher synth. Cosby sweater eu banh mi, qui irure terry richardson ex squid. Aliquip placeat salvia cillum iphone. Seitan aliquip quis cardigan american apparel, butcher voluptate nisi qui.',
-     *     'Profile' => 'Food truck fixie locavore, accusamus mcsweeney\'s marfa nulla single-origin coffee squid. Exercitation +1 labore velit, blog sartorial PBR leggings next level wes anderson artisan four loko farm-to-table craft beer twee. Qui photo booth letterpress, commodo enim craft beer mlkshk aliquip jean shorts ullamco ad vinyl cillum PBR. Homo nostrud organic, assumenda labore aesthetic magna delectus mollit. Keytar helvetica VHS salvia yr, vero magna velit sapiente labore stumptown. Vegan fanny pack odio cillum wes anderson 8-bit, sustainable jean shorts beard ut DIY ethical culpa terry richardson biodiesel. Art party scenester stumptown, tumblr butcher vero sint qui sapiente accusamus tattooed echo park.',
+     *     'Home' => 'One',
+     *     'Profile' => 'Two',
      *     'Dropdown' => array(
-     *         'This' => 'Etsy mixtape wayfarers, ethical wes anderson tofu before they sold out mcsweeney\'s organic lomo retro fanny pack lo-fi farm-to-table readymade. Messenger bag gentrify pitchfork tattooed craft beer, iphone skateboard locavore carles etsy salvia banksy hoodie helvetica. DIY synth PBR banksy irony. Leggings gentrify squid 8-bit cred pitchfork. Williamsburg banh mi whatever gluten-free, carles pitchfork biodiesel fixie etsy retro mlkshk vice blog. Scenester cred you probably haven\'t heard of them, vinyl craft beer blog stumptown. Pitchfork sustainable tofu synth chambray yr.',
-     *         'That' => 'Trust fund seitan letterpress, keytar raw denim keffiyeh etsy art party before they sold out master cleanse gluten-free squid scenester freegan cosby sweater. Fanny pack portland seitan DIY, art party locavore wolf cliche high life echo park Austin. Cred vinyl keffiyeh DIY salvia PBR, banh mi before they sold out farm-to-table VHS viral locavore cosby sweater. Lomo wolf viral, mustache readymade thundercats keffiyeh craft beer marfa ethical. Wolf salvia freegan, sartorial keffiyeh echo park vegan.'
-     *     )
-     * ), array('active'=>1, 'fade'));
+     *         'This' => 'Three',
+     *         'That' => 'Four',
+     *     ),
+     * ), array(
+     *     'active' => 'This',
+     *     'fade,'
+     * ));
      * ```
      */
     public function toggle($type, array $links, array $options = array())
@@ -1048,18 +1057,18 @@ class Common
     /**
      * Bootstrap accordions are basically collapsible panels, so keep that in mind. That is essentially what you are creating here.
      * 
-     * @param string $class    Either '**default**', '**primary**', '**success**', '**info**', '**warning**', or '**danger**'. These only apply to the head section, and are passed directly by us into ``$this->panel()``.
-     * @param array  $sections An ``array($heading => $body, ...)`` of sections that will become your accordion. The ``<h1-6>`` headers in the $heading will be automatically classed appropriately. Accordions are definitely nestable, but we don't create them via nested arrays through this method. Just add a pre-made accordion to the $body you would like it to reside in ie. the $body should never be an array.
+     * @param string $class    Either '**default**', '**primary**', '**success**', '**info**', '**warning**', or '**danger**'. These only apply to the head section, and are passed directly by us into ``$bp->panel()``.
+     * @param array  $sections An ``array($heading => $body, ...)`` of sections that will become your accordion. The ``<h1-6>`` headers in the **$heading** will be automatically classed appropriately. Accordions are definitely nestable, but we don't create them via nested arrays through this method. Just add a pre-made accordion to the **$body** you would like it to reside in ie. the **$body** should never be an array.
      * @param int    $open     This is the panel number you would like be open from the get-go (starting at 1). If you don't want any to be open initially, then set this to 0.
      * 
      * @return string
      * 
      * ```php
      * echo $bp->accordion('info', array(
-     *     '<h4>Collapsible Group Item #1</h4>' => 'Anim pariatur cliche reprehenderit, enim eiusmod high life accusamus terry richardson ad squid. 3 wolf moon officia aute, non cupidatat skateboard dolor brunch. Food truck quinoa nesciunt laborum eiusmod. Brunch 3 wolf moon tempor, sunt aliqua put a bird on it squid single-origin coffee nulla assumenda shoreditch et. Nihil anim keffiyeh helvetica, craft beer labore wes anderson cred nesciunt sapiente ea proident. Ad vegan excepteur butcher vice lomo. Leggings occaecat craft beer farm-to-table, raw denim aesthetic synth nesciunt you probably haven\'t heard of them accusamus labore sustainable VHS.',
-     *     '<h4>Collapsible Group Item #2</h4>' => 'Anim pariatur cliche reprehenderit, enim eiusmod high life accusamus terry richardson ad squid. 3 wolf moon officia aute, non cupidatat skateboard dolor brunch. Food truck quinoa nesciunt laborum eiusmod. Brunch 3 wolf moon tempor, sunt aliqua put a bird on it squid single-origin coffee nulla assumenda shoreditch et. Nihil anim keffiyeh helvetica, craft beer labore wes anderson cred nesciunt sapiente ea proident. Ad vegan excepteur butcher vice lomo. Leggings occaecat craft beer farm-to-table, raw denim aesthetic synth nesciunt you probably haven\'t heard of them accusamus labore sustainable VHS.',
-     *     '<h4>Collapsible Group Item #3</h4>' => 'Anim pariatur cliche reprehenderit, enim eiusmod high life accusamus terry richardson ad squid. 3 wolf moon officia aute, non cupidatat skateboard dolor brunch. Food truck quinoa nesciunt laborum eiusmod. Brunch 3 wolf moon tempor, sunt aliqua put a bird on it squid single-origin coffee nulla assumenda shoreditch et. Nihil anim keffiyeh helvetica, craft beer labore wes anderson cred nesciunt sapiente ea proident. Ad vegan excepteur butcher vice lomo. Leggings occaecat craft beer farm-to-table, raw denim aesthetic synth nesciunt you probably haven\'t heard of them accusamus labore sustainable VHS.'
-     * ), 0);
+     *     '<h4>Group Item #1</h4>' => 'One',
+     *     '<h4>Group Item #2</h4>' => 'Two',
+     *     '<h4>Group Item #3</h4>' => 'Three',
+     * ), 2);
      * ```
      */
     public function accordion($class, array $sections, $open = 1)
@@ -1105,7 +1114,7 @@ class Common
     /**
      * Creates a Bootstrap carousel for cycling through elements. Those elements don't necessarily need to be images, but pretty much they always are.
      * 
-     * @param array $images  An ``array($image, ...)`` of images to cycle through, starting with the first (logically). To get fancy and add captions, then make this an ``array($image => $caption, ...)`` of images with captions to cycle through. If you have some images with captions and others without, then you can merge these two concepts no problem. Remember, the $image is not just a location, it is the entire ``<img>`` tag src and all.
+     * @param array $images  An ``array($image, ...)`` of images to cycle through, starting with the first (logically). To get fancy and add captions, then make this an ``array($image => $caption, ...)`` of images with captions to cycle through. If you have some images with captions and others without, then you can merge these two concepts no problem. Remember, the **$image** is not just a location, it is the entire ``<img>`` tag src and all.
      * @param array $options The available option keys are:
      * 
      * - '**interval**' - The time delay in thousandths of a second between cycles (or frame changes). The default is 5000 ie. 5 seconds.
@@ -1113,6 +1122,18 @@ class Common
      * - '**controls**' - The clickable arrows on the side that you can click to get to what you are interested in. If you don't want them, then set this to false. The default is true ie. include them. Also by default we use ``array($bp->icon('chevron-left'), $bp->icon('chevron-right'))`` for the left and right arrows. If you would like something else, then you can make this an array of your preferences.
      * 
      * @return string
+     * 
+     * ```php
+     * echo '<div style="width:500px; height:300px; margin:20px auto;">';
+     * echo $bp->carousel(array(
+     *     '<img src="http://lorempixel.com/500/300/food/1/" width="500" height="300">',
+     *     '<img src="http://lorempixel.com/500/300/food/2/" width="500" height="300">' => '<p>Caption</p>',
+     *     '<img src="http://lorempixel.com/500/300/food/3/" width="500" height="300">' => '<h3>Header</h3>',
+     * ), array(
+     *     'interval' => 3000,
+     * ));
+     * echo '</div>';
+     * ```
      */
     public function carousel(array $images, array $options = array())
     {
