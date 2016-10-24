@@ -936,7 +936,7 @@ class Common
      * ));
      * ```
      */
-    public function panel($class, $sections)
+    public function panel($class, array $sections)
     {
         $html = '';
         foreach ($sections as $panel => $content) {
