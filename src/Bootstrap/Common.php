@@ -258,16 +258,16 @@ class Common
     }
 
     /**
-     * This method helps you cut down on verbosity, but do you remember migrating from icon in v.2 to glyphicon in v.3? If that happens again, then we'll just change the ``$prefix`` default and that will be that.
+     * Create an icon without the verbosity.
      * 
      * @param string $symbol The icon you would like to display without the base and icon class prefix.
      * @param string $prefix The base and icon class prefix. The default is a Bootstrap icon, but this can be used with any icon font by simply entering their value here.
-     * @param string $tag    The tag to use for displaying your font. Everyone uses the <i> tag, so that is the default. If $prefix == 'glyphicon' (the default for Bootstrap) then we will use a span element. Why? I don't know, but since v.2 that seems to be what they prefer to use now. If you want to style an icon further then you can do so here. eg. 'i style="font-size:16px;"'
+     * @param string $tag    The tag to use for displaying your font. Everyone uses the ``<i>`` tag, so that is the default. If ``$prefix == 'glyphicon'`` (the default for Bootstrap) then we will use a span element. Why? I don't know, but since v.2 that seems to be what they prefer to use now. If you want to style an icon further then you can do so here. eg. ``'i style="font-size:16px;"'``
      * 
      * @return string
      * 
      * ```php
-     * echo $bp->icon('asterisk'); // <span class="glyphicon glyphicon-asterisk"></span>
+     * echo $bp->icon('asterisk');
      * ```
      */
     public function icon($symbol, $prefix = 'glyphicon', $tag = 'i')
