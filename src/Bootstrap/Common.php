@@ -323,7 +323,7 @@ class Common
      *         'Disabled link' => '#'
      *     ),
      *     'active' => 'Active link',
-     *     'disabled' => 'Disabled link'
+     *     'disabled' => 'Disabled link',
      * ));
      * ```
      */
@@ -373,7 +373,7 @@ class Common
     }
 
     /**
-     * This method will group together your buttons.
+     * Group your buttons together.
      * 
      * @param string $class   The classes: '**xs**', '**sm**', '**lg**', '**justified**', and '**vertical**' will all be prefixed with 'btn-group', and we include the 'btn-group' class too. When you size a group up, then don't size the individual buttons.
      * @param array  $buttons An ``array($bp->button(), ...)`` of buttons.
@@ -382,18 +382,17 @@ class Common
      * @return string
      * 
      * ```php
-     * $bp->group('', array(
-     *     $bp->button('primary', 'Btn'),
-     *     $bp->button('primary', 'Group'),
-     *     $bp->button('primary', array('split'=>'Split'), array(
+     * echo $bp->group('', array(
+     *     $bp->button('default', 'Left'),
+     *     $bp->button('default', 'Middle'),
+     *     $bp->button('default', array('split'=>'Right'), array(
      *         'dropdown' => array(
      *             'Works' => '#',
      *             'Here' => '#',
      *             'Too' => '#',
      *         ),
-     *         'pull'=>'right'
+     *         'pull' => 'right',
      *     )),
-     *     $bp->button('primary', 'Middle'),
      * ));
      * ```
      */
@@ -414,14 +413,14 @@ class Common
     }
 
     /**
-     * This used to be a private method that we only used internally for tabs and pills and buttons and so forth, but it is just so useful. Now you can make your own dropdowns with regular ``<a>`` links as will.
+     * This used to be a private method that we only used internally for tabs and pills and buttons and so forth, but it is just so useful. Now you can make your own dropdowns with regular ``<a>`` links as well.
      * 
      * @param string $tag     If this isn't 'li', then it will be an '**a**'. If you specify 'li' tags then you will need to surround this method's output with your own ``<ul>`` or ``<ol>`` tags. Otherwise you can just use the returned ``<a>`` $links (with dropdowns if any) as is. The ``<a>``'s with dropdowns will be surrounded by a ``<span class="dropdown">``. If one of those dropdown links are active then the ``<span>`` and ``<a>`` tags will receive an additional 'active' class as well. To add any other class(es) to the ``<a>`` or ``<li>`` tags just add them after the $tag here eg. '**a special-class**'.
-     * @param array  $links   An ``array($name => $href, ...)`` of links. If $href is an array unto itself, then it will be turned into a dropdown menu with the same header and divider rules applied as with ``$bp->buttons()``.
+     * @param array  $links   An ``array($name => $href, ...)`` of links. If **$href** is an array unto itself, then it will be turned into a dropdown menu with the same header and divider rules applied as with ``$bp->buttons()``.
      * @param array  $options The available options are:
      * 
-     * - '**active**' => $name, $href, 'url', 'urlquery', or number (starting from 1)
-     * - '**disabled**' => $name or $href or number (starting from 1)
+     * - '**active**' => **$name**, **$href**, '**url**', '**urlquery**', or a number (starting from 1)
+     * - '**disabled**' => **$name**, **$href** or a number (starting from 1)
      * - '**align**' => '**left**' (default) or '**right**' - the direction you would like to pull them towards
      * 
      * @return string
@@ -434,7 +433,9 @@ class Common
      *         'Action' => '#',
      *         'Another Action' => '#',
      *     ),
-     * ), array('active'=>'url'));
+     * ), array(
+     *     'active' => 'url',
+     * ));
      * ```
      */
     public function links($tag, array $links, array $options = array())
@@ -521,10 +522,10 @@ class Common
      * @param array $links   An ``array($name => $href, ...)`` of links. If $href is an array unto itself, then it will be turned into a dropdown menu with the same header and divider rules applied as with ``$bp->buttons()``.
      * @param array $options The available options are:
      * 
-     * - '**active**' => $name, $href, 'url', 'urlquery', or number (starting from 1)
-     * - '**disabled**' => $name or $href or number (starting from 1)
+     * - '**active**' => **$name**, **$href**, '**url**', '**urlquery**', or a number (starting from 1)
+     * - '**disabled**' => **$name**, **$href**, or a number (starting from 1)
      * - '**align**' =>
-     *   - '**justified**' - The tabs will horizontally extend the full width
+     *   - '**justified**' - So the tabs will horizontally extend the full width
      *   - '**left**' (default) or '**right**' - The direction you would like to pull them towards
      * 
      * @return string
@@ -534,7 +535,10 @@ class Common
      *     'Nav' => '#',
      *     'Tabs' => '#',
      *     'Justified' => '#',
-     * ), array('active'=>1, 'align'=>'justified'));
+     * ), array(
+     *     'align' => 'justified',
+     *     'active' => 1,
+     * ));
      * ```
      */
     public function tabs(array $links, array $options = array())
@@ -561,8 +565,8 @@ class Common
      * @param array $links   An ``array($name => $href, ...)`` of links. If $href is an array unto itself, then it will be turned into a dropdown menu with the same header and divider rules applied as with ``$bp->buttons()``.
      * @param array $options The available options are:
      * 
-     * - '**active**' => $name, $href, 'url', 'urlquery', or number (starting from 1)
-     * - '**disabled**' => $name or $href or number (starting from 1)
+     * - '**active**' => **$name**, **$href**, '**url**', '**urlquery**', or number (starting from 1)
+     * - '**disabled**' => **$name**, **$href** or number (starting from 1)
      * - '**align**' =>
      *   - '**justified**' - The pills will horizontally extend the full width
      *   - '**vertical**' or '**stacked**' - Each pill will be stacked on top of the other
@@ -581,14 +585,9 @@ class Common
      *         '',
      *         'Spam ' . $bp->badge(2) => '#'
      *     ),
-     *     'Disabled link' => '#'
-     * ), array('active'=>'Home', 'disabled'=>'Disabled link'));
-     * 
-     * echo $bp->pills(array(
-     *     'Nav' => '#',
-     *     'Pills' => '#',
-     *     'Justified' => '#'
-     * ), array('active'=>'Nav', 'align'=>'justified'));
+     * ), array(
+     *     'active' => 'Home',
+     * ));
      * ```
      */
     public function pills(array $links, array $options = array())
@@ -614,7 +613,7 @@ class Common
     }
 
     /**
-     * This creates a Bootstrap styled breadcrumb trail. The last link is automatically activated.
+     * Creates a Bootstrap styled breadcrumb trail. The last link is automatically activated.
      * 
      * @param array $links An ``array($name => $href)`` of links to display. The ``$href`` may also be another ``array($name => $href)`` of dropdown links.
      * 
@@ -624,8 +623,8 @@ class Common
      * $bp->breadcrumbs(array(
      *     'Home' => '#',
      *     'Library' => '#',
-     *     'Data' => '#'
-     * )); // <ul class="breadcrumb"><li><a href="#">Home</a></li> <li><a href="#">Library</a></li> <li class="active">Data</li></ul>
+     *     'Data' => '#',
+     * ));
      * ```
      */
     public function breadcrumbs(array $links)
