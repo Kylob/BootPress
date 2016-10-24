@@ -45,7 +45,7 @@ class Common
     }
 
     /**
-     * Determines if private property is available.
+     * Determines if the private property is available.
      *
      * @param string $name
      *
@@ -131,41 +131,36 @@ class Common
     /**
      * This assists you in making Ordered, Unordered, and Definition lists. It is especially useful when you are nesting lists within lists. Your code almost looks exactly like you would expect to see it on the big screen. It would have been nice if we could have named this method 'list', but someone has taken that already.
      * 
-     * @param string $tag Either an '**ol**' (Ordered list), '**ul**' (Unordered list), or a '**dl**' (Definition list). You can add any other classes you like (or not), but the special ones that Bootstrap has blessed us with are:
+     * @param string $tag  Either an '**ol**' (Ordered list), '**ul**' (Unordered list), or a '**dl**' (Definition list). You can add any other classes you like (or not), but the special ones that Bootstrap has blessed us with are:
      * 
      * - '**list-inline**' - For an unordered list to be displayed horizontally.
      * - '**list-unstyled**' - For an unordered list to be unbulleted.
      * - '**dl-horizontal**' - For a definition to be displayed beside it's title rather than below.
-     * @param array $list For Ordered and Unordered lists this is an ``array($li, $li, ...)``, and to nest another list just make the ``$li`` another array.
+     *
+     * @param array  $list For Ordered and Unordered lists this is an ``array($li, $li, ...)``, and to nest another list just make the ``$li`` another array.
      * 
      * For Definition Lists this is an ``array($title => $definition, ...)``. If you have multiple ``$definition``'s, then just make ``$title`` an array of them.
      * 
      * @return string
      * 
      * ```php
-     * $li = array(
-     *     'Lorem ipsum dolor sit amet',
-     *     'Consectetur adipiscing elit' => array(
-     *         'Phasellus iaculis neque',
-     *         'Purus sodales ultricies',
-     *         'Vestibulum laoreet porttitor sem'
+     * echo $bp->lister('ol', array(
+     *     'Coffee',
+     *     'Tea' => array(
+     *         'Black tea',
+     *         'Green tea',
      *     ),
-     *     'Faucibus porta lacus fringilla vel',
-     *     'Aenean sit amet erat nunc'
-     * );
+     *     'Milk',
+     * ));
      * 
-     * echo $bp->lister('ol', $li);
-     * 
-     * echo $bp->lister('ul list-unstyled', $li);
-     * 
-     * echo $bp->lister('ul list-inline', array('Lorem ipsum', 'Phasellus iaculis', 'Nulla volutpat'));
+     * echo $bp->lister('ul list-inline', array('Coffee', 'Tea', 'Milk'));
      * 
      * echo $bp->lister('dl dl-horizontal', array(
-     *     'Malesuada porta' => array(
-     *         'Vestibulum id ligula porta felis euismod semper eget lacinia odio sem nec elit.',
-     *         'Donec id elit non mi porta gravida at eget metus.'
+     *     'Coffee' => array(
+     *         'Black hot drink',
+     *         'Caffeinated beverage',
      *     ),
-     *     'Felis euismod semper eget lacinia' => 'Fusce dapibus, tellus ac cursus commodo, tortor mauris condimentum nibh, ut fermentum massa justo sit amet risus.'
+     *     'Milk' => 'White cold drink',
      * ));
      * ```
      */
