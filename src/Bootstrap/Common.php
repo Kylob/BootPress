@@ -755,9 +755,9 @@ class Common
     }
 
     /**
-     * This is the easiest way I could devise of making Bootstrap media objects as manageable as possible. ``<h1-6>`` Headers and ``<img>`` images will automatically be classed appropriately.
+     * This is the easiest way I could devise of making Bootstrap media objects as manageable as possible. ``<h1-6>`` headers and ``<img>``es will automatically be classed appropriately.
      * 
-     * @param array $list A media array row that looks like this: ``array($left, $body, $right);``
+     * @param array $list A media array row that looks like this: ``array($left, $body, $right)``
      * 
      * - If you don't have an image or whatever for the left side, then set an empty value
      * - If you have nothing to right align then you can either leave it off, or set an empty value
@@ -765,23 +765,37 @@ class Common
      *   - ``array('id' => $id, 'class' => 'custom', $left, $body, $right);``
      * - You can pack unlimited $list's (arguments) into this method, each $list being a sibling of the other:
      *   - ``$bp->media(array($left, $body, $right), array($left, $body, $right), array($left, $body, $right));``
-     * - To nest media comments in a parent / child relationship, just add another media array row to the parent:
-     *   - ``array($left, $body, $right, array($left, $body, $right, array($left, $body, $right)));`` - this would be a grandparent, parent, child setup
-     *   - ``array($left, $body, $right, array($left, $body, $right), array($left, $body, $right));`` - a parent, child, child arrangement
+     * - To nest media lists in a parent / child relationship, just add another media array row to the parent:
+     *   - ``array($left, $body, $right, array($left, $body, $right, array($left, $body, $right)));`` - this would be a parent, child, grandchild arrangement
+     *   - ``array($left, $body, $right, array($left, $body, $right), array($left, $body, $right));`` - a parent, child, child condition
      *   - ``array($left, $body, $right, array($left, $body, $right, array($left, $body, $right), array($left, $body, $right)), array($left, $body, $right)), array($left, $body, $right));`` - now I'm just messing with you, but I think you've got the picture (a parent, child, grandchild, grandchild, child, sibling)
      *   - This could go on ad infinitum, but soon your content will become pretty scrunched up if you take it too far.
      * 
      * @return string
      * 
      * ```php
-     * $image = '<img alt="64x64" style="width: 64px; height: 64px;" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEAAAABACAYAAACqaXHeAAABWUlEQVR4nO2VMY7CMBBFuf9RfAMfwL17t67nCkM1aHBIASF5QvziSbtLGD0/T7Q3M/N/5kYL0CgALUCjALQAjQLQAjQKQAvQKAAtQKMAtACNAtACNApAC9AoAC1AowC0AI0C0AI0CkAL0HwlQCnlQe998/kYY/ezK2eeEqDW6q01NzNvrXkpxeecm2fekT1j5ikB5pxeSvExxu4zvfeNbHwvDtl7fxzy05lIgFjDkFnF82FW2bhZM3uKcWTm5QHi5kJiXddY5ZBeZfN7/q2ZyAbEDeXfX631KhuHy38/OvPSAOv7mmXzCmdi1eO78Vzc8JGZlwfIK5lvdC9Uvq1aq9daNz8fmYkEMHt+l9d/V69kY5XXW86HeXcmGuCXUQBagEYBaAEaBaAFaBSAFqBRAFqARgFoARoFoAVoFIAWoFEAWoBGAWgBGgWgBWgUgBagUQBagEYBaAGaO387LYipKEKVAAAAAElFTkSuQmCC">';
-     * 
-     * $content = '<h4>Media Heading</h4><p>Cras sit amet nibh libero, in gravida nulla. Nulla vel metus scelerisque ante sollicitudin commodo. Cras purus odio, vestibulum in vulputate at, tempus viverra turpis.</p>';
-     * 
-     * echo $bp->media(
-     *     array('class'=>'special', $image, $content, $image, array($image, $content, array($image, $content, $image)), array('class'=>'content', $image, $content)), // parent, child, grandchild, child
-     *     array($image, $content, $image) // sibling
-     * );
+     * echo $bp->media(array(
+     *     'Image',
+     *     '<h1>Parent</h1> <p>Paragraph</p>',
+     *     '<img src="parent.jpg" alt="Family Photo">',
+     *     array(
+     *         'Image',
+     *         '<h2>1st Child</h2>',
+     *         array(
+     *             'Image',
+     *             '<h3>1st Grandchild</h3>',
+     *         ),
+     *     ),
+     *     array(
+     *         'Image',
+     *         '<h2>2nd Child</h2>',
+     *     ),
+     * ), array(
+     *     'class' => 'special',
+     *     'Image',
+     *     '<h1>Sibling</h1> <a href="#">Link</a>',
+     *     '<img src="sibling.jpg" alt="Family Photo">',
+     * ));
      * ```
      */
     public function media(array $list, $parent = 0)
