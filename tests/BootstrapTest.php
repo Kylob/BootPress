@@ -382,13 +382,6 @@ class BootstrapTest extends \BootPress\HTMLUnit\Component
         )));
     }
 
-    public function testImgMethod()
-    {
-        $bp = new Bootstrap();
-        $this->assertEquals('No Image', $bp->img('', 'width="75"', 'No Image', '#seo.jpg'));
-        $this->assertEquals('<img src="/image.jpg#seo.jpg" width="75">', $bp->img('/image.jpg', 'width="75"', 'No Image', '#seo.jpg'));
-    }
-
     public function testIconMethod()
     {
         $bp = new Bootstrap();
