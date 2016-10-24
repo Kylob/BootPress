@@ -650,7 +650,7 @@ class Common
     }
 
     /**
-     * This makes a Bootstrap label, and saves you having to type label twice. Awesome, right? We didn't build the class for this, but it was simple enough to include so I did. I use it.
+     * Creates a Bootstrap label, and saves you from having to type the label twice.  Awesome, right?
      * 
      * @param string $class Either '**default**', '**primary**', '**success**', '**info**', '**warning**', or '**danger**'. The label class and prefix are automatically included. You can add more classes to it if you like.
      * @param string $text  The label's text.
@@ -658,7 +658,7 @@ class Common
      * @return string
      * 
      * ```php
-     * echo $bp->label('primary', 'New'); // <span class="label label-primary">New</span>
+     * echo $bp->label('default', 'New');
      * ```
      */
     public function label($class, $text)
@@ -669,16 +669,15 @@ class Common
     }
 
     /**
-     * This method is a little bit more useful than label, so I am not as embarrassed to present it. If ``$count`` equals 0, or if it's not numeric (null?), then it still includes the tag but leaves the value empty.
+     * Creates a Bootstrap badge, and is a bit more useful than ``$this->label()``. If **$count** equals 0, or if it's not numeric (null?), then it still includes the tag but leaves the value empty.
      * 
      * @param int    $count The number you would like to display.
-     * @param string $align This will pull your badge 'right' or 'left' or not (default). In a list group, badges are automatically positioned on the right.
+     * @param string $align This will pull your badge '**right**' or '**left**' or not (default). In a list group, badges are automatically positioned to the right.
      * 
      * @return string
      * 
      * ```php
-     * $count = 13;
-     * echo $bp->badge($count, 'right'); // <span class="badge pull-right">13</span>
+     * echo $bp->badge(13, 'right');
      * ```
      */
     public function badge($count, $align = '')
@@ -698,11 +697,9 @@ class Common
      * @return string
      * 
      * ```php
-     * echo $bp->row('sm', array(
-     *     $bp->col(4, $bp->alert('danger', '<strong>Danger</strong> Change a few things up and try submitting again. ', false)),
-     *     $bp->col(4,  $bp->alert('success', '<strong>Success</strong> You successfully read this <a href="#">important alert message</a>. ', false)),
-     *     $bp->col(4, $bp->alert('info', '<strong>Info</strong> This alert needs your attention, but it\'s not super important. '))
-     * ));
+     * echo $bp->alert('info', '<h3>Heads up!</h3> This alert needs your attention, but it\'s not <a href="#">super important</a>.');
+     * 
+     * echo $bp->alert('danger', '<h3>Oh snap!</h3> Change a few things up and <a href="#">try submitting again</a>.', false);
      * ```
      */
     public function alert($type, $alert, $dismissable = true)
@@ -723,7 +720,7 @@ class Common
     }
 
     /**
-     * This allows you to create any flavor of progress bar that Bootstrap has to offer.
+     * Creates every flavor of progress bar that Bootstrap has to offer.
      * 
      * @param int    $percent The amount of progress from 0 to 100. In order to stack multiple values then turn this into an array.
      * @param string $class   You can include one of the four contextual classes: '**success**', '**info**', '**warning**' or '**danger**'. Also '**striped**' and '**active**' if you like the looks of those. These will all be properly prefixed. If you are stacking multiple bars, then turn this into an array and make sure your classes correspond with your percentages.
@@ -734,7 +731,7 @@ class Common
      * ```php
      * echo $bp->progress(60, 'info', 'display');
      * 
-     * echo $bp->progress(array(25, 25, 25, 25), array('', 'warning', 'success', 'danger'));
+     * echo $bp->progress(array(25, 25, 25, 25), array('', 'warning', 'success', 'danger striped'));
      * ```
      */
     public function progress($percent, $class = '', $display = false)
