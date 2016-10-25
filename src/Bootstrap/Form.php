@@ -67,7 +67,7 @@ class Form extends \BootPress\Form\Component
     }
 
     /**
-     * Use to display a message on the retrun trip after you have ``$page->eject()``ed them.  The Bootstrap alert status message will be displayed at the top of the form when you return ``$form->header()``.
+     * Display a user message after ``$form->eject()``ing them.  The Bootstrap alert status message will be displayed at the top of the form when you return ``$form->header()``.
      * 
      * @param string $status  Either '**success**', '**info**', '**warning**', or '**danger**'.  If this is '**html**', then the $message will be delivered as is.
      * @param string $message The message you would like to get across to your user.  ``<h1-6>`` headers and ``<a>`` links may be used.
@@ -85,32 +85,6 @@ class Form extends \BootPress\Form\Component
             'status' => $status,
             'msg' => $message,
         ));
-    }
-
-    /**
-     * This is to add html tags, or semicolons, or asterisks, or whatever you would like to all of the form's prompts.
-     * 
-     * @param string      $place    Either '**info**', '**append**', or '**prepend**' to the prompt.  You only have one shot at each.
-     * @param string      $html     Whatever you would like to add.  For '**info**', this will be the icon class you want to use.
-     * @param false|mixed $required If $place == 'prepend' and this is anything but (bool) false, then the $html will only be prepended if the field is required per the ``$form->validator``.
-     * 
-     * ```php
-     * $form->prompt('prepend', '<font color="red">*</font> ', 'required'); // If the field is required it will add a red asterisk to the front.
-     * 
-     * $form->prompt('append', ':'); // Adds a semicolon to all of the prompts.
-     * ```
-     */
-    public function prompt($place, $html, $required = false)
-    {
-        switch ($place) {
-            case 'info':
-            case 'append':
-                $this->prompt[$place] = $html;
-                break;
-            case 'prepend':
-                $this->prompt['prepend'] = array('html' => $html, 'required' => (bool) $required);
-                break;
-        }
     }
 
     /**
@@ -153,6 +127,32 @@ class Form extends \BootPress\Form\Component
             $this->align = 'form-horizontal';
             $this->collapse = (in_array($collapse, array('xs', 'sm', 'md', 'lg'))) ? $collapse : 'sm';
             $this->indent = (is_numeric($indent) && $indent > 0 && $indent < 12) ? $indent : 2;
+        }
+    }
+
+    /**
+     * This is to add html tags, or semicolons, or asterisks, or whatever you would like to all of the form's prompts.
+     * 
+     * @param string      $place    Either '**info**', '**append**', or '**prepend**' to the prompt.  You only have one shot at each.
+     * @param string      $html     Whatever you would like to add.  For '**info**', this will be the icon class you want to use.
+     * @param false|mixed $required If $place == 'prepend' and this is anything but (bool) false, then the $html will only be prepended if the field is required per the ``$form->validator``.
+     * 
+     * ```php
+     * $form->prompt('prepend', '<font color="red">*</font> ', 'required'); // If the field is required it will add a red asterisk to the front.
+     * 
+     * $form->prompt('append', ':'); // Adds a semicolon to all of the prompts.
+     * ```
+     */
+    public function prompt($place, $html, $required = false)
+    {
+        switch ($place) {
+            case 'info':
+            case 'append':
+                $this->prompt[$place] = $html;
+                break;
+            case 'prepend':
+                $this->prompt['prepend'] = array('html' => $html, 'required' => (bool) $required);
+                break;
         }
     }
 
