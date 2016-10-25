@@ -68,18 +68,16 @@ class BootstrapTest extends \BootPress\HTMLUnit\Component
         $form->align();
         $form->message('success', 'Custom message');
         $this->assertEqualsRegExp(array(
-            '<div class="row"><div class="col-sm-12">',
-                '<div class="alert alert-success alert-dismissable" role="alert">',
-                    '<button type="button" class="close" data-dismiss="alert">',
-                        '<span aria-hidden="true">&times;</span>',
-                    '</button>',
-                    'Custom message',
-                '</div>',
-                '<form name="example" method="post" action="http://website.com/path/to/folder.html?foo=bar&amp;submitted=example" accept-charset="utf-8" autocomplete="off" class="form-horizontal">',
+            '<div class="alert alert-success alert-dismissable" role="alert">',
+                '<button type="button" class="close" data-dismiss="alert">',
+                    '<span aria-hidden="true">&times;</span>',
+                '</button>',
+                'Custom message',
+            '</div>',
+            '<form name="example" method="post" action="http://website.com/path/to/folder.html?foo=bar&amp;submitted=example" accept-charset="utf-8" autocomplete="off" class="form-horizontal">',
         ), $form->header());
         $this->assertEqualsRegExp(array(
-                '</form>',
-            '</div></div>',
+            '</form>',
         ), $form->close());
         
         // prepend and append prompts
