@@ -155,9 +155,6 @@ class Form extends \BootPress\Form\Component
             'onkeyup' => 'false',
         ), $validate));
         $html = "\n";
-        if ($this->align == 'form-horizontal') {
-            $html .= '<div class="row"><div class="col-'.$this->collapse.'-12">';
-        }
         if ($flash = $this->page->session->getFlashBag()->get($this->header['name'])) {
             $html .= ($flash[0]['status'] == 'html') ? $flash[0]['msg'] : $this->bp->alert($flash[0]['status'], $flash[0]['msg']);
         }
@@ -420,18 +417,5 @@ class Form extends \BootPress\Form\Component
         }
 
         return $this->field('', implode(' ', $buttons));
-    }
-
-    /**
-     * {@inheritdoc}
-     */
-    public function close()
-    {
-        $html = parent::close();
-        if ($this->align == 'form-horizontal') {
-            $html .= '</div></div>';
-        }
-
-        return $html;
     }
 }
