@@ -12,7 +12,7 @@ class Form extends \BootPress\Form\Component
     /** @var string Set ``$this->size('lg|sm')`` to make your '**input-lg**' or '**input-sm**'. */
     private $input = '';
 
-    /** @var string ``$this->align('horizontal|collapse|inline')`` the direction to make your '**form-horizontal**', or '' (collapsed), or '**form-inline**'. */
+    /** @var string ``$this->align('horizontal|collapse|inline')`` to make your '**form-horizontal**', or '' (collapsed), or '**form-inline**'. */
     private $align = 'form-horizontal';
 
     /** @var string When to collapse ``$this->align('horizontal')`` form.  Either '**xs**', '**sm**', '**md**', or '**lg**'. */
