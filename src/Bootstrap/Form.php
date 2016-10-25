@@ -43,12 +43,34 @@ class Form extends \BootPress\Form\Component
                 break;
         }
     }
+
+    /**
+     * Use to display a message on the retrun trip after you have ``$page->eject()``ed them.  The Bootstrap alert status message will be displayed at the top of the form when you return ``$form->header()``.
+     * 
+     * @param string $status  Either '**success**', '**info**', '**warning**', or '**danger**'.  If this is '**html**', then the $message will be delivered as is.
+     * @param string $message The message you would like to get across to your user.  ``<h1-6>`` headers and ``<a>`` links may be used.
+     * 
+     * ```php
+     * if ($vars = $form->validator->certified()) {
+     *     $form->message('success', 'Good job, you are doing great!');
+     *     $page->eject($form->eject);
+     * }
+     * ```
+     */
+    public function message($status, $message)
+    {
+        $this->page->session->getFlashBag()->add($this->header['name'], array(
+            'status' => $status,
+            'msg' => $message,
+        ));
+    }
+
     /**
      * This is to add html tags, or semicolons, or asterisks, or whatever you would like to all of the form's prompts.
      * 
      * @param string      $place    Either '**info**', '**append**', or '**prepend**' to the prompt.  You only have one shot at each.
-     * @param string      $html     Whatever you would like to add.  For 'info', this will be the icon class you want to use.
-     * @param false|mixed $required If this is anything but (bool) false and $place == 'prepend', the the $html will only be prepended if the field is required per the ``$form->validator``.
+     * @param string      $html     Whatever you would like to add.  For '**info**', this will be the icon class you want to use.
+     * @param false|mixed $required If $place == 'prepend' and this is anything but (bool) false, then the $html will only be prepended if the field is required per the ``$form->validator``.
      * 
      * ```php
      * $form->prompt('prepend', '<font color="red">*</font> ', 'required'); // If the field is required it will add a red asterisk to the front.
@@ -91,6 +113,7 @@ class Form extends \BootPress\Form\Component
      * - '**collapse**' - This will display the form prompt immediately above the field.
      * - '**inline**' - All of the fields will be inline with each other, and the form prompts will be removed.
      * - '**horizontal**' - Vertically aligns all of the fields with the prompt immediately preceding, and right aligned.
+     *
      * @param string $collapse Either '**xs**', '**sm**', '**md**', or '**lg**'.  This is the breaking point so to speak for a '**horizontal**' form.  It is the device size on which the form will '**collapse**'.
      * @param int    $indent   The number of columns (up to 12) that you would like to indent the field in a '**horizontal**' form.
      * 
@@ -112,28 +135,11 @@ class Form extends \BootPress\Form\Component
     }
 
     /**
-     * Use to display a message on the retrun trip after you have ``$page->eject()``ed them.  The Bootstrap alert status message will be displayed at the top of the form when you return ``$form->header()``.
-     * 
-     * @param string $status  Either '**success**', '**info**', '**warning**', or '**danger**'.  If this is '**html**', then the $message will be delivered as is.
-     * @param string $message The message you would like to get across to your user.  ``<h1-6>`` headers and ``<a>`` links may be used.
-     * 
-     * ```php
-     * if ($vars = $form->validator->certified()) {
-     *     $form->message('success', 'Good job, you are doing great!');
-     *     $page->eject($form->eject);
-     * }
-     * ```
-     */
-    public function message($status, $message)
-    {
-        $this->page->session->getFlashBag()->add($this->header['name'], array(
-            'status' => $status,
-            'msg' => $message,
-        ));
-    }
-
-    /**
-     * {@inheritdoc}
+     * Creates the ``<form>``, invokes the Validator jQuery, and displays your message (if any).
+     *
+     * @param array $validate Override the custom validator settings we have created for Bootstrap.
+     *
+     * @return string
      */
     public function header(array $validate = array())
     {
@@ -164,9 +170,19 @@ class Form extends \BootPress\Form\Component
     }
 
     /**
-     * {@inheritdoc}
+     * Creates checkboxes from the ``$form->menu($field)`` you set earlier.
      * 
-     * @param false|mixed $inline This tells us if you want the checkboxes to be inline (any value but false), or not (false).
+     * @param string      $field      The checkbox's name.
+     * @param string[]    $attributes Anything else you would like to add besides the 'name', 'value', 'checked', and data validation attributes.
+     * @param false|mixed $inline     This tells us if you want the checkboxes to be inline (any value but false), or not (false).
+     * 
+     * @return string A checkbox ``<label><input type="checkbox" ...></label>`` html tag.
+     * 
+     * ```php
+     * $form->menu('remember', array('Y'=>'Remember Me'));
+     * 
+     * echo $form->checkbox('remember');
+     * ```
      */
     public function checkbox($field, array $attributes = array(), $inline = false)
     {
@@ -185,6 +201,24 @@ class Form extends \BootPress\Form\Component
      * 
      * @param false|mixed $inline This tells us if you want the radio buttons to be inline (any value but false), or not (false).
      */
+    
+    /**
+     * Creates radio buttons from the ``$form->menu($field)`` you set earlier.
+     * 
+     * @param string      $field      The radio button's name.
+     * @param string[]    $attributes Anything else you would like to add besides the 'name', 'value', 'checked', and data validation attributes.
+     * @param false|mixed $inline     This tells us if you want the radio buttons to be inline (any value but false), or not (false).
+     * 
+     * @return string Radio ``<label><input type="radio" ...></label>`` html tags.
+     * 
+     * ```php
+     * $gender = $form->menu('gender', array('M'=>'Male', 'F'=>'Female')); // A radio menu
+     * $form->validator->set('gender', "required|inList[{$gender}]");
+     * 
+     * echo $form->radio('gender');
+     * ```
+     */
+    
     public function radio($field, array $attributes = array(), $inline = false)
     {
         $disabled = in_array('disabled', $attributes) ? 'disabled' : '';
