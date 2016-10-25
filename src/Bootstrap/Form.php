@@ -74,8 +74,8 @@ class Form extends \BootPress\Form\Component
      * 
      * ```php
      * if ($vars = $form->validator->certified()) {
-     *     $form->message('success', 'Good job, you are doing great!');
-     *     $page->eject($form->eject);
+     *     $form->message('info', 'Good job, you are doing great!');
+     *     $form->eject();
      * }
      * ```
      */
