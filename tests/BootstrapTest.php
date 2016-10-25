@@ -220,8 +220,6 @@ class BootstrapTest extends \BootPress\HTMLUnit\Component
             '</div>',
         ), $form->field(array('Prompt', 'Toggle Info'), '<p>Helpful text</p>', 'What are you thinking?'));
 
-        // label and prompt methods()
-        
         // submit method
         $this->assertEqualsRegExp(array(
             '<div class="form-group">',
@@ -231,10 +229,6 @@ class BootstrapTest extends \BootPress\HTMLUnit\Component
                 '</div>',
             '</div>',
         ), $form->submit('Submit', 'Reset'));
-        
-        // prompt(s)
-        
-        
     }
 
     public function testTableObject()
