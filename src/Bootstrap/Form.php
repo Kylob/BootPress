@@ -25,7 +25,7 @@ class Form extends \BootPress\Form\Component
     }
 
     /**
-     * A private property getter.
+     * A private getter, to facilitate additional functionality.
      * 
      * @param string $name
      * 
@@ -42,6 +42,28 @@ class Form extends \BootPress\Form\Component
                 return $this->$name;
                 break;
         }
+    }
+
+    /**
+     * Check if a private property is set.
+     * 
+     * @param string $name
+     * 
+     * @return bool
+     */
+    public function __isset($name)
+    {
+        switch ($name) {
+            case 'prompt':
+            case 'input':
+            case 'align':
+            case 'collapse':
+            case 'indent':
+                return true;
+                break;
+        }
+
+        return false;
     }
 
     /**
@@ -257,74 +279,6 @@ class Form extends \BootPress\Form\Component
     }
 
     /**
-     * Used by ``$this->field()`` to create a ``<label>`` prompt.
-     * 
-     * @param string|array $prompt The form label reference.  If you want to include additional information relative to the field, then you can make this an ``array($prompt => $info)``, or an ``array($prompt, $info)`` that will appear when cliked or hovered over.  To customize the icon set ``$form->prompt('info', 'fa fa-info-circle')``.
-     * @param string       $name   The name of the associated input field.
-     * @param string       $id     The id of the associated input field.
-     * 
-     * @return string The generated HTML ``<label>``.
-     *
-     * ```php
-     * $form->label('Email Address', 'email', $form->validator->id('email'));
-     * ```
-     *
-     * @todo Why is this public?  This should be made private.
-     */
-    public function label($prompt, $name, $id)
-    {
-        if (empty($prompt)) {
-            return '';
-        }
-        if (is_array($prompt)) {
-            list($prompt, $info) = (count($prompt) > 1) ? array_values($prompt) : each($prompt);
-        }
-        if (empty($prompt) || strpos($prompt, '<label') !== false) {
-            return $prompt;
-        }
-        if (isset($this->prompt['prepend'])) {
-            if (!$this->prompt['prepend']['required'] || $this->validator->required($name)) {
-                $prompt = $this->prompt['prepend']['html'].$prompt;
-            }
-        }
-        if (isset($this->prompt['append'])) {
-            $prompt .= $this->prompt['append'];
-        }
-        if (isset($info)) {
-            $prompt .= ' '.$this->page->tag('i', array(
-                'title' => htmlspecialchars($info),
-                'class' => $this->prompt['info'],
-                'style' => 'cursor:pointer;',
-                'data-html' => 'true',
-                'data-toggle' => 'tooltip',
-                'data-placement' => 'bottom',
-                'data-container' => 'form[name='.$this->header['name'].']',
-            ), '');
-            $this->page->jquery('$(\'[data-toggle="tooltip"]\').tooltip();');
-        }
-        switch ($this->align) {
-            case 'form-inline':
-                $class = 'sr-only';
-                break;
-            case 'form-horizontal':
-                $class = array(
-                    "col-{$this->collapse}-{$this->indent}",
-                    'control-label',
-                    $this->input,
-                );
-                break;
-            default:
-                $class = $this->input;
-                break;
-        }
-
-        return $this->page->tag('label', array(
-            'class' => $class,
-            'for' => $id,
-        ), $prompt);
-    }
-
-    /**
      * Adds a (properly formatted) $prompt to your $input field, and manages any error messages.
      * 
      * @param string $prompt The $input's name.
@@ -417,5 +371,67 @@ class Form extends \BootPress\Form\Component
         }
 
         return $this->field('', implode(' ', $buttons));
+    }
+    
+    /**
+     * Used by ``$this->field()`` to create a ``<label>`` prompt.
+     * 
+     * @param string|array $prompt The form label reference.  If you want to include additional information relative to the field, then you can make this an ``array($prompt => $info)``, or an ``array($prompt, $info)`` that will appear when cliked or hovered over.  To customize the icon set ``$form->prompt('info', 'fa fa-info-circle')``.
+     * @param string       $name   The name of the associated input field.
+     * @param string       $id     The id of the associated input field.
+     * 
+     * @return string The generated HTML ``<label>``.
+     */
+    private function label($prompt, $name, $id)
+    {
+        if (empty($prompt)) {
+            return '';
+        }
+        if (is_array($prompt)) {
+            list($prompt, $info) = (count($prompt) > 1) ? array_values($prompt) : each($prompt);
+        }
+        if (empty($prompt) || strpos($prompt, '<label') !== false) {
+            return $prompt;
+        }
+        if (isset($this->prompt['prepend'])) {
+            if (!$this->prompt['prepend']['required'] || $this->validator->required($name)) {
+                $prompt = $this->prompt['prepend']['html'].$prompt;
+            }
+        }
+        if (isset($this->prompt['append'])) {
+            $prompt .= $this->prompt['append'];
+        }
+        if (isset($info)) {
+            $prompt .= ' '.$this->page->tag('i', array(
+                'title' => htmlspecialchars($info),
+                'class' => $this->prompt['info'],
+                'style' => 'cursor:pointer;',
+                'data-html' => 'true',
+                'data-toggle' => 'tooltip',
+                'data-placement' => 'bottom',
+                'data-container' => 'form[name='.$this->header['name'].']',
+            ), '');
+            $this->page->jquery('$(\'[data-toggle="tooltip"]\').tooltip();');
+        }
+        switch ($this->align) {
+            case 'form-inline':
+                $class = 'sr-only';
+                break;
+            case 'form-horizontal':
+                $class = array(
+                    "col-{$this->collapse}-{$this->indent}",
+                    'control-label',
+                    $this->input,
+                );
+                break;
+            default:
+                $class = $this->input;
+                break;
+        }
+
+        return $this->page->tag('label', array(
+            'class' => $class,
+            'for' => $id,
+        ), $prompt);
     }
 }
