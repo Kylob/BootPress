@@ -64,6 +64,14 @@ class BootstrapTest extends \BootPress\HTMLUnit\Component
         $this->assertEquals(2, $form->indent);
         $this->assertNull($form->missing);
         
+        // private issetters
+        $this->assertTrue(isset($form->prompt));
+        $this->assertTrue(isset($form->input));
+        $this->assertTrue(isset($form->align));
+        $this->assertTrue(isset($form->collapse));
+        $this->assertTrue(isset($form->indent));
+        $this->assertFalse(isset($form->missing));
+        
         // form message, header, and close methods
         $form->align();
         $form->message('success', 'Custom message');
