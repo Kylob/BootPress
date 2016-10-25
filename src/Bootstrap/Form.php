@@ -8,17 +8,23 @@ class Form extends \BootPress\Form\Component
 
     /** @var object A BootPress\Bootstrap\Common instance. */
     private $bp;
-    
+
+    /** @var string Set ``$this->size('lg|sm')`` to make your '**input-lg**' or '**input-sm**'. */
+    private $input = '';
+
+    /** @var string ``$this->align('horizontal|collapse|inline')`` the direction to make your '**form-horizontal**', or '' (collapsed), or '**form-inline**'. */
+    private $align = 'form-horizontal';
+
+    /** @var string When to collapse ``$this->align('horizontal')`` form.  Either '**xs**', '**sm**', '**md**', or '**lg**'. */
+    private $collapse = 'sm';
+
+    /** @var int The number of columns to indent ``$this->align('horizontal', $this->collapse)`` form. */
+    private $indent = 2;
+
     /** @var array Use ``$this->prompt()`` to '**prepend**' and '**append**' HTML strings to ``<label>``'s, and specify the additional '**info**' icon to use. */
     private $prompt = array(
         'info' => 'glyphicon glyphicon-question-sign',
     );
-    
-    /** @var string  */
-    private $input = '';
-    private $align = 'form-horizontal';
-    private $collapse = 'sm';
-    private $indent = 2;
 
     /**
      * {@inheritdoc}
