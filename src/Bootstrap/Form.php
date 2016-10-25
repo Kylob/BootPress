@@ -197,12 +197,6 @@ class Form extends \BootPress\Form\Component
     }
 
     /**
-     * {@inheritdoc}
-     * 
-     * @param false|mixed $inline This tells us if you want the radio buttons to be inline (any value but false), or not (false).
-     */
-    
-    /**
      * Creates radio buttons from the ``$form->menu($field)`` you set earlier.
      * 
      * @param string      $field      The radio button's name.
@@ -218,7 +212,6 @@ class Form extends \BootPress\Form\Component
      * echo $form->radio('gender');
      * ```
      */
-    
     public function radio($field, array $attributes = array(), $inline = false)
     {
         $disabled = in_array('disabled', $attributes) ? 'disabled' : '';
@@ -267,13 +260,19 @@ class Form extends \BootPress\Form\Component
     }
 
     /**
-     * This is to add html tags, or semicolons, or asterisks, or whatever you would like include with all of the form's prompts.
+     * Used by ``$this->field()`` to create a ``<label>`` prompt.
      * 
      * @param string|array $prompt The form label reference.  If you want to include additional information relative to the field, then you can make this an ``array($prompt => $info)``, or an ``array($prompt, $info)`` that will appear when cliked or hovered over.  To customize the icon set ``$form->prompt('info', 'fa fa-info-circle')``.
      * @param string       $name   The name of the associated input field.
      * @param string       $id     The id of the associated input field.
      * 
      * @return string The generated HTML ``<label>``.
+     *
+     * ```php
+     * $form->label('Email Address', 'email', $form->validator->id('email'));
+     * ```
+     *
+     * @todo Why is this public?  This should be made private.
      */
     public function label($prompt, $name, $id)
     {
