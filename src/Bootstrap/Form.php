@@ -135,7 +135,7 @@ class Form extends \BootPress\Form\Component
      * 
      * @param string      $place    Either '**info**', '**append**', or '**prepend**' to the prompt.  You only have one shot at each.
      * @param string      $html     Whatever you would like to add.  For '**info**', this will be the icon class you want to use.
-     * @param false|mixed $required If $place == 'prepend' and this is anything but (bool) false, then the $html will only be prepended if the field is required per the ``$form->validator``.
+     * @param false|mixed $required If ``$place == 'prepend'`` and this is anything but (bool) false, then the **$html** will only be prepended if the field is required per the ``$form->validator``.
      * 
      * ```php
      * $form->prompt('prepend', '<font color="red">*</font> ', 'required'); // If the field is required it will add a red asterisk to the front.
@@ -225,8 +225,8 @@ class Form extends \BootPress\Form\Component
      * @return string Radio ``<label><input type="radio" ...></label>`` html tags.
      * 
      * ```php
-     * $gender = $form->menu('gender', array('M'=>'Male', 'F'=>'Female')); // A radio menu
-     * $form->validator->set('gender', "required|inList[{$gender}]");
+     * $form->menu('gender', array('M'=>'Male', 'F'=>'Female'));
+     * $form->validator->set('gender', 'required|inList');
      * 
      * echo $form->radio('gender');
      * ```
@@ -279,11 +279,11 @@ class Form extends \BootPress\Form\Component
     }
 
     /**
-     * Adds a (properly formatted) $prompt to your $input field, and manages any error messages.
+     * Adds a (properly formatted) **$prompt** to your **$input** field, and manages any error messages.
      * 
-     * @param string $prompt The $input's name.
-     * @param string $input  A form field.
-     * @param string $error  An optional error to override, or include with the field.
+     * @param string $prompt The **$input**'s name.
+     * @param string $input  A form field, or help block, etc.
+     * @param string $error  An optional error to override, and include with the field.
      * 
      * @return string A ``<div class="form-group">...</div>`` html string.
      * 
