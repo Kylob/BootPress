@@ -6,10 +6,15 @@ class Form extends \BootPress\Form\Component
 {
     use Base;
 
+    /** @var object A BootPress\Bootstrap\Common instance. */
     private $bp;
+    
+    /** @var array Use ``$this->prompt()`` to '**prepend**' and '**append**' HTML strings to ``<label>``'s, and specify the additional '**info**' icon to use. */
     private $prompt = array(
         'info' => 'glyphicon glyphicon-question-sign',
     );
+    
+    /** @var string  */
     private $input = '';
     private $align = 'form-horizontal';
     private $collapse = 'sm';
@@ -33,15 +38,7 @@ class Form extends \BootPress\Form\Component
      */
     public function __get($name)
     {
-        switch ($name) {
-            case 'prompt':
-            case 'input':
-            case 'align':
-            case 'collapse':
-            case 'indent':
-                return $this->$name;
-                break;
-        }
+        return (isset($this->$name)) ? $this->$name : null;
     }
 
     /**
@@ -53,17 +50,7 @@ class Form extends \BootPress\Form\Component
      */
     public function __isset($name)
     {
-        switch ($name) {
-            case 'prompt':
-            case 'input':
-            case 'align':
-            case 'collapse':
-            case 'indent':
-                return true;
-                break;
-        }
-
-        return false;
+        return (isset($this->$name)) ? true : false;
     }
 
     /**
@@ -281,9 +268,9 @@ class Form extends \BootPress\Form\Component
     /**
      * Adds a (properly formatted) **$prompt** to your **$input** field, and manages any error messages.
      * 
-     * @param string $prompt The **$input**'s name.
-     * @param string $input  A form field, or help block, etc.
-     * @param string $error  An optional error to override, and include with the field.
+     * @param string|array $prompt For the **$input** field.  If you want to include additional info that will appear when clicked or hovered over, then you can either make this an ``array($prompt => $info)`` or an ``array($prompt, $info)``.  To customize the icon used, set ``$form->prompt('info', 'fa fa-info-circle')``.
+     * @param string       $input  A form field, or help block, etc.
+     * @param string       $error  An optional error to override, and include with the field.
      * 
      * @return string A ``<div class="form-group">...</div>`` html string.
      * 
@@ -376,7 +363,7 @@ class Form extends \BootPress\Form\Component
     /**
      * Used by ``$this->field()`` to create a ``<label>`` prompt.
      * 
-     * @param string|array $prompt The form label reference.  If you want to include additional information relative to the field, then you can make this an ``array($prompt => $info)``, or an ``array($prompt, $info)`` that will appear when cliked or hovered over.  To customize the icon set ``$form->prompt('info', 'fa fa-info-circle')``.
+     * @param string|array $prompt The form label reference.
      * @param string       $name   The name of the associated input field.
      * @param string       $id     The id of the associated input field.
      * 
