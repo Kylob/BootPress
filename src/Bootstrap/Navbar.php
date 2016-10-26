@@ -5,22 +5,22 @@ namespace BootPress\Bootstrap;
 class Navbar extends Common
 {
     /**
-     * This will open a new navbar.
+     * Create a new navbar.
      * 
-     * @param mixed  $brand   The name of your website. If this is a string then it will automatically link to your ``$page->url['base']``. If you want to override that, then make this an ``array($brand, $link)``.
+     * @param mixed  $brand   The name of your website. If this is a string then it will automatically link to your ``$page->url['base']``. If you want to override that, then make this an ``array($brand => $link)``.
      * @param string $align   Either '**top**', '**bottom**', or '**static**' if you want to fix the alignment. If you are just trying to get to the next arg then you can declare '**inverse**' here and we will know what you are talking about.
-     * @param mixed  $inverse If this is anything but false (eg. '****inverse**') then we will display the inverted or alternate navbar.
+     * @param mixed  $inverse If this is anything but false (eg. '**inverse**') then we will display the inverted or alternate navbar.
      * 
      * @return string
      * 
      * ```php
-     * echo $bp->navbar->open($ci->blog->get('name'), 'top', 'inverse');
+     * echo $bp->navbar->open(array('Website', 'http://example.com'));
      * ```
      */
     public function open($brand, $align = '', $inverse = false)
     {
         if (is_array($brand)) {
-            list($brand, $link) = each($brand);
+            list($brand, $link) = (count($brand) > 1) ? $brand: each($brand);
         } else {
             $link = $this->page->url['base'];
         }
