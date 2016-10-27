@@ -153,7 +153,11 @@ class Common
      *     'Milk',
      * ));
      * 
-     * echo $bp->lister('ul list-inline', array('Coffee', 'Tea', 'Milk'));
+     * echo $bp->lister('ul list-inline', array(
+     *     'Coffee',
+     *     'Tea',
+     *     'Milk',
+     * ));
      * 
      * echo $bp->lister('dl dl-horizontal', array(
      *     'Coffee' => array(
@@ -249,7 +253,32 @@ class Common
      * @return object
      * 
      * ```php
-     * $form = $bp->form('example');
+     * $form = $bp->form('sign_in');
+     * 
+     * $form->menu('remember', array('Y' => 'Remember me'));
+     * 
+     * $form->validator->set(array(
+     *     'email' => 'required|email',
+     *     'password' => 'required|minLength[5]|noWhiteSpace',
+     *     'remember' => 'yesNo',
+     * ));
+     * 
+     * if ($vars = $form->validator->certified()) {
+     *     $form->message('info', 'Good job, you are doing great!');
+     *     $form->eject();
+     * }
+     * 
+     * $form->size('lg'); // oversize the inputs
+     * $form->align('collapse'); // default is horizontal
+     * 
+     * echo $form->header();
+     * echo $form->fieldset('Sign In', array(
+     *     $form->field('Email address', $form->group($bp->icon('user'), '', $form->text('email'))),
+     *     $form->field('Password', $form->group($bp->icon('lock'), '', $form->password('password'))),
+     *     $form->field('', $form->checkbox('remember'),
+     *     $form->submit(),
+     * ));
+     * echo $form->close();
      * ```
      */
     public function form($name, $method = 'post')
@@ -308,9 +337,7 @@ class Common
      * ```php
      * echo $bp->button('primary', 'Primary');
      * 
-     * echo $bp->button('lg success', 'Link', array(
-     *     'href' => '#'
-     * ));
+     * echo $bp->button('lg success', 'Link', array('href'=>'#'));
      * 
      * echo $bp->button('default', 'Dropdown', array(
      *     'dropdown' => array(
@@ -923,8 +950,8 @@ class Common
      * ```php
      * echo $bp->panel('primary', array(
      *     'header' => '<h3>Title</h3>',
-     *     'body'' => 'Content',
-     *     'footer'' => '<a href="#">Link</a>',
+     *     'body' => 'Content',
+     *     'footer' => '<a href="#">Link</a>',
      * ));
      * 
      * echo $bp->panel('default', array(
