@@ -25,6 +25,10 @@ Add the following to your ``composer.json`` file.
 ## Example Usage
 
 ```php
+<?php
+
+use BootPress\Skeleton\Component as Skeleton;
+
 
 ```
 
