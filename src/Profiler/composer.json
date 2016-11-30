@@ -1,0 +1,20 @@
+{
+    "name": "bootpress/profiler",
+    "description": "PHP Debug Bar integration for BootPress.",
+    "keywords": ["bootpress", "debug", "debugbar", "phpdebugbar", "profiler"],
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Kyle Gadd",
+            "email": "kyle.gadd@gmail.com"
+        }
+    ],
+    "require": {
+        "bootpress/blog": "^1.0",
+        "maximebf/debugbar": ">=1.10"
+    },
+    "autoload": {
+        "psr-4": { "BootPress\\Profiler\\": "src/" },
+        "files": [ "function.php" ]
+    }
+}
