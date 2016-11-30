@@ -275,7 +275,8 @@ class AnalyticsTest extends \BootPress\HTMLUnit\Component
     {
         Page::html()->session->invalidate(); // so that $analytics->offset has no effect
         $analytics = new Analytics();
-        $time = strtotime('Sep 23, 2017 17:30:45');
+        $time = mktime(17, 30, 45, 9, 23, 2017);
+        // $time = strtotime('Sep 23, 2017 17:30:45');
         $this->assertEquals(array(
             1506182400,
             1506185999,
