@@ -9,7 +9,8 @@
     ],
     "require": {
         "bootpress/blog": "^1.0",
-        "bootpress/bootstrap": "^1.0"
+        "bootpress/bootstrap": "^1.0",
+        "jenssegers/agent": "2.3.*"
     },
     "require-dev": {
         "bootpress/htmlunit": "^1.0",
