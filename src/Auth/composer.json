@@ -1,8 +1,7 @@
 {
-    "name": "bootpress/analytics",
-    "description": "Easily track and report on your website's user and robot traffic.  Collects detailed user and server response times.  Monitors 404 pages, and the IP addresses that are trying to hack you.",
+    "name": "bootpress/auth",
+    "description": "Manages users, and logs them in securely using the definitive best practices known to man.",
     "keywords": ["bootpress", "analytics", "tracker"],
-    "homepage": "https://www.bootpress.org/components/analytics/",
     "license": "MIT",
     "authors": [
         {
@@ -14,9 +13,18 @@
         "php": ">=5.4",
         "bootpress/page": "^1.0",
         "bootpress/sqlite": "^1.0",
-        "jenssegers/agent": "2.3.*"
+        "symfony/yaml": "^2.3||^3.0"
+    },
+    "require-dev": {
+        "phpunit/phpunit": "^4.0",
+        "friendsofphp/php-cs-fixer": "^1.0",
+        "squizlabs/php_codesniffer": "^2.5"
+    },
+    "suggest": {
+        "paragonie/random_compat": "PHP 5.x polyfill for random_bytes() and random_int() from PHP 7",
+        "ircmaxell/password-compat": "PHP 5.5 password_* functions, with forward-compatible support."
     },
     "autoload": {
-        "psr-4": { "BootPress\\Analytics\\": "" }
+        "psr-4": { "BootPress\\Auth\\": "src/" }
     }
 }
