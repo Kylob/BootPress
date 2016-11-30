@@ -306,9 +306,9 @@ class AnalyticsTest extends \BootPress\HTMLUnit\Component
             '2017-09-30 23:59:59',
         ), $analytics->timeRange($time, 'month', 'M Y'));
         $this->assertEquals(array(
-            1483232400,
-            1514768399,
-            2017,
+            1483228800,
+            1514764799,
+            '2017',
             '2017-01-01 00:00:00',
             '2017-12-31 23:59:59',
         ), $analytics->timeRange($time, 'year', 'Y'));
