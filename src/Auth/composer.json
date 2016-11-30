@@ -1,5 +1,7 @@
 {
-    "name": "bootpress/components",
+    "name": "bootpress/auth",
+    "description": "Manages users, and logs them in securely using the definitive best practices known to man.",
+    "keywords": ["bootpress", "analytics", "tracker"],
     "license": "MIT",
     "authors": [
         {
@@ -8,12 +10,13 @@
         }
     ],
     "require": {
-        "bootpress/blog": "^1.0",
-        "bootpress/bootstrap": "^1.0",
-        "jenssegers/agent": "2.3.*"
+        "php": ">=5.4",
+        "bootpress/page": "^1.0",
+        "bootpress/sqlite": "^1.0",
+        "symfony/yaml": "^2.3||^3.0"
     },
     "require-dev": {
-        "bootpress/htmlunit": "^1.0",
+        "phpunit/phpunit": "^4.0",
         "friendsofphp/php-cs-fixer": "^1.0",
         "squizlabs/php_codesniffer": "^2.5"
     },
@@ -22,6 +25,6 @@
         "ircmaxell/password-compat": "PHP 5.5 password_* functions, with forward-compatible support."
     },
     "autoload": {
-        "psr-4": { "BootPress\\": "src/" }
+        "psr-4": { "BootPress\\Auth\\": "src/" }
     }
 }

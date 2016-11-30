@@ -1,0 +1,26 @@
+{
+    "name": "bootpress/analytics",
+    "description": "Easily track and report on your website's user and robot traffic.  Collects detailed user and server response times.  Monitors 404 pages, and the IP addresses that are trying to hack you.",
+    "keywords": ["bootpress", "analytics", "tracker"],
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Kyle Gadd",
+            "email": "kyle.gadd@gmail.com"
+        }
+    ],
+    "require": {
+        "php": ">=5.4",
+        "bootpress/page": "^1.0",
+        "bootpress/sqlite": "^1.0",
+        "jenssegers/agent": "2.3.*"
+    },
+    "require-dev": {
+        "bootpress/htmlunit": "^1.0",
+        "friendsofphp/php-cs-fixer": "^1.0",
+        "squizlabs/php_codesniffer": "^2.5"
+    },
+    "autoload": {
+        "psr-4": { "BootPress\\Analytics\\": "src/" }
+    }
+}
