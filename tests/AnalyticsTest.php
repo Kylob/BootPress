@@ -7,7 +7,7 @@ use BootPress\Analytics\Component as Analytics;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 
-class AnalyticsTest extends HTMLUnit_Framework_TestCase
+class AnalyticsTest extends \BootPress\HTMLUnit\Component
 {
     protected static $page;
 
