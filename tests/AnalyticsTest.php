@@ -278,36 +278,36 @@ class AnalyticsTest extends \BootPress\HTMLUnit\Component
         $time = mktime(17, 30, 45, 9, 23, 2017);
         // $time = strtotime('Sep 23, 2017 17:30:45');
         $this->assertEquals(array(
-            1506182400,
-            1506185999,
+            1506186000,
+            1506189599,
             '5:00pm',
             '2017-09-23 17:00:00',
             '2017-09-23 17:59:59',
         ), $analytics->timeRange($time, 'hour', 'g:00a'));
         $this->assertEquals(array(
-            1506121200,
-            1506207599,
+            1506124800,
+            1506211199,
             'Saturday',
             '2017-09-23 00:00:00',
             '2017-09-23 23:59:59',
         ), $analytics->timeRange($time, 'day', 'l'));
         $this->assertEquals(array(
-            1505689200,
-            1506293999,
+            1505692800,
+            1506297599,
             '',
             '2017-09-18 00:00:00',
             '2017-09-24 23:59:59',
         ), $analytics->timeRange($time, 'week'));
         $this->assertEquals(array(
-            1504220400,
-            1506812399,
+            1504224000,
+            1506815999,
             'Sep 2017',
             '2017-09-01 00:00:00',
             '2017-09-30 23:59:59',
         ), $analytics->timeRange($time, 'month', 'M Y'));
         $this->assertEquals(array(
-            1483228800,
-            1514764799,
+            1483232400,
+            1514768399,
             2017,
             '2017-01-01 00:00:00',
             '2017-12-31 23:59:59',
