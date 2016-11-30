@@ -15,7 +15,12 @@
         "bootpress/sqlite": "^1.0",
         "jenssegers/agent": "2.3.*"
     },
+    "require-dev": {
+        "bootpress/htmlunit": "^1.0",
+        "friendsofphp/php-cs-fixer": "^1.0",
+        "squizlabs/php_codesniffer": "^2.5"
+    },
     "autoload": {
-        "psr-4": { "BootPress\\Analytics\\": "" }
+        "psr-4": { "BootPress\\Analytics\\": "src/" }
     }
 }
