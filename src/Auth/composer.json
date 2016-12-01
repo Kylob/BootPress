@@ -25,6 +25,6 @@
         "ircmaxell/password-compat": "PHP 5.5 password_* functions, with forward-compatible support."
     },
     "autoload": {
-        "psr-4": { "BootPress\\Auth\\": "src/" }
+        "psr-4": { "BootPress\\Auth\\": "src" }
     }
 }
