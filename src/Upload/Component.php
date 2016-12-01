@@ -1,6 +1,6 @@
 <?php
 
-namespace BootPress\Forms;
+namespace BootPress\Upload;
 
 use BootPress\Page\Component as Page;
 use BootPress\Asset\Component as Asset;
