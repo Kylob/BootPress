@@ -11,7 +11,9 @@
         "bootpress/blog": "^1.0",
         "bootpress/bootstrap": "^1.0",
         "jenssegers/agent": "2.3.*",
-        "maximebf/debugbar": ">=1.10.3"
+        "maximebf/debugbar": ">=1.10.3",
+        "jbroadway/urlify": "^1.0",
+        "gargron/fileupload": "^1.1"
     },
     "require-dev": {
         "bootpress/htmlunit": "^1.0",
