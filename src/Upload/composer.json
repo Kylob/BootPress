@@ -1,0 +1,26 @@
+{
+    "name": "bootpress/upload",
+    "description": "Pretty and simple file uploads using the blueimp jQuery File Uploader.",
+    "keywords": ["bootpress", "bootstrap", "blueimp", "jquery", "form", "file", "uploads"],
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Kyle Gadd",
+            "email": "kyle.gadd@gmail.com"
+        }
+    ],
+    "require": {
+        "bootpress/page": "^1.0",
+        "bootpress/bootstrap": "^1.0",
+        "jbroadway/urlify": "^1.0",
+        "gargron/fileupload": "^1.1"
+    },
+    "require-dev": {
+        "bootpress/htmlunit": "^1.0",
+        "friendsofphp/php-cs-fixer": "^1.0",
+        "squizlabs/php_codesniffer": "^2.5"
+    },
+    "autoload": {
+        "psr-4": { "BootPress\\Upload\\": "src" }
+    }
+}
