@@ -21,6 +21,6 @@
         "squizlabs/php_codesniffer": "^2.5"
     },
     "autoload": {
-        "psr-4": { "BootPress\\Analytics\\": "src/" }
+        "psr-4": { "BootPress\\Analytics\\": "src" }
     }
 }
