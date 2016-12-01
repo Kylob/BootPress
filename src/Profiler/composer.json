@@ -11,7 +11,7 @@
     ],
     "require": {
         "bootpress/blog": "^1.0",
-        "maximebf/debugbar": ">=1.10"
+        "maximebf/debugbar": ">=1.10.3"
     },
     "autoload": {
         "psr-4": { "BootPress\\Profiler\\": "src/" },
