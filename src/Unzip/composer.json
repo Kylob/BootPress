@@ -1,0 +1,18 @@
+{
+    "name": "bootpress/unzip",
+    "description": "Unzip files from a common (root) directory",
+    "keywords": ["bootpress", "unzip"],
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Kyle Gadd",
+            "email": "kyle.gadd@gmail.com"
+        }
+    ],
+    "require": {
+        "bootpress/page": "^1.0"
+    },
+    "autoload": {
+        "psr-4": { "BootPress\\Unzip\\": "src" }
+    }
+}
