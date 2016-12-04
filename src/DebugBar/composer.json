@@ -1,0 +1,25 @@
+{
+    "name": "bootpress/debugbar",
+    "description": "PHP Debugbar integration for BootPress.",
+    "keywords": ["bootpress", "debug", "phpdebugbar", "profiler"],
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Kyle Gadd",
+            "email": "kyle.gadd@gmail.com"
+        }
+    ],
+    "require": {
+        "bootpress/blog": "^1.0",
+        "maximebf/debugbar": ">=1.10.3"
+    },
+    "require-dev": {
+        "phpunit/phpunit": "^4.0",
+        "friendsofphp/php-cs-fixer": "^1.0",
+        "squizlabs/php_codesniffer": "^2.5"
+    },
+    "autoload": {
+        "psr-4": { "BootPress\\DebugBar\\": "src" },
+        "files": [ "function.php" ]
+    }
+}
