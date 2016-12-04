@@ -420,7 +420,7 @@ class Component
      */
     public static function wyciwyg()
     {
-        extract(Admin::params('bp', 'page', 'plugin'));
+        extract(self::params('bp', 'page', 'plugin'));
         $page->link(array(
             'https://cdn.jsdelivr.net/ace/1.2.3/min/ace.js',
             $page->url($plugin, 'Pages/admin/wyciwyg.js'),
