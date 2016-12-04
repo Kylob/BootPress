@@ -67,7 +67,7 @@ class Component
                 case 'admin':
                 case 'plugin':
                 case 'path':
-                case 'method';
+                case 'method':
                     $params[$param] = static::$$param;
                     break;
                 default:
