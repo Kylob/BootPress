@@ -27,6 +27,6 @@
     },
     "autoload": {
         "psr-4": { "BootPress\\": "src" },
-        "files": [ "src/Profiler/function.php" ]
+        "files": [ "src/DebugBar/function.php" ]
     }
 }

@@ -1,6 +1,6 @@
 <?php
 
-namespace BootPress\Profiler;
+namespace BootPress\DebugBar;
 
 use BootPress\Page\Component as Page;
 use Symfony\Component\HttpFoundation\Response;
@@ -64,15 +64,15 @@ class Component
         $url = $page->path($plugin, 'Resources');
         $dir = $page->dir($plugin, 'Resources');
         $this->renderer = $this->debugbar->getJavascriptRenderer($url, $dir);
-        DataCollector::setDefaultDataFormatter(new \BootPress\Profiler\DataFormatter());
+        DataCollector::setDefaultDataFormatter(new \BootPress\DebugBar\DataFormatter());
         $map = array(
             'php' => 'DebugBar\DataCollector\PhpInfoCollector',
-            'bootpress' => 'BootPress\Profiler\Collector\BootPress',
+            'bootpress' => 'BootPress\DebugBar\Collector\BootPress',
             'timeline' => 'DebugBar\DataCollector\TimeDataCollector',
             'messages' => 'DebugBar\DataCollector\MessagesCollector',
-            'files' => 'BootPress\Profiler\Collector\Files',
+            'files' => 'BootPress\DebugBar\Collector\Files',
             'exceptions' => 'DebugBar\DataCollector\ExceptionsCollector',
-            'queries' => 'BootPress\Profiler\Collector\Queries',
+            'queries' => 'BootPress\DebugBar\Collector\Queries',
             'memory' => 'DebugBar\DataCollector\MemoryCollector',
         );
         if (empty($enable)) {
@@ -111,7 +111,7 @@ class Component
         });
         $page->filter('response', function ($page, $response, $type) {
             if (in_array($type, array('redirect', 'json', 'html'))) {
-                self::addBreakPoint('Render Profiler');
+                self::addBreakPoint('Render DebugBar');
                 array_pop(self::$logs);
                 array_pop(self::$breakpoints);
                 if ($this->debugbar->hasCollector('time')) {
@@ -130,7 +130,7 @@ class Component
                             $this->start('"'.$bp.'" BreakPoint');
                         }
                     }
-                    $this->start('Render Profiler');
+                    $this->start('Render DebugBar');
                 }
                 if ($this->debugbar->hasCollector('bootpress')) {
                     $this->debugbar->getCollector('bootpress')->setResponse($response);
@@ -169,7 +169,7 @@ class Component
                 }
             }
         });
-        $this->time('Enable Profiler', $started, microtime(true));
+        $this->time('Enable DebugBar', $started, microtime(true));
     }
 
     public function __call($method, $arguments)

@@ -1,6 +1,6 @@
 <?php
 
-namespace BootPress\Profiler;
+namespace BootPress\DebugBar;
 
 use DebugBar\HttpDriverInterface;
 use Symfony\Component\HttpFoundation\Response;

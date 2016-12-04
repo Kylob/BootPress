@@ -1,6 +1,6 @@
 <?php
 
-namespace BootPress\Profiler;
+namespace BootPress\DebugBar;
 
 use DebugBar\DataFormatter\DataFormatterInterface;
 use Symfony\Component\VarDumper\Cloner\VarCloner;

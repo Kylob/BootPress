@@ -1,8 +1,8 @@
 <?php
 
-namespace BootPress\Profiler\Collector;
+namespace BootPress\DebugBar\Collector;
 
-use BootPress\Profiler\Component as Profiler;
+use BootPress\DebugBar\Component as Profiler;
 use DebugBar\DataCollector\DataCollector;
 use DebugBar\DataCollector\Renderable;
 

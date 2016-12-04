@@ -1,6 +1,6 @@
 <?php
 
-namespace BootPress\Profiler\Collector;
+namespace BootPress\DebugBar\Collector;
 
 use DebugBar\DataCollector\Renderable;
 use DebugBar\DataCollector\DataCollector;

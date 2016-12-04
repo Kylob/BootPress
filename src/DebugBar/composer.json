@@ -1,7 +1,7 @@
 {
-    "name": "bootpress/profiler",
-    "description": "PHP Debug Bar integration for BootPress.",
-    "keywords": ["bootpress", "debug", "debugbar", "phpdebugbar", "profiler"],
+    "name": "bootpress/debugbar",
+    "description": "PHP Debugbar integration for BootPress.",
+    "keywords": ["bootpress", "debug", "phpdebugbar", "profiler"],
     "license": "MIT",
     "authors": [
         {
@@ -19,7 +19,7 @@
         "squizlabs/php_codesniffer": "^2.5"
     },
     "autoload": {
-        "psr-4": { "BootPress\\Profiler\\": "src" },
+        "psr-4": { "BootPress\\DebugBar\\": "src" },
         "files": [ "function.php" ]
     }
 }

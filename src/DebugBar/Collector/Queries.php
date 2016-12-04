@@ -1,6 +1,6 @@
 <?php
 
-namespace BootPress\Profiler\Collector;
+namespace BootPress\DebugBar\Collector;
 
 use BootPress\Page\Component as Page;
 use BootPress\Database\Component as Database;
