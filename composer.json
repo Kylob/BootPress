@@ -10,10 +10,11 @@
     "require": {
         "bootpress/blog": "^1.0",
         "bootpress/bootstrap": "^1.0",
-        "jenssegers/agent": "2.3.*",
-        "maximebf/debugbar": ">=1.10.3",
+        "jenssegers/agent": "^2.3",
+        "maximebf/debugbar": "^1.11",
         "jbroadway/urlify": "^1.0",
-        "gargron/fileupload": "^1.1"
+        "gargron/fileupload": "^1.1",
+        "maennchen/zipstream-php": "^0.4.0"
     },
     "require-dev": {
         "bootpress/htmlunit": "^1.0",
