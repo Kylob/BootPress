@@ -8,7 +8,6 @@ use DebugBar\DataCollector\Renderable;
 
 class Files extends DataCollector implements Renderable
 {
-
     /**
      * {@inheritdoc}
      */
@@ -67,7 +66,7 @@ class Files extends DataCollector implements Renderable
                 }
             }
         }
-        
+
         return array(
             'messages' => $messages,
             'count' => $slice,

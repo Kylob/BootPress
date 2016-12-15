@@ -3,13 +3,11 @@
 namespace BootPress\Admin\Pages;
 
 use BootPress\Admin\Component as Admin;
-use phpUri;
 
 class Users
 {
-    
     private static $icon;
-    
+
     public static function setup($auth, $path)
     {
         extract(Admin::params('bp', 'page'));
@@ -40,9 +38,10 @@ class Users
             $links = null;
         }
         $page->navbar = '<div class="navbar-custom-menu">'.$bp->navbar->menu($menu).'</div>';
+
         return $links;
     }
-    
+
     public static function page()
     {
         extract(Admin::params('bp', 'page', 'auth', 'path', 'method'));
@@ -75,9 +74,12 @@ class Users
                 }
                 break;
         }
+        $page->link('https://cdn.jsdelivr.net/jquery.timeago/1.3.0/jquery.timeago.min.js');
+        $page->jquery('$.timeago.settings.allowFuture = true; $("span.timeago").timeago();');
+
         return $html;
     }
-    
+
     private static function signIn()
     {
         extract(Admin::params('bp', 'page', 'auth', 'path'));
@@ -85,7 +87,7 @@ class Users
         $html = '';
         $form = $bp->form('admin_sign_in');
         $form->values['remember'] = 'N';
-        $form->menu('remember', array('Y'=>'Keep me signed in at this computer for 30 days'));
+        $form->menu('remember', array('Y' => 'Keep me signed in at this computer for 30 days'));
         $form->validator->set(array(
             'email' => 'required|email',
             'password' => 'required|noWhiteSpace|minLength[6]',
@@ -94,7 +96,7 @@ class Users
         if ($vars = $form->validator->certified()) {
             if ($id = $auth->check($vars['email'], $vars['password'])) {
                 $user = $auth->info($id);
-                if (in_array($user['admin'], array(1,2))) {
+                if (in_array($user['admin'], array(1, 2))) {
                     $auth->login($id, ($vars['remember'] == 'Y') ? 30 : 1);
                     $page->eject($page->url('admin', 'blog'));
                 }
@@ -115,12 +117,13 @@ class Users
         $html .= $form->field(null, $form->checkbox('remember'));
         $html .= $form->submit('Sign In');
         $html .= $form->close();
+
         return Admin::box('default', array(
             'head with-border' => static::$icon.'Sign In',
             'body' => $html,
         ));
     }
-    
+
     private static function editProfile($user_id)
     {
         extract(Admin::params('bp', 'page', 'auth', 'website'));
@@ -163,19 +166,113 @@ class Users
         ), $form->password('confirm'));
         $html .= $form->submit('Edit Profile');
         $html .= $form->close();
+
         return Admin::box('default', array(
             'head with-border' => static::$icon.'Edit Your Profile',
             'body' => $html,
-        ));
+        )).self::sessions($user_id);
     }
-    
-    private static function listUsers()
+
+    private static function listUsers($view)
     {
         extract(Admin::params('bp', 'page', 'auth', 'website'));
         $page->title = 'View Users at '.$website;
         $html = '';
+
+        // Count
+        $count = array();
+        $count['total'] = $auth->db->value('SELECT COUNT(*) FROM users');
+        $count['active'] = $auth->db->value('SELECT COUNT(DISTINCT user_id) FROM user_sessions WHERE user_id > 0 AND last_activity > 0');
+        $count['admin'] = $auth->db->value('SELECT COUNT(*) FROM users WHERE admin > 0');
+
+        // Links
+        $links = array();
+        $url = $page->url('delete', '', '?');
+        $links[$bp->icon('user').' View Users '.$bp->badge($count['total'])] = $page->url('add', $url, 'view', 'all');
+        $links['Active '.$bp->badge($count['active'])] = $page->url('add', $url, 'view', 'active');
+        $links['Admin '.$bp->badge($count['admin'])] = $page->url('add', $url, 'view', 'admin');
+
+        // IDs
+        $ids = array();
+        $bp->pagination->set('page', 100);
+        if ($user = $page->get('search')) {
+            $where = ' WHERE email LIKE ? OR name LIKE ?';
+            $params = array('%'.$user.'%', '%'.$user.'%');
+            if (!$bp->pagination->set('page', 100)) {
+                $bp->pagination->total($auth->db->value('SELECT COUNT(*) FROM users'.$where, $params));
+            }
+            $ids = $auth->db->ids(array(
+                'SELECT id FROM users'.$where,
+                'ORDER BY id DESC'.$bp->pagination->limit,
+            ), $params);
+        } elseif ($view == 'active') {
+            if (!$bp->pagination->set('page', 100)) {
+                $bp->pagination->total($count['active']);
+            }
+            $ids = $auth->db->ids(array(
+                'SELECT user_id FROM user_sessions',
+                'WHERE last_activity > 0 AND user_id > 0',
+                'GROUP BY user_id ORDER BY last_activity DESC'.$bp->pagination->limit,
+            ));
+        } elseif ($view == 'admin') {
+            if (!$bp->pagination->set('page', 100)) {
+                $bp->pagination->total($count['admin']);
+            }
+            $ids = $auth->db->ids(array(
+                'SELECT id FROM users',
+                'WHERE admin > 0',
+                'ORDER BY id, admin ASC'.$bp->pagination->limit,
+            ));
+        } else {
+            if (!$bp->pagination->set('page', 100)) {
+                $bp->pagination->total($count['total']);
+            }
+            $ids = $auth->db->ids(array(
+                'SELECT id FROM users',
+                'ORDER BY id DESC'.$bp->pagination->limit,
+            ));
+        }
+        $html .= $bp->table->open('class=hover');
+        $html .= $bp->table->head();
+        $html .= $bp->table->cell('', 'ID');
+        $html .= $bp->table->cell('', 'Name');
+        $html .= $bp->table->cell('', 'Email');
+        $html .= $bp->table->cell('style=text-align:center;', 'Registered');
+        $html .= $bp->table->cell('style=text-align:center; width:40px;', 'Admin');
+        $html .= $bp->table->cell('style=text-align:center; width:60px;', 'Approved');
+        $html .= $bp->table->cell('style=text-align:right;', 'Last Activity');
+        if (!empty($ids)) {
+            $analytics = $page->session->get('analytics');
+            foreach ($auth->info($ids) as $id => $user) {
+                $html .= $bp->table->row();
+                $html .= $bp->table->cell('', $bp->button('xs warning', $bp->icon('pencil').' '.$user['id'], array('href' => $page->url('admin', 'users/edit?id='.$id), 'title' => 'Edit User')));
+                $html .= $bp->table->cell('', $user['name']);
+                $html .= $bp->table->cell('', $user['email']);
+                $html .= $bp->table->cell('align=center', date('M d Y', $user['registered'] - $analytics['offset']));
+                $html .= $bp->table->cell('align=center', $user['admin']);
+                $html .= $bp->table->cell('align=center', $bp->label(($user['approved'] == 'Y' ? 'success' : 'danger'), $user['approved']));
+                $html .= $bp->table->cell('align=right', ($user['last_activity'] > 0) ? '<span class="timeago" title="'.date('c', $user['last_activity']).'"></span>' : '');
+            }
+        }
+        $html .= $bp->table->close();
+        $bp->pagination->html('links', array(
+            'wrapper' => '<ul class="pagination pagination-sm no-margin">{{ value }}</ul>',
+        ));
+
+        return Admin::box('default', array(
+            implode('', array(
+                '<div class="box-header with-border no-padding">',
+                    $bp->pills($links, array('align' => 'horizontal', 'active' => $page->url())),
+                    '<div class="box-tools">',
+                        '<div style="width:250px;">'.$bp->search($url, array('class' => 'form-collapse')).'</div>',
+                    '</div>',
+                '</div>',
+            )),
+            'body no-padding table-responsive' => $html,
+            'foot clearfix' => $bp->pagination->links(),
+        ));
     }
-    
+
     private static function editUser($user_id)
     {
         extract(Admin::params('bp', 'page', 'auth', 'website'));
@@ -186,26 +283,24 @@ class Users
         }
         $form = $bp->form('edit_user');
         $form->values = $edit;
-        $form->menu('admin', range(0,10));
-        $form->menu('approved', array('Y'=>$edit['name'].' is authorized to sign in at '.$website));
+        $form->menu('admin', range(0, 10));
+        $form->menu('approved', array('Y' => $edit['name'].' is authorized to sign in at '.$website));
         $form->validator->set(array(
             'name' => 'required',
             'email' => 'required|email',
             'password' => 'noWhiteSpace|minLength[6]',
             'admin' => 'digits|range[0,10]',
-            'groups' => '',
             'approved' => 'yesNo',
         ));
         if ($vars = $form->validator->certified()) {
             if ($edit['email'] != $vars['email'] && $auth->check($vars['email'])) {
                 $form->validator->errors['email'] = 'Sorry, the email submitted has already been registered.';
             } else {
-                $update = $vars;
-                unset($update['groups']);
-                $auth->update($user_id, $update);
-                $auth->db->exec('DELETE FROM user_groups WHERE user_id = ?', $user_id);
-                $auth->addToGroup($user_id, explode(',', $vars['groups']));
-                $page->eject($form->eject);
+                if ($auth->isUser() == $user_id) {
+                    unset($vars['admin'], $vars['approved']);
+                }
+                $auth->update($user_id, $vars);
+                $form->eject();
             }
         }
         $html .= $form->header();
@@ -217,24 +312,25 @@ class Users
         ), $form->group($bp->icon('envelope'), '', $form->text('email')));
         $html .= $form->field(array('Password',
             'Enter a new password if you want to change it.',
-        ), $form->group($bp->icon('lock'), $auth->randomPassword(), $form->text('password', array('placeholder'=>'Leave empty to keep current password'))));
+        ), $form->group($bp->icon('lock'), $auth->randomPassword(), $form->text('password', array('placeholder' => 'Leave empty to keep current password'))));
+
+        $disabled = ($auth->isUser() == $user_id) ? array('disabled' => 'disabled') : array();
+
         $html .= $form->field(array('Admin',
             'Level 1 (like you) has complete access, and level 2 will have limited access to this Admin section.',
-        ), $form->select('admin'));
-        $html .= $form->field(array('Groups',
-            'To further segregate your users into stereotypes.',
-        ), $form->text('groups'));
+        ), $form->select('admin', $disabled));
         $html .= $form->field(array('Approved',
             'Uncheck if you never want them to log in again.',
-        ), $form->checkbox('approved'));
+        ), $form->checkbox('approved', $disabled));
         $html .= $form->submit('Edit User');
         $html .= $form->close();
+
         return Admin::box('default', array(
             'head with-border' => static::$icon.'Edit User',
             'body' => $html,
-        ));
+        )).self::sessions($user_id);
     }
-    
+
     private static function registerUser()
     {
         extract(Admin::params('bp', 'page', 'auth', 'path', 'website'));
@@ -268,9 +364,61 @@ class Users
         ), $form->group($bp->icon('lock'), '', $form->text('password')));
         $html .= $form->submit('Register User');
         $html .= $form->close();
+
         return Admin::box('default', array(
             'head with-border' => static::$icon.'Register User',
             'body' => $html,
+        ));
+    }
+
+    private static function sessions($user_id)
+    {
+        extract(Admin::params('bp', 'page', 'auth'));
+        $html = '';
+        if (!$bp->pagination->set('sessions', 10)) {
+            $bp->pagination->total($auth->db->value('SELECT COUNT(*) FROM user_sessions WHERE user_id = ?', $user_id));
+        }
+        $bp->pagination->html('links', array(
+            'wrapper' => '<ul class="pagination pagination-sm no-margin pull-right">{{ value }}</ul>',
+        ));
+        $logout = $page->get('logout');
+        if ($result = $auth->db->query(array(
+            'SELECT * FROM user_sessions WHERE user_id = ? ORDER BY user_id, adjourn DESC'.$bp->pagination->limit,
+        ), $user_id, 'assoc')) {
+            $offset = ($analytics = $page->session->get('analytics')) ? $analytics['offset'] : 0;
+            $html .= $bp->table->open('class=table');
+            $html .= $bp->table->head();
+            $html .= $bp->table->cell('style=text-align:center; width:75px;', 'Current');
+            $html .= $bp->table->cell('', 'Login');
+            $html .= $bp->table->cell('', 'Expires');
+            $html .= $bp->table->cell('', 'IP Address');
+            $html .= $bp->table->cell('style=text-align:center; width:75px;', 'Logout');
+            while ($row = $auth->db->fetch($result)) {
+                $current = $row['adjourn'] > time();
+                $login = strtotime($row['login']);
+                $html .= $bp->table->row();
+                $html .= $bp->table->cell('style=text-align:center;', $current ? $bp->icon('check text-green', 'fa') : '&nbsp;'); // Current
+                $html .= $bp->table->cell('', date('D, j M Y @ g:i a', $login - $offset).' <span class="timeago" title="'.date('c', $login).'"></span>'); // Login
+                $html .= $bp->table->cell('', '<span class="timeago" title="'.date('c', $row['adjourn']).'"></span>'); // Expires
+                $html .= $bp->table->cell('', $row['ip_address']); // IP Address
+                $html .= $bp->table->cell('style=text-align:center;', $current ? '<a href="'.$page->url('add', '', 'logout', $row['id']).'" title="Click to log user out of this session">'.$bp->icon('sign-out', 'fa').'</a>' : '&nbsp;'); // Logout
+                if ($logout == $row['id']) {
+                    $auth->db->exec('UPDATE user_sessions SET adjourn = last_activity WHERE id = ?', $row['id']);
+                }
+            }
+            $html .= $bp->table->close();
+            $auth->db->close($result);
+        }
+        if ($logout) {
+            $page->eject($page->url('delete', '', 'logout'));
+        }
+
+        return Admin::box('default', array(
+            'head with-border' => array(
+                $bp->icon('laptop', 'fa').' Sessions',
+                $bp->pagination->links(),
+            ),
+            'body no-padding table-responsive' => $html,
         ));
     }
 }

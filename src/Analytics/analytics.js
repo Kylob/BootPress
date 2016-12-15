@@ -8,7 +8,8 @@ $(window).on('load', function () {
     var dst = offset < Math.max(jan, jul) ? 1 : 0;
     var timezone = offset / -60;
     if (dst) {
-        timezone -= diff / 60; }
+        timezone -= diff / 60;
+    }
     timezone = (timezone == 0) ? "UTC" : (timezone > 0 ? "UP" : "UM") + timezone.toString().replace(/[^\d]/g, "");
     var hemisphere = (diff) ? (jan > jul ? "N" : "S") : "";
     $.ajax({
@@ -22,6 +23,8 @@ $(window).on('load', function () {
             dst: dst,
             offset: offset * 60,
             timer: (timer) ? {
+                // https://www.w3.org/TR/navigation-timing/#processing-model
+                // http://stackoverflow.com/questions/16808486/explanation-of-window-performance-javascript
                 loaded: timer.domContentLoadedEventEnd - timer.navigationStart,
                 server: timer.responseEnd - timer.domainLookupStart,
                 dns: timer.domainLookupEnd - timer.domainLookupStart,

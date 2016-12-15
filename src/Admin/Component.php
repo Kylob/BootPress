@@ -49,7 +49,7 @@ class Component
     public static $method = null;
     public static $version = array();
     private static $sidebar = array();
-    
+
     public static function params($get)
     {
         $params = array();
@@ -75,9 +75,10 @@ class Component
                     break;
             }
         }
+
         return $params;
     }
-    
+
     public static function page($path = 'admin', array $version = array())
     {
         $page = Page::html();
@@ -91,36 +92,51 @@ class Component
         static::$version = array_merge(array(
             'bootstrap' => '3.3.6',
         ), $version);
+
         return true;
     }
-    
+
     public static function setup(Auth $auth, Blog $blog, array $map)
     {
         $html = '';
         if (!isset(static::$version['bootstrap'])) {
             return $html;
         }
-        static::$bp = new Bootstrap;
+        static::$bp = new Bootstrap();
         static::$auth = $auth;
         static::$blog = $blog;
         static::$website = ($name = $blog->config('blog', 'name')) ? $name : 'Website';
         $page = Page::html();
-        if (($field = $page->request->request->get('field')) && ($collapsed = $page->request->request->get('collapsed'))) {
-            switch ($field) {
-                case 'sidebar':
-                    if ($collapsed == 'true') {
-                        $page->session->set('collapse_sidebar', true);
-                    } else {
-                        $page->session->remove('collapse_sidebar');
-                    }
-                    break;
+        if ($auth->isAdmin(2) && ($field = $page->post('field')) && ($checked = $page->post('checked'))) {
+            $session = array(
+                'sidebar' => 'collapse_sidebar',
+                'suspend' => 'suspend_caching',
+                'debugbar' => 'enable_debugbar',
+            );
+            if (isset($session[$field])) {
+                if ($checked == 'true') {
+                    $page->session->set($session[$field], true);
+                } else {
+                    $page->session->remove($session[$field]);
+                }
             }
+
             return $page->sendJson();
         }
         $page->jquery('
             $(document).on("click", "[data-toggle=\'offcanvas\']", function(){
-                var sidebar = ($("body").hasClass("sidebar-collapse") == true) ? "true" : "false";
-                $.post(location.href, {field:"sidebar", collapsed:sidebar});
+                var checked = ($("body").hasClass("sidebar-collapse") == true) ? "true" : "false";
+                $.post(location.href, {field:"sidebar", checked:checked});
+            });
+            $("section.content-header input").each(function(){
+                var self = $(this); var label = self.next(); var label_text = label.text(); label.remove();
+                self.iCheck({checkboxClass:"icheckbox_line-red", insert:\'<div class="icheck_line-icon"></div>\' + label_text});
+            });
+            $("#suspend-debugbar").show();
+            $("#suspend, #debugbar").on("ifChanged", function(){
+                var field = $(this).attr("id");
+                var checked = $(this).is(":checked") ? "true" : "false";
+                $.post(location.href, {field:field, checked:checked});
             });
         ');
         $page->theme = array('BootPress\Admin\Component', 'display');
@@ -138,7 +154,7 @@ class Component
                 if (method_exists($class, 'setup')) {
                     $link = $class::setup($auth, $path);
                     if (is_string($link)) {
-                        static::sidebar(array($link=>$path));
+                        static::sidebar(array($link => $path));
                     } elseif (is_array($link)) {
                         if (count($link) > 1) {
                             $subs = $link; // just an array of extra routes that will not be in the sidebar
@@ -165,14 +181,15 @@ class Component
             if (isset($route['params']['method'])) {
                 static::$method = $route['params']['method'];
             }
+
             return $route['target'];
         } elseif ($class = $page->routes($base)) {
             $page->eject(static::$admin.'/'.$class['params']['path']);
         }
-        
+
         return false;
     }
-    
+
     /*
     $admin->sidebar(array(
         'Databases' => 'databases',
@@ -268,7 +285,7 @@ class Component
 
     public static function display($content)
     {
-        extract(self::params('page', 'admin', 'plugin'));
+        extract(self::params('auth', 'website', 'page', 'admin', 'plugin'));
         $page->meta('http-equiv="X-UA-Compatible" content="IE=edge"');
         $page->meta('content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" name="viewport"');
 
@@ -278,16 +295,26 @@ class Component
             'layout' => '', // 'fixed' or 'layout-boxed', and 'layout-top-nav' to move sidebar up top
             'skin' => 'blue', // blue, yellow, green, purple, red, and black with optional '-light' sidebar
             'logo' => implode('', array(
-                '<span class="logo-mini"><a href="https://www.bootpress.org/"><img src="' . $page->url($plugin, 'Pages/admin/bp.png') . '" height="30" style="margin-top:-3px;" alt="BP"></a></span>',
-                '<span class="logo-lg"><a href="https://www.bootpress.org/"><img src="' . $page->url($plugin, 'Pages/admin/bootpress.png') . '" height="30" style="margin-top:-3px;" alt="BootPress"></a></span>',
+                '<span class="logo-mini"><a href="https://www.bootpress.org/"><img src="'.$page->url($plugin, 'Pages/admin/bp.png').'" height="30" style="margin-top:-3px;" alt="BP"></a></span>',
+                '<span class="logo-lg"><a href="https://www.bootpress.org/"><img src="'.$page->url($plugin, 'Pages/admin/bootpress.png').'" height="30" style="margin-top:-3px;" alt="BootPress"></a></span>',
             )),
             'navbar' => '',
-            'header' => '',
+            'header' => '<h1><a href="'.$page->url('base').'">'.$website.'</a></h1>',
             'footer' => '',
         ) as $config => $default) {
             if (is_null($page->$config)) {
                 $page->$config = $default;
             }
+        }
+
+        // Header
+        if ($auth->isAdmin(2)) {
+            $suspend = ($page->session->get('suspend_caching')) ? ' checked="checked" ' : ' ';
+            $debugbar = ($page->session->get('enable_debugbar')) ? ' checked="checked" ' : ' ';
+            $page->header = '<span id="suspend-debugbar" class="pull-right" style="display:none;">'.implode('', array(
+              '<span class="pull-right"><input type="checkbox"'.$debugbar.'id="debugbar" value="Y"><label>Enable DebugBar</label></span>',
+              '<span class="pull-right"><input type="checkbox"'.$suspend.'id="suspend" value="Y"><label>Suspend Caching</label></span>',
+            )).'</span>'.$page->header;
         }
 
         // Sidebar
@@ -335,6 +362,52 @@ class Component
             }
         }
 
+        // Body
+        $layout = array('hold-transition', 'skin-'.$page->skin, $page->layout);
+        if (strpos($page->layout, 'fixed') === false) {
+            $layout[] = 'sidebar-mini';
+        }
+        if (empty($sidebar) || $page->session->get('collapse_sidebar')) {
+            $layout[] = 'sidebar-collapse';
+        }
+        $page->body = 'class="'.implode(' ', $layout).'"';
+
+        // Begin "wrapper"
+        $html = '<div class="wrapper">';
+
+        // Header
+        $html .= '<header class="main-header">';
+        if ($sidebar !== false) {
+            $html .= '<div class="logo">'.$page->logo.'</div>';
+        }
+        $html .= '<nav class="navbar navbar-static-top" role="navigation">';
+        if (!empty($sidebar)) {
+            $html .= '<a href="#" class="sidebar-toggle" data-toggle="offcanvas" role="button"><span class="sr-only">Toggle navigation</span><span class="icon-bar"></span><span class="icon-bar"></span><span class="icon-bar"></span></a>';
+        }
+        $html .= $page->navbar;
+        $html .= '</nav>';
+        $html .= '</header>';
+
+        // Left sidebar
+        if ($sidebar !== false) {
+            $html .= '<aside class="main-sidebar">';
+            $html .= '<section class="sidebar">'.$sidebar.'</section>';
+            $html .= '</aside>';
+        }
+
+        // Header and Content
+        $html .= '<div class="content-wrapper">';
+        $html .= '<section class="content-header">'.$page->header.'</section>';
+        $html .= '<section class="content">'.$content.'</section>';
+        $html .= '</div>';
+
+        // Main footer
+        $html .= $page->footer;
+
+        // End "wrapper"
+        $html .= '</div>';
+        self::wyciwyg();
+
         // Main CSS and JS Files
         $page->link('<script src="https://cdnjs.cloudflare.com/ajax/libs/admin-lte/2.3.8/js/app.min.js"></script>', 'prepend'); // this must come after the options, fastclick, and slimscroll below
         if (!empty($page->options)) {
@@ -350,88 +423,47 @@ class Component
             'https://cdn.jsdelivr.net/fastclick/1.0.6/fastclick.min.js',
             'https://cdn.jsdelivr.net/slimscroll/1.3.7/jquery.slimscroll.min.js',
             'https://cdn.jsdelivr.net/bootbox/4.4.0/bootbox.min.js',
+            'https://cdn.jsdelivr.net/icheck/1.0.2/icheck.min.js',
+            'https://cdn.jsdelivr.net/icheck/1.0.2/skins/line/red.min.css',
+            'https://cdn.jsdelivr.net/ace/1.2.3/min/ace.js',
+            $page->url($plugin, 'Pages/admin/wyciwyg.js'),
             '<!--[if lt IE 9]>
                 <script src="https://cdn.jsdelivr.net/html5shiv/3.7.3/html5shiv.min.js"></script>
                 <script src="https://cdn.jsdelivr.net/respond/1.4.2/respond.min.js"></script>
             <![endif]-->',
         ), 'prepend');
+        if (strpos($html, 'class="timeago"')) {
+            $page->link('https://cdn.jsdelivr.net/jquery.timeago/1.4.1/jquery.timeago.min.js');
+            $page->jquery('$("span.timeago").timeago();');
+        }
         if (empty($page->jquery)) {
             $page->jquery = 'https://cdn.jsdelivr.net/jquery/2.2.3/jquery.min.js';
         }
-
-        // Body
-        $layout = array('hold-transition', 'skin-'.$page->skin, $page->layout);
-        if (strpos($page->layout, 'fixed') === false) {
-            $layout[] = 'sidebar-mini';
-        }
-        if (empty($sidebar) || $page->session->get('collapse_sidebar')) {
-            $layout[] = 'sidebar-collapse';
-        }
-        $page->body = 'class="'.implode(' ', $layout).'"';
-        
-        // Begin "wrapper"
-        $html = '<div class="wrapper">';
-        
-        // Header
-        $html .= '<header class="main-header">';
-        if ($sidebar !== false) {
-            $html .= '<div class="logo">'.$page->logo.'</div>';
-        }
-        $html .= '<nav class="navbar navbar-static-top" role="navigation">';
-        if (!empty($sidebar)) {
-            $html .= '<a href="#" class="sidebar-toggle" data-toggle="offcanvas" role="button"><span class="sr-only">Toggle navigation</span><span class="icon-bar"></span><span class="icon-bar"></span><span class="icon-bar"></span></a>';
-        }
-        $html .= $page->navbar;
-        $html .= '</nav>';
-        $html .= '</header>';
-        
-        // Left sidebar
-        if ($sidebar !== false) {
-            $html .= '<aside class="main-sidebar">';
-            $html .= '<section class="sidebar">'.$sidebar.'</section>';
-            $html .= '</aside>';
-        }
-        
-        // Content
-        $html .= '<div class="content-wrapper">';
-        $html .= '<section class="content-header">'.$page->header.'</section>';
-        $html .= '<section class="content">'.$content.'</section>';
-        $html .= '</div>';
-        
-        // Main footer
-        $html .= $page->footer;
-        
-        // End "wrapper"
-        $html .= '</div>';
-        self::wyciwyg();
-
-        return $html;
-    }
-    
-    /**
-     * Makes a nice Ace Editor from a textarea, or a link with a '**wyciwyg**' class.  The data attributes are:
-     *
-     * '**file**' - The name of the file to display.
-     * '**retrieve**' - The file path (for links only).
-     *
-     * Use in conjuction with Files::save()
-     * 
-     * @return <type>
-     */
-    public static function wyciwyg()
-    {
-        extract(self::params('bp', 'page', 'plugin'));
-        $page->link(array(
-            'https://cdn.jsdelivr.net/ace/1.2.3/min/ace.js',
-            $page->url($plugin, 'Pages/admin/wyciwyg.js'),
-        ));
         $page->style(array(
             '.input-group-btn .btn { padding-bottom:7px; }',
             '.box-header h3 .fa, .box-header h3 .glyphicon { margin-right:10px; }',
             '.media-body span.space { margin-right:25px; }',
             '.media-right { white-space:nowrap; }',
-            'textarea.input-sm { font-family:Menlo,Monaco,Consolas,"Courier New",monospace; white-space:pre; }'
+            'div.icheckbox_line-red { margin:0 0 10px 20px; }',
+            'textarea.input-sm { font-family:Menlo,Monaco,Consolas,"Courier New",monospace; white-space:pre; }',
         ));
+
+        return $html;
+    }
+
+    /**
+     * Makes a nice Ace Editor from a textarea, or a link with a '**wyciwyg**' class.  The data attributes are:.
+     *
+     * '**file**' - The name of the file to display.
+     * '**retrieve**' - The file path (for links only).
+     *
+     * Use in conjuction with Files::save()
+     *
+     * @return <type>
+     */
+    public static function wyciwyg()
+    {
+        extract(self::params('bp', 'page', 'plugin'));
         $html = "\n\n".<<<EOT
 <div id="wyciwyg" style="display:none; width:100%; padding:0 10px;">
     <div id="toolbar" class="btn-toolbar">
@@ -499,9 +531,8 @@ class Component
     <div id="editor"></div>
 </div> <!-- #wyciwyg -->
 EOT;
-        $page->filter('html', function($prepend, $html, $append) {
+        $page->filter('html', function ($prepend, $html, $append) {
             return $prepend.$html.$append;
         }, array('<div id="adminForms">', 'this', '</div>'.$html), 50);
     }
-    
 }

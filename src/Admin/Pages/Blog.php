@@ -8,12 +8,10 @@ use BootPress\Sitemap\Component as Sitemap;
 use BootPress\Upload\Component as Upload;
 use BootPress\Unzip\Component as Unzip;
 use BootPress\Page\Component as Page;
-use Symfony\Component\Yaml\Yaml;
 use ZipStream; // maennchen/zipstream-php
 
 class Blog
 {
-    
     public static function setup($auth, $path)
     {
         if (!$auth->isAdmin(2)) {
@@ -27,7 +25,7 @@ class Blog
         }
         if (strpos($page->url['path'], '/published') !== false) {
             if ($search = $page->get('search')) {
-                $sitemap = new Sitemap;
+                $sitemap = new Sitemap();
                 $count = $sitemap->count($search, 'blog');
                 unset($sitemap);
             } else {
@@ -39,7 +37,7 @@ class Blog
             $links[$bp->icon('thumb-tack', 'fa').' Posts '.$bp->badge($posts, 'right')] = 'posts';
         }
         if ($pages = $blog->db->value('SELECT COUNT(*) FROM blog WHERE featured <= 0 AND published = 1')) {
-            $links[$bp->icon('file-o', 'fa').' Pages '.$bp->badge($pages, 'right')] = 'pages';
+            $links[$bp->icon('files-o', 'fa').' Pages '.$bp->badge($pages, 'right')] = 'pages';
         }
         if ($auth->isAdmin(1)) {
             $links[$bp->icon('cog', 'fa').' Config'] = 'config';
@@ -57,16 +55,17 @@ class Blog
                 )),
             )), 'prepend');
         }
+
         return array($bp->icon('globe', 'fa').' Blog' => $links);
     }
-    
+
     public static function page()
     {
         extract(Admin::params('bp', 'blog', 'auth', 'page', 'admin', 'path', 'method'));
         if ($method) {
             switch ($method) {
                 case 'unpublished':
-                    $header = $bp->icon('exclamation-triangle', 'fa', 'i style="margin-right:10px;"');
+                    $header = $bp->icon('exclamation-triangle', 'fa');
                     $header .= ' Unpublished';
                     break;
                 case 'published':
@@ -74,30 +73,30 @@ class Blog
                     $header .= ($search = $page->get('search')) ? " Search for '{$search}'" : ' Search';
                     break;
                 case 'posts':
-                    $header = $bp->icon('thumb-tack', 'fa', 'i style="margin-right:10px;"').' Posts';
+                    $header = $bp->icon('thumb-tack', 'fa').' Posts';
                     break;
                 case 'pages':
-                    $header = $bp->icon('file-o', 'fa', 'i style="margin-right:10px;"').' Pages';
+                    $header = $bp->icon('files-o', 'fa').' Pages';
                     break;
                 case 'config':
-                    $header = $bp->icon('cog', 'fa', 'i style="margin-right:10px;"').' Config';
+                    $header = $bp->icon('cog', 'fa').' Config';
                     break;
                 case 'backup':
-                    $header = $bp->icon('download', 'fa', 'i style="margin-right:10px;"').' Backup';
+                    $header = $bp->icon('download', 'fa').' Backup';
                     break;
                 case 'restore':
-                    $header = $bp->icon('upload', 'fa', 'i style="margin-right:10px;"').' Restore';
+                    $header = $bp->icon('upload', 'fa').' Restore';
                     break;
             }
             $html = self::$method();
         } else {
-            $header = $bp->icon('pencil-square-o', 'fa', 'i style="margin-right:10px;"');
+            $header = $bp->icon('pencil-square-o', 'fa');
             $header .= ($page->get('edit')) ? ' Edit' : ' New';
             // $html = self::form();
             list($html, $media) = self::form();
             if ($page->get('image')) {
                 return Admin::box('default', array(
-                    'head with-border' => $bp->icon('image', 'fa', 'i style="margin-right:10px;"').' Image',
+                    'head with-border' => $bp->icon('image', 'fa').' Image',
                     'body' => $html,
                 ));
             }
@@ -106,7 +105,7 @@ class Blog
             'href' => 'https://www.bootpress.org/docs/blog/',
             'target' => '_blank',
         ));
-        $bp->pagination->html('links', array('wrapper'=>'<ul class="pagination pagination-sm no-margin">{{ value }}</ul>'));
+        $bp->pagination->html('links', array('wrapper' => '<ul class="pagination pagination-sm no-margin">{{ value }}</ul>'));
         $html = Admin::box('default', array(
             'head with-border' => array($header, $docs),
             'body' => $html,
@@ -114,67 +113,72 @@ class Blog
         ));
         if (isset($media)) {
             $html .= Admin::box('default', array(
-                'head with-border' => array($bp->icon('globe', 'fa', 'i style="margin-right:10px;"').' Blog'),
+                'head with-border' => array($bp->icon('globe', 'fa').' Blog'),
                 'body' => $media,
             ));
         }
-        
+
         return $html;
     }
-    
+
     private static function unpublished()
     {
         extract(Admin::params(array('page', 'website')));
         $page->title = 'Unpublished Posts and Pages at '.$website;
+
         return static::blog(array(
             'WHERE featured <= 0 AND (published = 0 OR published > 1)',
-            'ORDER BY featured, published, updated ASC'
+            'ORDER BY featured, published, updated ASC',
         ));
     }
-    
+
     private static function published()
     {
         extract(Admin::params(array('bp', 'blog', 'page', 'website')));
         if ($search = $page->get('search')) {
             $page->title = 'Search Published Posts and Pages at '.$website;
-            $sitemap = new Sitemap;
+            $sitemap = new Sitemap();
             if (!$bp->pagination->set('page', 20)) {
                 $bp->pagination->total($sitemap->count($search, 'blog'));
             }
             $results = array();
             foreach ($sitemap->search($search, 'blog', $bp->pagination->limit) as $row) {
                 $results[$row['id']] = $row['snippet'];
-            } 
+            }
             unset($sitemap);
+
             return static::ids(array_keys($results), $results);
         }
         $page->title = 'Published Posts and Pages at '.$website;
+
         return static::blog(array(
             'WHERE featured <= 0 AND published != 0',
-            'ORDER BY published, updated ASC'
+            'ORDER BY published, updated ASC',
         ));
     }
-    
+
     private static function posts()
     {
         extract(Admin::params(array('page', 'website')));
         $page->title = 'Published Posts at '.$website;
+
         return static::blog(array(
             'WHERE featured <= 0 AND published < 0',
-            'ORDER BY featured, published, updated ASC'
+            'ORDER BY featured, published, updated ASC',
         ));
     }
-    
+
     private static function pages()
     {
         extract(Admin::params(array('page', 'website')));
         $page->title = 'Published Pages at '.$website;
+
         return static::blog(array(
             'WHERE featured <= 0 AND published = 1',
-            'ORDER BY featured, published, updated ASC'
+            'ORDER BY featured, published, updated ASC',
         ));
     }
-    
+
     private static function config()
     {
         extract(Admin::params(array('bp', 'blog', 'page', 'plugin', 'website')));
@@ -193,13 +197,13 @@ class Blog
         $config = Files::textarea($form, 'config', $blog->folder.'config.yml');
         $html .= $form->header();
         $html .= $form->field(array('config.yml',
-            'Manage your blog\'s authors, categories, and tags.'
+            'Manage your blog\'s authors, categories, and tags.',
         ), $config);
         $html .= $form->close();
-        
+
         return $html.$media;
     }
-    
+
     private static function backup()
     {
         extract(Admin::params('blog', 'page', 'website'));
@@ -210,11 +214,11 @@ class Blog
         $content = preg_filter('/^/', 'content/', $content);
         $zip = new ZipStream\ZipStream('backup_'.$blog->url($website).'_blog-content_'.date('Y-m-d').'.zip');
         foreach (array_merge($files, $content) as $file) {
-            $zip->addFileFromPath($file, $path.$file, array('time'=>filemtime($path.$file)));
+            $zip->addFileFromPath($file, $path.$file, array('time' => filemtime($path.$file)));
         }
         $zip->finish();
     }
-    
+
     private static function restore()
     {
         extract(Admin::params('bp', 'page', 'blog', 'website'));
@@ -264,12 +268,13 @@ class Blog
         $html .= $form->field('', '<p class="form-control-static">Submitting this form will also recreate your blog\'s database.</p>');
         $form->hidden['database'] = 'delete';
         $html .= $form->close();
+
         return $html;
     }
-    
+
     /**
      * A form to either edit or create a new blog post.
-     * 
+     *
      * @return string
      */
     private static function form()
@@ -320,7 +325,7 @@ class Blog
                 $blog->folder.'template.twig',
                 $page->file($plugin, 'Pages/blog/template.twig'),
             ));
-            
+
             // Breadcrumb links
             $dir = $page->dir($blog->folder, 'content');
             $url = $page->url('delete', '', 'content');
@@ -349,7 +354,7 @@ class Blog
                 $links[''] = $pulldown;
             }
             $links[] = '';
-            
+
             // Media files
             $media = Files::view($dir, array(
                 'files' => 'twig|js|css',
@@ -360,7 +365,7 @@ class Blog
             }
             $media = $bp->breadcrumbs($links).$media;
         }
-        
+
         if ($vars = $form->validator->certified()) {
             if ($edit) {
                 $rename = self::seo($vars['url'], $path, $edit);
@@ -404,7 +409,7 @@ class Blog
                 $page->eject($form->eject);
             }
         }
-        
+
         if ($edit) {
             $post = $blog->db->row('SELECT path, title, published FROM blog WHERE id = ?', $edit, 'assoc');
             if (empty($post['title'])) {
@@ -412,23 +417,23 @@ class Blog
             }
             $title = '<a href="'.$page->url('base', $post['path']).'" target="_blank">'.$post['title'].' '.$bp->icon('new-window').'</a>';
             $type = ($post['published'] < 0) ? 'post' : 'page';
-            $delete = $bp->button('sm danger delete pull-right', $bp->icon('trash'), array('title'=>'Click to delete this '.$type));
+            $delete = $bp->button('sm danger delete pull-right', $bp->icon('trash'), array('title' => 'Click to delete this '.$type));
             $html .= '<p class="lead">'.$title.' '.$delete.'</p>';
             $page->jquery('
                 $("#toolbar button.return").removeClass("return").addClass("refresh").click(function(){ window.location = window.location.href; });
                 $(".delete").click(function(){
-                    if (confirm("Are you sure you would like to delete this ' . $type . '?")) {
-                        window.location = "' . str_replace('&amp;', '&', $page->url('add', '', 'delete', 'post')) . '";
+                    if (confirm("Are you sure you would like to delete this ' .$type.'?")) {
+                        window.location = "' .str_replace('&amp;', '&', $page->url('add', '', 'delete', 'post')).'";
                     }
                 });
             ');
         }
-        
+
         // Form begin
         $html .= $form->header();
-        
+
         if ($edit) {
-            
+
             // Category
             $select = array();
             $suffix = ($edit) ? (($slash = strrpos($post['path'], '/')) ? substr($post['path'], $slash) : '/'.$post['path']) : '/';
@@ -439,9 +444,9 @@ class Blog
                 if ($edit && isset($select[$post['path']])) {
                     $select[$post['path']] .= ' (current url)';
                 }
-                $form->menu('category', array($post['path']=>'&nbsp;') + $select);
+                $form->menu('category', array($post['path'] => '&nbsp;') + $select);
                 $html .= $form->field(array('Category',
-                    'Optionally select an established category for your path.'
+                    'Optionally select an established category for your path.',
                 ), $form->select('category'));
                 $page->jquery('
                     $("select[name=category]").change(function(){
@@ -459,16 +464,15 @@ class Blog
                 'data-loading-text' => 'Submitting...',
             ));
             $html .= $form->field(array('Path',
-                'A unique URL path to this post that should never change once it has been published.'
+                'A unique URL path to this post that should never change once it has been published.',
             ), $form->group('/', $append, $form->text('url')));
-            
+
             // Index
             $html .= $form->field(array('Template',
-                'This is the index.html.twig file that contains the content of your page or post.'
+                'This is the index.html.twig file that contains the content of your page or post.',
             ), $index);
-            
         } else {
-            
+
             // Blog
             $append = $bp->button('primary', 'Submit', array(
                 'type' => 'submit',
@@ -477,40 +481,40 @@ class Blog
             $html .= $form->field(array('Blog',
                 'Enter the title of your new blog page or post.',
             ), $form->group('', $append, $form->text('blog')));
-            
+
             // Template
             $html .= $form->field(array('Template',
-                'This template will kick start your new blog page or post.'
+                'This template will kick start your new blog page or post.',
             ), $template);
-            
         }
-        
+
         // Form end
         $html .= $form->close();
-        
+
         return array($html, $media);
     }
-    
+
     private static function blog(array $query)
     {
         extract(Admin::params(array('bp', 'blog')));
         if (!$bp->pagination->set('page', 20)) {
             $bp->pagination->total($blog->db->value('SELECT COUNT(*) FROM blog '.$query[0]));
         }
+
         return static::ids($blog->db->ids(array(
             'SELECT id FROM blog',
             array_shift($query),
-            array_shift($query).$bp->pagination->limit
+            array_shift($query).$bp->pagination->limit,
         )));
     }
-    
+
     /**
      * This method ensures a unique path for creating a new blog post, or when moving an old one.
-     * 
-     * @param string $new The submitted path.
-     * @param string $old The former path.
-     * @param int    $id  The current blog id.
-     * 
+     *
+     * @param string $new The submitted path
+     * @param string $old The former path
+     * @param int    $id  The current blog id
+     *
      * @return string The unique blog path
      */
     private static function seo($new, $old = '', $id = 0)
@@ -528,11 +532,12 @@ class Blog
         }
         $increment = 1;
         while ($blog->db->value('SELECT id FROM blog WHERE path = ?', $seo.$increment)) {
-            $increment++;
+            ++$increment;
         }
+
         return $seo.$increment;
     }
-    
+
     private static function ids(array $ids, array $snippets = array())
     {
         $html = '';
@@ -550,22 +555,22 @@ class Blog
                 $thumb = '<img src="'.$row['page']['image'].'?w=75&h=75" width="75" height="75">';
             }
             $listing = '<h4>';
-                $listing .= '<a href="'.$page->url('base', $row['path']).'">';
-                $listing .= (!empty($row['title'])) ? $row['title'] : $row['path'];
-                $listing .= '</a> <small class="pull-right">'.$reference.'</small>';
+            $listing .= '<a href="'.$page->url('base', $row['path']).'">';
+            $listing .= (!empty($row['title'])) ? $row['title'] : $row['path'];
+            $listing .= '</a> <small class="pull-right">'.$reference.'</small>';
             $listing .= '</h4>';
             $listing .= '<p>';
-                $listing .= '<span class="text-danger">';
-                $listing .= '<small>'.$page->url('base', $row['path']).'</small>';
-                $listing .= '</span><br>';
-                if (isset($snippets[$id])) {
-                    $listing .= $snippets[$id];
-                } elseif (isset($row['page']['description'])) {
-                    $listing .= $row['page']['description'];
-                } else {
-                    $content = strip_tags($row['content']);
-                    $listing .= (mb_strlen($content) > 500) ? mb_substr($content, 0, 500).'&hellip;' : $content;
-                }
+            $listing .= '<span class="text-danger">';
+            $listing .= '<small>'.$page->url('base', $row['path']).'</small>';
+            $listing .= '</span><br>';
+            if (isset($snippets[$id])) {
+                $listing .= $snippets[$id];
+            } elseif (isset($row['page']['description'])) {
+                $listing .= $row['page']['description'];
+            } else {
+                $content = strip_tags($row['content']);
+                $listing .= (mb_strlen($content) > 500) ? mb_substr($content, 0, 500).'&hellip;' : $content;
+            }
             $listing .= '</p>';
             $html .= $bp->row('sm', array(
                 $bp->col(1, '<p>'.$bp->button('xs warning', $bp->icon('pencil').' edit', array(
@@ -574,10 +579,7 @@ class Blog
                 $bp->col(11, $bp->media(array($thumb, $listing))),
             )).'<br>';
         }
-        if (strpos($html, 'class="timeago"')) {
-            $page->link('https://cdn.jsdelivr.net/jquery.timeago/1.4.1/jquery.timeago.min.js');
-            $page->jquery('$("span.timeago").timeago();');
-        }
+
         return $html;
     }
 }

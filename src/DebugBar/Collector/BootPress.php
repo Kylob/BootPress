@@ -11,7 +11,6 @@ use BootPress\Page\Component as Page;
 
 class BootPress extends DataCollector implements DataCollectorInterface, Renderable
 {
-    
     protected $response;
 
     public function setResponse(Response $response)
@@ -51,7 +50,7 @@ class BootPress extends DataCollector implements DataCollectorInterface, Rendera
     public function collect()
     {
         // return array();
-        
+
         $responseHeaders = $this->response->headers->all();
         $cookies = array();
         foreach ($this->response->headers->getCookies() as $cookie) {
@@ -106,6 +105,7 @@ class BootPress extends DataCollector implements DataCollectorInterface, Rendera
                 'Content' => $content,
             ),
             'Session' => $page->session->all(),
+            'Cookies' => $page->request->cookies->all(),
         );
 
         if (isset($data['Request']['Headers']['php-auth-pw'])) {
@@ -124,7 +124,7 @@ class BootPress extends DataCollector implements DataCollectorInterface, Rendera
     private function getCookieHeader($name, $value, $expires, $path, $domain, $secure, $httponly)
     {
         $cookie = sprintf('%s=%s', $name, urlencode($value));
-        
+
         if (0 !== $expires) {
             if (is_numeric($expires)) {
                 $expires = (int) $expires;
@@ -141,17 +141,17 @@ class BootPress extends DataCollector implements DataCollectorInterface, Rendera
             $expires = \DateTime::createFromFormat('U', $expires, new \DateTimeZone('UTC'))->format('D, d-M-Y H:i:s T');
             $cookie .= '; expires='.substr($expires, 0, -5);
         }
-        
+
         if ($domain) {
             $cookie .= '; domain='.$domain;
         }
-        
+
         $cookie .= '; path='.$path;
-        
+
         if ($secure) {
             $cookie .= '; secure';
         }
-        
+
         if ($httponly) {
             $cookie .= '; httponly';
         }

@@ -14,7 +14,8 @@
         "maximebf/debugbar": "^1.11",
         "jbroadway/urlify": "^1.0",
         "gargron/fileupload": "^1.1",
-        "maennchen/zipstream-php": "^0.4.0"
+        "maennchen/zipstream-php": "^0.4.0",
+        "paragonie/random_compat": "^2.0"
     },
     "require-dev": {
         "bootpress/htmlunit": "^1.0",

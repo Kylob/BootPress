@@ -9,12 +9,11 @@ use BootPress\Unzip\Component as Unzip;
 
 class Themes
 {
-    
     public static function setup($auth, $path)
     {
         return ($auth->isAdmin(2)) ? Admin::$bp->icon('desktop', 'fa').' Themes' : false;
     }
-    
+
     public static function page()
     {
         extract(Admin::params('page', 'blog', 'bp'));
@@ -46,6 +45,7 @@ class Themes
         if ($page->get('delete')) {
             $page->eject($page->url('delete', '', 'delete'));
         }
+
         return Admin::box('default', array(
             'head with-border' => array(
                 $bp->icon('desktop', 'fa').' Themes',
@@ -57,9 +57,9 @@ class Themes
             'body' => $form.$media,
         ));
     }
-    
+
     /**
-     * @return string  A form for creating a new theme.
+     * @return string A form for creating a new theme
      */
     private static function create()
     {
@@ -90,6 +90,7 @@ class Themes
             }
             $page->eject($form->eject);
         }
+
         return implode('', array(
             $form->header(),
             self::select($form),
@@ -103,9 +104,9 @@ class Themes
             $form->close(),
         ));
     }
-    
+
     /**
-     * @return string  A form for editing an existing theme.
+     * @return string A form for editing an existing theme
      */
     private static function theme($folder)
     {
@@ -135,7 +136,7 @@ class Themes
         $config = Files::textarea($form, 'config', $folder.'config.yml');
         $form->values['preview'] = $page->session->get('preview_layout') ? 'Y' : 'N';
         $form->values['action'] = 'copy';
-        $form->menu('preview', array('Y'=>'Preview the selected theme'));
+        $form->menu('preview', array('Y' => 'Preview the selected theme'));
         $form->menu('action', array(
               'copy' => '<b>Copy</b> will make a duplicate of this theme if it does not already exist',
               'rename' => '<b>Rename</b> will change the name of this theme as long as it does not already exist',
@@ -209,7 +210,8 @@ class Themes
             });
         ');
         $preview = str_replace('class="checkbox"', 'class="checkbox pull-left"', $form->checkbox('preview'));
-        $preview .= $bp->button('danger delete pull-right', $bp->icon('trash'), array('title'=>'Click to delete this theme'));
+        $preview .= $bp->button('danger delete pull-right', $bp->icon('trash'), array('title' => 'Click to delete this theme'));
+
         return implode('', array(
             $form->header(),
             $form->field('', $preview),
@@ -228,12 +230,12 @@ class Themes
             $form->close(),
         ));
     }
-    
+
     /**
      * Creates a select field for editing themes.
-     * 
-     * @param object $form  A Bootstrap form object.
-     * 
+     *
+     * @param object $form A Bootstrap form object
+     *
      * @return string
      */
     private static function select($form)
@@ -248,10 +250,10 @@ class Themes
         $form->menu('themes', $themes, '&nbsp;'); // the select options
         $form->values['themes'] = $page->url(); // preselect the currently selected theme if any
         $page->jquery('$("#'.$form->validator->id('themes').'").change(function(){ window.location = $(this).val(); });');
+
         return $form->field(array(
             $page->get('edit') ? 'Edit' : 'Select',
             'Select the theme you would like to edit.',
         ), $form->select('themes'));
-        
     }
 }

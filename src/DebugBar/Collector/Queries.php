@@ -2,7 +2,6 @@
 
 namespace BootPress\DebugBar\Collector;
 
-use BootPress\Page\Component as Page;
 use BootPress\Database\Component as Database;
 use DebugBar\DataCollector\AssetProvider;
 use DebugBar\DataCollector\DataCollector;
@@ -10,7 +9,6 @@ use DebugBar\DataCollector\Renderable;
 
 class Queries extends DataCollector implements Renderable, AssetProvider
 {
-
     /**
      * {@inheritdoc}
      */
@@ -39,7 +37,7 @@ class Queries extends DataCollector implements Renderable, AssetProvider
             ),
         );
     }
-    
+
     /**
      * {@inheritdoc}
      */
@@ -47,7 +45,7 @@ class Queries extends DataCollector implements Renderable, AssetProvider
     {
         return array(
             'css' => 'widgets/sqlqueries/widget.css',
-            'js' => 'widgets/sqlqueries/widget.js'
+            'js' => 'widgets/sqlqueries/widget.js',
         );
     }
 
@@ -66,7 +64,7 @@ class Queries extends DataCollector implements Renderable, AssetProvider
             if (empty($db['queries'])) {
                 continue;
             } // driver, duration, queries
-            $logs['nb_databases']++;
+            ++$logs['nb_databases'];
             $logs['accumulated_duration'] += $db['duration'];
             $driver = (is_file($db['driver'])) ? basename($db['driver']) : $db['driver'];
             foreach ($db['queries'] as $query) { // sql, count, error?, duration
@@ -87,14 +85,14 @@ class Queries extends DataCollector implements Renderable, AssetProvider
                         $errors = '('.$count.') '.$error;
                     }
                     $log['error_message'] = implode("\n", $errors);
-                    $logs['nb_failed_statements']++;
+                    ++$logs['nb_failed_statements'];
                 }
-                $logs['nb_statements']++;
+                ++$logs['nb_statements'];
                 $logs['statements'][] = $log;
             }
         }
         $logs['accumulated_duration_str'] = $this->formatDuration($logs['accumulated_duration']);
-        
+
         return $logs;
     }
 }

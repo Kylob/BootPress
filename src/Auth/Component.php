@@ -4,6 +4,7 @@ namespace BootPress\Auth;
 
 use BootPress\Page\Component as Page;
 use BootPress\SQLite\Component as SQLite;
+use BootPress\Validator\Component as Validator;
 use Symfony\Component\Yaml\Yaml;
 
 /*
@@ -28,32 +29,29 @@ http://security.stackexchange.com/questions/19676/token-based-authentication-sec
 
 class Component
 {
-    /** @var object  This property gives you access to the SQLite3 (or custom) users database. */
+    /** @var object Gives you access to the SQLite3 (or custom) users database. */
     public $db;
 
-    /** @var object  BootPress\Page\Component instance. */
+    /** @var object A BootPress\Page\Component instance. */
     private $page;
 
-    /** @var null|string  The HTTP Authenticated username or null. */
+    /** @var null|string The HTTP Authenticated username or null. */
     private $basic;
 
-    /** @var array  Password hashing options. */
+    /** @var array Password hashing options. */
     private $password;
 
-    /** $var array  Information we user to sanity check with a cookie.  Has '**id**', '**series**', '**token**', '**time**', and '**user_agent**' keys. */
+    /** $var array  Information we use to sanity check with a cookie.  Has '**id**', '**series**', '**token**', '**time**', and '**user_agent**' keys. */
     private $session = array();
-
-    /** var array  Stored information about a logged in user.  Has '**id**', '**name**', '**email**', '**admin**', and '**login**' keys. */
-    private $user = array();
 
     /**
      * Establishes the authentication settings, and runs all of our security checks.  Authentication is either session-based, or via HTTP Basic Auth.  Session-based authentication relies on the user database.  HTTP Basic Auth can use either the database, an array, or a YAML file of usernames and passwords.  A user can be both HTTP and session authenticated as long as Basic Auth is not using the database.  This allows an administrator to be logged in as a regular user, yet still retain super admin privileges.
-     * 
+     *
      * @param array $options Allows you to customize the authorization settings.  You can set the:
-     * 
+     *
      * - '**db**' - A custom BootPress\Database\Component instance.  The default is an SQLite Users.db we will automatically create.
      * - '**basic**' - Either ``null`` (the default) to use the users database, an ``array('username'=>'password', ...)`` of users, or a YAML file of username's and password's.
-     * - '**password**' - '**algo**' and '**options**' for hashing passwords.
+     * - '**password**' - '**algo**' and '**options**' for ``password_hash()``
      */
     public function __construct(array $options = array())
     {
@@ -71,14 +69,6 @@ class Component
         if (is_null($this->db)) {
             $this->db = new SQLite($this->page->dir['page'].'Users.db');
             if ($this->db->created) {
-                $this->db->create('user_group_names', array(
-                    'id' => 'INTEGER PRIMARY KEY',
-                    'name' => 'TEXT UNIQUE COLLATE NOCASE',
-                ));
-                $this->db->create('user_groups', array(
-                    'user_id' => 'INTEGER NOT NULL DEFAULT 0',
-                    'group_id' => 'INTEGER NOT NULL DEFAULT 0',
-                ), array('unique' => 'user_id, group_id'));
                 $this->db->create('user_sessions', array(
                     'id' => 'INTEGER PRIMARY KEY',
                     'user_id' => 'INTEGER NOT NULL DEFAULT 0',
@@ -106,10 +96,10 @@ class Component
         $username = $this->page->request->getUser();
         $password = $this->page->request->getPassword();
         if (!empty($username) && !empty($password)) {
+            $this->page->session->remove('bootpress');
             if (is_null($basic)) { // use the user database (default)
                 if ($user_id = $this->check($username, $password, 'approved = "Y"')) {
-                    $this->user = $this->db->row('SELECT id, name, email, admin FROM users WHERE id = ?', $user_id, 'assoc');
-                    $this->user['login'] = 0;
+                    $this->setSession($this->db->row('SELECT id, name, email, admin FROM users WHERE id = ?', $user_id, 'assoc'));
                 }
             } elseif (is_array($basic)) { // an array of users
                 if (isset($basic[$username]) && $password == $basic[$username]) {
@@ -137,19 +127,20 @@ class Component
             return; // HTTP Basic Authentication takes precedence
         }
         $user = false;
-        $session = $this->page->session->get('bootpress/cookie'); // vs. bootpress/verified
         if ($cookie = $this->page->request->cookies->get('bootpress')) {
             $cookie = base64_decode($cookie);
         }
-        if ($session && $session != $cookie) { // These two must match if they both exist
+        // These two must match if they both exist
+        if (($session = $this->page->session->get('bootpress')) && $session['cookie'] != $cookie) {
             // We set the $session so we know that's good, but ...
             // if $session doesn't equal $cookie then it has been compromised
             // if $session and no $cookie, then it's assumed to have been stolen and deleted
-            $this->logout($this->db->value('SELECT user_id FROM user_sessions WHERE id = ?', strstr($session.' ', ' ', true)));
+            $this->logout($this->db->value('SELECT user_id FROM user_sessions WHERE id = ?', strstr($session['cookie'].' ', ' ', true)));
 
             return $this->setCookie();
         }
-        if ($cookie) { // We can have a $cookie and no $session (just log them in again)
+        // We can have a $cookie and no $session (just log them in again)
+        if ($cookie) {
             list($id, $series, $token) = explode(' ', $cookie.'   ');
             if (!$user = $this->db->row(array(
                 'SELECT u.id, u.name, u.email, u.admin, strftime("%s", s.login) AS login, s.user_agent, s.last_activity, s.relapse, s.adjourn, s.token, u.approved',
@@ -157,7 +148,8 @@ class Component
                 'INNER JOIN users AS u ON s.user_id = u.id',
                 'WHERE s.id = ? AND s.series = ?',
             ), array($id, sha1($series)), 'assoc')) {
-                return $this->setCookie(); // ie. unset the cookie - it is defective, but not necessarily malicious
+                // Unset the cookie - it is defective, but not necessarily malicious
+                return $this->setCookie();
             }
             $session = array(
                 'id' => $id,
@@ -184,17 +176,23 @@ class Component
                     'adjourn' => $session['time'] + $user['relapse'],
                     'token' => sha1($session['token']),
                 )));
-                $this->db->update('users', 'id', array($user['id'] => array('last_activity' => $session['time'])));
-                $this->setCookie(implode(' ', array($session['id'], $session['series'], $session['token'])), $user['relapse']);
+                $this->db->update('users', 'id', array(
+                    $user['id'] => array('last_activity' => $session['time']),
+                ));
+                $this->setCookie(implode(' ', array(
+                    $session['id'],
+                    $session['series'],
+                    $session['token'],
+                )), $user['relapse']);
             }
             $this->session = $session; // 'id', 'series', 'token', 'time', 'user_agent'
-            $this->user = array_slice($user, 0, 5, true); // 'id', 'name', 'email', 'admin', 'login'
-            $this->user['login'] = time() - $this->user['login'];
+            $user['login'] = $session['time'] - $user['login']; // the number of seconds since
+            $this->setSession(array_slice($user, 0, 5, true)); // 'id', 'name', 'email', 'admin', 'login'
         }
     }
 
     /**
-     * @return null|string The basic username if HTTP authenticated, or null if not.
+     * @return null|string The basic username if HTTP authenticated, or null if not
      */
     public function http()
     {
@@ -203,10 +201,12 @@ class Component
 
     /**
      * HTTP Authenticate a user for current directory and all subdirectories whether they are signed in or not.
-     * 
-     * @param string $name Identifies the set of resources to which the username and password will apply.
+     *
+     * @param string $name Identifies the set of resources to which the username and password will apply
      *
      * @see http://stackoverflow.com/questions/12701085/what-is-the-realm-in-basic-authentication
+     *
+     * @example
      *
      * ```php
      * if (!$auth->http()) {
@@ -224,31 +224,37 @@ class Component
 
     /**
      * Retrieve some information about the signed in user.
-     * 
+     *
      * @param string $param Can be any of the following:
-     *                      - '**id**' - From the database's user table.
-     *                      - '**name**' - Of the user.
-     *                      - '**email**' - Of the user.
-     *                      - '**admin**' level - The default is 0 meaning they have no admin privileges.
-     *                      - '**login**' - The number of seconds ago that they actually signed in with a username and password for the current session.  If using HTTP Basic Authentication, this will always be 0.
-     * 
-     * @return array|string|null An array if you don't set $param, a string if the user is logged in and the $param exists, or null if not.
-     * 
+     *
+     * - '**id**' - From the database's user table.
+     * - '**name**' - Of the user.
+     * - '**email**' - Of the user.
+     * - '**admin**' level - The default is 0 meaning they have no admin privileges.
+     * - '**login**' - The number of seconds ago that they actually signed in with a username and password for the current session.  If using HTTP Basic Authentication, this will always be 0
+     *
+     * @return mixed An array if you don't specify any **$param**, a string if the user is logged in and the **$param** exists, or null if not
+     *
+     * @example
+     *
      * ```php
      * echo 'Hello '.$auth->user('name');
      * ```
      */
     public function user($param = null)
     {
+        if (!$user = $this->page->session->get('bootpress')) {
+            $user = array();
+        }
         if (is_null($param)) {
-            return $this->user;
+            return $user;
         }
 
-        return (isset($this->user[$param])) ? $this->user[$param] : null;
+        return (isset($user[$param])) ? $user[$param] : null;
     }
 
     /**
-     * Gives you the following information about your user(s):.
+     * Retrieve the following information about your user(s).
      *
      * - '**id**'
      * - '**name**'
@@ -257,11 +263,10 @@ class Component
      * - '**approved**' - Y (yes) or N (no).
      * - '**registered**' - A GMT timestamp.
      * - '**last_activity**' - A GMT timestamp (updated at 5 minute intervals) or 0 if we don't know.
-     * - A '**groups**' ``array($group, ...)`` of groups they are in.
-     * 
-     * @param int|int[] $user_id An integer, or an ``array($user_id, ...)``` of users you would like to return information for.
-     * 
-     * @return array An associative array of information about your user(s).  If $user_id is an array, then this will be a multidimensional ``array($user_id => $info, ...)``` for every user in the order given.  If there was no record found for a given $user_id, then it will be an empty array.
+     *
+     * @param int|array $user_id An integer, or an ``array($user_id, ...)``` of users whose information you would like
+     *
+     * @return array An associative array of information about your user(s).  If **$user_id** is an array, then this will be a multidimensional ``array($user_id => $info, ...)``` for every user in the order given.  If there was no record found for a given **$user_id**, then it will be an empty array
      */
     public function info($user_id)
     {
@@ -271,25 +276,25 @@ class Component
         foreach ($ids as $id) {
             $users[$id] = array();
         }
-        $groups = $this->getUsersGroups($ids);
         foreach ($this->db->all('SELECT * FROM users WHERE id IN('.implode(', ', $ids).')', '', 'assoc') as $row) {
             unset($row['password']);
             $users[$row['id']] = $row;
             $users[$row['id']]['registered'] = strtotime($row['registered']);
-            $users[$row['id']]['groups'] = $groups[$row['id']];
         }
 
         return ($single) ? array_shift($users) : $users;
     }
 
     /**
-     * This takes the submitted parameters and check to see if they exist in the users database.
-     * 
-     * @param string $email    This is the only required argument.  If you stop here then we are only checking to see if the email already exists.
-     * @param string $password The submitted password to check if the user is who they are claiming to be.  Encryption is handled in vitro.
-     * @param string $and      Additional qualifier's to check against.
-     * 
-     * @return int|false (bool) false if the record does not exist, or the id (integer) of the user if we have a match.
+     * This takes the submitted parameters and checks to see if they exist in the users database.
+     *
+     * @param string $email    This is the only required argument.  If you stop here then we are only checking to see if the email already exists
+     * @param string $password The submitted password to check if the user is who they are claiming to be.  Encryption is handled in vitro
+     * @param string $and      Additional qualifier's to check against
+     *
+     * @return bool|int Either ``false`` if the record does not exist, or the user's id if we have a match
+     *
+     * @example
      *
      * ```php
      * if ($user_id = $auth->check('user@domain.com', 'password', 'approved = "Y"')) {
@@ -313,7 +318,7 @@ class Component
                         'password' => password_hash($password, $this->password['algo'], $this->password['options']),
                     )));
                 }
-                $this->page->session->set('bootpress/verified', $user['id']);
+                $this->setSession(array('verified' => $user['id']));
 
                 return $user['id'];
             }
@@ -324,10 +329,12 @@ class Component
 
     /**
      * Verifies whether or not an email address looks valid.
-     * 
-     * @param string $address The email you would like to verify the looks of.
-     * 
-     * @return bool True or False.  Whether the $address looks like a real email or not.
+     *
+     * @param string $address
+     *
+     * @return bool Whether the **$address** looks like a real email or not
+     *
+     * @example
      *
      * ```php
      * if ($auth->isEmail('user@domain.com')) {
@@ -337,44 +344,39 @@ class Component
      */
     public function isEmail($address)
     {
-        return (bool) preg_match('/^[a-zA-Z0-9.!#$%&\'*+\/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$/', $address);
+        return Validator::email($address);
     }
 
     /**
-     * This creates a random password that you can suggest to a user, or use to reset and email them the new password, or to just create a random alpha-numeric string for yourself.
-     * 
+     * This creates a random password that you can suggest to a user, or use to reset and email them the new password, or to just create a random unambiguous string for yourself.
+     *
      * @param int $length The desired length of your password
-     * 
-     * @return string The random password.
+     *
+     * @return string The random password
      */
-    public function randomPassword($length = 8)
+    public function randomPassword($length = 8, $pool = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ')
     {
         $password = '';
+        $chars = str_shuffle(preg_replace('/[B8G6I1l0OQDS5Z2]/', '', $pool));
+        $count = mb_strlen($chars) - 1; // for starting at 0
         for ($i = 0; $i < $length; ++$i) {
-            switch (mt_rand(0, 2)) {
-                case 0:
-                    $password .= mt_rand(0, 9);
-                    break; // 0-9
-                case 1:
-                    $password .= chr(mt_rand(65, 90));
-                    break; // A-Z
-                case 2:
-                    $password .= chr(mt_rand(97, 122));
-                    break; // a-z
-            }
+            $start = mt_rand(0, $count);
+            $password .= mb_substr($chars, $start, 1);
         }
 
-        return $password;
+        return str_shuffle($password);
     }
 
     /**
      * This will ensure that a user is registered at the site.  If you get someone registering twice for whatever reason, then this will make sure they are in, and you can advise them whether or not they already hold an account with you.  If they are not a $new_user, then the name and password will not be saved (the email of course will remain the same).  You don't want somebody registering themselves access into someone else's account.
-     * 
-     * @param string $name     The user's name.
-     * @param string $email    The user's email.
-     * @param string $password The user's password.  Do not encrypt!  We do that for you.
-     * 
-     * @return array An ``array((bool) $new_user, (int) $user_id)`` where $new_user is either true or false, and $user_id is either the new or the old id depending.
+     *
+     * @param string $name     The user's name
+     * @param string $email    The user's email
+     * @param string $password The user's password.  Do not encrypt!  We do that for you
+     *
+     * @return array An ``array((bool) $new_user, (int) $user_id)`` where $new_user is either true or false, and $user_id is either the new or the old id depending
+     *
+     * @example
      *
      * ```php
      * list($new_user, $user_id) = $auth->register('Joe Blow', 'name@domain.com', 'sekrit');
@@ -400,8 +402,8 @@ class Component
 
     /**
      * Allows you to update a users account.
-     * 
-     * @param int   $user_id The id of the user you would like to update.
+     *
+     * @param int   $user_id The id of the user you would like to update
      * @param array $user    An associative array of fields you would like to update.  The available fields are:
      *
      * - '**name**' => The users name.
@@ -409,11 +411,13 @@ class Component
      * - '**password**' => The new password.  No encryption needed.
      * - '**admin**' => An integer >= 0.
      * - '**approved**' => '**Y**' (yes) or '**N**' (no).  If you set this to '**N**' (no), they will be logged out immediately wherever they may be.
-     * - '**registered**' => 
-     * - '**last_activity**' => 
+     * - '**registered**' =>
+     * - '**last_activity**' =>
      *
-     * ... and any other fields that may exist if you have customized the database to suit your needs.
-     * 
+     * ... and any other fields that may exist if you have customized the database to suit your needs
+     *
+     * @example
+     *
      * ```php
      * if ($auth->update($user_id, array(
      *     'approved' => 'N', // This will log them out and prevent them from ever signing in again.
@@ -464,7 +468,7 @@ class Component
             if ($this->isUser($user_id)) {
                 foreach (array('name', 'email', 'admin') as $value) {
                     if (isset($update[$value])) {
-                        $this->user[$value] = $update[$value];
+                        $this->setSession(array($value => $update[$value]));
                     }
                 }
             }
@@ -476,11 +480,13 @@ class Component
 
     /**
      * This will login a user to your site for a specified amount of time (of inactivity), and optionally log them out everywhere else.  Session and cookie based.
-     * 
-     * @param int         $user_id Of the user you want to login.
-     * @param int         $expires The number of days (if less than or equal to 730) or seconds (if greater than 730) of inactivity after which you would like to require the user to sign back into your site.
-     * @param false|mixed $single  If you set this to true (or to anything besides false), then they will be logged out of every other session that may be currently active.  Meaning if you sign in on a public computer, then realize you forgot to sign out, you can sign in again on any other computer and be signed out from all previous sessions if you use this feature.
-     * 
+     *
+     * @param int   $user_id Of the user you want to login
+     * @param int   $expires The number of days (if less than or equal to 730) or seconds (if greater than 730) of inactivity after which you would like to require the user to sign back into your site
+     * @param mixed $single  If you set this to true (or to anything besides false), then they will be logged out of every other session that may be currently active.  Meaning if you sign in on a public computer, then realize you forgot to sign out, you can sign in again on any other computer and be signed out from all previous sessions if you use this feature
+     *
+     * @example
+     *
      * ```php
      * $auth->login($user_id, 30, 'single'); // Sign in $user_id for 30 days here, and log them out everywhere else.
      * ```
@@ -513,15 +519,17 @@ class Component
             ));
             $this->db->update('users', 'id', array($user['id'] => array('last_activity' => $this->session['time'])));
             $this->setCookie(implode(' ', array($this->session['id'], $this->session['series'], $this->session['token'])), $relapse);
-            $this->user = $user;
+            $this->setSession($user);
         }
     }
 
     /**
      * This will log a session authenticated user out of your site.
-     * 
-     * @param int $user_id If this is an integer, then $user_id will be logged out of all their sessions, everywhere.  If null (or not given), then the current user will be logged out of the current session.
-     * 
+     *
+     * @param int $user_id If this is an integer, then **$user_id** will be logged out of all their sessions, everywhere.  If null (or not given), then the current user will be logged out of the current session
+     *
+     * @example
+     *
      * ```php
      * $auth->logout(); // Log out the current user.
      * ```
@@ -529,50 +537,35 @@ class Component
     public function logout($user_id = null)
     {
         if ($user_id) {
-            $this->db->exec('DELETE FROM user_sessions WHERE user_id = ? AND adjourn <= ?', array($user_id, time()));
+            $this->db->exec('UPDATE user_sessions SET adjourn = last_activity WHERE user_id = ? AND adjourn >= ?', array($user_id, time()));
             if ($user_id == $this->isUser()) {
                 $this->logout();
             }
         } elseif (isset($this->session['id'])) {
             $this->setCookie();
-            $this->db->exec('DELETE FROM user_sessions WHERE id = ? AND adjourn <= ?', array($this->session['id'], time()));
+            $this->db->exec('UPDATE user_sessions SET adjourn = last_activity WHERE id = ?', $this->session['id']);
             $this->session = array();
-            $this->user = array();
         }
     }
 
     /**
-     * Get the number of active, session authenticated users at your site within the $duration given.
-     * 
-     * @param int $duration How far back (in seconds) you would like to go.  The default is 600 seconds ie. 10 minutes.
-     * 
-     * @return int The total number of active users.  If this is 1, then that's you!
-     * 
-     * ```php
-     * $auth->count(86400); // within the last 24 hours
-     * ```
-     */
-    public function online($duration = 600)
-    {
-        return $this->db->value('SELECT COUNT(*) FROM users WHERE last_activity >= ?', array(time() - $duration));
-    }
-
-    /**
      * This will tell you if the person viewing the current page is a specific (optional) user, or not.  This does not apply if the user is HTTP Basic Authenticated from an array or YAML file of users.
-     * 
-     * @param int $user_id If you want to verify that this is a specific user, then you may indicate the user's id here.
-     * 
-     * @return false|int False if they are not a signed in user, and if you included a $user_id then false if they are not that specific user.  Otherwise this returns the id of the signed in user.
-     * 
+     *
+     * @param int $user_id If you want to verify that this is a specific user, then you may indicate the user's id here
+     *
+     * @return bool|int Either ``false`` if nobody is signed in, or ``false`` if **$user_id** is not the current user, or the (integer) id of the user that is signed in
+     *
+     * @example
+     *
      * ```php
      * if ($user_id = $auth->isUser()) {
      *     // Now we may do something specifically for $user_id
      * }
-     * 
+     *
      * if (!$auth->isUser($seller_id)) {
      *     $page->eject(); // not the real seller, get them out of here
      * }
-     * 
+     *
      * if ($auth->isUser()) {
      *     // Display a logout link
      * }
@@ -592,9 +585,11 @@ class Component
 
     /**
      * Allows you to determine if ``$this->isUser()`` submitted a password during the current session, or if we're relying on a remember-me cookie.
-     * 
-     * @return false|int The current user's id if they submitted a password during the current session, or false if not.
-     * 
+     *
+     * @return bool|int The current user's id if they submitted a password during the current session, or ``false`` if not
+     *
+     * @example
+     *
      * ```php
      * if ($user_id = $auth->isVerified()) {
      *     // Allow them to change their password, charge their credit card, etc.
@@ -603,25 +598,27 @@ class Component
      */
     public function isVerified()
     {
-        return (($user_id = $this->isUser()) && $user_id == $this->page->session->get('bootpress/verified')) ? $user_id : false;
+        return (($user_id = $this->isUser()) && $user_id === $this->user('verified')) ? $user_id : false;
     }
 
     /**
-     * This will tell you if the person viewing the current page has admin access greater than or equal to $level, or not.  There is no need to check if ``$this->isUser()`` first when using this function, unless you also want the $user_id, or to make sure this is a specific admin user.  HTTP Basic Authenticated users will always pass this test and returns (integer) 1, giving them super-admin privileges.
-     * 
+     * This will tell you if the person viewing the current page has admin access greater than or equal to $level, or not.  There is no need to check if ``$this->isUser()`` first when using this function, unless you also want the $user_id, or to make sure this is a specific admin user.  HTTP Basic Authenticated users (from an array or file) will always pass this test and returns (integer) 1, giving them super-admin privileges.
+     *
      * @param int $level The admin user must be greater than or equal to the level you indicate here.  This method manages admin permissions as follows:
-     * 
+     *
      * 1. Is the end all and be all of admins, and can access anything.
      * 2. Does not have level 1 access, but can access 2, 3, 4, 5, etc.
-     * 3. Cannot access level 1 or 2 admin pages, but can access 3, 4, 5, 6 ... you get the picture.
-     * 
-     * @return bool False if they are not even a user in the first place, and false again if they don't have the level of access you desire.  Otherwise it returns the level of access they have.
-     * 
+     * 3. Cannot access level 1 or 2 admin pages, but can access 3, 4, 5, 6 ... you get the picture
+     *
+     * @return bool|int Either ``false`` if they are not even a user in the first place, and ``false`` again if they don't have the level of access you desire, or the (integer) level of access they have
+     *
+     * @example
+     *
      * ```php
      * if ($auth->isAdmin(1) || $auth->isUser($seller)) {
      *     // Now you and the seller can edit their info
      * }
-     * 
+     *
      * if ($level = $auth->isAdmin(2)) {
      *     // Level 1 and level 2 admins can access this
      *     if ($level == 1) {
@@ -642,213 +639,18 @@ class Component
     }
 
     /**
-     * Checks to see if the signed in user is included in any or all of the group(s) you specify.
-     * 
-     * @param string|array $group The name of the group.  To verify membership for the current user against 
-     * @param string       $check If '**all**' (default) then they must be in every group specified.  If '**any**' then they must be in at least one of the groups specified.
-     * 
-     * @return bool True or False.
-     * 
-     * ```php
-     * if ($auth->inGroup(array('heaven', 'hell'), 'any')) {
-     *     // Then this signed in user is dead.
-     *     $auth->logout();
-     * }
-     * ```
-     */
-    public function inGroup($group, $check = 'all')
-    {
-        if ($this->basic) {
-            return true;
-        }
-
-        return ($user_id = $this->isUser()) ? $this->userInGroup($user_id, $group, $check) : false;
-    }
-
-    /**
-     * This will add $user_id(s) to the $group(s) you want to include them in.
-     * 
-     * @param int    $user_id Of the user.  To add multiple users, make this an ``array($user_id, ...)`` of users to add to the $group(s).
-     * @param string $group   The name of the group you would like to include them in.  To include in multiple groups, make this an ``array($group, ...)`` of groups to add the $user_id(s) to.
-     * 
-     * ```php
-     * $auth->addToGroup($user_id, 'rothschild');
-     * ```
-     */
-    public function addToGroup($user_id, $group)
-    {
-        $users = (array) $user_id;
-        $groups = (array) $this->groupId($group);
-        $this->removeFromGroup($users, $groups);
-        $stmt = $this->db->insert('user_groups', array('user_id', 'group_id'));
-        foreach ($users as $user_id) {
-            foreach ($groups as $group_id) {
-                $this->db->insert($stmt, array($user_id, $group_id));
-            }
-        }
-        $this->db->close($stmt);
-    }
-
-    /**
-     * This will remove $user_id(s) from the $group(s) they no longer belong in.
-     * 
-     * @param int    $user_id Of the user.  To remove multiple users, make this an ``array($user_id, ...)`` of users to remove from the $group(s).
-     * @param string $group   The name of the group you would like to remove them from.  To remove from multiple groups, make this an ``array($group, ...)`` of groups to remove the $user_id(s) from.
-     * 
-     * ```php
-     * $auth->removeFromGroup($user_id, 'rothschild'); // $user_id should not be involved with them anyways
-     * ```
-     */
-    public function removeFromGroup($user_id, $group)
-    {
-        $this->db->exec(array(
-            'DELETE FROM user_groups',
-            'WHERE user_id IN ('.implode(', ', (array) $user_id).')',
-            'AND group_id IN('.implode(', ', (array) $this->groupId($group)).')',
-        ));
-    }
-
-    /**
-     * This will retrieve all of the groups that $user_id(s) belong to.
-     * 
-     * @param int $user_id Of the user.  If you want to retrieve the groups of multiple users at once, then make this an ``array($user_id, ...)`` of users.
-     * 
-     * @return array A single ``array($group, ...)`` of groups if $user_id is an integer (single), or a multidimensional ``array($user_id => $groups, ...)`` for every $user_id in the order given.
-     * 
-     * ```php
-     * $groups = $auth->getUsersGroups($user_id);
-     * ```
-     */
-    public function getUsersGroups($user_id)
-    {
-        $single = (is_array($user_id)) ? false : true;
-        $ids = ($single) ? array($user_id) : $user_id;
-        $users = array();
-        foreach ($ids as $id) {
-            $users[$id] = array();
-        }
-        foreach ($this->db->all(array(
-            'SELECT u.user_id, g.name AS group_name',
-            'FROM user_groups AS u',
-            'INNER JOIN user_group_names AS g ON u.group_id = g.id',
-            'WHERE u.user_id IN('.implode(', ', $ids).')',
-            'ORDER BY g.name ASC',
-        ), '', 'assoc') as $row) {
-            $users[$row['user_id']][] = $row['group_name'];
-        }
-
-        return ($single) ? array_shift($users) : $users;
-    }
-
-    /**
-     * This will retrieve all of the user_id's that belong to the $group(s).
-     * 
-     * @param string $group The name of the group.  If you want to retrieve the user_id's of multiple groups at once, then make this an ``array($group, ...)`` of groups.
-     * 
-     * @return array A single ``array($user_id, ...)`` of users if $groups is a string (single), or a multidimensional ``array($group => (array) $user_ids, ...)`` for every $group in the order given.
-     * 
-     * ```php
-     * $users = $auth->getGroupsUsers('rothschild');
-     * ```
-     */
-    public function getGroupsUsers($group)
-    {
-        $single = (is_array($group)) ? false : true;
-        $ids = ($single) ? array($group) : $group;
-        $groups = array();
-        foreach ($ids as $id) {
-            $groups[$id] = array();
-        }
-        foreach ($this->db->all(array(
-            'SELECT u.user_id, u.group_id, g.name AS group_name',
-            'FROM user_groups AS u',
-            'INNER JOIN user_group_names AS g ON u.group_id = g.id',
-            'WHERE u.user_id > 0 AND u.group_id IN('.implode(', ', $this->groupId($ids)).')',
-            'ORDER BY u.user_id, u.group_id ASC',
-        ), '', 'assoc') as $row) {
-            $key = (isset($groups[$row['group_id']])) ? $row['group_id'] : $row['group_name'];
-            $groups[$key][] = $row['user_id'];
-        }
-
-        return ($single) ? array_shift($groups) : $groups;
-    }
-
-    /**
-     * This will verify if $user_id is in '**any**' or '**all**' of the $group(s) specified.  If you are checking for the current user of your page, then do not use this method.  Use ``$this->inGroup()`` instead.
-     * 
-     * @param int    $user_id Of the user whose $group(s) membership you want to verify.  This cannot be an array.  Sorry.
-     * @param string $group   The name of the group.  To verify $user_id against multiple groups then make this an ``array($group, ...)`` of groups.
-     * @param string $check   If '**all**' (default) then they must be in every group specified.  If '**any**' then they must be in at least one of the groups specified.
-     * 
-     * @return array True or False, whether or not your conditions were met.
-     * 
-     * ```php
-     * if ($auth->userInGroup($user_id, array('rothschild', 'white house', 'al-Qaeda'), 'any') {
-     *     // Well then we've got quite the user on our hands.
-     * }
-     * ```
-     */
-    public function userInGroup($user_id, $group, $check = 'all') // or 'any'
-    {
-        $groups = implode(',', $this->getUsersGroups($user_id));
-        if (empty($groups)) {
-            return false;
-        }
-        $check = (in_array(strtolower($check), array('all', 'and', '&&'))) ? 'all' : 'any';
-        foreach ((array) $group as $in) {
-            if (mb_stripos(",{$groups},", ",{$in},") !== false) {
-                if ($check == 'any') {
-                    return true; // there is no sense in checking any more beyond this
-                }
-            } elseif ($check == 'all') {
-                return false; // they are not in this group, so that is all we need to know
-            }
-        }
-
-        return ($check == 'all') ? true : false;
-    }
-
-    /**
-     * Retrieves a group's id.
-     * 
-     * @param string|array $name Of the group.
-     * 
-     * @return int|array The group(s) id(s).
-     */
-    private function groupId($name)
-    {
-        $single = (is_array($name)) ? false : true;
-        $groups = array();
-        foreach ((array) $name as $group) {
-            if (empty($group)) {
-                $group_id = 0;
-            } elseif (is_numeric($group)) {
-                $group_id = $group;
-            } else {
-                $group_id = $this->db->value('SELECT id FROM user_group_names WHERE name = ?', $group);
-                if (empty($group_id)) {
-                    $group_id = $this->db->insert('user_group_names', array('name' => $group));
-                }
-            }
-            $groups[$group] = $group_id;
-        }
-
-        return ($single) ? array_shift($groups) : $groups;
-    }
-
-    /**
      * Sets (or removes if the $value is empty) a cookie to verify the validity of a session.
-     * 
-     * @param string $value   Of the cookie.
-     * @param int    $expires How long (in seconds) the cookie should exist.
+     *
+     * @param string $value   Of the cookie
+     * @param int    $expires How long (in seconds) the cookie should exist
      */
     private function setCookie($value = '', $expires = 0)
     {
         if (empty($value)) {
-            $this->page->session->remove('bootpress/cookie');
+            $this->page->session->remove('bootpress');
             $expires = 1;
         } else {
-            $this->page->session->set('bootpress/cookie', $value);
+            $this->setSession(array('cookie' => $value));
             $value = base64_encode($value);
             if ($expires != 0) {
                 $expires += time();
@@ -858,10 +660,26 @@ class Component
         setcookie('bootpress', $value, $expires, $match['path'], $match['domain'], $match['secure'], true);
     }
 
+    private function setSession(array $info)
+    {
+        if (!$current = $this->page->session->get('bootpress')) {
+            $current = array(
+                'cookie' => null,
+                'verified' => false,
+                'id' => 0,
+                'name' => null,
+                'email' => null,
+                'admin' => 0,
+                'login' => 0,
+            );
+        }
+        $this->page->session->set('bootpress', array_merge($current, $info));
+    }
+
     /**
      * Generates the series and tokens we use to compare sessions and cookies with.
-     * 
-     * @return string A random, 22 character string.
+     *
+     * @return string A random, 22 character string
      */
     private function salt()
     {

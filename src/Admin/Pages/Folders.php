@@ -4,16 +4,14 @@ namespace BootPress\Admin\Pages;
 
 use BootPress\Admin\Files;
 use BootPress\Admin\Component as Admin;
-use BootPress\Upload\Component as Upload;
 
 class Folders
 {
-    
     public static function setup($auth, $path)
     {
         return ($auth->isAdmin(1)) ? Admin::$bp->icon('folder', 'fa').' Folders' : false;
     }
-    
+
     public static function page()
     {
         extract(Admin::params('bp', 'page'));
@@ -44,7 +42,7 @@ class Folders
         if ($edit) {
             $form->values['path'] = $page->get('folder');
             $index = Files::textarea($form, 'index', $dir.$edit.'/index.php');
-            $media = Files::view($dir.$edit, array('exclude'=>'index.php'));
+            $media = Files::view($dir.$edit, array('exclude' => 'index.php'));
             if ($page->get('image')) {
                 return Admin::box('default', array(
                     'head with-border' => $bp->icon('image', 'fa').' Image',
@@ -107,13 +105,13 @@ class Folders
                 $page->eject($form->eject);
             }
         }
-        
+
         // Open Form
         $html .= $form->header();
-        
+
         // Link to Folder
         if ($edit) {
-            $delete = $bp->button('sm danger delete pull-right', $bp->icon('trash'), array('title'=>'Click to delete this folder', 'style'=>'margin-left:20px;'));
+            $delete = $bp->button('sm danger delete pull-right', $bp->icon('trash'), array('title' => 'Click to delete this folder', 'style' => 'margin-left:20px;'));
             $html .= '<p class="lead"><a href="'.$page->url('base', $edit).'" target="_blank">'.$page->url('base', $edit).' '.$bp->icon('new-window').'</a> '.$delete.'</p><br>';
             $page->jquery('
                 $(".delete").click(function(){
@@ -130,21 +128,21 @@ class Folders
                 });
             ');
         }
-        
+
         // Select a Folder to 'edit'
         if (!empty($folders)) {
             $html .= $form->field(array(($edit ? 'Folder' : 'Select'),
                 'Select a folder that you would like to edit.',
             ), $form->select('edit'));
         }
-        
+
         // Edit or Create a 'folder'
         $prepend = $page->url('base');
         $append = array();
         if (!empty($page->url['suffix'])) {
             $append[] = $page->url['suffix'];
         }
-        $append[] = $bp->button('primary', 'Submit', array('type'=>'submit', 'data-loading-text'=>'Submitting...'));
+        $append[] = $bp->button('primary', 'Submit', array('type' => 'submit', 'data-loading-text' => 'Submitting...'));
         if ($edit) {
             $html .= $form->field(array('Save As',
                 'Use only lowercase letters, dashes (-), and slashes (/).',
@@ -154,24 +152,24 @@ class Folders
                 'Use only lowercase letters, dashes (-), and slashes (/).  The folder you create here will be directly accessible at: '.$page->url('base').'[folder]/...  You, of course, will have to deal with the dot dot dot\'s.  Alternatively, you can create any url rule structure that you like in the .htaccess file, and direct it to the main index.php file with the additional parameter: ?page=[folder]',
             ), $form->group($prepend, $append, $form->text('folder')));
         }
-        
+
         // 'index.php' wyciwyg
         if ($edit) {
-            $html .= $form->field(array('index.php', 
+            $html .= $form->field(array('index.php',
                 'This is the main file where you can manage the content of your folder.',
             ), $index);
         }
-        
+
         // Close Form
         $html .= $form->close();
-        
+
         // jQuery
         $page->jquery('
             $("#'.$form->validator->id('edit').'").change(function(){
                 window.location = "'.$page->url('delete', '', '?').'?edit=" + $(this).val();
             });
         ');
-        
+
         return Admin::box('default', array(
             'head with-border' => array(
                 $bp->icon('folder', 'fa').' Folders',

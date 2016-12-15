@@ -8,17 +8,16 @@ use phpUri;
 
 class Code
 {
-    
     public static function setup($auth, $path)
     {
         return ($auth->isAdmin(1)) ? Admin::$bp->icon('code', 'fa').' Code' : false;
     }
-    
+
     public static function page()
     {
         extract(Admin::params('bp', 'page'));
         $html = '';
-        
+
         // The folder we are currently viewing
         $folder = $page->dir();
         if ($dir = $page->get('dir')) {
@@ -27,16 +26,16 @@ class Code
                 $folder = rtrim($relative, '/').'/';
             }
         }
-        
+
         // Files contained therein
-        $media = Files::view($folder, array('files'=>'yml|twig|js|css|less|scss|php'));
+        $media = Files::view($folder, array('files' => 'yml|twig|js|css|less|scss|php'));
         if ($page->get('image')) {
             return Admin::box('default', array(
                 'head with-border' => $bp->icon('image', 'fa').' Image',
                 'body' => $media,
             ));
         }
-        
+
         // Breadcrumb links
         $links = array();
         $relative = array(); // dot **../** syntax
@@ -75,7 +74,7 @@ class Code
         }
         $links[] = '';
         $html .= $bp->breadcrumbs($links);
-        
+
         // Create a new folder
         $form = $bp->form('admin_code_folders');
         $form->validator->set('folder', 'required');
@@ -91,9 +90,9 @@ class Code
         $html .= $form->header();
         $html .= $form->field(array('Folder',
             'Enter the name of the new folder you would like to create.',
-        ), $form->group('', $bp->button('primary', 'Submit', array('type'=>'submit', 'data-loading-text'=>'Submitting...')), $form->text('folder')));
+        ), $form->group('', $bp->button('primary', 'Submit', array('type' => 'submit', 'data-loading-text' => 'Submitting...')), $form->text('folder')));
         $html .= $form->close();
-        
+
         return Admin::box('default', array(
             'head with-border' => $bp->icon('code', 'fa').' Code',
             'body' => $html.$media,

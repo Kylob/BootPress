@@ -6,7 +6,7 @@ use BootPress\Page\Component as Page;
 
 /**
  * This component is based on the code at:
- * https://github.com/philsturgeon/codeigniter-unzip
+ * https://github.com/philsturgeon/codeigniter-unzip.
  *
  * Requires extension ZLib Enabled.
  */
@@ -24,7 +24,7 @@ class Component
      * Establish the file to be unzipped, and where.
      *
      * @param string $zip_file
-     * @param string $target_dir  Defaults to the directory that contains the $zip_file.
+     * @param string $target_dir Defaults to the directory that contains the $zip_file
      * @param int    $chmod
      */
     public function __construct($zip_file, $target_dir = null, $chmod = 0755)
@@ -67,10 +67,10 @@ class Component
     /**
      * Unzip allowable files in archive.
      *
-     * @param string|array $allow_extensions   Either an arrary, or a pipe-delimited string of acceptable file extensions to extract.
-     * @param bool         $remove_common_dir  Whether to remove a common directory (if any), or not.
+     * @param string|array $allow_extensions  Either an arrary, or a pipe-delimited string of acceptable file extensions to extract
+     * @param bool         $remove_common_dir Whether to remove a common directory (if any), or not
      *
-     * @return array  All of the extracted file locations.
+     * @return array All of the extracted file locations
      */
     public function extract($allow_extensions = null, $remove_common_dir = false)
     {
@@ -96,10 +96,10 @@ class Component
     /**
      * Unzip all files from specified folders in archive.
      *
-     * @param string|array $folders           The folder(s) to extract files from.  Do not include a trailing slash.
-     * @param string|array $allow_extensions  Either an arrary, or a pipe-delimited string of acceptable file extensions to extract.
+     * @param string|array $folders          The folder(s) to extract files from.  Do not include a trailing slash
+     * @param string|array $allow_extensions Either an arrary, or a pipe-delimited string of acceptable file extensions to extract
      *
-     * @return array  All of the extracted file locations.
+     * @return array All of the extracted file locations
      */
     public function extractFolders($folders, $allow_extensions = null)
     {
@@ -124,9 +124,9 @@ class Component
     /**
      * Unzip specified files in archive.
      *
-     * @param string|array $files  The file(s) to extract.
+     * @param string|array $files The file(s) to extract
      *
-     * @return array  All of the extracted file locations.
+     * @return array All of the extracted file locations
      */
     public function extractFiles($files)
     {
@@ -196,7 +196,7 @@ class Component
         if (!$fdetails['uncompressed_size']) { // File is empty
             return $target_file_name ? file_put_contents($target_file_name, '') : '';
         }
-        
+
         if (is_file($target_file_name) && $fdetails['lastmod_datetime'] <= filemtime($target_file_name)) {
             return ''; // The file already exists, and we'll stick with the most recent version thank you.
         }
@@ -210,7 +210,7 @@ class Component
         );
 
         chmod($target_file_name, $this->chmod);
-        
+
         return $ret;
     }
 
@@ -371,7 +371,7 @@ class Component
     {
         $return = false;
         fseek($this->fh, 0);
-        for (;;) {
+        for (; ;) {
             $details = $this->getFileHeader();
 
             if (!$details) { // Invalid signature. Trying to verify if is old style Data Descriptor...

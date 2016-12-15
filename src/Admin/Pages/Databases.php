@@ -2,7 +2,6 @@
 
 namespace BootPress\Admin\Pages;
 
-use BootPress\Admin\Files;
 use BootPress\Admin\Component as Admin;
 use BootPress\Asset\Component as Asset;
 use BootPress\Page\Component as Page;
@@ -10,12 +9,11 @@ use Symfony\Component\Yaml\Yaml;
 
 class Databases
 {
-    
     public static function setup($auth, $path)
     {
         return ($auth->isAdmin(1)) ? Admin::$bp->icon('database', 'fa').' Databases' : false;
     }
-    
+
     public static function page()
     {
         $page = Page::html();
@@ -38,13 +36,13 @@ class Databases
         $display = array();
         $url = $page->url('delete', '', '?');
         foreach ($yaml as $driver => $config) {
-            $params = array('db'=>$driver);
+            $params = array('db' => $driver);
             if (isset($config['username'])) {
                 $params['username'] = $config['username'];
             }
             if (isset($config['dsn']) && $driver = strstr($config['dsn'], ':', true)) {
                 switch ($driver) {
-                    case 'mysql': 
+                    case 'mysql':
                         $group = 'MySQL';
                         $adminer = 'server';
                         break;
@@ -68,9 +66,9 @@ class Databases
                     if (preg_match('/host=([a-z0-9._\-]+);?/i', $config['dsn'], $matches)) {
                         $params[$adminer] = $matches[1];
                     }
-                    $link = '<a href="' . $page->url('add', $url, $params) . '">' . $params['db'] . '</a>';
+                    $link = '<a href="'.$page->url('add', $url, $params).'">'.$params['db'].'</a>';
                     if (isset($config['password']) && !empty($config['password'])) {
-                        $link .= '&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;' . $config['password'];
+                        $link .= '&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;'.$config['password'];
                     }
                     $display[$group][] = $link;
                 }
@@ -82,27 +80,27 @@ class Databases
             $base = $page->commonDir(array_merge(array($page->dir()), $files));
             foreach ($files as $num => $file) {
                 if (is_file($file)) {
-                    $link = $page->url('add', $url, array('sqlite'=>'', 'db'=>$file, 'username'=>'adminer'));
+                    $link = $page->url('add', $url, array('sqlite' => '', 'db' => $file, 'username' => 'adminer'));
                     $display['SQLite'][] = '.../<a href="'.$link.'">'.str_replace($base, '', $file).'</a>';
                 } else {
                     unset($files[$num]);
                 }
             }
             if (count($yaml['sqlite']) > count($files)) {
-                    ksort($yaml);
-                    $yaml['sqlite'] = array_values($files);
-                    $yaml = Yaml::dump($yaml, 3);
-                    file_put_contents($databases, $yaml);
+                ksort($yaml);
+                $yaml['sqlite'] = array_values($files);
+                $yaml = Yaml::dump($yaml, 3);
+                file_put_contents($databases, $yaml);
             }
         }
         ksort($display);
         $html = '';
         foreach ($display as $driver => $database) {
-            $html .= Admin::$bp->lister('dl dl-horizontal', array($driver=>$database));
+            $html .= Admin::$bp->lister('dl dl-horizontal', array($driver => $database));
         }
-        
+
         return Admin::box('default', array(
-            'head with-border' => Admin::$bp->icon('database', 'fa') . ' Databases',
+            'head with-border' => Admin::$bp->icon('database', 'fa').' Databases',
             'body' => $html,
         ));
     }
