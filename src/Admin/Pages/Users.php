@@ -48,6 +48,7 @@ class Users
         switch ($method) {
             case 'logout':
                 $auth->logout();
+                $page->session->remove('enable_debugbar');
                 $page->eject($page->url('admin', $path));
                 break;
             case 'register':
