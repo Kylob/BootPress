@@ -589,12 +589,16 @@ class Analytics
                 file_put_contents($file, '');
             }
             \BootPress\Admin\Files::save(array('robots.txt' => $file));
-            $sitemaps = $this->db->ids(array(
+            if (!$sitemaps = $this->db->ids(array(
                 'SELECT id FROM analytic_paths WHERE path LIKE ? AND path NOT LIKE ?',
-            ), array('sitemap%.xml', '%/%'));
-            $robots = $this->db->ids(array(
+            ), array('sitemap%.xml', '%/%'))) {
+                $sitemaps = array();
+            }
+            if (!$robots = $this->db->ids(array(
                 'SELECT id FROM analytic_paths WHERE path = ?',
-            ), 'robots.txt');
+            ), 'robots.txt')) {
+                $robots = array();
+            }
             $month = time() - 2592000; // last 30 days
             if (!$bp->pagination->set('page', 100)) {
                 $bp->pagination->total($this->db->value(array(
