@@ -182,7 +182,7 @@ class Component
             if ($referrer = trim(strip_tags($page->request->headers->get('referer')))) {
                 $ref = trim(strstr($referrer, ':'), ':/');
                 $self = trim(strstr($page->url['base'], ':'), ':/');
-                if (strpos($ref, $self) !== 0) {
+                if (strpos($ref, $self) === 0) {
                     $referrer = null;
                 }
             }
