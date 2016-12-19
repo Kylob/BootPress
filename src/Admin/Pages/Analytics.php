@@ -354,11 +354,11 @@ class Analytics
         if (is_array($data)) {
             $colors = array(
                 '#F39C12', // orange
+                '#F56954', // red
                 '#00A65A', // green
                 '#3C8DBC', // dk. blue
-                '#F56954', // red
-                '#D2D6DE', // lt. gray
                 '#00C0EF', // lt. blue
+                '#D2D6DE', // lt. gray
             );
             // $colors = array('#F56954', '#00A65A', '#F39C12', '#00C0EF', '#3C8DBC', '#D2D6DE'); // red, green, orange, lt. blue, blue, lt. gray
             foreach ($data as $key => $value) {
