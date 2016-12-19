@@ -533,8 +533,13 @@ class Files
                         break;
                 }
             }
-            file_put_contents($file, $code);
-            exit('Saved');
+            if (!is_writable($file)) {
+                exit('This file is not writable');
+            } elseif (file_put_contents($file, $code) === false) {
+                exit('There was an error');
+            } else {
+                exit('Saved');
+            }
         }
     }
 
