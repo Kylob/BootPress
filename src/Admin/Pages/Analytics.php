@@ -625,7 +625,7 @@ class Analytics
                 $html .= $bp->table->cell('', 'User Agent');
                 $html .= $bp->table->cell('class=text-center', 'Hits');
                 $html .= $bp->table->cell('class=text-center', '<a href="#" class="wyciwyg txt text-nowrap" data-retrieve="robots.txt" data-file="robots.txt" title="Edit">'.$bp->icon('pencil-square-o', 'fa').' robots.txt</a>');
-                $html .= $bp->table->cell('class=text-center', '<a href="'.$page->url('sitemap.xml').'" class="text-nowrap">sitemap%.xml</a>');
+                $html .= $bp->table->cell('class=text-center', '<a href="'.$page->url('sitemap.xml').'" class="text-nowrap" target="_blank">sitemap%.xml '.$bp->icon('new-window').'</a>');
                 $html .= $bp->table->cell('class=text-center', 'Checked');
                 while (list($agent, $robot, $time, $hits, $robots, $sitemaps, $checked) = $this->db->fetch($result)) {
                     $html .= $bp->table->row();
