@@ -48,42 +48,39 @@ class Component
                 'id' => 'INTEGER PRIMARY KEY',
                 'session' => 'TEXT NOT NULL DEFAULT ""',
                 'started' => 'INTEGER NOT NULL DEFAULT 0',
+                'ip' => 'TEXT NOT NULL DEFAULT ""',
+                'referrer' => 'TEXT NOT NULL DEFAULT ""',
                 'session_id' => 'INTEGER NOT NULL DEFAULT 0',
                 'agent_id' => 'INTEGER NOT NULL DEFAULT 0',
                 'path_id' => 'INTEGER NOT NULL DEFAULT 0',
                 'query' => 'TEXT NOT NULL DEFAULT ""',
-                'referrer' => 'TEXT NOT NULL DEFAULT ""',
-                'ip' => 'TEXT NOT NULL DEFAULT ""',
             ), array('started'));
 
             // User-agents, and whatever useful information we can glean from them
             $db->create('analytic_agents', array(
                 'id' => 'INTEGER PRIMARY KEY',
-                'agent' => 'TEXT UNIQUE NOT NULL DEFAULT ""', // up to 255 varchar string
-                'robot' => 'TEXT NOT NULL DEFAULT ""',
                 'browser' => 'TEXT NOT NULL DEFAULT ""',
                 'version' => 'TEXT NOT NULL DEFAULT ""',
                 'mobile' => 'TEXT NOT NULL DEFAULT ""',
                 'desktop' => 'TEXT NOT NULL DEFAULT ""',
+                'robot' => 'TEXT NOT NULL DEFAULT ""',
+                'agent' => 'TEXT UNIQUE NOT NULL DEFAULT ""', // up to 255 varchar string
             ));
 
             // Bot (javascript disabled) hits - every page and asset
             $db->create('analytic_bots', array(
                 'id' => 'INTEGER PRIMARY KEY',
+                'time' => 'INTEGER NOT NULL DEFAULT 0',
                 'ip' => 'TEXT NOT NULL DEFAULT ""',
+                'analytic_id' => 'INTEGER NOT NULL DEFAULT 0', // for deleting when user
                 'agent_id' => 'INTEGER NOT NULL DEFAULT 0',
                 'path_id' => 'INTEGER NOT NULL DEFAULT 0',
                 'query' => 'TEXT NOT NULL DEFAULT ""',
-                'time' => 'INTEGER NOT NULL DEFAULT 0',
-                'analytic_id' => 'INTEGER NOT NULL DEFAULT 0', // for deleting when user
-            ), array('ip', 'agent_id', 'path_id', 'time'));
+            ), array('time', 'ip', 'agent_id', 'path_id'));
 
             // User (javascript enabled) hits - html pages only
             $db->create('analytic_hits', array(
                 'id' => 'INTEGER PRIMARY KEY',
-                'session_id' => 'INTEGER NOT NULL DEFAULT 0',
-                'path_id' => 'INTEGER NOT NULL DEFAULT 0',
-                'query' => 'TEXT NOT NULL DEFAULT ""',
                 'time' => 'INTEGER NOT NULL DEFAULT 0',
                 'loaded' => 'INTEGER NOT NULL DEFAULT 0', // microseconds
                 'server' => 'INTEGER NOT NULL DEFAULT 0', // microseconds
@@ -91,7 +88,10 @@ class Component
                 'tcp' => 'INTEGER NOT NULL DEFAULT 0', // microseconds
                 'request' => 'INTEGER NOT NULL DEFAULT 0', // microseconds
                 'response' => 'INTEGER NOT NULL DEFAULT 0', // microseconds
-            ), array('session_id', 'path_id', 'time'));
+                'session_id' => 'INTEGER NOT NULL DEFAULT 0',
+                'path_id' => 'INTEGER NOT NULL DEFAULT 0',
+                'query' => 'TEXT NOT NULL DEFAULT ""',
+            ), array('time', 'session_id', 'path_id'));
 
             // URL paths
             $db->create('analytic_paths', array(
@@ -102,20 +102,20 @@ class Component
             // User (javascript enabled) session data
             $db->create('analytic_sessions', array(
                 'id' => 'INTEGER PRIMARY KEY',
+                'started' => 'INTEGER NOT NULL DEFAULT 0',
                 'hits' => 'INTEGER NOT NULL DEFAULT 0',
                 'duration' => 'INTEGER NOT NULL DEFAULT 0', // seconds
-                'started' => 'INTEGER NOT NULL DEFAULT 0',
-                'agent_id' => 'INTEGER NOT NULL DEFAULT 0',
-                'path_id' => 'INTEGER NOT NULL DEFAULT 0',
-                'query' => 'TEXT NOT NULL DEFAULT ""',
-                'referrer' => 'TEXT NOT NULL DEFAULT ""',
-                'ip' => 'TEXT NOT NULL DEFAULT ""',
                 'width' => 'INTEGER NOT NULL DEFAULT 0',
                 'height' => 'INTEGER NOT NULL DEFAULT 0',
                 'hemisphere' => 'TEXT NOT NULL DEFAULT ""',
                 'timezone' => 'TEXT NOT NULL DEFAULT ""',
                 'dst' => 'INTEGER NOT NULL DEFAULT 0',
                 'offset' => 'INTEGER NOT NULL DEFAULT 0', // seconds
+                'ip' => 'TEXT NOT NULL DEFAULT ""',
+                'referrer' => 'TEXT NOT NULL DEFAULT ""',
+                'agent_id' => 'INTEGER NOT NULL DEFAULT 0',
+                'path_id' => 'INTEGER NOT NULL DEFAULT 0',
+                'query' => 'TEXT NOT NULL DEFAULT ""',
             ), array('started'));
 
             // Associates user(s) and their sessions
