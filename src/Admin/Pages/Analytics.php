@@ -127,17 +127,17 @@ class Analytics
             $bp->pagination->total($db->value(array(
                 'SELECT COUNT(*) FROM analytic_sessions AS s',
                 'LEFT JOIN analytic_users AS u ON s.id = u.session_id AND u.user_id = ?',
-                'WHERE s.started > ? AND s.referrer != "" AND u.user_id != ?',
-            ), array($this->user_id, ($this->now - 2592000), $this->user_id)));
+                'WHERE s.started > ? AND s.referrer != "" AND u.user_id IS NULL',
+            ), array($this->user_id, ($this->now - 2592000))));
         }
         if ($result = $db->query(array(
             'SELECT s.hits, s.duration, s.started, s.referrer, p.path, s.query, s.hemisphere, s.timezone',
             'FROM analytic_sessions AS s',
             'INNER JOIN analytic_paths AS p ON s.path_id = p.id',
             'LEFT JOIN analytic_users AS u ON s.id = u.session_id AND u.user_id = ?',
-            'WHERE s.started > ? AND s.referrer != "" AND u.user_id != ?',
+            'WHERE s.started > ? AND s.referrer != "" AND u.user_id IS NULL',
             'ORDER BY s.started DESC'.$bp->pagination->limit,
-        ), array($this->user_id, ($this->now - 2592000), $this->user_id), 'row')) {
+        ), array($this->user_id, ($this->now - 2592000)), 'row')) {
             $html .= $bp->table->open('class=hover');
             $html .= $bp->table->head();
             $html .= $bp->table->cell('', 'Referrer');
@@ -180,9 +180,9 @@ class Analytics
             'FROM analytic_hits AS h',
             'INNER JOIN analytic_paths AS p ON h.path_id = p.id',
             'LEFT JOIN analytic_users AS u ON h.session_id = u.session_id AND u.user_id = ?',
-            'WHERE h.time > ? AND u.user_id != ?',
+            'WHERE h.time > ? AND u.user_id IS NULL',
             'GROUP BY h.path_id ORDER BY hits DESC LIMIT 50',
-        ), array($this->user_id, ($this->now - 2592000), $this->user_id), 'row')) {
+        ), array($this->user_id, ($this->now - 2592000)), 'row')) {
             while (list($path, $hits) = $this->db->fetch($result)) {
                 $html .= $bp->table->row();
                 $html .= $bp->table->cell('', '<a href="'.$page->url($path).'">'.(empty($path) ? '(index)' : $path).'</a>');
@@ -206,9 +206,9 @@ class Analytics
             'INNER JOIN analytic_paths AS p ON h.path_id = p.id',
             'INNER JOIN analytic_sessions AS s ON h.session_id = s.id',
             'LEFT JOIN analytic_users AS u ON h.session_id = u.session_id AND u.user_id = ?',
-            'WHERE h.time > ? AND u.user_id != ?',
+            'WHERE h.time > ? AND u.user_id IS NULL',
             'GROUP BY s.id ORDER BY h.id DESC LIMIT 50',
-        ), array($this->user_id, ($this->now - 2592000), $this->user_id), 'row')) {
+        ), array($this->user_id, ($this->now - 2592000)), 'row')) {
             while (list($time, $path, $query, $id, $ip) = $this->db->fetch($result)) {
                 $html .= $bp->table->row();
                 $html .= $bp->table->cell('', '<a href="'.$page->url($path.$query).'">'.(empty($path) ? '(index)' : $path).'</a>');
@@ -402,8 +402,8 @@ class Analytics
             'FROM analytic_sessions AS s',
             'INNER JOIN analytic_agents AS a ON s.agent_id = a.id',
             'LEFT JOIN analytic_users AS u ON s.id = u.session_id AND u.user_id = ?',
-            'WHERE s.started > ? AND u.user_id != ?',
-        ), array($this->user_id, ($this->now - 2592000), $this->user_id), 'row')) {
+            'WHERE s.started > ? AND u.user_id IS NULL',
+        ), array($this->user_id, ($this->now - 2592000)), 'row')) {
             while (list($hits, $browser, $version, $phone, $desktop) = $this->db->fetch($result)) {
                 // Total
                 $total += $hits;
@@ -811,9 +811,9 @@ class Analytics
                 'LEFT JOIN analytic_users AS u ON h.session_id = u.session_id AND u.user_id = ?',
                 $this->where('h.time', $start, $stop, array(
                     'h.path_id = (SELECT p.id FROM analytic_paths AS p WHERE p.path = ?)',
-                    'u.user_id != ?',
+                    'u.user_id IS NULL',
                 )),
-            ), array($path, $this->user_id));
+            ), array($this->user_id, $path));
         }
 
         return ($views) ? $views : $default;
@@ -845,9 +845,9 @@ class Analytics
                 'INNER JOIN analytic_sessions AS s ON h.session_id = s.id',
                 'LEFT JOIN analytic_users AS u ON h.session_id = u.session_id AND u.user_id = ?',
                 $this->where('h.time', $start, $stop, array(
-                    'u.user_id != ?',
+                    'u.user_id IS NULL',
                 )),
-            ), array($this->user_id, $this->user_id), 'assoc');
+            ), array($this->user_id), 'assoc');
             // exit('<pre>'.print_r($row, true).'</pre>');
         }
         $user = array();
