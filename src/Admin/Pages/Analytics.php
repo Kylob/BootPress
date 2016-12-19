@@ -664,6 +664,15 @@ class Analytics
             } elseif ($delay < 3600) {
                 $delay = round($delay / 60);
                 $html = $delay.' min';
+            } elseif ($delay < 86400) {
+                $delay = round($delay / 3600);
+                $html = $delay.' hr';
+            } elseif ($delay < 604800) {
+                $delay = round($delay / 86400);
+                $html = $delay.' day';
+            } else {
+                $delay = round($delay / 604800);
+                $html = $delay.' wk';
             }
         }
         $delayed = $time;
