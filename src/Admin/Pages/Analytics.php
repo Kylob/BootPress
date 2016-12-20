@@ -16,11 +16,11 @@ class Analytics
     {
         return ($auth->isAdmin(2)) ? array(Admin::$bp->icon('line-chart', 'fa').' Analytics' => array(
             Admin::$bp->icon('area-chart', 'fa').' Visitors' => '',
+            Admin::$bp->icon('sitemap', 'fa').' Robots' => 'robots',
+            Admin::$bp->icon('user').' Users' => 'users',
             Admin::$bp->icon('link', 'fa').' Referrers' => 'referrers',
             Admin::$bp->icon('files-o', 'fa').' Pages' => 'pages',
             Admin::$bp->icon('server', 'fa').' Server' => 'server',
-            Admin::$bp->icon('apple', 'fa').' Users' => 'users',
-            Admin::$bp->icon('sitemap', 'fa').' Robots' => 'robots',
         )) : false;
     }
 
@@ -48,73 +48,505 @@ class Analytics
 
     private function visitors()
     {
-        extract(Admin::params('bp', 'website', 'page'));
+        extract(Admin::params('bp', 'website', 'page', 'path', 'admin'));
         $page->title = 'Visitors at '.$website;
         $html = '';
-        $data = array();
-        foreach ($this->startStop(31, 'day', 'Y-m-d') as $x => $info) { // D M j
-            list($start, $stop) = $info;
-            list($user, $hits) = array_values($this->userHits($start, $stop));
-            $data[] = '{x:"'.$x.'", hits:'.$hits.', users:'.$user.', avg:'.($user > 0 ? round($hits / $user, 1) : 0).'}';
-        }
-        $page->jquery('
-            new Morris.Area({
-                behaveLikeLine: true,
-                element: "visitors-chart",
-                resize: true,
-                data: ['.implode(',', $data).'],
-                xkey: "x",
-                xLabels: "month",
-                xLabelFormat: function(x){ var str = x.toDateString(); return str.substr(4,4) + str.substr(-4); },
-                dateFormat: function(x){ return new Date(x).toDateString().slice(0,-5); },
-                ykeys: ["hits", "users", "avg"],
-                labels: ["Pageviews", "Number of Users", "Avg Views per User"],
-                lineColors: ["#3C8DBC", "#00A65A", "#F56954"],
-                hideHover: "auto"
-            });
-        ');
-        $page->link(array(
-            'https://cdn.jsdelivr.net/morris.js/0.5.1/morris.min.js',
-            'https://cdn.jsdelivr.net/morris.js/0.5.1/morris.css',
-        ));
-        $page->link('https://cdnjs.cloudflare.com/ajax/libs/raphael/2.2.7/raphael.min.js', 'prepend');
-        $html .= $bp->table->open('class=hover');
-        $visits = array();
-        $visits['Since'] = array(date('M Y', $this->started()) => array($this->started(), time()));
-        $visits['Past Day'] = $this->startStop(24, 'hour', 'g:00a', array('This Hour', 'Last Hour'));
-        $visits['Past Week'] = $this->startStop(7, 'day', 'l', array('Today', 'Yesterday'));
-        $visits['Past Month'] = $this->startStop(5, 'week', '', array('This Week', 'Last Week', '2 weeks ago', '3 weeks ago', '4 weeks ago'));
-        $visits['Past Year'] = $this->startStop(12, 'month', 'M Y', array('This Month', 'Last Month'));
-        foreach ($visits as $header => $values) {
+        if (($visitors = $page->get('visitors')) && ($from = $page->get('from')) && ($to = $page->get('to'))) {
+            if (!$bp->pagination->set('page', 100)) {
+                $bp->pagination->total($this->db->value(array(
+                    'SELECT COUNT(DISTINCT h.session_id) AS count',
+                    'FROM analytic_hits AS h',
+                    'INNER JOIN analytic_sessions AS s ON h.session_id = s.id',
+                    'LEFT JOIN analytic_users AS u ON h.session_id = u.session_id AND u.user_id = ?',
+                    $this->where('h.time', $from, $to, array(
+                        'u.user_id IS NULL',
+                    )),
+                ), $this->user_id));
+            }
+            $html .= $bp->table->open('class=hover');
             $html .= $bp->table->head();
-            $html .= $bp->table->cell('', $header);
-            $html .= $bp->table->cell('class=text-right', 'Robots');
-            $html .= $bp->table->cell('', 'Hits');
-            $html .= $bp->table->cell('class=text-right', 'Users');
-            $html .= $bp->table->cell('', 'Hits');
-            $html .= $bp->table->cell('class=text-center', 'Avg Load Times');
-            $html .= $bp->table->cell('class=text-center', 'Avg Session Duration');
-            foreach ($values as $reference => $times) {
-                list($start, $stop) = $times;
-                $user = $this->userHits($start, $stop, '-');
-                $robot = $this->robotHits($start, $stop, '-');
-                $html .= $bp->table->row();
-                $html .= $bp->table->cell('', $reference);
-                $html .= $bp->table->cell('class=text-right', $robot['ips']);
-                $html .= $bp->table->cell('', $robot['hits']);
-                $html .= $bp->table->cell('class=text-right', $user['sessions']);
-                $html .= $bp->table->cell('', $user['hits']);
-                $html .= $bp->table->cell('class=text-center', $user['loaded']);
-                $html .= $bp->table->cell('class=text-center', $user['duration']);
+            $html .= $bp->table->cell('', 'Location');
+            $html .= $bp->table->cell('class=text-center', 'Browser');
+            $html .= $bp->table->cell('class=text-center', 'Screen');
+            $html .= $bp->table->cell('class=text-center', 'Hits');
+            $html .= $bp->table->cell('class=text-center', 'Duration');
+            $html .= $bp->table->cell('', 'Time');
+            if ($result = $this->db->query(array(
+                'SELECT s.id, s.timezone, s.hemisphere, s.hits, s.duration, s.started, s.width, s.height, a.browser, a.mobile, a.desktop, a.robot, a.agent',
+                'FROM analytic_hits AS h',
+                'INNER JOIN analytic_sessions AS s ON h.session_id = s.id',
+                'LEFT JOIN analytic_users AS u ON h.session_id = u.session_id AND u.user_id = ?',
+                'INNER JOIN analytic_agents AS a ON s.agent_id = a.id',
+                $this->where('h.time', $from, $to, array(
+                    'u.user_id IS NULL',
+                )),
+                'GROUP BY h.session_id ORDER BY s.started DESC'.$bp->pagination->limit,
+            ), $this->user_id, 'assoc')) {
+                $url = $page->url($admin, $path, 'users');
+                while ($row = $this->db->fetch($result)) {
+                    if (!empty($row['mobile'])) {
+                        $row['browser'] = $row['mobile'];
+                    }
+                    $html .= $bp->table->row();
+                    $html .= $bp->table->cell('', '<a href="'.$page->url('add', $url, array(
+                        'session' => $row['id'],
+                    )).'">'.BPA::location($row['timezone'], $row['hemisphere']).'</a>');
+                    $html .= $bp->table->cell('class=text-center', !empty($row['browser']) ? $row['browser'] : '-');
+                    $html .= $bp->table->cell('class=text-center', $row['width'].' x '.$row['height']);
+                    $html .= $bp->table->cell('class=text-center', $row['hits']);
+                    $html .= $bp->table->cell('class=text-center', !empty($row['duration']) ? number_format(($row['duration'] / 60), 2).' min' : '-');
+                    $html .= $bp->table->cell('', '<span class="timeago" title="'.date('c', $row['started']).'">'.$row['started'].'</span>');
+                }
+            }
+            $html .= $bp->table->close();
+            $html = Admin::box('default', array(
+                'head with-border' => $bp->icon('line-chart', 'fa').' '.$visitors,
+                'body no-padding table-responsive' => $html,
+                'foot clearfix' => $bp->pagination->links(),
+            ));
+        } else {
+            $data = array();
+            foreach ($this->startStop(31, 'day', 'Y-m-d') as $x => $info) { // D M j
+                list($start, $stop) = $info;
+                list($user, $hits) = array_values($this->userHits($start, $stop));
+                $data[] = '{x:"'.$x.'", hits:'.$hits.', users:'.$user.', avg:'.($user > 0 ? round($hits / $user, 1) : 0).'}';
+            }
+            $page->jquery('
+                new Morris.Area({
+                    behaveLikeLine: true,
+                    element: "visitors-chart",
+                    resize: true,
+                    data: ['.implode(',', $data).'],
+                    xkey: "x",
+                    xLabels: "month",
+                    xLabelFormat: function(x){ var str = x.toDateString(); return str.substr(4,4) + str.substr(-4); },
+                    dateFormat: function(x){ return new Date(x).toDateString().slice(0,-5); },
+                    ykeys: ["hits", "users", "avg"],
+                    labels: ["Pageviews", "Number of Users", "Avg Views per User"],
+                    lineColors: ["#3C8DBC", "#00A65A", "#F56954"],
+                    hideHover: "auto"
+                });
+            ');
+            $page->link(array(
+                'https://cdn.jsdelivr.net/morris.js/0.5.1/morris.min.js',
+                'https://cdn.jsdelivr.net/morris.js/0.5.1/morris.css',
+            ));
+            $page->link('https://cdnjs.cloudflare.com/ajax/libs/raphael/2.2.7/raphael.min.js', 'prepend');
+            $html .= $bp->table->open('class=hover');
+            $visits = array();
+            $visits['Since'] = array(date('M Y', $this->started()) => array($this->started(), time()));
+            $visits['Past Day'] = $this->startStop(24, 'hour', 'g:00a', array('This Hour', 'Last Hour'));
+            $visits['Past Week'] = $this->startStop(7, 'day', 'l', array('Today', 'Yesterday'));
+            $visits['Past Month'] = $this->startStop(5, 'week', '', array('This Week', 'Last Week', '2 weeks ago', '3 weeks ago', '4 weeks ago'));
+            $visits['Past Year'] = $this->startStop(12, 'month', 'M Y', array('This Month', 'Last Month'));
+            $url = $page->url($admin, $path);
+            foreach ($visits as $header => $values) {
+                $html .= $bp->table->head();
+                $html .= $bp->table->cell('', $header);
+                $html .= $bp->table->cell('class=text-right', 'Robots');
+                $html .= $bp->table->cell('', 'Hits');
+                $html .= $bp->table->cell('class=text-right', 'Users');
+                $html .= $bp->table->cell('', 'Hits');
+                $html .= $bp->table->cell('class=text-center', 'Avg Load Times');
+                $html .= $bp->table->cell('class=text-center', 'Avg Session Duration');
+                foreach ($values as $reference => $times) {
+                    list($start, $stop) = $times;
+                    $user = $this->userHits($start, $stop, '-');
+                    $robot = $this->robotHits($start, $stop, '-');
+                    $html .= $bp->table->row();
+                    $html .= $bp->table->cell('', '<a href="'.$page->url('add', $url, array(
+                        'visitors' => ($header == 'Since') ? 'Since '.$reference : $reference,
+                        'from' => $start,
+                        'to' => $stop,
+                    )).'">'.$reference.'</a>');
+                    $html .= $bp->table->cell('class=text-right', $robot['ips']);
+                    $html .= $bp->table->cell('', $robot['hits']);
+                    $html .= $bp->table->cell('class=text-right', $user['sessions']);
+                    $html .= $bp->table->cell('', $user['hits']);
+                    $html .= $bp->table->cell('class=text-center', $user['loaded']);
+                    $html .= $bp->table->cell('class=text-center', $user['duration']);
+                }
+            }
+            $html .= $bp->table->close();
+            $html = Admin::box('default', array(
+                'head with-border' => $bp->icon('line-chart', 'fa').' Visitors',
+                'body' => '<div id="visitors-chart" style="height:300px;"></div>',
+                'body no-padding table-responsive' => $html,
+            ));
+        }
+
+        return $html;
+    }
+
+    private function robots()
+    {
+        extract(Admin::params('bp', 'blog', 'website', 'page'));
+        $page->title = 'Robot Analytics at '.$website;
+        $html = '';
+        $url = $page->url('delete', '', '?');
+        if (($agent = $page->get('agent')) && $row = $this->db->row(array(
+            'SELECT id, agent, robot',
+            'FROM analytic_agents',
+            'WHERE agent = ?',
+        ), $agent, 'assoc')) {
+            $header = !empty($row['robot']) ? $row['robot'] : $row['agent'];
+            if (!$bp->pagination->set('page', 100)) {
+                $bp->pagination->total($this->db->value(array(
+                    'SELECT COUNT(*) FROM analytic_bots WHERE agent_id = ?',
+                ), $row['id']));
+            }
+            if ($result = $this->db->query(array(
+                'SELECT p.path, b.query, b.time, b.ip',
+                'FROM analytic_bots AS b',
+                'INNER JOIN analytic_paths AS p ON b.path_id = p.id',
+                'WHERE b.agent_id = ? ORDER BY time DESC'.$bp->pagination->limit,
+            ), $row['id'], 'row')) {
+                $html .= $bp->table->open('class=hover');
+                $html .= $bp->table->head();
+                $html .= $bp->table->cell('', 'URL');
+                $html .= $bp->table->cell('', 'IP');
+                $html .= $bp->table->cell('class=text-center', 'Accessed');
+                $html .= $bp->table->cell('class=text-center', 'Next');
+                $delayed = null;
+                while (list($path, $query, $time, $ip) = $this->db->fetch($result)) {
+                    $html .= $bp->table->row();
+                    $html .= $bp->table->cell('', '<a href="'.$page->url('base', $path.$query).'">'.$this->ellipsize($path, 50, '(index)').'</a>');
+                    $html .= $bp->table->cell('', '<a href="'.$page->url('add', $url, 'ip', $ip).'">'.$ip.'</a>');
+                    $html .= $bp->table->cell('class=text-center', date('D, M d Y, h:i a', $time - $this->offset));
+                    $html .= $bp->table->cell('class=text-center', $this->next($delayed, $time));
+                }
+                $html .= $bp->table->close();
+                $this->db->close($result);
+            }
+        } elseif ($ip = $page->get('ip')) {
+            $header = strip_tags($ip);
+            if (!$bp->pagination->set('page', 100)) {
+                $bp->pagination->total($this->db->value(array(
+                    'SELECT COUNT(*) FROM analytic_bots WHERE ip = ?',
+                ), $header));
+            }
+            if ($result = $this->db->query(array(
+                'SELECT p.path, b.query, b.time, a.agent',
+                'FROM analytic_bots AS b',
+                'INNER JOIN analytic_paths AS p ON b.path_id = p.id',
+                'INNER JOIN analytic_agents AS a ON b.agent_id = a.id',
+                'WHERE b.ip = ? ORDER BY time DESC'.$bp->pagination->limit,
+            ), $header, 'row')) {
+                $html .= $bp->table->open('class=hover');
+                $html .= $bp->table->head();
+                $html .= $bp->table->cell('', 'URL');
+                $html .= $bp->table->cell('', 'User Agent');
+                $html .= $bp->table->cell('class=text-center', 'Accessed');
+                $html .= $bp->table->cell('class=text-center', 'Next');
+                $delayed = null;
+                while (list($path, $query, $time, $agent) = $this->db->fetch($result)) {
+                    $html .= $bp->table->row();
+                    $html .= $bp->table->cell('', '<a href="'.$page->url('base', $path.$query).'">'.$this->ellipsize($path, 50, '(index)').'</a>');
+                    $html .= $bp->table->cell('', '<a href="'.$page->url('add', $url, 'agent', $agent).'">'.$this->ellipsize($agent, 50, '(empty)').'</a>');
+                    $html .= $bp->table->cell('class=text-center', date('D, M d Y, h:i a', $time - $this->offset));
+                    $html .= $bp->table->cell('class=text-center', $this->next($delayed, $time));
+                }
+                $html .= $bp->table->close();
+                $this->db->close($result);
+            }
+        } else {
+            $header = 'Robots <small style="margin-left:10px;">Last 30 Days</small>';
+            $file = $blog->folder.'content/robots.txt.twig';
+            if (!is_file($file)) {
+                file_put_contents($file, '');
+            }
+            \BootPress\Admin\Files::save(array('robots.txt' => $file));
+            if (!$sitemaps = $this->db->ids(array(
+                'SELECT id FROM analytic_paths WHERE path LIKE ? AND path NOT LIKE ?',
+            ), array('sitemap%.xml', '%/%'))) {
+                $sitemaps = array();
+            }
+            if (!$robots = $this->db->ids(array(
+                'SELECT id FROM analytic_paths WHERE path = ?',
+            ), 'robots.txt')) {
+                $robots = array();
+            }
+            $month = time() - 2592000; // last 30 days
+            if (!$bp->pagination->set('page', 100)) {
+                $bp->pagination->total($this->db->value(array(
+                    'SELECT COUNT(DISTINCT agent_id)',
+                    'FROM analytic_bots',
+                    'WHERE time > ?',
+                ), $month));
+            }
+            if ($result = $this->db->query(array(
+                'SELECT a.agent, a.robot,',
+                '   MAX(b.time) AS time,',
+                '   COUNT(b.agent_id) AS hits,',
+                '   SUM(CASE WHEN b.path_id IN('.implode(',', $robots).') THEN 1 ELSE 0 END) AS robots,',
+                '   SUM(CASE WHEN b.path_id IN('.implode(',', $sitemaps).') THEN 1 ELSE 0 END) AS sitemaps,',
+                '   MAX(CASE WHEN b.path_id IN('.implode(',', array_merge($robots, $sitemaps)).') THEN b.time ELSE 0 END) AS checked',
+                'FROM analytic_bots AS b',
+                'INNER JOIN analytic_agents AS a ON b.agent_id = a.id',
+                'WHERE b.time > ?',
+                'GROUP BY b.agent_id',
+                'ORDER BY hits DESC'.$bp->pagination->limit,
+            ), $month, 'row')) {
+                $html .= $bp->table->open('class=hover');
+                $html .= $bp->table->head();
+                $html .= $bp->table->cell('', 'User Agent');
+                $html .= $bp->table->cell('class=text-center', 'Hits');
+                $html .= $bp->table->cell('class=text-center', '<a href="#" class="wyciwyg txt text-nowrap" data-retrieve="robots.txt" data-file="robots.txt" title="Edit">'.$bp->icon('pencil-square-o', 'fa').' robots.txt</a>');
+                $html .= $bp->table->cell('class=text-center', '<a href="'.$page->url('sitemap.xml').'" class="text-nowrap" target="_blank" title="View">sitemap%.xml '.$bp->icon('external-link', 'fa').'</a>');
+                $html .= $bp->table->cell('class=text-center', 'Checked');
+                while (list($agent, $robot, $time, $hits, $robots, $sitemaps, $checked) = $this->db->fetch($result)) {
+                    $html .= $bp->table->row();
+                    $html .= $bp->table->cell('', '<a href="'.$page->url('add', $url, 'agent', $agent).'">'.(!empty($robot) ? $robot : $this->ellipsize($agent, 50, '(empty)')).'</a>');
+                    $html .= $bp->table->cell('class=text-center', $hits);
+                    $html .= $bp->table->cell('class=text-center', !empty($robots) ? $robots : '-');
+                    $html .= $bp->table->cell('class=text-center', !empty($sitemaps) ? $sitemaps : '-');
+                    $html .= $bp->table->cell('class=text-center', !empty($checked) ? '<span class="timeago" title="'.date('c', $checked).'">'.$checked.'</span>' : '-');
+                }
+                $html .= $bp->table->close();
+                $this->db->close($result);
             }
         }
-        $html .= $bp->table->close();
 
         return Admin::box('default', array(
-            'head with-border' => $bp->icon('line-chart', 'fa').' Visitors',
-            'body' => '<div id="visitors-chart" style="height:300px;"></div>',
+            'head with-border' => $bp->icon('sitemap', 'fa').' '.$header,
             'body no-padding table-responsive' => $html,
+            'foot clearfix' => $bp->pagination->links(),
         ));
+    }
+
+    private function users($data = null)
+    {
+        extract(Admin::params('bp', 'blog', 'website', 'page'));
+        $page->title = 'User Analytics at '.$website;
+        $html = '';
+        if ($id = $page->get('session')) {
+            $tb = $bp->table->open('class=hover');
+            $tb .= $bp->table->head();
+            $tb .= $bp->table->cell('', 'URL');
+            $tb .= $bp->table->cell('class=text-center', 'Server');
+            $tb .= $bp->table->cell('class=text-center', 'Loaded');
+            $tb .= $bp->table->cell('class=text-center', 'Accessed');
+            $tb .= $bp->table->cell('class=text-center', 'Next');
+            if ($row = $this->db->row(array(
+                'SELECT a.agent, a.mobile, a.desktop, a.browser, a.version, s.width, s.height, s.ip, s.timezone, s.hemisphere, s.referrer, p.path, s.query, s.started, s.hits',
+                'FROM analytic_sessions AS s',
+                'INNER JOIN analytic_agents AS a ON s.agent_id = a.id',
+                'INNER JOIN analytic_paths AS p ON s.path_id = p.id',
+                'WHERE s.id = ?',
+            ), $id, 'assoc')) {
+                $dl = array();
+                if (!empty($row['agent'])) {
+                    $dl['User Agent'] = $row['agent'];
+                }
+                if (!empty($row['mobile'])) {
+                    $dl['Mobile'] = $row['mobile'];
+                } elseif (!empty($row['desktop'])) {
+                    $dl['Desktop'] = $row['desktop'];
+                }
+                if (!empty($row['browser'])) {
+                    $dl['Browser'] = $row['browser'];
+                    if (!empty($row['version'])) {
+                        $dl['Browser'] .= ' v.'.$row['version'];
+                    }
+                }
+                $dl['Screen'] = $row['width'].' x '.$row['height'];
+                $dl['IP Address'] = $row['ip'];
+                if (!empty($row['referrer'])) {
+                    $dl['Referrer'] = $row['referrer'];
+                }
+                $dl['Landing Page'] = '<a href="'.$page->url('base', $row['path'].$row['query']).'">'.$this->ellipsize($row['path'], 255, '(index)').'</a>';
+                $dl['Location'] = BPA::location($row['timezone'], $row['hemisphere']);
+                $dl['Time'] = '<span class="timeago" title="'.date('c', $row['started']).'">'.$row['started'].'</span>';
+                $html .= $bp->lister('dl dl-horizontal', $dl);
+                
+                if (!$bp->pagination->set('page', 100)) {
+                    $bp->pagination->total($row['hits']);
+                }
+                if ($result = $this->db->query(array(
+                    'SELECT p.path, h.query, h.loaded, h.server, h.time',
+                    'FROM analytic_hits AS h',
+                    'INNER JOIN analytic_paths AS p ON h.path_id = p.id',
+                    'WHERE h.session_id = ? ORDER BY time DESC'.$bp->pagination->limit,
+                ), $id, 'row')) {
+                    $delayed = null;
+                    while (list($path, $query, $loaded, $server, $time) = $this->db->fetch($result)) {
+                        $tb .= $bp->table->row();
+                        $tb .= $bp->table->cell('', '<a href="'.$page->url('base', $path.$query).'">'.$this->ellipsize($path, 50, '(index)').'</a>');
+                        $tb .= $bp->table->cell('class=text-center', number_format(($server / 1000), 2).' s');
+                        $tb .= $bp->table->cell('class=text-center', number_format(($loaded / 1000), 2).' s');
+                        $tb .= $bp->table->cell('class=text-center', date('D, M d Y, h:i a', $time - $this->offset));
+                        $tb .= $bp->table->cell('class=text-center', $this->next($delayed, $time));
+                    }
+                    $this->db->close($result);
+                }
+                
+            }
+            $tb .= $bp->table->close();
+            
+            $html = Admin::box('default', array(
+                'head with-border' => $bp->icon('user').' Users',
+                'body' => $html,
+                'body no-padding table-responsive' => $tb,
+                'foot clearfix' => $bp->pagination->links(),
+            ));
+        } else {
+            if (is_array($data)) {
+                $colors = array(
+                    '#F39C12', // orange
+                    '#F56954', // red
+                    '#00A65A', // green
+                    '#3C8DBC', // dk. blue
+                    '#00C0EF', // lt. blue
+                    '#D2D6DE', // lt. gray
+                );
+                // $colors = array('#F56954', '#00A65A', '#F39C12', '#00C0EF', '#3C8DBC', '#D2D6DE'); // red, green, orange, lt. blue, blue, lt. gray
+                foreach ($data as $key => $value) {
+                    if (!empty($key) && ($percent = round($value)) > 0) {
+                        $color = array_shift($colors);
+                        $data[$key] = "{value:{$percent},color:\"{$color}\",label:\"{$key}\"}";
+                        array_push($colors, $color);
+                    } else {
+                        unset($data[$key]);
+                    }
+                }
+
+                return (!empty($data)) ? '['.implode(', ', $data).']' : null;
+            }
+            $page->style(array(
+                'canvas { display:inline; }',
+                '.canvas-container { width:100%; text-align:center; }',
+                '.vcenter' => array(
+                    'display: inline-block;',
+                    'vertical-align: middle;',
+                    'float: none;',
+                ),
+            ));
+            $page->link('https://cdn.jsdelivr.net/chart.js/1.0.1/Chart.min.js');
+            $options = array(
+                'animation:false',
+                'legendTemplate:"<ul class=\"<%=name.toLowerCase()%>-legend list-unstyled\"><% for (var i=0; i<segments.length; i++){%><li><p><i class=\"fa fa-circle-o\" style=\"color:<%=segments[i].fillColor%>; margin-right:10px;\"></i><%=segments[i].value%>% - <%=segments[i].label%></p></li><%}%></ul>"',
+                'tooltipTemplate:"<%=value %>% - <%=label%>"',
+            );
+            $options = '{'.implode(', ', $options).'}';
+            $total = 0;
+            $mobile = array();
+            $platforms = array();
+            $browsers = array();
+            $versions = array();
+            if ($result = $this->db->query(array(
+                'SELECT s.hits, a.browser, a.version, a.mobile, a.desktop',
+                'FROM analytic_sessions AS s',
+                'INNER JOIN analytic_agents AS a ON s.agent_id = a.id',
+                'LEFT JOIN analytic_users AS u ON s.id = u.session_id AND u.user_id = ?',
+                'WHERE s.started > ? AND u.user_id IS NULL',
+            ), array($this->user_id, ($this->now - 2592000)), 'row')) {
+                while (list($hits, $browser, $version, $phone, $desktop) = $this->db->fetch($result)) {
+                    // Total
+                    $total += $hits;
+                    // Mobile
+                    if (!empty($phone)) {
+                        if (!isset($mobile[$phone])) {
+                            $mobile[$phone] = 0;
+                        }
+                        $mobile[$phone] += $hits;
+                    }
+                    // Platforms
+                    if (!isset($platforms[$desktop])) {
+                        $platforms[$desktop] = 0;
+                    }
+                    $platforms[$desktop] += $hits;
+                    // Browsers
+                    if (!isset($browsers[$browser])) {
+                        $browsers[$browser] = 0;
+                    }
+                    $browsers[$browser] += $hits;
+                    // Versions
+                    $version = (int) $version;
+                    if (!isset($versions[$browser][$version])) {
+                        $versions[$browser][$version] = 0;
+                    }
+                    $versions[$browser][$version] += $hits;
+                }
+                $this->db->close($result);
+            }
+            // Mobile
+            foreach ($mobile as $phone => $hits) {
+                $mobile[$phone] = ($hits / $total) * 100;
+            }
+            arsort($mobile);
+            if ($data = $this->users($mobile)) {
+                $html .= '<br>'.$bp->row('sm', array(
+                    $bp->col('6 vcenter', '<div class="canvas-container"><canvas id="mobileChart" height="250"></canvas></div>'),
+                    $bp->col('5 vcenter', '<p class="lead">Mobile ('.round(array_sum($mobile)).'% of Users)</p><div id="mobileChartLegend"></div>'),
+                )).'<br>';
+                $page->script(array(
+                    'var mobileChartCanvas = document.getElementById("mobileChart").getContext("2d");',
+                    'var mobileChart = new Chart(mobileChartCanvas).Doughnut('.$data.', '.$options.');',
+                    'document.getElementById("mobileChartLegend").innerHTML = mobileChart.generateLegend();',
+                ));
+            }
+            // Platforms
+            foreach ($platforms as $platform => $hits) {
+                $platforms[$platform] = ($hits / $total) * 100;
+            }
+            arsort($platforms);
+            if ($data = $this->users($platforms)) {
+                $html .= '<br>'.$bp->row('sm', array(
+                    $bp->col('6 vcenter', '<div class="canvas-container"><canvas id="platformsChart" height="250"></canvas></div>'),
+                    $bp->col('5 vcenter', '<p class="lead">Platforms</p><div id="platformsChartLegend"></div>'),
+                )).'<br>';
+                $page->script(array(
+                    'var platformsChartCanvas = document.getElementById("platformsChart").getContext("2d");',
+                    'var platformsChart = new Chart(platformsChartCanvas).Doughnut('.$data.', '.$options.');',
+                    'document.getElementById("platformsChartLegend").innerHTML = platformsChart.generateLegend();',
+                ));
+            }
+            // Browsers
+            foreach ($browsers as $browser => $hits) {
+                $browsers[$browser] = ($hits / $total) * 100;
+                foreach ($versions[$browser] as $version => $hits) {
+                    $versions[$browser][$version] = ($hits / $total) * 100;
+                }
+                arsort($versions[$browser]);
+            }
+            arsort($browsers);
+            if ($data = $this->users($browsers)) {
+                $html .= '<br>'.$bp->row('sm', array(
+                    $bp->col('6 vcenter', '<div class="canvas-container"><canvas id="browsersChart" height="250"></canvas></div>'),
+                    $bp->col('5 vcenter', '<p class="lead">Browsers</p><div id="browsersChartLegend"></div>'),
+                )).'<br>';
+                $page->script(array(
+                    'var browsersChartCanvas = document.getElementById("browsersChart").getContext("2d");',
+                    'var browsersChart = new Chart(browsersChartCanvas).Doughnut('.$data.', '.$options.');',
+                    'document.getElementById("browsersChartLegend").innerHTML = browsersChart.generateLegend();',
+                ));
+            }
+            // Versions
+            $options = str_replace(' - ', ' - v.', $options);
+            foreach ($browsers as $browser => $share) {
+                if (!empty($browser) && ($percent = round($share)) > 0 && isset($versions[$browser]) && ($data = $this->users($versions[$browser]))) {
+                    $seo = $blog->url($browser);
+                    $html .= '<br>'.$bp->row('sm', array(
+                        $bp->col('6 vcenter', '<div class="canvas-container"><canvas id="'.$seo.'Chart" height="250"></canvas></div>'),
+                        $bp->col('5 vcenter', '<p class="lead">'.$browser.' ('.$percent.'% of Users)</p><div id="'.$seo.'ChartLegend"></div>'),
+                    )).'<br>';
+                    $page->script(array(
+                        'var '.$seo.'ChartCanvas = document.getElementById("'.$seo.'Chart").getContext("2d");',
+                        'var '.$seo.'Chart = new Chart('.$seo.'ChartCanvas).Doughnut('.$data.', '.$options.');',
+                        'document.getElementById("'.$seo.'ChartLegend").innerHTML = '.$seo.'Chart.generateLegend();',
+                    ));
+                }
+            }
+            if (!empty($html)) {
+                $html = '<div style="margin:20px;">'.$html.'</div>';
+            }
+            $html = Admin::box('default', array(
+                'head with-border' => $bp->icon('user').' Users <small style="margin-left:10px;">Last 30 Days</small>',
+                'body' => $html,
+            ));
+        }
+
+        return $html;
     }
 
     private function referrers()
@@ -144,14 +576,14 @@ class Analytics
             $html .= $bp->table->cell('', 'Page');
             $html .= $bp->table->cell('', 'Location');
             $html .= $bp->table->cell('class=text-center', 'Hits');
-            $html .= $bp->table->cell('class=text-center', 'Date');
+            $html .= $bp->table->cell('class=text-center', 'Time');
             while (list($hits, $duration, $started, $referrer, $path, $query, $hemisphere, $timezone) = $db->fetch($result)) {
                 preg_match('/\/\/([\S]+\.[a-z]{2,4})\//i', $referrer, $matches);
                 $website = array_pop($matches);
                 $location = BPA::location($timezone, $hemisphere);
                 $html .= $bp->table->row();
                 $html .= $bp->table->cell('', '<a href="'.$referrer.'" title="'.$website.'">'.$this->ellipsize($website, 50).'</a>');
-                $html .= $bp->table->cell('', '<a href="'.$page->url($path.$query).'" title="'.$path.'">'.$this->ellipsize($path, 50).'</a>');
+                $html .= $bp->table->cell('', '<a href="'.$page->url('base', $path.$query).'" title="'.$path.'">'.$this->ellipsize($path, 50, '(index)').'</a>');
                 $html .= $bp->table->cell('', '<span title="'.$location.'">'.$this->ellipsize($location, 50).'</span>');
                 $html .= $bp->table->cell('class=text-center', $hits);
                 $html .= $bp->table->cell('class=text-center', '<span class="timeago" title="'.date('c', $started).'">'.$started.'</span>');
@@ -169,8 +601,9 @@ class Analytics
 
     private function pages()
     {
-        extract(Admin::params('bp', 'website', 'page'));
+        extract(Admin::params('bp', 'website', 'page', 'path', 'admin'));
         $page->title = 'Analytic Pages at '.$website;
+        $url = $page->url($admin, $path, 'users'); // for linking most recent users
         $html = $bp->table->open('class=hover');
         $html .= $bp->table->head();
         $html .= $bp->table->cell('', 'Most Popular (last 30 days)');
@@ -181,11 +614,11 @@ class Analytics
             'INNER JOIN analytic_paths AS p ON h.path_id = p.id',
             'LEFT JOIN analytic_users AS u ON h.session_id = u.session_id AND u.user_id = ?',
             'WHERE h.time > ? AND u.user_id IS NULL',
-            'GROUP BY h.path_id ORDER BY hits DESC LIMIT 50',
+            'GROUP BY h.path_id ORDER BY hits DESC LIMIT 25',
         ), array($this->user_id, ($this->now - 2592000)), 'row')) {
             while (list($path, $hits) = $this->db->fetch($result)) {
                 $html .= $bp->table->row();
-                $html .= $bp->table->cell('', '<a href="'.$page->url($path).'">'.(empty($path) ? '(index)' : $path).'</a>');
+                $html .= $bp->table->cell('', '<a href="'.$page->url('base', $path).'">'.$this->ellipsize($path, 50, '(index)').'</a>');
                 $html .= $bp->table->cell('class=text-center', $hits);
             }
             $this->db->close($result);
@@ -198,22 +631,24 @@ class Analytics
         $html = $bp->table->open('class=hover');
         $html .= $bp->table->head();
         $html .= $bp->table->cell('', 'Most Recent (per user)');
-        $html .= $bp->table->cell('class=text-center', 'Date');
-        $html .= $bp->table->cell('class=text-center', 'IP');
+        $html .= $bp->table->cell('', 'Location');
+        $html .= $bp->table->cell('', 'Time');
         if ($result = $this->db->query(array(
-            'SELECT h.time, p.path, h.query, s.id, s.ip',
+            'SELECT p.path, h.query, h.time, s.id, s.timezone, s.hemisphere',
             'FROM analytic_hits AS h',
             'INNER JOIN analytic_paths AS p ON h.path_id = p.id',
             'INNER JOIN analytic_sessions AS s ON h.session_id = s.id',
             'LEFT JOIN analytic_users AS u ON h.session_id = u.session_id AND u.user_id = ?',
             'WHERE h.time > ? AND u.user_id IS NULL',
-            'GROUP BY s.id ORDER BY h.id DESC LIMIT 50',
+            'GROUP BY s.id ORDER BY h.id DESC LIMIT 25',
         ), array($this->user_id, ($this->now - 2592000)), 'row')) {
-            while (list($time, $path, $query, $id, $ip) = $this->db->fetch($result)) {
+            while (list($path, $query, $time, $id, $timezone, $hemisphere) = $this->db->fetch($result)) {
                 $html .= $bp->table->row();
-                $html .= $bp->table->cell('', '<a href="'.$page->url($path.$query).'">'.(empty($path) ? '(index)' : $path).'</a>');
-                $html .= $bp->table->cell('class=text-center', '<span class="timeago" title="'.date('c', $time).'">'.$time.'</span>');
-                $html .= $bp->table->cell('class=text-center', $ip);
+                $html .= $bp->table->cell('', '<a href="'.$page->url('base', $path.$query).'">'.$this->ellipsize($path, 50, '(index)').'</a>');
+                $html .= $bp->table->cell('', '<a href="'.$page->url('add', $url, array(
+                    'session' => $id,
+                )).'">'.BPA::location($timezone, $hemisphere).'</a>');
+                $html .= $bp->table->cell('', '<span class="timeago" title="'.date('c', $time).'">'.$time.'</span>');
                 // $html .= $bp->table->cell('class=text-center', '<a href="'.$page->url('add', '', 'id', $id).'">'.$ip.'</a>');
             }
         }
@@ -349,307 +784,12 @@ class Analytics
         return $html;
     }
 
-    private function users($data = null)
-    {
-        if (is_array($data)) {
-            $colors = array(
-                '#F39C12', // orange
-                '#F56954', // red
-                '#00A65A', // green
-                '#3C8DBC', // dk. blue
-                '#00C0EF', // lt. blue
-                '#D2D6DE', // lt. gray
-            );
-            // $colors = array('#F56954', '#00A65A', '#F39C12', '#00C0EF', '#3C8DBC', '#D2D6DE'); // red, green, orange, lt. blue, blue, lt. gray
-            foreach ($data as $key => $value) {
-                if (!empty($key) && ($percent = round($value)) > 0) {
-                    $color = array_shift($colors);
-                    $data[$key] = "{value:{$percent},color:\"{$color}\",label:\"{$key}\"}";
-                    array_push($colors, $color);
-                } else {
-                    unset($data[$key]);
-                }
-            }
-
-            return (!empty($data)) ? '['.implode(', ', $data).']' : null;
-        }
-        extract(Admin::params('bp', 'blog', 'website', 'page'));
-        $page->title = 'User Analytics at '.$website;
-        $page->style(array(
-            'canvas { display:inline; }',
-            '.canvas-container { width:100%; text-align:center; }',
-            '.vcenter' => array(
-                'display: inline-block;',
-                'vertical-align: middle;',
-                'float: none;',
-            ),
-        ));
-        $page->link('https://cdn.jsdelivr.net/chart.js/1.0.1/Chart.min.js');
-        $html = '';
-        $options = array(
-            'animation:false',
-            'legendTemplate:"<ul class=\"<%=name.toLowerCase()%>-legend list-unstyled\"><% for (var i=0; i<segments.length; i++){%><li><p><i class=\"fa fa-circle-o\" style=\"color:<%=segments[i].fillColor%>; margin-right:10px;\"></i><%=segments[i].value%>% - <%=segments[i].label%></p></li><%}%></ul>"',
-            'tooltipTemplate:"<%=value %>% - <%=label%>"',
-        );
-        $options = '{'.implode(', ', $options).'}';
-        $total = 0;
-        $mobile = array();
-        $platforms = array();
-        $browsers = array();
-        $versions = array();
-        if ($result = $this->db->query(array(
-            'SELECT s.hits, a.browser, a.version, a.mobile, a.desktop',
-            'FROM analytic_sessions AS s',
-            'INNER JOIN analytic_agents AS a ON s.agent_id = a.id',
-            'LEFT JOIN analytic_users AS u ON s.id = u.session_id AND u.user_id = ?',
-            'WHERE s.started > ? AND u.user_id IS NULL',
-        ), array($this->user_id, ($this->now - 2592000)), 'row')) {
-            while (list($hits, $browser, $version, $phone, $desktop) = $this->db->fetch($result)) {
-                // Total
-                $total += $hits;
-                // Mobile
-                if (!empty($phone)) {
-                    if (!isset($mobile[$phone])) {
-                        $mobile[$phone] = 0;
-                    }
-                    $mobile[$phone] += $hits;
-                }
-                // Platforms
-                if (!isset($platforms[$desktop])) {
-                    $platforms[$desktop] = 0;
-                }
-                $platforms[$desktop] += $hits;
-                // Browsers
-                if (!isset($browsers[$browser])) {
-                    $browsers[$browser] = 0;
-                }
-                $browsers[$browser] += $hits;
-                // Versions
-                $version = (int) $version;
-                if (!isset($versions[$browser][$version])) {
-                    $versions[$browser][$version] = 0;
-                }
-                $versions[$browser][$version] += $hits;
-            }
-            $this->db->close($result);
-        }
-        // Mobile
-        foreach ($mobile as $phone => $hits) {
-            $mobile[$phone] = ($hits / $total) * 100;
-        }
-        arsort($mobile);
-        if ($data = $this->users($mobile)) {
-            $html .= '<br>'.$bp->row('sm', array(
-                $bp->col('6 vcenter', '<div class="canvas-container"><canvas id="mobileChart" height="250"></canvas></div>'),
-                $bp->col('5 vcenter', '<p class="lead">Mobile ('.round(array_sum($mobile)).'% of Users)</p><div id="mobileChartLegend"></div>'),
-            )).'<br>';
-            $page->script(array(
-                'var mobileChartCanvas = document.getElementById("mobileChart").getContext("2d");',
-                'var mobileChart = new Chart(mobileChartCanvas).Doughnut('.$data.', '.$options.');',
-                'document.getElementById("mobileChartLegend").innerHTML = mobileChart.generateLegend();',
-            ));
-        }
-        // Platforms
-        foreach ($platforms as $platform => $hits) {
-            $platforms[$platform] = ($hits / $total) * 100;
-        }
-        arsort($platforms);
-        if ($data = $this->users($platforms)) {
-            $html .= '<br>'.$bp->row('sm', array(
-                $bp->col('6 vcenter', '<div class="canvas-container"><canvas id="platformsChart" height="250"></canvas></div>'),
-                $bp->col('5 vcenter', '<p class="lead">Platforms</p><div id="platformsChartLegend"></div>'),
-            )).'<br>';
-            $page->script(array(
-                'var platformsChartCanvas = document.getElementById("platformsChart").getContext("2d");',
-                'var platformsChart = new Chart(platformsChartCanvas).Doughnut('.$data.', '.$options.');',
-                'document.getElementById("platformsChartLegend").innerHTML = platformsChart.generateLegend();',
-            ));
-        }
-        // Browsers
-        foreach ($browsers as $browser => $hits) {
-            $browsers[$browser] = ($hits / $total) * 100;
-            foreach ($versions[$browser] as $version => $hits) {
-                $versions[$browser][$version] = ($hits / $total) * 100;
-            }
-            arsort($versions[$browser]);
-        }
-        arsort($browsers);
-        if ($data = $this->users($browsers)) {
-            $html .= '<br>'.$bp->row('sm', array(
-                $bp->col('6 vcenter', '<div class="canvas-container"><canvas id="browsersChart" height="250"></canvas></div>'),
-                $bp->col('5 vcenter', '<p class="lead">Browsers</p><div id="browsersChartLegend"></div>'),
-            )).'<br>';
-            $page->script(array(
-                'var browsersChartCanvas = document.getElementById("browsersChart").getContext("2d");',
-                'var browsersChart = new Chart(browsersChartCanvas).Doughnut('.$data.', '.$options.');',
-                'document.getElementById("browsersChartLegend").innerHTML = browsersChart.generateLegend();',
-            ));
-        }
-        // Versions
-        $options = str_replace(' - ', ' - version ', $options);
-        foreach ($browsers as $browser => $share) {
-            if (!empty($browser) && ($percent = round($share)) > 0 && isset($versions[$browser]) && ($data = $this->users($versions[$browser]))) {
-                $seo = $blog->url($browser);
-                $html .= '<br>'.$bp->row('sm', array(
-                    $bp->col('6 vcenter', '<div class="canvas-container"><canvas id="'.$seo.'Chart" height="250"></canvas></div>'),
-                    $bp->col('5 vcenter', '<p class="lead">'.$browser.' ('.$percent.'% of Users)</p><div id="'.$seo.'ChartLegend"></div>'),
-                )).'<br>';
-                $page->script(array(
-                    'var '.$seo.'ChartCanvas = document.getElementById("'.$seo.'Chart").getContext("2d");',
-                    'var '.$seo.'Chart = new Chart('.$seo.'ChartCanvas).Doughnut('.$data.', '.$options.');',
-                    'document.getElementById("'.$seo.'ChartLegend").innerHTML = '.$seo.'Chart.generateLegend();',
-                ));
-            }
-        }
-        if (!empty($html)) {
-            $html = '<div style="margin:20px;">'.$html.'</div>';
-        }
-
-        return Admin::box('default', array(
-            'head with-border' => $bp->icon('apple', 'fa').' Users <small style="margin-left:10px;">Last 30 Days</small>',
-            'body' => $html,
-        ));
-    }
-
-    private function robots()
-    {
-        extract(Admin::params('bp', 'blog', 'website', 'page'));
-        $page->title = 'Robot Analytics at '.$website;
-        $html = '';
-        $url = $page->url('delete', '', '?');
-        if (($agent = $page->get('agent')) && $row = $this->db->row(array(
-            'SELECT id, agent, robot',
-            'FROM analytic_agents',
-            'WHERE agent = ?',
-        ), $agent, 'assoc')) {
-            $header = !empty($row['robot']) ? $row['robot'] : $row['agent'];
-            if (!$bp->pagination->set('page', 100)) {
-                $bp->pagination->total($this->db->value(array(
-                    'SELECT COUNT(*) FROM analytic_bots WHERE agent_id = ?',
-                ), $row['id']));
-            }
-            if ($result = $this->db->query(array(
-                'SELECT p.path, b.query, b.time, b.ip',
-                'FROM analytic_bots AS b',
-                'INNER JOIN analytic_paths AS p ON b.path_id = p.id',
-                'WHERE b.agent_id = ? ORDER BY time DESC'.$bp->pagination->limit,
-            ), $row['id'], 'row')) {
-                $html .= $bp->table->open('class=hover');
-                $html .= $bp->table->head();
-                $html .= $bp->table->cell('', 'URL');
-                $html .= $bp->table->cell('', 'IP');
-                $html .= $bp->table->cell('class=text-center', 'Accessed');
-                $html .= $bp->table->cell('class=text-center', 'Next');
-                $delayed = null;
-                while (list($path, $query, $time, $ip) = $this->db->fetch($result)) {
-                    $html .= $bp->table->row();
-                    $html .= $bp->table->cell('', '<a href="'.$page->url($path.$query).'">'.$this->ellipsize($path, 50).'</a>');
-                    $html .= $bp->table->cell('', '<a href="'.$page->url('add', $url, 'ip', $ip).'">'.$ip.'</a>');
-                    $html .= $bp->table->cell('class=text-center', date('D, M m Y, h:i a', $time - $this->offset));
-                    $html .= $bp->table->cell('class=text-center', $this->next($delayed, $time));
-                }
-                $html .= $bp->table->close();
-                $this->db->close($result);
-            }
-        } elseif ($ip = $page->get('ip')) {
-            $header = strip_tags($ip);
-            if (!$bp->pagination->set('page', 100)) {
-                $bp->pagination->total($this->db->value(array(
-                    'SELECT COUNT(*) FROM analytic_bots WHERE ip = ?',
-                ), $header));
-            }
-            if ($result = $this->db->query(array(
-                'SELECT p.path, b.query, b.time, a.agent',
-                'FROM analytic_bots AS b',
-                'INNER JOIN analytic_paths AS p ON b.path_id = p.id',
-                'INNER JOIN analytic_agents AS a ON b.agent_id = a.id',
-                'WHERE b.ip = ? ORDER BY time DESC'.$bp->pagination->limit,
-            ), $header, 'row')) {
-                $html .= $bp->table->open('class=hover');
-                $html .= $bp->table->head();
-                $html .= $bp->table->cell('', 'URL');
-                $html .= $bp->table->cell('', 'User Agent');
-                $html .= $bp->table->cell('class=text-center', 'Accessed');
-                $html .= $bp->table->cell('class=text-center', 'Next');
-                $delayed = null;
-                while (list($path, $query, $time, $agent) = $this->db->fetch($result)) {
-                    $html .= $bp->table->row();
-                    $html .= $bp->table->cell('', '<a href="'.$page->url($path.$query).'">'.$this->ellipsize($path, 50).'</a>');
-                    $html .= $bp->table->cell('', '<a href="'.$page->url('add', $url, 'agent', $agent).'">'.$this->ellipsize($agent, 50).'</a>');
-                    $html .= $bp->table->cell('class=text-center', date('D, M m Y, h:i a', $time - $this->offset));
-                    $html .= $bp->table->cell('class=text-center', $this->next($delayed, $time));
-                }
-                $html .= $bp->table->close();
-                $this->db->close($result);
-            }
-        } else {
-            $header = 'Robots <small style="margin-left:10px;">Last 30 Days</small>';
-            $file = $blog->folder.'content/robots.txt.twig';
-            if (!is_file($file)) {
-                file_put_contents($file, '');
-            }
-            \BootPress\Admin\Files::save(array('robots.txt' => $file));
-            if (!$sitemaps = $this->db->ids(array(
-                'SELECT id FROM analytic_paths WHERE path LIKE ? AND path NOT LIKE ?',
-            ), array('sitemap%.xml', '%/%'))) {
-                $sitemaps = array();
-            }
-            if (!$robots = $this->db->ids(array(
-                'SELECT id FROM analytic_paths WHERE path = ?',
-            ), 'robots.txt')) {
-                $robots = array();
-            }
-            $month = time() - 2592000; // last 30 days
-            if (!$bp->pagination->set('page', 100)) {
-                $bp->pagination->total($this->db->value(array(
-                    'SELECT COUNT(DISTINCT agent_id)',
-                    'FROM analytic_bots',
-                    'WHERE time > ?',
-                ), $month));
-            }
-            if ($result = $this->db->query(array(
-                'SELECT a.agent, a.robot,',
-                '   MAX(b.time) AS time,',
-                '   COUNT(b.agent_id) AS hits,',
-                '   SUM(CASE WHEN b.path_id IN('.implode(',', $robots).') THEN 1 ELSE 0 END) AS robots,',
-                '   SUM(CASE WHEN b.path_id IN('.implode(',', $sitemaps).') THEN 1 ELSE 0 END) AS sitemaps,',
-                '   MAX(CASE WHEN b.path_id IN('.implode(',', array_merge($robots, $sitemaps)).') THEN b.time ELSE 0 END) AS checked',
-                'FROM analytic_bots AS b',
-                'INNER JOIN analytic_agents AS a ON b.agent_id = a.id',
-                'WHERE b.time > ?',
-                'GROUP BY b.agent_id',
-                'ORDER BY hits DESC'.$bp->pagination->limit,
-            ), $month, 'row')) {
-                $html .= $bp->table->open('class=hover');
-                $html .= $bp->table->head();
-                $html .= $bp->table->cell('', 'User Agent');
-                $html .= $bp->table->cell('class=text-center', 'Hits');
-                $html .= $bp->table->cell('class=text-center', '<a href="#" class="wyciwyg txt text-nowrap" data-retrieve="robots.txt" data-file="robots.txt" title="Edit">'.$bp->icon('pencil-square-o', 'fa').' robots.txt</a>');
-                $html .= $bp->table->cell('class=text-center', '<a href="'.$page->url('sitemap.xml').'" class="text-nowrap" target="_blank" title="View">sitemap%.xml '.$bp->icon('external-link', 'fa').'</a>');
-                $html .= $bp->table->cell('class=text-center', 'Checked');
-                while (list($agent, $robot, $time, $hits, $robots, $sitemaps, $checked) = $this->db->fetch($result)) {
-                    $html .= $bp->table->row();
-                    $html .= $bp->table->cell('', '<a href="'.$page->url('add', $url, 'agent', $agent).'">'.(!empty($robot) ? $robot : $this->ellipsize($agent, 50)).'</a>');
-                    $html .= $bp->table->cell('class=text-center', $hits);
-                    $html .= $bp->table->cell('class=text-center', !empty($robots) ? $robots : '-');
-                    $html .= $bp->table->cell('class=text-center', !empty($sitemaps) ? $sitemaps : '-');
-                    $html .= $bp->table->cell('class=text-center', !empty($checked) ? '<span class="timeago" title="'.date('c', $checked).'">'.$checked.'</span>' : '-');
-                }
-                $html .= $bp->table->close();
-                $this->db->close($result);
-            }
-        }
-
-        return Admin::box('default', array(
-            'head with-border' => $bp->icon('sitemap', 'fa').' '.$header,
-            'body no-padding table-responsive' => $html,
-            'foot clearfix' => $bp->pagination->links(),
-        ));
-    }
-
-    private function ellipsize($string, $length)
+    private function ellipsize($string, $length, $alt = '')
     {
         $string = trim(strip_tags($string));
+        if (empty($string)) {
+            $string = $alt;
+        }
 
         return (mb_strlen($string) >= $length) ? mb_substr($string, 0, $length).'&hellip;' : $string;
     }
