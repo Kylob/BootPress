@@ -169,12 +169,11 @@ class Component
             } else {
                 $browser = $agent->browser();
                 $analytics['agent']['browser'] = $browser;
-                $analytics['agent']['version'] = $agent->version($browser);
+                $analytics['agent']['version'] = intval($agent->version($browser));
                 if ($agent->isMobile()) {
                     $analytics['agent']['mobile'] = $agent->device();
                 } else { // desktop
-                    $platform = $agent->platform();
-                    $analytics['agent']['desktop'] = trim($platform.' '.$agent->version($platform));
+                    $analytics['agent']['desktop'] = $agent->platform();
                 }
             }
             unset($agent);
@@ -193,7 +192,7 @@ class Component
                 'agent' => trim(substr(strip_tags($page->request->headers->get('User-Agent')), 0, 255)),
                 'robot' => (string) $robot,
                 'browser' => (string) $browser,
-                'version' => (string) $version,
+                'version' => empty($version) ? '' : $version,
                 'mobile' => (string) $mobile,
                 'desktop' => (string) $desktop,
                 'referrer' => (string) $referrer,
@@ -301,9 +300,11 @@ class Component
             }, array(200));
         }
 
-        $page->filter('body', function ($html) use ($page) {
-            return $html."\n\t".'<script src="'.$page->url($page->dirname(__CLASS__), 'analytics.js').'"></script>';
-        });
+        if (empty($analytics['agent']['robot'])) {
+            $page->filter('body', function ($html) use ($page) {
+                return $html."\n\t".'<script src="'.$page->url($page->dirname(__CLASS__), 'analytics.js').'"></script>';
+            });
+        }
 
         return false;
     }
