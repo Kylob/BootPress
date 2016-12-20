@@ -127,11 +127,11 @@ class AnalyticsTest extends \BootPress\HTMLUnit\Component
             'timezone' => 'UM9',
             'javascript' => true,
             'agent' => array(
-                'robot' => '',
+                'robot' => null,
                 'browser' => 'Safari',
-                'version' => '5.1.7',
+                'version' => '5',
                 'mobile' => '',
-                'desktop' => 'OS X 10_6_8',
+                'desktop' => 'OS X',
             ),
         ), $info);
 
