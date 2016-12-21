@@ -78,13 +78,15 @@ class Themes
             } else {
                 $dir = $blog->folder.'themes/'.$save.'/';
                 mkdir($dir, 0755, true);
-                file_put_contents($dir.'index.html.twig', '');
                 if (!empty($vars['upload']) && is_file(Upload::$folder.$vars['upload'])) {
                     $zip = new Unzip(Upload::$folder.$vars['upload'], $dir);
                     $zip->extract('yml|twig|js|css|less|scss|ttf|otf|svg|eot|woff|woff2|swf|jpg|jpeg|gif|png|ico', 'remove_common_dir');
                     $zip->close();
                     unset($zip);
                     unlink(Upload::$folder.$vars['upload']);
+                }
+                if (!is_file($dir.'index.html.twig')) {
+                    file_put_contents($dir.'index.html.twig', '');
                 }
                 $form->eject = $page->url('add', $form->eject, 'edit', $save);
             }
