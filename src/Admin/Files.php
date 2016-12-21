@@ -2,11 +2,12 @@
 
 namespace BootPress\Admin;
 
-use BootPress\Admin\Component as Admin;
-use BootPress\Upload\Component as Upload;
-use BootPress\Unzip\Component as Unzip;
-use BootPress\Asset\Component as Asset;
+use BootPress\Blog\Twig\Parser;
 use BootPress\Page\Component as Page;
+use BootPress\Admin\Component as Admin;
+use BootPress\Asset\Component as Asset;
+use BootPress\Unzip\Component as Unzip;
+use BootPress\Upload\Component as Upload;
 use ZipStream; // maennchen/zipstream-php
 use Intervention\Image\ImageManager;
 use Symfony\Component\Yaml\Yaml;
@@ -503,6 +504,7 @@ class Files
                         break;
                     case 'twig':
                         $twig = $blog->theme->getTwig();
+                        $twig->setParser(new Parser($twig));
                         try {
                             $twig->parse($twig->tokenize(new \Twig_Source($code, basename($file))));
                         } catch (\Twig_Error_Syntax $e) {
