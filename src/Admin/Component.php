@@ -440,7 +440,6 @@ class Component
             $page->jquery = 'https://cdn.jsdelivr.net/jquery/2.2.3/jquery.min.js';
         }
         $page->style(array(
-            '.input-group-btn .btn { padding-bottom:7px; }',
             '.box-header h3 .fa, .box-header h3 .glyphicon { margin-right:10px; }',
             '.media-body span.space { margin-right:25px; }',
             '.media-right { white-space:nowrap; }',
