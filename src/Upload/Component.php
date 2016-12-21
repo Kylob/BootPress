@@ -25,8 +25,11 @@ class Component
     {
         if (is_null(self::$folder)) {
             $dir = str_replace('\\', '/', __DIR__).'/uploads/';
-            if (!is_dir($dir)) {
-                mkdir($dir, 0755, true);
+            if (!is_dir($dir) && !mkdir($dir, 0755, true)) {
+                throw new \Exception('The uploads dir "'.$dir.'" does not exist.');
+            }
+            if (!is_writable($dir)) {
+                throw new \Exception('The uploads dir "'.$dir.'" is not writable.');
             }
             self::$folder = $dir;
         }
