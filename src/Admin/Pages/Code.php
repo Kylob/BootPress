@@ -37,7 +37,7 @@ class Code
         }
 
         // Breadcrumb links
-        $links = array();
+        $html .= '<ul class="breadcrumb">';
         $relative = array(); // dot **../** syntax
         $base = explode('/', rtrim($page->dir(), '/'));
         foreach ($base as $length => $path) {
@@ -51,9 +51,9 @@ class Code
             $folders[] = $name;
             if ($search && (false !== $dots = array_search(implode('/', $folders), $relative))) {
                 if ($dots == '') {
-                    $links['<b>'.$name.'</b>'] = $url;
+                    $html .= '<li><a href="'.$url.'"><b>'.$name.'</b></a></li>';
                 } else {
-                    $links[$name] = $url.'?dir='.$dots;
+                    $html .= '<li><a href="'.$url.'?dir='.$dots.'">'.$name.'</a></li>';
                 }
                 $previous = $dots;
             } else {
@@ -61,7 +61,7 @@ class Code
                     $search = false;
                 }
                 $previous .= $name.'/';
-                $links[$name] = $url.'?dir='.trim($previous, '/');
+                $html .= '<li><a href="'.$url.'?dir='.trim($previous, '/').'">'.$name.'</a></li>';
             }
         }
         $pulldown = array();
@@ -70,10 +70,9 @@ class Code
             $pulldown[$name] = $url.'?dir='.trim($previous.$name, '/');
         }
         if (!empty($pulldown)) {
-            $links[''] = $pulldown;
+            $html .= $bp->links('li', array(''=>$pulldown));
         }
-        $links[] = '';
-        $html .= $bp->breadcrumbs($links);
+        $html .= '</ul>';
 
         // Create a new folder
         $form = $bp->form('admin_code_folders');
