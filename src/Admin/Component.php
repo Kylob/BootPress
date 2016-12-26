@@ -425,7 +425,7 @@ class Component
             'https://cdn.jsdelivr.net/bootbox/4.4.0/bootbox.min.js',
             'https://cdn.jsdelivr.net/icheck/1.0.2/icheck.min.js',
             'https://cdn.jsdelivr.net/icheck/1.0.2/skins/line/red.min.css',
-            'https://cdn.jsdelivr.net/ace/1.2.3/min/ace.js',
+            'https://cdn.jsdelivr.net/ace/1.2.6/min/ace.js',
             $page->url($plugin, 'Pages/admin/wyciwyg.js'),
             '<!--[if lt IE 9]>
                 <script src="https://cdn.jsdelivr.net/html5shiv/3.7.3/html5shiv.min.js"></script>
