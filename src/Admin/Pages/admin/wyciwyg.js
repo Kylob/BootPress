@@ -275,44 +275,9 @@ $(document).ready(function(){
     });
 
     editor.commands.addCommand({
-        name: "tab",
-        bindKey: {win: "Tab",  mac: "Tab"},
-        exec: function() { editor.insert("\t"); },
-        readOnly: false
-    });
-
-    editor.commands.addCommand({
         name: "save",
         bindKey: {win: "Ctrl-S",  mac: "Command-S"},
         exec: function() { $("#toolbar button.send").click(); },
-        readOnly: false
-    });
-
-    editor.commands.addCommand({
-        name: "page up",
-        bindKey: {win: "Ctrl-Up",  mac: "Command-Up"},
-        exec: function() { editor.gotoPageUp(); },
-        readOnly: true
-    });
-
-    editor.commands.addCommand({
-        name: "page down",
-        bindKey: {win: "Ctrl-Down",  mac: "Command-Down"},
-        exec: function() { editor.gotoPageDown(); },
-        readOnly: true
-    });
-
-    editor.commands.addCommand({
-        name: "indent",
-        bindKey: {win: "Ctrl-Shift-I",  mac: "Command-Shift-I"},
-        exec: function() { editor.blockIndent(); },
-        readOnly: false
-    });
-
-    editor.commands.addCommand({
-        name: "outdent",
-        bindKey: {win: "Ctrl-Shift-O",  mac: "Command-Shift-O"},
-        exec: function() { editor.blockOutdent(); },
         readOnly: false
     });
 
