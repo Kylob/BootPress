@@ -13,6 +13,11 @@ class AnalyticsTest extends \BootPress\HTMLUnit\Component
 
     public static function setUpBeforeClass()
     {
+        // To avert a ps_files_cleanup_dir permission denied error.
+        if (is_dir('/tmp')) {
+            session_save_path('/tmp');
+        }
+        ini_set('session.gc_probability', 0);
         self::$page = array('testing' => true, 'dir' => __DIR__.'/page', 'suffix' => '.html');
     }
 
