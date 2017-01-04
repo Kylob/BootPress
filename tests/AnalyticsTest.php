@@ -121,7 +121,7 @@ class AnalyticsTest extends \BootPress\HTMLUnit\Component
         unset($info['last'], $info['started']);
         $this->assertEquals(array(
             'hits' => 1,
-            'session' => $page->session->getId(),
+            'session' => $page->session->id(),
             'users' => array(1),
             'offset' => 28800,
             'timezone' => 'UM9',
