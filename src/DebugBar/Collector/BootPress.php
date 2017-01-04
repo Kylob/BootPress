@@ -104,7 +104,7 @@ class BootPress extends DataCollector implements DataCollectorInterface, Rendera
                 'Headers' => $responseHeaders,
                 'Content' => $content,
             ),
-            'Session' => $page->session->all(),
+            'Session' => isset($_SESSION) ? $_SESSION : array(),
             'Cookies' => $page->request->cookies->all(),
         );
 
