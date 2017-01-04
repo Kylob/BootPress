@@ -15,6 +15,7 @@ class DebugBarTest extends \BootPress\HTMLUnit\Component
 
     public function testDebugbarFunction()
     {
+        ob_start();
         debugbar('breakpoint', 'Starting Test', 'From the Beginning');
         $page = Page::html(array(
             'dir' => __DIR__.'/page',
@@ -30,6 +31,7 @@ class DebugBarTest extends \BootPress\HTMLUnit\Component
         debugbar('enable');
         $page->send($page->display('Content'));
         debugbar('breakpoint', 'Ending Test');
+        $output = ob_get_clean();
     }
     
 }
