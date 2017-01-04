@@ -2,9 +2,9 @@
 
 namespace BootPress\DebugBar;
 
+use BootPress\Page\Session;
 use DebugBar\HttpDriverInterface;
 use Symfony\Component\HttpFoundation\Response;
-use Symfony\Component\HttpFoundation\Session\Session;
 
 /**
  * HTTP driver for Symfony Request/Session.
@@ -29,11 +29,9 @@ class SymfonyHttpDriver implements HttpDriverInterface
 
     public function isSessionStarted()
     {
-        if (!$this->session->isStarted()) {
-            $this->session->start();
-        }
+        $this->session->id();
 
-        return $this->session->isStarted();
+        return Session::$started;
     }
 
     public function setSessionValue($name, $value)
@@ -43,7 +41,7 @@ class SymfonyHttpDriver implements HttpDriverInterface
 
     public function hasSessionValue($name)
     {
-        return $this->session->has($name);
+        return (!is_null($this->session->get($name))) ? true : false;
     }
 
     public function getSessionValue($name)
