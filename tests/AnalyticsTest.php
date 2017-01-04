@@ -165,7 +165,7 @@ class AnalyticsTest extends \BootPress\HTMLUnit\Component
         session_regenerate_id();
         $page = $this->page(array('server' => array(
             'HTTP_USER_AGENT' => 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_6_8) AppleWebKit/537.13+ (KHTML, like Gecko) Version/5.1.7 Safari/534.57.2',
-            'HTTP_REFERER' => 'http://somewhere-else.com/linked.html?query=string',
+            'HTTP_REFERER' => 'https://website.com/path.html?query=string', // does not get logged
         )));
         $this->assertFalse(Analytics::log());
         $page->send($page->display('Content')); // includes analytics.js at end of <body>
