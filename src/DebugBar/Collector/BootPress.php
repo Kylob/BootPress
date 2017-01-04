@@ -113,7 +113,9 @@ class BootPress extends DataCollector implements DataCollectorInterface, Rendera
         }
 
         foreach ($data as $key => $var) {
-            if (!is_string($data[$key])) {
+            if (empty($var)) {
+                unset($data[$key]);
+            } elseif (!is_string($var)) {
                 $data[$key] = $this->formatVar($var);
             }
         }
