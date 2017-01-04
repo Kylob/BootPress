@@ -7,6 +7,9 @@ if (!function_exists('debugbar')) {
         $params = func_get_args();
         $action = (string) array_shift($params);
         switch ($action) {
+            case 'class':
+                return $debugbar ? $debugbar::$debugbar : false;
+                break;
             case 'enable':
                 if (is_null($debugbar)) {
                     $enable = array_shift($params);
