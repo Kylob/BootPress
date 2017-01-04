@@ -39,6 +39,8 @@ class AnalyticsTest extends \BootPress\HTMLUnit\Component
 
     public function testLogProcessHitsIdAndExecMethods()
     {
+        ob_start();
+        
         // Robot - Google
         $page = $this->page(array('server' => array(
             'HTTP_USER_AGENT' => 'Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)',
@@ -223,6 +225,8 @@ class AnalyticsTest extends \BootPress\HTMLUnit\Component
         $this->assertEquals(array(
             array('session_id' => 1, 'user_id' => 1),
         ), $db->all('SELECT * FROM analytic_users WHERE user_id = ?', 1, 'assoc'));
+        
+        $output = ob_get_clean();
     }
 
     public function testPostAndJsonMethods()
