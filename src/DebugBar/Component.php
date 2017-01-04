@@ -9,10 +9,10 @@ use DebugBar\DebugBar;
 
 class Component
 {
+    public static $debugbar;
     protected static $breakpoints = array();
     protected static $files = array();
     protected static $logs = array();
-    private $debugbar;
     private $renderer;
     private $messages;
 
@@ -57,13 +57,16 @@ class Component
 
     public function __construct(array $enable = array(), array $messages = array())
     {
+        if (self::$debugbar) {
+            return;
+        }
         $started = microtime(true);
-        $this->debugbar = new DebugBar();
+        self::$debugbar = new DebugBar();
         $page = Page::html();
         $plugin = $page->dirname('DebugBar\DebugBar');
         $url = $page->path($plugin, 'Resources');
         $dir = $page->dir($plugin, 'Resources');
-        $this->renderer = $this->debugbar->getJavascriptRenderer($url, $dir);
+        $this->renderer = self::$debugbar->getJavascriptRenderer($url, $dir);
         DataCollector::setDefaultDataFormatter(new \BootPress\DebugBar\DataFormatter());
         $map = array(
             'php' => 'DebugBar\DataCollector\PhpInfoCollector',
@@ -80,13 +83,13 @@ class Component
         }
         foreach ($enable as $collector) {
             if ($collector instanceof DataCollector) {
-                $this->debugbar->addCollector($collector);
+                self::$debugbar->addCollector($collector);
             } elseif (class_exists($collector)) {
-                $this->debugbar->addCollector(new $collector());
+                self::$debugbar->addCollector(new $collector());
             } elseif (is_string($collector)) {
                 $class = strtolower($collector);
                 if (isset($map[$class])) {
-                    $this->debugbar->addCollector(new $map[$class]());
+                    self::$debugbar->addCollector(new $map[$class]());
                 }
             }
         }
@@ -114,7 +117,7 @@ class Component
                 self::addBreakPoint('Render DebugBar');
                 array_pop(self::$logs);
                 array_pop(self::$breakpoints);
-                if ($this->debugbar->hasCollector('time')) {
+                if (self::$debugbar->hasCollector('time')) {
                     $chunk = 0;
                     foreach (static::$breakpoints as $bp) {
                         if (is_array($bp)) {
@@ -122,7 +125,7 @@ class Component
                             $name = '('.DataCollector::getDefaultDataFormatter()->formatBytes($memory - $chunk).') "'.$name.'" BreakPoint';
                             $chunk = $memory;
                             if (!isset($start)) {
-                                $start = $this->debugbar['time']->getRequestStartTime();
+                                $start = self::$debugbar['time']->getRequestStartTime();
                             }
                             $this->time($name, $start, $time);
                             $start = $time;
@@ -132,8 +135,8 @@ class Component
                     }
                     $this->start('Render DebugBar');
                 }
-                if ($this->debugbar->hasCollector('bootpress')) {
-                    $this->debugbar->getCollector('bootpress')->setResponse($response);
+                if (self::$debugbar->hasCollector('bootpress')) {
+                    self::$debugbar->getCollector('bootpress')->setResponse($response);
                 }
                 $files = str_replace('\\', '/', array_keys(static::$files));
                 $base = $page->commonDir($files);
@@ -160,11 +163,11 @@ class Component
                     $response->setContent($content);
                 } else {
                     $httpDriver = new SymfonyHttpDriver($page->session, $response);
-                    $this->debugbar->setHttpDriver($httpDriver);
+                    self::$debugbar->setHttpDriver($httpDriver);
                     if ($type == 'json') {
-                        $this->debugbar->sendDataInHeaders();
+                        self::$debugbar->sendDataInHeaders();
                     } else { // $type == 'redirect'
-                        $this->debugbar->stackData();
+                        self::$debugbar->stackData();
                     }
                 }
             }
@@ -176,32 +179,32 @@ class Component
     {
         switch ($method) {
             case 'start':
-                if ($this->debugbar->hasCollector('time')) {
-                    call_user_func_array(array($this->debugbar['time'], 'startMeasure'), $arguments);
+                if (self::$debugbar->hasCollector('time')) {
+                    call_user_func_array(array(self::$debugbar['time'], 'startMeasure'), $arguments);
                 }
                 break;
             case 'stop':
-                if ($this->debugbar->hasCollector('time')) {
-                    call_user_func_array(array($this->debugbar['time'], 'stopMeasure'), $arguments);
+                if (self::$debugbar->hasCollector('time')) {
+                    call_user_func_array(array(self::$debugbar['time'], 'stopMeasure'), $arguments);
                 }
                 break;
             case 'measure':
-                if ($this->debugbar->hasCollector('time')) {
-                    call_user_func_array(array($this->debugbar['time'], 'measure'), $arguments);
+                if (self::$debugbar->hasCollector('time')) {
+                    call_user_func_array(array(self::$debugbar['time'], 'measure'), $arguments);
                 }
                 break;
             case 'time':
-                if ($this->debugbar->hasCollector('time')) {
-                    call_user_func_array(array($this->debugbar['time'], 'addMeasure'), $arguments);
+                if (self::$debugbar->hasCollector('time')) {
+                    call_user_func_array(array(self::$debugbar['time'], 'addMeasure'), $arguments);
                 }
                 break;
             case 'exception':
-                if ($this->debugbar->hasCollector('exceptions')) {
-                    call_user_func_array(array($this->debugbar['exceptions'], 'addException'), $arguments);
+                if (self::$debugbar->hasCollector('exceptions')) {
+                    call_user_func_array(array(self::$debugbar['exceptions'], 'addException'), $arguments);
                 }
                 break;
             default:
-                if ($this->debugbar->hasCollector('messages') && isset($this->messages[$method])) {
+                if (self::$debugbar->hasCollector('messages') && isset($this->messages[$method])) {
                     list($message, $file, $line, $memory, $time) = $arguments;
                     $is_string = true;
                     if (!is_string($message)) {
@@ -209,9 +212,9 @@ class Component
                         $is_string = false;
                     }
                     $prepend = array();
-                    if (is_numeric($memory) && is_numeric($time) && $this->debugbar->hasCollector('time')) {
+                    if (is_numeric($memory) && is_numeric($time) && self::$debugbar->hasCollector('time')) {
                         $memory = DataCollector::getDefaultDataFormatter()->formatBytes($memory);
-                        $time = ($time > 0) ? $time - $this->debugbar['time']->getRequestStartTime() : 0;
+                        $time = ($time > 0) ? $time - self::$debugbar['time']->getRequestStartTime() : 0;
                         $time = DataCollector::getDefaultDataFormatter()->formatDuration($time);
                         $prepend[] = '['.$memory.' | '.$time.']';
                     }
@@ -219,7 +222,7 @@ class Component
                         $prepend[] = '['.static::$files[$file].' Ln:'.$line.']';
                     }
                     $message = trim(implode(' ', $prepend).' '.$message);
-                    $this->debugbar['messages']->addMessage($message, $method, $is_string);
+                    self::$debugbar['messages']->addMessage($message, $method, $is_string);
                 }
                 break;
         }
