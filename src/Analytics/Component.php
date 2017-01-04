@@ -155,7 +155,7 @@ class Component
                 'hits' => 0,
                 'last' => $now,
                 'started' => $now,
-                'session' => $page->session->getId(),
+                'session' => $page->session->id(),
                 'javascript' => false,
                 'timezone' => null,
                 'offset' => null,
