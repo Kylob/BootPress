@@ -243,13 +243,12 @@ class Users
         $html .= $bp->table->cell('style=text-align:center; width:60px;', 'Approved');
         $html .= $bp->table->cell('style=text-align:right;', 'Last Activity');
         if (!empty($ids)) {
-            $analytics = $page->session->get('analytics');
             foreach ($auth->info($ids) as $id => $user) {
                 $html .= $bp->table->row();
                 $html .= $bp->table->cell('', $bp->button('xs warning', $bp->icon('pencil').' '.$user['id'], array('href' => $page->url('admin', 'users/edit?id='.$id), 'title' => 'Edit User')));
                 $html .= $bp->table->cell('', $user['name']);
                 $html .= $bp->table->cell('', $user['email']);
-                $html .= $bp->table->cell('align=center', date('M d Y', $user['registered'] - $analytics['offset']));
+                $html .= $bp->table->cell('align=center', date('M d Y', $user['registered'] - $page->session->get('analytics.offset', 0)));
                 $html .= $bp->table->cell('align=center', $user['admin']);
                 $html .= $bp->table->cell('align=center', $bp->label(($user['approved'] == 'Y' ? 'success' : 'danger'), $user['approved']));
                 $html .= $bp->table->cell('align=right', ($user['last_activity'] > 0) ? '<span class="timeago" title="'.date('c', $user['last_activity']).'"></span>' : '');
@@ -386,7 +385,6 @@ class Users
         if ($result = $auth->db->query(array(
             'SELECT * FROM user_sessions WHERE user_id = ? ORDER BY user_id, adjourn DESC'.$bp->pagination->limit,
         ), $user_id, 'assoc')) {
-            $offset = ($analytics = $page->session->get('analytics')) ? $analytics['offset'] : 0;
             $html .= $bp->table->open('class=table');
             $html .= $bp->table->head();
             $html .= $bp->table->cell('style=text-align:center; width:75px;', 'Current');
@@ -399,7 +397,7 @@ class Users
                 $login = strtotime($row['login']);
                 $html .= $bp->table->row();
                 $html .= $bp->table->cell('style=text-align:center;', $current ? $bp->icon('check text-green', 'fa') : '&nbsp;'); // Current
-                $html .= $bp->table->cell('', date('D, j M Y @ g:i a', $login - $offset).' <span class="timeago" title="'.date('c', $login).'"></span>'); // Login
+                $html .= $bp->table->cell('', date('D, j M Y @ g:i a', $login - $page->session->get('analytics.offset', 0)).' <span class="timeago" title="'.date('c', $login).'"></span>'); // Login
                 $html .= $bp->table->cell('', '<span class="timeago" title="'.date('c', $row['adjourn']).'"></span>'); // Expires
                 $html .= $bp->table->cell('', $row['ip_address']); // IP Address
                 $html .= $bp->table->cell('style=text-align:center;', $current ? '<a href="'.$page->url('add', '', 'logout', $row['id']).'" title="Click to log user out of this session">'.$bp->icon('sign-out', 'fa').'</a>' : '&nbsp;'); // Logout
