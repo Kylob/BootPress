@@ -53,7 +53,8 @@ class AnalyticsTest extends \BootPress\HTMLUnit\Component
         $page->send('Content');
 
         // Mobile - iPhone
-        $page->session->invalidate(); // so it doesn't think we are a repeat visitor
+        $_SESSION = array();
+        session_create_id(); // so it doesn't think we are a repeat visitor
         $page = $this->page(array('server' => array(
             'HTTP_USER_AGENT' => 'Mozilla/5.0 (iPhone; U; ru; CPU iPhone OS 4_2_1 like Mac OS X; ru) AppleWebKit/533.17.9 (KHTML, like Gecko) Version/5.0.2 Mobile/8C148a Safari/6533.18.5',
         )));
@@ -61,7 +62,8 @@ class AnalyticsTest extends \BootPress\HTMLUnit\Component
         $page->send('Content');
 
         // Desktop - OS X 10_6_8
-        $page->session->invalidate(); // so it doesn't think we are a repeat visitor
+        $_SESSION = array();
+        session_create_id(); // so it doesn't think we are a repeat visitor
         $page = $this->page(array('server' => array(
             'HTTP_USER_AGENT' => 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_6_8) AppleWebKit/537.13+ (KHTML, like Gecko) Version/5.1.7 Safari/534.57.2',
             'HTTP_REFERER' => 'http://somewhere-else.com/linked.html?query=string',
@@ -157,7 +159,8 @@ class AnalyticsTest extends \BootPress\HTMLUnit\Component
         $page->send('Content');
 
         // create new session and log an initial hit
-        $page->session->invalidate();
+        $_SESSION = array();
+        session_create_id();
         $page = $this->page(array('server' => array(
             'HTTP_USER_AGENT' => 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_6_8) AppleWebKit/537.13+ (KHTML, like Gecko) Version/5.1.7 Safari/534.57.2',
             'HTTP_REFERER' => 'http://somewhere-else.com/linked.html?query=string',
