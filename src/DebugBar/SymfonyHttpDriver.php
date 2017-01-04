@@ -29,9 +29,7 @@ class SymfonyHttpDriver implements HttpDriverInterface
 
     public function isSessionStarted()
     {
-        $this->session->id();
-
-        return Session::$started;
+        return (Session::$started || !empty($this->session->id())) ? true : false;
     }
 
     public function setSessionValue($name, $value)
