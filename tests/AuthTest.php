@@ -13,6 +13,11 @@ class AuthTest extends \PHPUnit_Framework_TestCase
 
     public static function setUpBeforeClass()
     {
+        // To avert a ps_files_cleanup_dir permission denied error.
+        if (is_dir('/tmp')) {
+            session_save_path('/tmp');
+        }
+        ini_set('session.gc_probability', 0);
         self::$page = array('dir' => __DIR__.'/page', 'suffix' => '.html', 'testing' => true);
         $page = Page::html(self::$page, Request::create('http://website.com/', 'GET'), 'overthrow');
         $db = $page->file('Users.db');
