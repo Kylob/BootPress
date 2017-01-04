@@ -60,7 +60,7 @@ class FileName implements FileNameGenerator
     {
         $page = Page::html();
         $path = pathinfo(strtolower($name));
-        $name = md5($page->session->getId()); // 32 char string
+        $name = md5($page->session->id()); // 32 char string
         $name .= URLify::filter($path['filename'], 60, '', true);
         $name .= '.'.$path['extension'];
 
