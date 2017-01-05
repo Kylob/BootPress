@@ -2,7 +2,7 @@
 
 namespace BootPress\DebugBar\Collector;
 
-use BootPress\DebugBar\Component as Profiler;
+use BootPress\DebugBar\Component as DebugBar;
 use DebugBar\DataCollector\DataCollector;
 use DebugBar\DataCollector\Renderable;
 
@@ -25,7 +25,7 @@ class Files extends DataCollector implements Renderable
 
         return array(
             "$name" => array(
-                'icon' => 'files-o',
+                'icon' => 'file-code-o',
                 'widget' => 'PhpDebugBar.Widgets.MessagesWidget',
                 'map' => $name.'.messages',
                 'default' => '{}',
@@ -43,9 +43,9 @@ class Files extends DataCollector implements Renderable
     public function collect()
     {
         $messages = array();
-        $files = array_values(Profiler::get('files'));
+        $files = array_values(DebugBar::get('files'));
         $offset = 0;
-        foreach (Profiler::get('breakpoints') as $bp) {
+        foreach (DebugBar::get('breakpoints') as $bp) {
             if (is_array($bp)) { // all but the last
                 list($name, $slice) = $bp;
                 $length = $slice - $offset;
