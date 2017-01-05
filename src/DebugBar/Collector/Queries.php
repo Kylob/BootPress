@@ -26,7 +26,7 @@ class Queries extends DataCollector implements Renderable, AssetProvider
 
         return array(
             $name => array(
-                'icon' => 'inbox',
+                'icon' => 'database',
                 'widget' => 'PhpDebugBar.Widgets.SQLQueriesWidget',
                 'map' => $name,
                 'default' => '[]',
