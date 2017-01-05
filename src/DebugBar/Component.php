@@ -71,11 +71,12 @@ class Component
         $map = array(
             'php' => 'DebugBar\DataCollector\PhpInfoCollector',
             'bootpress' => 'BootPress\DebugBar\Collector\BootPress',
-            'timeline' => 'DebugBar\DataCollector\TimeDataCollector',
-            'messages' => 'DebugBar\DataCollector\MessagesCollector',
             'files' => 'BootPress\DebugBar\Collector\Files',
             'exceptions' => 'DebugBar\DataCollector\ExceptionsCollector',
+            'messages' => 'DebugBar\DataCollector\MessagesCollector',
             'queries' => 'BootPress\DebugBar\Collector\Queries',
+            'twig' => 'BootPress\DebugBar\Collector\Twig',
+            'timeline' => 'DebugBar\DataCollector\TimeDataCollector',
             'memory' => 'DebugBar\DataCollector\MemoryCollector',
         );
         if (empty($enable)) {
