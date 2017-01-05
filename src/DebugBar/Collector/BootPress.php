@@ -35,7 +35,7 @@ class BootPress extends DataCollector implements DataCollectorInterface, Rendera
 
         return array(
             'request' => array(
-                'icon' => 'tags',
+                'icon' => 'laptop',
                 'widget' => 'PhpDebugBar.Widgets.VariableListWidget',
                 'title' => 'BootPress',
                 'map' => $name,
