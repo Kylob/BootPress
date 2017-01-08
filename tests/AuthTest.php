@@ -75,7 +75,7 @@ class AuthTest extends \PHPUnit_Framework_TestCase
         $page = Page::html();
         $auth = new Auth();
         $auth->login($auth->check('joe@bloggs.com', 'supersekrit'));
-        $session = $page->session->get('bootpress');
+        $session = $page->session->get('auth');
         $this->assertNotEmpty($session);
         $this->assertEquals(1, $session['verified']);
         $this->assertEquals(1, $auth->isUser());
@@ -84,10 +84,10 @@ class AuthTest extends \PHPUnit_Framework_TestCase
         $this->assertEquals(1, $auth->isVerified());
         $this->assertFalse($auth->isAdmin());
         $session['verified'] = null;
-        $page->session->set('bootpress', $session);
+        $page->session->set('auth', $session);
         $this->assertFalse($auth->isVerified());
         $auth->logout();
-        $this->assertNull($page->session->get('bootpress'));
+        $this->assertNull($page->session->get('auth'));
         $this->assertFalse($auth->isUser());
     }
 
@@ -97,71 +97,70 @@ class AuthTest extends \PHPUnit_Framework_TestCase
         $page = Page::html();
         $auth = new Auth();
         $auth->login(1);
-        $session = $page->session->get('bootpress');
+        $session = $page->session->get('auth.cookie');
         $this->assertNotEmpty($session);
-        list($id, $series, $token) = explode(' ', $session['cookie']);
+        extract($session); // id, series, token
         $this->assertEquals(1, $auth->db->value('SELECT user_id FROM user_sessions WHERE id = ?', $id));
         $this->assertEquals(sha1($series), $auth->db->value('SELECT series FROM user_sessions WHERE id = ?', $id));
         $this->assertEquals(sha1($token), $auth->db->value('SELECT token FROM user_sessions WHERE id = ?', $id));
-        $this->assertNull($page->request->cookies->get('bootpress'));
+        $this->assertNull($page->request->cookies->get('_bp'));
         $this->assertEquals(1, $auth->isUser());
         $auth = new Auth(); // this will logout Joe from all of his sessions because of a session / cookie mismatch
         $this->assertFalse($auth->isUser());
 
         // Unset the cookie when it doesn't match a record in the database and only log them out of the current session
         $auth->login(1);
-        $session = $page->session->get('bootpress');
-        list($id, $series, $token) = explode(' ', $session['cookie']);
+        $session = $page->session->get('auth.cookie');
+        extract($session); // id, series, token
         $cookie = base64_encode(implode(' ', array($id, sha1($series), $token))); // a database (series) mismatch
         $page = Page::html(self::$page, Request::create(// set the cookie
             'http://website.com/', // uri
             'GET', // method
             array(), // parameters
-            array('bootpress' => $cookie) // cookies
+            array('_bp' => $cookie) // cookies
         ), 'overthrow');
-        $this->assertEquals($cookie, $page->request->cookies->get('bootpress')); // make sure cookie is set
-        $page->session->remove('bootpress'); // remove session so that we don't bypass our test
+        $this->assertEquals($cookie, $page->request->cookies->get('_bp')); // make sure cookie is set
+        $page->session->remove('auth'); // remove session so that we don't bypass our test
         $auth = new Auth(); // unsets the cookie and logs user out of current session
         $this->assertFalse($auth->isUser());
 
         // Logout user of all sessions when there is no session to compare to, and there is a token mismatch
         $auth->login(1);
-        $session = $page->session->get('bootpress');
-        list($id, $series, $token) = explode(' ', $session['cookie']);
+        $session = $page->session->get('auth.cookie');
+        extract($session); // id, series, token
         $cookie = base64_encode(implode(' ', array($id, $series, sha1($token)))); // a token mismatch
         $page = Page::html(self::$page, Request::create(// set the cookie
             'http://website.com/', // uri
             'GET', // method
             array(), // parameters
-            array('bootpress' => $cookie) // cookies
+            array('_bp' => $cookie) // cookies
         ), 'overthrow');
-        $page->session->remove('bootpress'); // remove session so that we don't bypass our test
+        $page->session->remove('auth'); // remove session so that we don't bypass our test
         $auth = new Auth(); // unsets the cookie and logs user out of all their sessions
         $this->assertFalse($auth->isUser());
 
         // Update user_sessions and token when user has been active for more than 5 minutes
         $auth->login(1);
-        $session = $page->session->get('bootpress');
-        list($id, $series, $token) = explode(' ', $session['cookie']);
+        $session = $page->session->get('auth.cookie');
+        extract($session); // id, series, token
         $cookie = base64_encode(implode(' ', array($id, $series, $token))); // everything matches
         $page = Page::html(self::$page, Request::create(
             'http://website.com/', // uri
             'GET', // method
             array(), // parameters
-            array('bootpress' => $cookie) // cookies
+            array('_bp' => $cookie) // cookies
         ), 'overthrow');
-        $this->assertEquals(base64_encode($session['cookie']), $page->request->cookies->get('bootpress')); // session and cookie match
+        $this->assertEquals(base64_encode(implode(' ', $session)), $page->request->cookies->get('_bp')); // session and cookie match
         $time = time();
         $auth->db->update('user_sessions', 'id', array($id => array('last_activity' => ($time - 310)))); // come back 6 minutes later
         $this->assertEquals(1, $auth->isUser());
         $auth = new Auth();
         $this->assertEquals(1, $auth->isUser());
         $this->assertGreaterThan($time - 10, $auth->db->value('SELECT last_activity FROM user_sessions WHERE id = ?', $id));
-        $session = $page->session->get('bootpress');
-        list($new_id, $new_series, $new_token) = explode(' ', $session['cookie']);
-        $this->assertEquals($id, $new_id);
-        $this->assertEquals($series, $new_series);
-        $this->assertNotEquals($token, $new_token);
+        $session = $page->session->get('auth.cookie');
+        $this->assertEquals($id, $session['id']);
+        $this->assertEquals($series, $session['series']);
+        $this->assertNotEquals($token, $session['token']);
     }
 
     public function testUpdateAndUserMethods()
