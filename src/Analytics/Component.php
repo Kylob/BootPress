@@ -4,6 +4,7 @@ namespace BootPress\Analytics;
 
 use BootPress\Page\Component as Page;
 use BootPress\SQLite\Component as SQLite;
+use Symfony\Component\HttpFoundation\Cookie;
 use Jenssegers\Agent\Agent;
 
 /**
@@ -24,36 +25,47 @@ use Jenssegers\Agent\Agent;
  * $html = ''; // ...
  *
  * $page->send($page->display($html));
- * // ``$page->display()`` includes the analytics.js last
+ * // ``$page->display()`` includes the analytics.js at the end of your page
  * // ``$page->send()`` logs the bots to avoid erroneous data
  * ```
  */
 class Component
 {
+    /** @var string The current version. */
+    const VERSION = '0.8.1';
+
+    /** @var object The Analytics BootPress\SQLite\Component Database. */
     private static $db;
+
+    /** @var array Saved id's so we don't have to look them up twice. */
     private static $ids = array();
+
+    /** @var array Database statements we use when you ``Analytics::prepare()``. */
     private static $stmt = array();
+
+    /** @var array A conglomerate of information we organize in ``Analytics::data()``. */
     private static $data = array();
 
     /**
-     * @return object An *Analytics.db* BootPress\SQLite\Component instance with all your information
+     * Get the *Analytics.db* with all your information.
+     *
+     * @return object A BootPress\SQLite\Component instance.
      */
     public static function database()
     {
         $page = Page::html();
         $db = new SQLite($page->file('Analytics.db'));
-        if ($db->created) {
+        if ($db->created || version_compare(self::VERSION, $db->settings('version'), '>')) {
+            // Update what we've got, before potentially mixing things up
+            $db->settings('version', self::VERSION);
+            @unlink($page->file('analytics.csv'));
+            @unlink($page->file('analytics-temp.csv'));
+
             // Keeps track of sessions and associated data - deleted after 24 hours
             $db->create('analytics', array(
                 'id' => 'INTEGER PRIMARY KEY',
-                'session' => 'TEXT NOT NULL DEFAULT ""',
-                'started' => 'INTEGER NOT NULL DEFAULT 0',
-                'ip' => 'TEXT NOT NULL DEFAULT ""',
+                'started' => 'REAL NOT NULL DEFAULT 0', // microtime(true)
                 'referrer' => 'TEXT NOT NULL DEFAULT ""',
-                'session_id' => 'INTEGER NOT NULL DEFAULT 0',
-                'agent_id' => 'INTEGER NOT NULL DEFAULT 0',
-                'path_id' => 'INTEGER NOT NULL DEFAULT 0',
-                'query' => 'TEXT NOT NULL DEFAULT ""',
             ), array('started'));
 
             // User-agents, and whatever useful information we can glean from them
@@ -72,23 +84,23 @@ class Component
                 'id' => 'INTEGER PRIMARY KEY',
                 'time' => 'INTEGER NOT NULL DEFAULT 0',
                 'ip' => 'TEXT NOT NULL DEFAULT ""',
-                'analytic_id' => 'INTEGER NOT NULL DEFAULT 0', // for deleting when user
                 'agent_id' => 'INTEGER NOT NULL DEFAULT 0',
                 'path_id' => 'INTEGER NOT NULL DEFAULT 0',
                 'query' => 'TEXT NOT NULL DEFAULT ""',
+                'started' => 'REAL NOT NULL DEFAULT 0', // microtime(true) - for deleting when user
             ), array('time', 'ip', 'agent_id', 'path_id'));
 
             // User (javascript enabled) hits - html pages only
             $db->create('analytic_hits', array(
                 'id' => 'INTEGER PRIMARY KEY',
-                'time' => 'INTEGER NOT NULL DEFAULT 0',
-                'loaded' => 'INTEGER NOT NULL DEFAULT 0', // microseconds
-                'server' => 'INTEGER NOT NULL DEFAULT 0', // microseconds
                 'dns' => 'INTEGER NOT NULL DEFAULT 0', // microseconds
                 'tcp' => 'INTEGER NOT NULL DEFAULT 0', // microseconds
                 'request' => 'INTEGER NOT NULL DEFAULT 0', // microseconds
                 'response' => 'INTEGER NOT NULL DEFAULT 0', // microseconds
-                'session_id' => 'INTEGER NOT NULL DEFAULT 0',
+                'server' => 'INTEGER NOT NULL DEFAULT 0', // microseconds
+                'loaded' => 'INTEGER NOT NULL DEFAULT 0', // microseconds
+                'time' => 'INTEGER NOT NULL DEFAULT 0',
+                'session_id' => 'INTEGER NOT NULL DEFAULT 0', // analytic_sessions
                 'path_id' => 'INTEGER NOT NULL DEFAULT 0',
                 'query' => 'TEXT NOT NULL DEFAULT ""',
             ), array('time', 'session_id', 'path_id'));
@@ -102,25 +114,25 @@ class Component
             // User (javascript enabled) session data
             $db->create('analytic_sessions', array(
                 'id' => 'INTEGER PRIMARY KEY',
-                'started' => 'INTEGER NOT NULL DEFAULT 0',
                 'hits' => 'INTEGER NOT NULL DEFAULT 0',
                 'duration' => 'INTEGER NOT NULL DEFAULT 0', // seconds
-                'width' => 'INTEGER NOT NULL DEFAULT 0',
-                'height' => 'INTEGER NOT NULL DEFAULT 0',
+                'started' => 'REAL NOT NULL DEFAULT 0', // microtime(true)
+                'offset' => 'INTEGER NOT NULL DEFAULT 0', // seconds
                 'hemisphere' => 'TEXT NOT NULL DEFAULT ""',
                 'timezone' => 'TEXT NOT NULL DEFAULT ""',
                 'dst' => 'INTEGER NOT NULL DEFAULT 0',
-                'offset' => 'INTEGER NOT NULL DEFAULT 0', // seconds
+                'width' => 'INTEGER NOT NULL DEFAULT 0',
+                'height' => 'INTEGER NOT NULL DEFAULT 0',
                 'ip' => 'TEXT NOT NULL DEFAULT ""',
-                'referrer' => 'TEXT NOT NULL DEFAULT ""',
-                'agent_id' => 'INTEGER NOT NULL DEFAULT 0',
                 'path_id' => 'INTEGER NOT NULL DEFAULT 0',
                 'query' => 'TEXT NOT NULL DEFAULT ""',
+                'agent_id' => 'INTEGER NOT NULL DEFAULT 0',
+                'referrer' => 'TEXT NOT NULL DEFAULT ""',
             ), array('started'));
 
             // Associates user(s) and their sessions
             $db->create('analytic_users', array(
-                'session_id' => 'INTEGER NOT NULL DEFAULT 0',
+                'session_id' => 'INTEGER NOT NULL DEFAULT 0', // analytic_sessions
                 'user_id' => 'INTEGER NOT NULL DEFAULT 0',
             ), array('unique' => 'session_id, user_id'));
         }
@@ -144,66 +156,8 @@ class Component
     public static function log()
     {
         // Get initial values
-        $now = time();
-        $log = array(); // csv lines
         $page = Page::html();
-
-        // Establish a SESSION analytics array
-        $analytics = $page->session->get('analytics');
-        if (!is_array($analytics) || $analytics['last'] < ($now - 1800)) { // create a new "session" after half an hour of inactivity
-            $analytics = array(
-                'hits' => 0,
-                'last' => $now,
-                'started' => $now,
-                'session' => $page->session->id(),
-                'javascript' => false,
-                'timezone' => null,
-                'offset' => null,
-                'users' => array(),
-                'agent' => array_fill_keys(array('robot', 'browser', 'version', 'mobile', 'desktop'), null),
-            );
-            $agent = new Agent();
-            $agent->setUserAgent($page->request->headers->get('User-Agent'));
-            if ($agent->isRobot()) {
-                $analytics['agent']['robot'] = $agent->robot();
-            } else {
-                $browser = $agent->browser();
-                $analytics['agent']['browser'] = $browser;
-                $analytics['agent']['version'] = intval($agent->version($browser));
-                if ($agent->isMobile()) {
-                    $analytics['agent']['mobile'] = $agent->device();
-                } else { // desktop
-                    $analytics['agent']['desktop'] = $agent->platform();
-                }
-            }
-            unset($agent);
-            extract($analytics['agent']);
-            if ($referrer = trim(strip_tags($page->request->headers->get('referer')))) {
-                $ref = trim(strstr($referrer, ':'), ':/');
-                $self = trim(strstr($page->url['base'], ':'), ':/');
-                if (strpos($ref, $self) === 0) {
-                    $referrer = null;
-                }
-            }
-            $log[] = array(
-                '' => 'analytics',
-                'session' => $analytics['session'],
-                'started' => $analytics['started'],
-                'agent' => trim(substr(strip_tags($page->request->headers->get('User-Agent')), 0, 255)),
-                'robot' => (string) $robot,
-                'browser' => (string) $browser,
-                'version' => empty($version) ? '' : $version,
-                'mobile' => (string) $mobile,
-                'desktop' => (string) $desktop,
-                'referrer' => (string) $referrer,
-                'path' => $page->url['path'],
-                'query' => $page->url['query'],
-                'ip' => $page->request->getClientIp(),
-            );
-            $page->session->set('analytics', $analytics);
-            self::file($log);
-            $log = array();
-        }
+        $log = array(); // csv lines
 
         if ($page->request->isXmlHttpRequest()) {
 
@@ -216,62 +170,92 @@ class Component
                 $params[$key] = $value;
             }
             extract($params);
-            if ($analytics['javascript'] === false) {
-                $analytics['javascript'] = true;
-                $analytics['timezone'] = (string) $timezone;
-                $analytics['offset'] = (int) $offset;
+            list($time, $cookie, $started) = self::sessionCookie();
+
+            // Establish a SESSION analytics array
+            $analytics = $page->session->get('analytics');
+            if (!is_array($analytics) || $analytics['last'] < ($time - 1800)) { // create a new "session" after half an hour of inactivity
+                $analytics = array(
+                    'hits' => 0,
+                    'last' => (int) $time,
+                    'started' => (float) $started, // microtime(true)
+                    'timezone' => (string) $timezone,
+                    'offset' => (int) $offset,
+                    'users' => array(),
+                    'agent' => self::userAgent(), // 'user', 'robot', 'browser', 'version', 'mobile', 'desktop'
+                );
+                extract($analytics['agent']);
                 $log[] = array(
                     'analytic' => 'sessions',
-                    'session' => $analytics['session'],
-                    'started' => $analytics['started'],
-                    'width' => $width,
-                    'height' => $height,
+                    'started' => $started,
+                    'offset' => $offset,
                     'hemisphere' => $hemisphere,
                     'timezone' => $timezone,
                     'dst' => $dst,
-                    'offset' => $offset,
+                    'width' => $width,
+                    'height' => $height,
+                    'ip' => $page->request->getClientIp(),
+                    'path' => $page->url['path'],
+                    'query' => $page->url['query'],
+                    'agent' => (string) $user,
+                    'robot' => (string) $robot,
+                    'browser' => (string) $browser,
+                    'version' => empty($version) ? '' : $version,
+                    'mobile' => (string) $mobile,
+                    'desktop' => (string) $desktop,
                 );
             }
-            if ($user = $page->session->get('bootpress')) {
-                if (!in_array($user['id'], $analytics['users'])) {
-                    $analytics['users'][] = $user['id'];
+
+            // Log users
+            if ($user_id = $page->session->get('bootpress.id')) {
+                if (!in_array($user_id, $analytics['users'])) {
+                    $analytics['users'][] = $user_id;
                     $log[] = array(
                         'analytic' => 'users',
-                        'user_id' => (int) $user['id'],
-                        'session' => $analytics['session'],
-                        'started' => $analytics['started'],
+                        'started' => $started,
+                        'user_id' => (int) $user_id,
                     );
                 }
             }
+
+            // Increment hits
             $log[] = array(
                 'analytic' => 'hits',
-                'session' => $analytics['session'],
-                'started' => $analytics['started'],
-                'path' => $page->url['path'],
-                'query' => $page->url['query'],
-                'time' => $now,
-                'loaded' => ($timer) ? $timer['loaded'] : 0,
-                'server' => ($timer) ? $timer['server'] : 0,
+                'started' => $started,
                 'dns' => ($timer) ? $timer['dns'] : 0,
                 'tcp' => ($timer) ? $timer['tcp'] : 0,
                 'request' => ($timer) ? $timer['request'] : 0,
                 'response' => ($timer) ? $timer['response'] : 0,
+                'server' => ($timer) ? $timer['server'] : 0,
+                'loaded' => ($timer) ? $timer['loaded'] : 0,
+                'time' => $time,
+                'path' => $page->url['path'],
+                'query' => $page->url['query'],
             );
             $analytics['hits'] += 1;
-            $analytics['last'] = $now;
-            $page->session->set('analytics', $analytics);
+            $analytics['last'] = $time;
             if (self::file($log) > 180) {
                 self::process(); // every 3 minutes
             }
+
+            // Update session and delete cookie
+            $page->session->set('analytics', $analytics);
+            if ($cookie) {
+                $page->filter('response', function ($page, $response) {
+                    $response->headers->clearCookie('_bpa');
+                });
+            }
+
+            // Return useful info
             $uri = ($timer) ? $timer : array();
             $db = self::database();
-            if ($user) {
+            if ($user_id) {
                 $views = $db->value(array(
                     'SELECT COUNT(*) AS views FROM analytic_hits AS h',
                     'LEFT JOIN analytic_users AS u ON h.session_id = u.session_id AND u.user_id = ?',
                     'WHERE h.path_id = (SELECT p.id FROM analytic_paths AS p WHERE p.path = ?)',
                     'AND u.user_id != ?',
-                ), array($user['id'], $page->url['path'], $user['id']));
+                ), array($user_id, $page->url['path'], $user_id));
             } else {
                 $views = $db->value(array(
                     'SELECT COUNT(*) AS views',
@@ -283,27 +267,57 @@ class Component
             $uri['views'] = ($views) ? $views : 0;
 
             return $uri;
-        } elseif ($analytics['javascript'] === false && in_array($page->url['format'], array('html', 'pdf', 'txt', 'xml', 'rdf', 'rss', 'atom'))) {
-            $log[] = array(
-                'analytic' => 'bots',
-                'session' => $analytics['session'],
-                'started' => $analytics['started'],
-                'ip' => $page->request->getClientIp(),
-                'path' => $page->url['path'],
-                'query' => $page->url['query'],
-                'time' => $now,
-            );
-            $analytics['last'] = $now;
-            $page->filter('response', function ($page) use ($log, $analytics) {
-                $page->session->set('analytics', $analytics);
-                self::file($log);
-            }, array(200));
-        }
+        } elseif (in_array($page->url['format'], array('html', 'pdf', 'txt', 'xml', 'rdf', 'rss', 'atom'))) {
 
-        if (empty($analytics['agent']['robot'])) {
-            $page->filter('body', function ($html) use ($page) {
-                return $html."\n\t".'<script src="'.$page->url($page->dirname(__CLASS__), 'analytics.js').'"></script>';
-            });
+            // Establish COOKIE tracker and log a bot
+            $robot = false; // until suspected otherwise
+            if (!$page->session->get('analytics')) {
+                list($time, $cookie, $started) = self::sessionCookie();
+                extract(self::userAgent()); // 'user', 'robot', 'browser', 'version', 'mobile', 'desktop'
+                $log[] = array(
+                    'analytic' => 'bots',
+                    'started' => $started,
+                    'time' => $time,
+                    'path' => $page->url['path'],
+                    'query' => $page->url['query'],
+                    'ip' => $page->request->getClientIp(),
+                    'agent' => (string) $user,
+                    'robot' => (string) $robot,
+                    'browser' => (string) $browser,
+                    'version' => empty($version) ? '' : $version,
+                    'mobile' => (string) $mobile,
+                    'desktop' => (string) $desktop,
+                );
+                if (
+                    empty($robot) &&
+                    $cookie === false &&
+                    $referrer = trim(strip_tags($page->request->headers->get('referer')))
+                ) {
+                    $ref = trim(strstr($referrer, ':'), ':/');
+                    $self = trim(strstr($page->url['base'], ':'), ':/');
+                    if (strpos($ref, $self) !== 0) {
+                        $log[] = array( // only the first hit
+                            '' => 'analytics',
+                            'started' => $started,
+                            'referrer' => (string) $referrer,
+                        );
+                    }
+                }
+                $page->filter('response', function ($page, $response) use ($log, $time, $started, $robot) {
+                    if (empty($robot)) {
+                        $cookie = new Cookie('_bpa', $started.'.'.$time, $time + 1800);
+                        $response->headers->setCookie($cookie);
+                    }
+                    self::file($log);
+                }, array(200));
+            }
+
+            // Include analytics tracker .js at the end of the page
+            if (empty($robot)) {
+                $page->filter('body', function ($html) use ($page) {
+                    return $html."\n\t".'<script src="'.$page->url($page->dirname(__CLASS__), 'analytics.js').'"></script>';
+                });
+            }
         }
 
         return false;
@@ -346,52 +360,47 @@ class Component
         while ($row = fgetcsv($fp)) {
             switch (array_shift($row)) {
                 case 'analytics':
-                    list($session, $started, $agent, $robot, $browser, $version, $mobile, $desktop, $referrer, $path, $query, $ip) = $row;
-                    $agent_id = self::id('agents', $agent, array(
-                        $agent, $robot, $browser, $version, $mobile, $desktop,
-                    ));
-                    $path_id = self::id('paths', $path);
-                    $analytic_id = self::exec('INSERT', 'analytics', array(
-                        $session, $started, $agent_id, $path_id, $query, $referrer, $ip,
-                    ));
-                    self::$ids['analytics'][$session.'::'.$started] = $analytic_id;
+                    list($started, $referrer) = $row;
+                    self::exec('INSERT', 'analytics', array($started, $referrer));
                     break;
 
                 case 'bots':
-                    list($session, $started, $ip, $path, $query, $time) = $row;
-                    if ($analytic_id = self::id('analytics', $session.'::'.$started)) {
-                        $path_id = self::id('paths', $path);
-                        self::exec('INSERT', 'bots', array(
-                            $ip, $path_id, $query, $time, $analytic_id, $analytic_id,
-                        ));
-                    }
+                    list($started, $time, $path, $query, $ip, $agent, $robot, $browser, $version, $mobile, $desktop) = $row;
+                    $path_id = self::id('paths', $path);
+                    $agent_id = self::id('agents', $agent, array(
+                        $agent, $robot, $browser, $version, $mobile, $desktop,
+                    ));
+                    self::exec('INSERT', 'bots', array(
+                        $time, $ip, $agent_id, $path_id, $query, $started,
+                    ));
                     break;
 
                 case 'sessions':
-                    list($session, $started, $width, $height, $hemisphere, $timezone, $dst, $offset) = $row;
-                    if ($analytic_id = self::id('analytics', $session.'::'.$started)) {
-                        $session_id = self::exec('INSERT', 'sessions', array(
-                            $width, $height, $hemisphere, $timezone, $dst, $offset, $analytic_id,
-                        ));
-                        self::exec('UPDATE', 'analytics', array($session_id, $analytic_id));
-                        self::exec('DELETE', 'bots', array($analytic_id, $started));
-                        self::$ids['sessions'][$session.'::'.$started] = $session_id;
-                    }
+                    list($started, $offset, $hemisphere, $timezone, $dst, $width, $height, $ip, $path, $query, $agent, $robot, $browser, $version, $mobile, $desktop) = $row;
+                    $path_id = self::id('paths', $path);
+                    $agent_id = self::id('agents', $agent, array(
+                        $agent, $robot, $browser, $version, $mobile, $desktop,
+                    ));
+                    $referrer = ($row = self::exec('SELECT', 'analytics', $started)) ? array_shift($row) : '';
+                    self::exec('DELETE', 'bots', array(floor($started), $started));
+                    self::$ids['sessions'][(string) $started] = self::exec('INSERT', 'sessions', array(
+                        $started, $offset, $hemisphere, $timezone, $dst, $width, $height, $ip, $path_id, $query, $agent_id, $referrer,
+                    ));
                     break;
 
                 case 'users':
-                    list($user_id, $session, $started) = $row;
-                    if ($session_id = self::id('sessions', $session.'::'.$started)) {
+                    list($started, $user_id) = $row;
+                    if ($session_id = self::id('sessions', $started)) {
                         self::exec('INSERT', 'users', array($session_id, $user_id));
                     }
                     break;
 
                 case 'hits':
-                    list($session, $started, $path, $query, $time, $loaded, $server, $dns, $tcp, $request, $response) = $row;
-                    if ($session_id = self::id('sessions', $session.'::'.$started)) {
+                    list($started, $dns, $tcp, $request, $response, $server, $loaded, $time, $path, $query) = $row;
+                    if ($session_id = self::id('sessions', $started)) {
                         $path_id = self::id('paths', $path);
                         self::exec('INSERT', 'hits', array(
-                            $session_id, $path_id, $query, $time, $loaded, $server, $dns, $tcp, $request, $response,
+                            $dns, $tcp, $request, $response, $server, $loaded, $time, $session_id, $path_id, $query,
                         ));
                     }
                     break;
@@ -408,7 +417,7 @@ class Component
             foreach (self::$db->all(array(
                 'SELECT session_id AS id, COUNT(*) AS count, MAX(time) AS max, MIN(time) AS min',
                 'FROM analytic_hits',
-                'WHERE session_id IN('.implode(', ', self::$ids['sessions']).')',
+                'WHERE time > 0 AND session_id IN('.implode(', ', self::$ids['sessions']).')',
                 'GROUP BY session_id',
             ), '', 'assoc') as $row) {
                 self::$db->update($stmt, $row['id'], array($row['count'], ($row['max'] - $row['min'])));
@@ -591,6 +600,62 @@ class Component
     }
 
     /**
+     * Coordinates session and cookie start times.  This helps us to avoid starting a session unless we absolutely have to.
+     *
+     * @return array A numeric array you can ``list()``.
+     *
+     * - '**$time**' - To standardize it's value throughout the class.
+     * - '**$cookie**' - Either the *'_bpa'* value, or ``false`` if it was not set or no longer needed.
+     * - '**$started**' - The original ``microtime(true)`` of when this party got started.
+     */
+    private static function sessionCookie()
+    {
+        $page = Page::html();
+        $now = microtime(true);
+        $time = floor($now);
+        $cookie = false;
+        if (!$started = $page->session->get('analytics.started')) {
+            $started = $now;
+            if ($original = $page->request->cookies->get('_bpa')) {
+                $bpa = explode('.', $original);
+                if (($updated = array_pop($bpa)) && $updated > ($time - 1800)) { // within last half hour
+                    $bpa = implode('.', $bpa);
+                    if (is_numeric($bpa) && $bpa > ($time - 7200)) { // within last 2 hours
+                        $started = $bpa;
+                        $cookie = $original;
+                    }
+                }
+            }
+        }
+
+        return array($time, $cookie, $started);
+    }
+
+    /**
+     * Decrypts the User-Agent string (easily spoofed), and let's us know who we're working with.
+     */
+    private static function userAgent()
+    {
+        $user = new Agent(null, Page::html()->request->headers->get('User-Agent'));
+        $agent = array_fill_keys(array('user', 'robot', 'browser', 'version', 'mobile', 'desktop'), null);
+        $agent['user'] = trim(substr(strip_tags($user->getUserAgent()), 0, 255));
+        if ($user->isRobot()) {
+            $agent['robot'] = $user->robot();
+        } else {
+            $browser = $user->browser();
+            $agent['browser'] = $browser;
+            $agent['version'] = intval($user->version($browser));
+            if ($user->isMobile()) {
+                $agent['mobile'] = $user->device();
+            } else {
+                $agent['desktop'] = $user->platform();
+            }
+        }
+
+        return $agent;
+    }
+
+    /**
      * Appends csv lines to the analytics file.
      *
      * @param array $log The csv lines to add.  Must be an array of arrays ie. ``$log[] = array(...)``
@@ -625,10 +690,18 @@ class Component
      */
     private static function id($table, $value, array $insert = array())
     {
+        settype($value, 'string');
         if (isset(self::$ids[$table][$value])) {
             return self::$ids[$table][$value];
         }
         switch ($table) {
+            case 'paths':
+                if ($row = self::exec('SELECT', 'paths', $value)) { // path
+                    $id = array_shift($row);
+                } else {
+                    $id = self::exec('INSERT', 'paths', array($value));
+                }
+                break;
             case 'agents':
                 if ($row = self::exec('SELECT', 'agents', $value)) { // agent
                     $id = array_shift($row);
@@ -640,22 +713,8 @@ class Component
                     $id = self::exec('INSERT', 'agents', $insert);
                 }
                 break;
-            case 'paths':
-                if ($row = self::exec('SELECT', 'paths', $value)) { // path
-                    $id = array_shift($row);
-                } else {
-                    $id = self::exec('INSERT', 'paths', array($value));
-                }
-                break;
-            case 'analytics':
-                list($session, $started) = explode('::', $value);
-                if ($row = self::exec('SELECT', 'analytics', array($started, $session))) {
-                    $id = array_shift($row);
-                }
-                break;
             case 'sessions':
-                list($session, $started) = explode('::', $value);
-                if ($row = self::exec('SELECT', 'sessions', array($started, $session))) {
+                if ($row = self::exec('SELECT', 'sessions', array($value))) {
                     $id = array_shift($row);
                 }
                 break;
@@ -683,58 +742,47 @@ class Component
             switch ($action) {
                 case 'select':
                     switch ($table) {
-                        case 'agents':
-                            $stmt = self::$db->prepare('SELECT id, agent, robot, browser, version, mobile, desktop FROM analytic_agents WHERE agent = ?', 'assoc');
+                        case 'analytics':
+                            $stmt = self::$db->prepare('SELECT referrer FROM analytics WHERE started = ?', 'assoc');
                             break;
                         case 'paths':
                             $stmt = self::$db->prepare('SELECT id FROM analytic_paths WHERE path = ?', 'assoc');
                             break;
-                        case 'analytics':
-                            $stmt = self::$db->prepare('SELECT id FROM analytics WHERE started = ? AND session = ?');
+                        case 'agents':
+                            $stmt = self::$db->prepare('SELECT id, agent, robot, browser, version, mobile, desktop FROM analytic_agents WHERE agent = ?', 'assoc');
                             break;
                         case 'sessions':
-                            $stmt = self::$db->prepare('SELECT session_id AS id FROM analytics WHERE started = ? AND session = ?');
+                            $stmt = self::$db->prepare('SELECT id FROM analytic_sessions WHERE started = ?', 'assoc');
                             break;
                     }
                     break;
                 case 'insert':
                     switch ($table) {
                         case 'analytics':
-                            $stmt = self::$db->insert('analytics', array('session', 'started', 'agent_id', 'path_id', 'query', 'referrer', 'ip'));
+                            $stmt = self::$db->insert('analytics', array('started', 'referrer'));
+                            break;
+                        case 'paths':
+                            $stmt = self::$db->insert('analytic_paths', array('path'));
                             break;
                         case 'agents':
                             $stmt = self::$db->insert('analytic_agents', array('agent', 'robot', 'browser', 'version', 'mobile', 'desktop'));
                             break;
                         case 'bots':
-                            $stmt = self::$db->prepare(array(
-                                'INSERT INTO analytic_bots',
-                                "('ip', 'agent_id', 'path_id', 'query', 'time', 'analytic_id')",
-                                'SELECT ?, agent_id, ?, ?, ?, ? FROM analytics WHERE id = ?',
-                            ));
+                            $stmt = self::$db->insert('analytic_bots', array('time', 'ip', 'agent_id', 'path_id', 'query', 'started'));
                             break;
                         case 'sessions':
-                            $stmt = self::$db->prepare(array(
-                                'INSERT INTO analytic_sessions',
-                                "('started', 'agent_id', 'path_id', 'query', 'referrer', 'ip', 'width', 'height', 'hemisphere', 'timezone', 'dst', 'offset')",
-                                'SELECT started, agent_id, path_id, query, referrer, ip, ?, ?, ?, ?, ?, ? FROM analytics WHERE id = ?',
-                            ));
-                            break;
-                        case 'hits':
-                            $stmt = self::$db->insert('analytic_hits', array('session_id', 'path_id', 'query', 'time', 'loaded', 'server', 'dns', 'tcp', 'request', 'response'));
-                            break;
-                        case 'paths':
-                            $stmt = self::$db->insert('analytic_paths', array('path'));
+                            $stmt = self::$db->insert('analytic_sessions', array('started', 'offset', 'hemisphere', 'timezone', 'dst', 'width', 'height', 'ip', 'path_id', 'query', 'agent_id', 'referrer'));
                             break;
                         case 'users':
                             $stmt = self::$db->insert('analytic_users', array('session_id', 'user_id'));
+                            break;
+                        case 'hits':
+                            $stmt = self::$db->insert('analytic_hits', array('dns', 'tcp', 'request', 'response', 'server', 'loaded', 'time', 'session_id', 'path_id', 'query'));
                             break;
                     }
                     break;
                 case 'update':
                     switch ($table) {
-                        case 'analytics':
-                            $stmt = self::$db->update('analytics', 'id', array('session_id'));
-                            break;
                         case 'agents':
                             $stmt = self::$db->update('analytic_agents', 'id', array('robot', 'browser', 'version', 'mobile', 'desktop'));
                             break;
@@ -743,7 +791,7 @@ class Component
                 case 'delete':
                     switch ($table) {
                         case 'bots':
-                            $stmt = self::$db->prepare('DELETE FROM analytic_bots WHERE analytic_id = ? AND time >= ?');
+                            $stmt = self::$db->prepare('DELETE FROM analytic_bots WHERE time >= ? AND started = ?');
                             break;
                     }
                     break;
