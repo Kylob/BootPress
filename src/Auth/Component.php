@@ -246,7 +246,7 @@ class Component
      */
     public function user($param = null)
     {
-        if (!$user = $this->page->session->get('auth')) {
+        if (!$user = $this->page->session->get('auth.user')) {
             $user = array();
         }
         if (is_null($param)) {
@@ -654,11 +654,11 @@ class Component
             $expires = 1;
         } else {
             list($id, $series, $token) = explode(' ', $value);
-            $this->setSession(array('cookie' => array(
+            $this->page->session->set('auth.cookie', array(
                 'id' => $id,
                 'series' => $series,
                 'token' => $token,
-            )));
+            ));
             $value = base64_encode($value);
             if ($expires != 0) {
                 $expires += time();
@@ -668,11 +668,10 @@ class Component
         setcookie('_bp', $value, $expires, $match['path'], $match['domain'], $match['secure'], true);
     }
 
-    private function setSession(array $info)
+    private function setSession(array $user)
     {
-        if (!$current = $this->page->session->get('auth')) {
+        if (!$current = $this->page->session->get('auth.user')) {
             $current = array(
-                'cookie' => array(),
                 'verified' => false,
                 'id' => 0,
                 'name' => null,
@@ -681,7 +680,7 @@ class Component
                 'login' => 0,
             );
         }
-        $this->page->session->set('auth', array_merge($current, $info));
+        $this->page->session->set('auth.user', array_merge($current, $user));
     }
 
     /**
