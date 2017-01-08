@@ -207,7 +207,7 @@ class Component
             }
 
             // Log users
-            if ($user_id = $page->session->get('bootpress.id')) {
+            if ($user_id = $page->session->get('auth.id')) {
                 if (!in_array($user_id, $analytics['users'])) {
                     $analytics['users'][] = $user_id;
                     $log[] = array(

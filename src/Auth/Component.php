@@ -96,7 +96,7 @@ class Component
         $username = $this->page->request->getUser();
         $password = $this->page->request->getPassword();
         if (!empty($username) && !empty($password)) {
-            $this->page->session->remove('bootpress');
+            $this->page->session->remove('auth');
             if (is_null($basic)) { // use the user database (default)
                 if ($user_id = $this->check($username, $password, 'approved = "Y"')) {
                     $this->setSession($this->db->row('SELECT id, name, email, admin FROM users WHERE id = ?', $user_id, 'assoc'));
@@ -127,15 +127,18 @@ class Component
             return; // HTTP Basic Authentication takes precedence
         }
         $user = false;
-        if ($cookie = $this->page->request->cookies->get('bootpress')) {
+        if ($cookie = $this->page->request->cookies->get('_bp')) {
             $cookie = base64_decode($cookie);
         }
         // These two must match if they both exist
-        if (($session = $this->page->session->get('bootpress')) && $session['cookie'] != $cookie) {
+        if (
+            ($session = $this->page->session->get('auth.cookie')) &&
+            implode(' ', $session) != $cookie
+        ) {
             // We set the $session so we know that's good, but ...
             // if $session doesn't equal $cookie then it has been compromised
             // if $session and no $cookie, then it's assumed to have been stolen and deleted
-            $this->logout($this->db->value('SELECT user_id FROM user_sessions WHERE id = ?', strstr($session['cookie'].' ', ' ', true)));
+            $this->logout($this->db->value('SELECT user_id FROM user_sessions WHERE id = ?', strstr($session['id'], ' ', true)));
 
             return $this->setCookie();
         }
@@ -243,7 +246,7 @@ class Component
      */
     public function user($param = null)
     {
-        if (!$user = $this->page->session->get('bootpress')) {
+        if (!$user = $this->page->session->get('auth')) {
             $user = array();
         }
         if (is_null($param)) {
@@ -647,24 +650,29 @@ class Component
     private function setCookie($value = '', $expires = 0)
     {
         if (empty($value)) {
-            $this->page->session->remove('bootpress');
+            $this->page->session->remove('auth');
             $expires = 1;
         } else {
-            $this->setSession(array('cookie' => $value));
+            list($id, $series, $token) = explode(' ', $value);
+            $this->setSession(array('cookie' => array(
+                'id' => $id,
+                'series' => $series,
+                'token' => $token,
+            )));
             $value = base64_encode($value);
             if ($expires != 0) {
                 $expires += time();
             }
         }
         $match = session_get_cookie_params();
-        setcookie('bootpress', $value, $expires, $match['path'], $match['domain'], $match['secure'], true);
+        setcookie('_bp', $value, $expires, $match['path'], $match['domain'], $match['secure'], true);
     }
 
     private function setSession(array $info)
     {
-        if (!$current = $this->page->session->get('bootpress')) {
+        if (!$current = $this->page->session->get('auth')) {
             $current = array(
-                'cookie' => null,
+                'cookie' => array(),
                 'verified' => false,
                 'id' => 0,
                 'name' => null,
@@ -673,7 +681,7 @@ class Component
                 'login' => 0,
             );
         }
-        $this->page->session->set('bootpress', array_merge($current, $info));
+        $this->page->session->set('auth', array_merge($current, $info));
     }
 
     /**
