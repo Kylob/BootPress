@@ -75,7 +75,7 @@ class AuthTest extends \PHPUnit_Framework_TestCase
         $page = Page::html();
         $auth = new Auth();
         $auth->login($auth->check('joe@bloggs.com', 'supersekrit'));
-        $session = $page->session->get('auth');
+        $session = $page->session->get('auth.user');
         $this->assertNotEmpty($session);
         $this->assertEquals(1, $session['verified']);
         $this->assertEquals(1, $auth->isUser());
@@ -87,7 +87,7 @@ class AuthTest extends \PHPUnit_Framework_TestCase
         $page->session->set('auth', $session);
         $this->assertFalse($auth->isVerified());
         $auth->logout();
-        $this->assertNull($page->session->get('auth'));
+        $this->assertNull($page->session->get('auth.user'));
         $this->assertFalse($auth->isUser());
     }
 

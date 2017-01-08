@@ -107,6 +107,8 @@ class BootPress extends DataCollector implements DataCollectorInterface, Rendera
             'Session' => isset($_SESSION) ? $_SESSION : array(),
             'Cookies' => $page->request->cookies->all(),
         );
+        ksort($data['Session']);
+        ksort($data['Cookies']);
 
         if (isset($data['Request']['Headers']['php-auth-pw'])) {
             $data['Request']['Headers']['php-auth-pw'] = '******';
