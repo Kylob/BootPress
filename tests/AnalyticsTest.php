@@ -82,7 +82,7 @@ class AnalyticsTest extends \BootPress\HTMLUnit\Component
         $this->assertFileNotExists($csv);
 
         // pass in a user_id
-        $page->session->set('bootpress', array('id' => 1));
+        $page->session->set('auth', array('id' => 1));
 
         // Signed in user with Javascript
         $params = array(
