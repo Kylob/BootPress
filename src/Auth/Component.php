@@ -146,7 +146,7 @@ class Component
         if ($cookie) {
             list($id, $series, $token) = explode(' ', $cookie.'   ');
             if (!$user = $this->db->row(array(
-                'SELECT u.id, u.name, u.email, u.admin, strftime("%s", s.login) AS login, s.user_agent, s.last_activity, s.relapse, s.adjourn, s.token, u.approved',
+                'SELECT u.id, u.name, u.email, u.admin, s.login, s.user_agent, s.last_activity, s.relapse, s.adjourn, s.token, u.approved',
                 'FROM user_sessions AS s',
                 'INNER JOIN users AS u ON s.user_id = u.id',
                 'WHERE s.id = ? AND s.series = ?',
@@ -189,6 +189,7 @@ class Component
                 )), $user['relapse']);
             }
             $this->session = $session; // 'id', 'series', 'token', 'time', 'user_agent'
+            $user['login'] = date_create_from_format('Y-m-d H:i:s', $user['login'])->getTimestamp();
             $user['login'] = $session['time'] - $user['login']; // the number of seconds since
             $this->setSession(array_slice($user, 0, 5, true)); // 'id', 'name', 'email', 'admin', 'login'
         }
