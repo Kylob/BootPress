@@ -164,8 +164,8 @@ class Component
             if ($user['user_agent'] != $session['user_agent'] ||
                 $user['token'] != sha1($session['token']) ||
                 $user['adjourn'] <= $session['time'] ||
-                $user['approved'] != 'Y') {
-                // Something we take seriously has been changed
+                $user['approved'] != 'Y'
+            ) { // Something we take seriously has been changed
                 $this->logout($user['id']);
 
                 return $this->setCookie();
