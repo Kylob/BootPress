@@ -9,7 +9,7 @@
 
 ## Heads Up!
 
-This is where I hone my code before releasing it to the wild.  If you see something you like, let me know and maybe I'll release it sooner than later.  In the meantime, setup a [BootPress Blog](https://packagist.org/packages/bootpress/blog).  You'll love it.
+This is where I hone my code before releasing it to the wild.  If you see something you like, let me know and maybe I'll release it sooner than later.  In the meantime, setup a [BootPress Blog](https://www.bootpress.org/components/blog.html).  You'll love it.
 
 ## License
 
