@@ -10,7 +10,7 @@ php:
 
 before_script:
     - composer install --dev
-    - if [[ $TRAVIS_PHP_VERSION == 5.4 ]]; then composer require codeclimate/php-test-reporter:dev-master; fi
+    - if [[ $TRAVIS_PHP_VERSION == 5.4 ]]; then composer require codeclimate/php-test-reporter; fi
     
 script:
     - if [[ $TRAVIS_PHP_VERSION == 5.4 ]];
