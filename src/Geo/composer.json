@@ -1,0 +1,24 @@
+{
+    "name": "bootpress/geo",
+    "description": "Geo formulae for determining the distance and bearings among latitude and longitude coordinates.",
+    "keywords": [],
+    "homepage": "https://www.bootpress.org/components/geo.html",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Kyle Gadd",
+            "email": "kyle.gadd@gmail.com"
+        }
+    ],
+    "require": {
+        "php": ">=5.4"
+    },
+    "require-dev": {
+        "phpunit/phpunit": "^4.0",
+        "friendsofphp/php-cs-fixer": "^1.0",
+        "squizlabs/php_codesniffer": "^2.5"
+    },
+    "autoload": {
+        "psr-4": { "BootPress\\Geo\\": "src" }
+    }
+}
