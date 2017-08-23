@@ -14,11 +14,11 @@ http://security.stackexchange.com/questions/63435/why-use-an-authentication-toke
     - Store token hash (a weak one is fine) in database, and original in cookie
 https://paragonie.com/blog/2015/04/secure-authentication-php-with-long-term-persistence
     - Query database on a unique id (and not the token) for speed, and to thwart a timing attack
-Charles Miller - http://fishbowl.pastiche.org/2004/01/19/persistent_login_cookie_best_practice/)
+Charles Miller - http://fishbowl.pastiche.org/2004/01/19/persistent_login_cookie_best_practice/
     - Change token with each new session to give attacker a smaller window of opportunity to exploit a stolen cookie
     - If an id (username) and token do not match, then remove all of the users persistent logins
     - Do not allow access to sensitive actions on a cookie-based login, but only through typing a valid password
-Barry Jaspan - http://jaspan.com/improved_persistent_login_cookie_best_practice)
+Barry Jaspan - http://jaspan.com/improved_persistent_login_cookie_best_practice
     - If attacker steals cookie, he becomes the legitimate user (with an updated token), whilst the victim must login again
     - Deleting all sessions for a user submitting an invalid token (only) makes it too easy for an attacker to log everyone out
     - If a series (constant) token is submitted with an invalid (variable) token, then a theft has occurred
