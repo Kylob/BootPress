@@ -116,6 +116,7 @@ class Component
                 header($header.': '.$value);
             }
             $file = array_shift($files); // there's only one here to working with
+            $file->name = basename($file->getRealPath());
             $md5 = substr($file->name, 0, 32);
             $file->name = substr($file->name, 32);
 
