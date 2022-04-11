@@ -13,7 +13,7 @@
         "bootpress/page": "^1.0",
         "bootpress/bootstrap": "^1.0",
         "jbroadway/urlify": "^1.0",
-        "gargron/fileupload": "1.4.5"
+        "gargron/fileupload": "~1.4.0"
     },
     "require-dev": {
         "bootpress/htmlunit": "^1.0",
