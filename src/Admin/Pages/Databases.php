@@ -18,17 +18,8 @@ class Databases
     {
         $page = Page::html();
         $get = $page->request->query->all();
-        if ($page->get('adminer') == 'css') {
-            $file = __DIR__.'/databases/adminer.css';
-            if (is_file($file)) {
-                $page->send(Asset::dispatch($file, 86400));
-            } else {
-                $page->send(Asset::dispatch('css', ''));
-            }
-        }
         if (isset($get['file']) || (isset($get['db']) && (isset($get['mssql']) || isset($get['server']) || isset($get['sqlite']) || isset($get['oracle']) || isset($get['pgsql'])))) {
-            include 'databases/adminer_object.php';
-            include 'databases/adminer-4.2.5-en.php';
+            include 'databases/adminerevo.php';
             exit;
         }
         $databases = $page->file('databases.yml');
