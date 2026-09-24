@@ -16,17 +16,17 @@ $html = '';
 $page = Page::html();
 $blog = new Blog();
 if ($admin = Admin::page('admin')) {
-    $auth = new Auth(array(
-        'basic' => array('admin'=>'password'),
-    ));
-    if ($class = Admin::setup($auth, $blog, array(
+    $auth = new Auth([
+        'basic' => ['admin'=>'password'],
+    ]);
+    if ($class = Admin::setup($auth, $blog, [
         'users' => 'BootPress\Admin\Pages\Users',
         'blog' => 'BootPress\Admin\Pages\Blog',
         'themes' => 'BootPress\Admin\Pages\Themes',
         'folders' => 'BootPress\Admin\Pages\Folders',
         'databases' => 'BootPress\Admin\Pages\Databases',
         'code' => 'BootPress\Admin\Pages\Code',
-    ))) {
+    ])) {
         $html .= $class::page();
     } else {
         $page->eject('admin/'.($auth->isAdmin(2) ? 'blog' : 'users'));
