@@ -139,7 +139,7 @@ class Component
 
         return $db;
     }
-
+	
     /**
      * Track and log the current page.  Relevancy determined in-house.
      *
@@ -153,6 +153,48 @@ class Component
      * - **response** - How long it took to receive those bytes.  Included in **server**.
      * - **views** - The total number of views for the current page, not including your own (if you are logged in)
      */
+    public static function log () {
+        $page = Page::html();
+        if ($params = self::posted()) {
+            $user_id = $page->session->get('auth.user.id');
+            $log = self::save($user_id, $params);
+
+            // Return useful info
+            $uri = ($params['timer']) ? $params['timer'] : array();
+            $db = self::database();
+            if ($user_id) {
+                $views = $db->value(array(
+                    'SELECT COUNT(*) AS views FROM analytic_hits AS h',
+                    'LEFT JOIN analytic_users AS u ON h.session_id = u.session_id AND u.user_id = ?',
+                    'WHERE h.path_id = (SELECT p.id FROM analytic_paths AS p WHERE p.path = ?)',
+                    'AND u.user_id != ?',
+                ), array($user_id, $page->url['path'], $user_id));
+            } else {
+                $views = $db->value(array(
+                    'SELECT COUNT(*) AS views',
+                    'FROM analytic_hits AS h',
+                    'WHERE h.path_id = (SELECT p.id FROM analytic_paths AS p WHERE p.path = ?)',
+                ), array($page->url['path']));
+            }
+            $db->connection()->close();
+            $uri['views'] = ($views) ? $views : 0;
+
+            return $uri;
+        } elseif ($log_robot = self::page()) {
+            list($log, $robot) = $log_robot;
+
+            // Include analytics tracker .js at the end of the page
+            if (!$robot) {
+                $page->filter('body', function ($html) use ($page) {
+                    return $html."\n\t".'<script src="'.$page->url($page->dirname(__CLASS__), 'analytics.js').'"></script>';
+                });
+            }
+        }
+
+        return false;
+    }
+	
+	/*
     public static function log()
     {
         // Get initial values
@@ -164,10 +206,8 @@ class Component
             // Process POST requests from analytics.js
             $params = array();
             foreach (array('width', 'height', 'hemisphere', 'timezone', 'dst', 'offset', 'timer') as $key) {
-                if (null === $value = $page->post($key)) {
-                    return false;
-                }
-                $params[$key] = $value;
+				if (!isset($_POST[$key])) return false;
+				$params[$key] = $_POST[$key];
             }
             extract($params);
             list($time, $cookie, $started) = self::sessionCookie();
@@ -322,7 +362,8 @@ class Component
 
         return false;
     }
-
+	*/
+	
     /**
      * Process the analytics file for up-to-the-second results.  We call this ourselves in 3 minute intervals, when you log user hits.
      */
@@ -352,90 +393,92 @@ class Component
 
         // Open for business
         rename($file, $temp);
-        self::$db = self::database();
-        self::$db->exec('BEGIN IMMEDIATE');
+		if (is_file($temp) && $fp = fopen($temp, 'rb')) {
+			self::$db = self::database();
+			self::$db->exec('BEGIN IMMEDIATE');
+			
+			// Insert records from analytics.csv
+			$fp = fopen($temp, 'rb');
+			while ($row = fgetcsv($fp)) {
+				switch (array_shift($row)) {
+					case 'analytics':
+						list($started, $referrer) = $row;
+						self::exec('INSERT', 'analytics', array($started, $referrer));
+						break;
 
-        // Insert records from analytics.csv
-        $fp = fopen($temp, 'rb');
-        while ($row = fgetcsv($fp)) {
-            switch (array_shift($row)) {
-                case 'analytics':
-                    list($started, $referrer) = $row;
-                    self::exec('INSERT', 'analytics', array($started, $referrer));
-                    break;
+					case 'bots':
+						list($started, $time, $path, $query, $ip, $agent, $robot, $browser, $version, $mobile, $desktop) = $row;
+						$path_id = self::id('paths', $path);
+						$agent_id = self::id('agents', $agent, array(
+							$agent, $robot, $browser, $version, $mobile, $desktop,
+						));
+						self::exec('INSERT', 'bots', array(
+							$time, $ip, $agent_id, $path_id, $query, $started,
+						));
+						break;
 
-                case 'bots':
-                    list($started, $time, $path, $query, $ip, $agent, $robot, $browser, $version, $mobile, $desktop) = $row;
-                    $path_id = self::id('paths', $path);
-                    $agent_id = self::id('agents', $agent, array(
-                        $agent, $robot, $browser, $version, $mobile, $desktop,
-                    ));
-                    self::exec('INSERT', 'bots', array(
-                        $time, $ip, $agent_id, $path_id, $query, $started,
-                    ));
-                    break;
+					case 'sessions':
+						list($started, $offset, $hemisphere, $timezone, $dst, $width, $height, $ip, $path, $query, $agent, $robot, $browser, $version, $mobile, $desktop) = $row;
+						$path_id = self::id('paths', $path);
+						$agent_id = self::id('agents', $agent, array(
+							$agent, $robot, $browser, $version, $mobile, $desktop,
+						));
+						$referrer = ($row = self::exec('SELECT', 'analytics', $started)) ? array_shift($row) : '';
+						self::exec('DELETE', 'bots', array(floor($started), $started));
+						self::$ids['sessions'][(string) $started] = self::exec('INSERT', 'sessions', array(
+							$started, $offset, $hemisphere, $timezone, $dst, $width, $height, $ip, $path_id, $query, $agent_id, $referrer,
+						));
+						break;
 
-                case 'sessions':
-                    list($started, $offset, $hemisphere, $timezone, $dst, $width, $height, $ip, $path, $query, $agent, $robot, $browser, $version, $mobile, $desktop) = $row;
-                    $path_id = self::id('paths', $path);
-                    $agent_id = self::id('agents', $agent, array(
-                        $agent, $robot, $browser, $version, $mobile, $desktop,
-                    ));
-                    $referrer = ($row = self::exec('SELECT', 'analytics', $started)) ? array_shift($row) : '';
-                    self::exec('DELETE', 'bots', array(floor($started), $started));
-                    self::$ids['sessions'][(string) $started] = self::exec('INSERT', 'sessions', array(
-                        $started, $offset, $hemisphere, $timezone, $dst, $width, $height, $ip, $path_id, $query, $agent_id, $referrer,
-                    ));
-                    break;
+					case 'users':
+						list($started, $user_id) = $row;
+						if ($session_id = self::id('sessions', $started)) {
+							self::exec('INSERT', 'users', array($session_id, $user_id));
+						}
+						break;
 
-                case 'users':
-                    list($started, $user_id) = $row;
-                    if ($session_id = self::id('sessions', $started)) {
-                        self::exec('INSERT', 'users', array($session_id, $user_id));
-                    }
-                    break;
+					case 'hits':
+						list($started, $dns, $tcp, $request, $response, $server, $loaded, $time, $path, $query) = $row;
+						if ($session_id = self::id('sessions', $started)) {
+							$path_id = self::id('paths', $path);
+							self::exec('INSERT', 'hits', array(
+								$dns, $tcp, $request, $response, $server, $loaded, $time, $session_id, $path_id, $query,
+							));
+						}
+						break;
+				}
+			}
+			fclose($fp);
 
-                case 'hits':
-                    list($started, $dns, $tcp, $request, $response, $server, $loaded, $time, $path, $query) = $row;
-                    if ($session_id = self::id('sessions', $started)) {
-                        $path_id = self::id('paths', $path);
-                        self::exec('INSERT', 'hits', array(
-                            $dns, $tcp, $request, $response, $server, $loaded, $time, $session_id, $path_id, $query,
-                        ));
-                    }
-                    break;
-            }
-        }
-        fclose($fp);
+			// Remove analytics more than 24 hours old
+			self::$db->exec("DELETE FROM analytics WHERE started <= strftime('%s', 'now', '-24 hours')");
 
-        // Remove analytics more than 24 hours old
-        self::$db->exec("DELETE FROM analytics WHERE started <= strftime('%s', 'now', '-24 hours')");
+			// Update analytic_sessions hits and duration
+			if (isset(self::$ids['sessions'])) {
+				$stmt = self::$db->update('analytic_sessions', 'id', array('hits', 'duration'));
+				foreach (self::$db->all(array(
+					'SELECT session_id AS id, COUNT(*) AS count, MAX(time) AS max, MIN(time) AS min',
+					'FROM analytic_hits',
+					'WHERE time > 0 AND session_id IN('.implode(', ', self::$ids['sessions']).')',
+					'GROUP BY session_id',
+				), '', 'assoc') as $row) {
+					self::$db->update($stmt, $row['id'], array($row['count'], ($row['max'] - $row['min'])));
+				}
+				self::$db->close($stmt);
+			}
 
-        // Update analytic_sessions hits and duration
-        if (isset(self::$ids['sessions'])) {
-            $stmt = self::$db->update('analytic_sessions', 'id', array('hits', 'duration'));
-            foreach (self::$db->all(array(
-                'SELECT session_id AS id, COUNT(*) AS count, MAX(time) AS max, MIN(time) AS min',
-                'FROM analytic_hits',
-                'WHERE time > 0 AND session_id IN('.implode(', ', self::$ids['sessions']).')',
-                'GROUP BY session_id',
-            ), '', 'assoc') as $row) {
-                self::$db->update($stmt, $row['id'], array($row['count'], ($row['max'] - $row['min'])));
-            }
-            self::$db->close($stmt);
-        }
-
-        // Close up shop
-        self::$db->exec('COMMIT');
-        foreach (self::$stmt as $action => $tables) {
-            foreach ($tables as $stmt) {
-                self::$db->close($stmt);
-            }
-        }
-        self::$db = null;
-        self::$ids = array();
-        self::$stmt = array();
-        unlink($temp);
+			// Close up shop
+			self::$db->exec('COMMIT');
+			foreach (self::$stmt as $action => $tables) {
+				foreach ($tables as $stmt) {
+					self::$db->close($stmt);
+				}
+			}
+			self::$db = null;
+			self::$ids = array();
+			self::$stmt = array();
+			unlink($temp);
+		}
     }
 
     /**
@@ -597,6 +640,159 @@ class Component
         }
 
         return implode(', ', $timezones[$timezone]);
+    }
+
+    protected static function posted()
+	{
+        $page = Page::html();
+        if ($page->request->isXmlHttpRequest()) {
+            $params = [];
+            foreach (['width', 'height', 'hemisphere', 'timezone', 'dst', 'offset', 'timer'] as $key) {
+				if (!isset($_POST[$key])) return false;
+				$params[$key] = $_POST[$key];
+            }
+
+            return $params;
+        }
+
+        return false;
+    }
+
+    protected static function save($user_id, array $params)
+	{
+        $page = Page::html();
+        $log = array(); // csv lines
+        extract($params); // 'width', 'height', 'hemisphere', 'timezone', 'dst', 'offset', 'timer'
+        list($time, $cookie, $started) = self::sessionCookie();
+
+        // Establish a SESSION analytics array
+        $analytics = $page->session->get('analytics');
+        if (!is_array($analytics) || $analytics['last'] < ($time - 1800)) { // create a new "session" after half an hour of inactivity
+            $analytics = array(
+                'hits' => 0,
+                'last' => (int) $time,
+                'started' => (float) $started, // microtime(true)
+                'timezone' => (string) $timezone,
+                'offset' => (int) $offset,
+                'users' => array(),
+                'agent' => self::userAgent(), // 'user', 'robot', 'browser', 'version', 'mobile', 'desktop'
+            );
+            extract($analytics['agent']);
+            $log[] = array(
+                'analytic' => 'sessions',
+                'started' => $started,
+                'offset' => $offset,
+                'hemisphere' => $hemisphere,
+                'timezone' => $timezone,
+                'dst' => $dst,
+                'width' => $width,
+                'height' => $height,
+                'ip' => $page->request->getClientIp(),
+                'path' => $page->url['path'],
+                'query' => $page->url['query'],
+                'agent' => (string) $user,
+                'robot' => (string) $robot,
+                'browser' => (string) $browser,
+                'version' => empty($version) ? '' : $version,
+                'mobile' => (string) $mobile,
+                'desktop' => (string) $desktop,
+            );
+        }
+
+        // Log users
+        if ($user_id && !in_array($user_id, $analytics['users'])) {
+            $analytics['users'][] = $user_id;
+            $log[] = array(
+                'analytic' => 'users',
+                'started' => $started,
+                'user_id' => (int) $user_id,
+            );
+        }
+
+        // Increment hits
+        $log[] = array(
+            'analytic' => 'hits',
+            'started' => $started,
+            'dns' => ($timer) ? $timer['dns'] : 0,
+            'tcp' => ($timer) ? $timer['tcp'] : 0,
+            'request' => ($timer) ? $timer['request'] : 0,
+            'response' => ($timer) ? $timer['response'] : 0,
+            'server' => ($timer) ? $timer['server'] : 0,
+            'loaded' => ($timer) ? $timer['loaded'] : 0,
+            'time' => $time,
+            'path' => $page->url['path'],
+            'query' => $page->url['query'],
+        );
+        $analytics['hits'] += 1;
+        $analytics['last'] = $time;
+        if (self::file($log) > 180) {
+            self::process(); // every 3 minutes
+        }
+
+        // Update session and delete cookie
+        $page->session->set('analytics', $analytics);
+        if ($cookie) {
+            $page->filter('response', function ($page, $response) {
+                $response->headers->clearCookie('_bpa');
+            });
+        }
+
+        return $log;
+    }
+
+    protected static function page()
+	{
+        $page = Page::html();
+        if (in_array($page->url['format'], array('html', 'pdf', 'txt', 'xml', 'rdf', 'rss', 'atom'))) {
+            $log = array(); // csv lines
+            $robot = false; // until suspected otherwise
+
+            // Establish COOKIE tracker and log a bot
+            if (!$page->session->get('analytics')) {
+                list($time, $cookie, $started) = self::sessionCookie();
+                extract(self::userAgent()); // 'user', 'robot', 'browser', 'version', 'mobile', 'desktop'
+                $log[] = array(
+                    'analytic' => 'bots',
+                    'started' => $started,
+                    'time' => $time,
+                    'path' => $page->url['path'],
+                    'query' => $page->url['query'],
+                    'ip' => $page->request->getClientIp(),
+                    'agent' => (string) $user,
+                    'robot' => (string) $robot,
+                    'browser' => (string) $browser,
+                    'version' => empty($version) ? '' : $version,
+                    'mobile' => (string) $mobile,
+                    'desktop' => (string) $desktop,
+                );
+                if (
+                    !$robot &&
+                    $cookie === false &&
+                    $referrer = trim(strip_tags($page->request->headers->get('referer')))
+                ) {
+                    $ref = trim(strstr($referrer, ':'), ':/');
+                    $self = trim(strstr($page->url['base'], ':'), ':/');
+                    if (strpos($ref, $self) !== 0) {
+                        $log[] = array( // only the first hit
+                            '' => 'analytics',
+                            'started' => $started,
+                            'referrer' => (string) $referrer,
+                        );
+                    }
+                }
+                $page->filter('response', function ($page, $response) use ($log, $time, $started, $robot) {
+                    if (!$robot) {
+                        $cookie = new Cookie('_bpa', $started.'.'.$time, $time + 1800);
+                        $response->headers->setCookie($cookie);
+                    }
+                    self::file($log);
+                }, array(200));
+            }
+                
+            return [$log, $robot];
+        }
+
+        return false;
     }
 
     /**
