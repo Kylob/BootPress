@@ -68,7 +68,8 @@ class FileName implements FileNameGenerator
             $name = $this->pathresolver->upcountName($name);
         }
 
-        $uploaded_bytes = Util::fixIntegerOverflow(intval($content_range[1]));
+		$int = isset($content_range[1]) ? $content_range[1] : 0;
+        $uploaded_bytes = Util::fixIntegerOverflow(intval($int));
 
         while ($this->filesystem->isFile($this->pathresolver->getUploadPath($name))) {
             if ($uploaded_bytes == $this->filesystem->getFilesize($this->pathresolver->getUploadPath($name))) {
