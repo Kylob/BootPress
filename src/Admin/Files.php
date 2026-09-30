@@ -535,7 +535,7 @@ class Files
                         break;
                 }
             }
-            if (!is_writable($file)) {
+            if (is_file($file) && !is_writable($file)) {
                 exit('This file is not writable');
             } elseif (file_put_contents($file, $code) === false) {
                 exit('There was an error');
