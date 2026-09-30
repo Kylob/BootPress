@@ -71,7 +71,7 @@ class Databases
             $base = $page->commonDir(array_merge(array($page->dir()), $files));
             foreach ($files as $num => $file) {
                 if (is_file($file)) {
-                    $link = $page->url('add', $url, array('sqlite' => '', 'db' => $file, 'username' => 'adminer'));
+                    $link = $page->url('add', $url, array('sqlite' => '', 'db' => $file, 'username' => ''));
                     $display['SQLite'][] = '.../<a href="'.$link.'">'.str_replace($base, '', $file).'</a>';
                 } else {
                     unset($files[$num]);
