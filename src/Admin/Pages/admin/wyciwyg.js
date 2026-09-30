@@ -135,37 +135,54 @@ function display_wyciwyg (classes, data, retrieve, file, line, col) {
         editor.setReadOnly(false);
     }
     editor.getSession().setValue(data, line);
+	$(".wyciwyg_toolbar").hide();
     if (classes.hasClass("php")) {
+		$("#toolbar_php").show();
         editor.getSession().setMode("ace/mode/php");
     } else if (classes.hasClass("ini")) {
+		$("#toolbar_ini").show();
         editor.getSession().setMode("ace/mode/ini");
     } else if (classes.hasClass("yml")) {
+		$("#toolbar_yml").show();
         editor.getSession().setMode("ace/mode/yaml");
     } else if (classes.hasClass("tpl")) {
+		$("#toolbar_tpl").show();
         editor.getSession().setMode("ace/mode/smarty");
     } else if (classes.hasClass("twig")) {
+		$("#toolbar_twig").show();
         editor.getSession().setMode("ace/mode/twig");
     } else if (classes.hasClass("html")) {
+		$("#toolbar_html").show();
         editor.getSession().setMode("ace/mode/html");
     } else if (classes.hasClass("less")) {
+		$("#toolbar_less").show();
         editor.getSession().setMode("ace/mode/less");
     } else if (classes.hasClass("scss")) {
+		$("#toolbar_scss").show();
         editor.getSession().setMode("ace/mode/scss");
     } else if (classes.hasClass("css")) {
+		$("#toolbar_css").show();
         editor.getSession().setMode("ace/mode/css");
     } else if (classes.hasClass("js")) {
+		$("#toolbar_js").show();
         editor.getSession().setMode("ace/mode/javascript");
     } else if (classes.hasClass("json")) {
+		$("#toolbar_json").show();
         editor.getSession().setMode("ace/mode/json");
     } else if (classes.hasClass("xml")) {
+		$("#toolbar_xml").show();
         editor.getSession().setMode("ace/mode/xml");
     } else if (classes.hasClass("rdf")) {
+		$("#toolbar_rdf").show();
         editor.getSession().setMode("ace/mode/xml");
     } else if (classes.hasClass("rss")) {
+		$("#toolbar_rss").show();
         editor.getSession().setMode("ace/mode/xml");
     } else if (classes.hasClass("atom")) {
+		$("#toolbar_atom").show();
         editor.getSession().setMode("ace/mode/xml");
-    } else {
+    } else { // txt(?)
+		$("#toolbar_txt").show();
         editor.getSession().setMode("ace/mode/plain_text");
     }
     $("#adminForms").data("scroll", $(window).scrollTop()).hide(0);
@@ -231,9 +248,23 @@ $(document).ready(function(){
 
     $("#toolbar .insert").click(function(e){
         e.preventDefault();
+		var range = editor.getSelectionRange();
         var value = $(this).data("value").split("|");
-        var text = editor.getSession().getTextRange(editor.getSelectionRange());
+        var text = editor.getSession().getTextRange(range);
         editor.insert(value.join(text));
+		editor.focus();
+		var goto = value[0].split("\n"); // before the initial "|" pipe (that we want to goto)
+		var row = range.end.row + goto.length; // number of newlines (+1 that we need anyways)
+		// Now we need to know how far in (column) to put the cursor on the line (row) we are on
+		text = text.split("\n"); // turn it into an array now, so we can count it later
+		var column = text.pop().length; // of last line in the selected text
+		if (text.length == 0) { // ie. there are no newlines in the selected text
+			column += goto.pop().length; // so we need to add the length of the last (or only) line of prepended text
+			if (goto.length == 0) { // then we need to add what came before that too
+				column += range.start.column;
+			}
+		}
+		editor.gotoLine(row, column);
         if ($(this).closest("div.btn-group").hasClass("open")) $(this).dropdown("toggle");
         return false;
     });
