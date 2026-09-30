@@ -39,6 +39,7 @@ class Component {
 
     public static $website = 'Website'; // change this to actual site name
     public static $admin = ''; // base url path eg. 'admin'
+	public static $email; // you want to send email from
     public static $page;
     public static $plugin;
     public static $offset;
@@ -50,6 +51,7 @@ class Component {
     public static $method = null;
     public static $route = [];
     private static $sidebar = [];
+	private static $wyciwyg = [];
 
     public static function params ($get) {
         $params = [];
@@ -60,6 +62,7 @@ class Component {
             switch ($param) {
                 case 'website':
                 case 'admin':
+                case 'email':
                 case 'page':
                 case 'plugin':
                 case 'offset':
@@ -290,9 +293,48 @@ class Component {
         return '<div class="'.$classes.'">'.$box.'</div>';
     }
 
+	public static function wyciwyg ($type, array $click, string $text = null, string $tag = null) {
+        extract(self::params('page'));
+		if (in_array($tag, ['button', 'li'])) {
+			$insert = str_replace(['<', '>', '"', "\n", "\t"], ['&lt;', '&gt;', '&quot;', '&#10;', '&#09;'], array_pop($click));
+			switch ($tag) {
+				case 'button':
+					$tooltip = array_pop($click); // if there's another there
+					return $page->tag('button', array_filter([
+						'class' => 'btn btn-default insert',
+						'data-value' => $insert,
+						'title' => $tooltip,
+					]), $text);
+					break;
+				case 'li':
+					return '<li><a href="#" class="insert" data-value="' . $insert . '">' . $text . '</a></li>';
+					break;
+			}
+		}
+		$html = '';
+		foreach ($click as $text => $btn) {
+			if (is_numeric($text)) $text = '';
+			$multidimensional = is_array(array_shift(array_values($btn))) ? true : false;
+			if ($multidimensional) { // a dropdown menu
+				if ($text) $text .= ' '; // to make a space between it and the caret, but we don't want a space if there is no text
+				$html .= '<button class="btn btn-default dropdown-toggle" data-toggle="dropdown">' . $text . '<span class="caret"></span></button>';
+				$html .= '<ul class="dropdown-menu">';
+				foreach ($btn as $key => $array) {
+					$html .= self::wyciwyg($type, $array, $key, 'li');
+				}
+				$html .= '</ul>';
+			} else {
+				$html .= self::wyciwyg($type, $btn, $text, 'button');
+			}
+		}
+		foreach ((array) $type as $file) {
+			self::$wyciwyg[$file][] = $html;
+		}
+	}
+	
     # https://adminlte.io/themes/AdminLTE/documentation/index.html
     public static function display ($content) {
-        extract(self::params('website', 'bp', 'page', 'admin'));
+        extract(self::params('website', 'bp', 'page', 'auth', 'admin'));
         $page->meta('http-equiv="X-UA-Compatible" content="IE=edge"');
         $page->meta('content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" name="viewport"');
 
@@ -312,11 +354,13 @@ class Component {
                 $page->$config = $default;
             }
         }
-
+		
         // DebugBar
-		$debugbar = ($page->session->get('enable_debugbar')) ? 'Disable' : 'Enable';
-		array_unshift($page->navbar, '<a href="'.$page->url('add', '', 'debugbar', strtolower($debugbar)).'">'. $bp->icon('bug', 'fa') . '</a>');
-		// $page->footer .= '<span class="pull-right"><a href="'.$page->url('add', '', 'debugbar', strtolower($debugbar)).'">'.$debugbar.' DebugBar</a></span>';
+		if ($auth->isAdmin(1)) {
+			$debugbar = ($page->session->get('enable_debugbar')) ? 'Disable' : 'Enable';
+			array_unshift($page->navbar, '<a href="'.$page->url('add', '', 'debugbar', strtolower($debugbar)).'">'. $bp->icon('bug', 'fa') . '</a>');
+			// $page->footer .= '<span class="pull-right"><a href="'.$page->url('add', '', 'debugbar', strtolower($debugbar)).'">'.$debugbar.' DebugBar</a></span>';
+		}
 
         // Nav Links
         $nav = [];
@@ -365,7 +409,7 @@ class Component {
                 }
                 if (strpos($page->url['path'], $admin.$path) === 0) {
                     $class[] = 'active';
-                }
+				}
 				$menu .= (!empty($class)) ? '<li class="'.implode(' ', $class).'">' : '<li>';
 				$link = $page->url('admin', $path);
 				if ($top_nav && $submenu) {
@@ -490,7 +534,10 @@ class Component {
 
         // End "wrapper"
         $html .= '</div>';
-        // self::wyciwyg();
+		
+        if (true) { // $page->ace_editor) {
+			self::ace_editor();
+		}
 		
         // Main CSS and JS Files
 		$page->link('<script src="https://cdnjs.cloudflare.com/ajax/libs/admin-lte/2.3.11/js/app.min.js"></script>', 'prepend'); // this must come after the options, fastclick, and slimscroll below
@@ -509,7 +556,6 @@ class Component {
 			'https://cdn.jsdelivr.net/bootbox/4.4.0/bootbox.min.js',
 			'https://cdn.jsdelivr.net/icheck/1.0.2/icheck.min.js',
 			'https://cdn.jsdelivr.net/icheck/1.0.2/skins/line/red.min.css',
-			'https://cdn.jsdelivr.net/ace/1.2.6/min/ace.js',
 			'<!--[if lt IE 9]>
 				<script src="https://cdn.jsdelivr.net/html5shiv/3.7.3/html5shiv.min.js"></script>
 				<script src="https://cdn.jsdelivr.net/respond/1.4.2/respond.min.js"></script>
@@ -533,63 +579,68 @@ class Component {
      *
      * @return <type>
      */
-    public static function wyciwyg () {
+    private static function ace_editor () {
         extract(self::params('bp', 'page', 'plugin'));
-		static $called = null;
-		if ($called) return;
-		$called = true; // only once
-        $page->link($page->url($plugin, 'Pages/admin/wyciwyg.js'));
-        $html = "\n\n".<<<EOT
-<div id="wyciwyg" style="display:none; width:100%; padding:0 10px;">
+        $page->link([
+			'https://cdn.jsdelivr.net/ace/1.2.6/min/ace.js',
+			$page->url($plugin, 'Pages/admin/wyciwyg.js'),
+		]);
+		if (!isset(self::$wyciwyg['html'])) {
+			self::wyciwyg('html', [
+				$bp->icon('header', 'fa') => [
+					'<h1>Heading 1</h1>' => ['<h1>|</h1>'],
+					'<h2>Heading 2</h2>' => ['<h2>|</h2>'],
+					'<h3>Heading 3</h3>' => ['<h3>|</h3>'],
+					'<h4>Heading 4</h4>' => ['<h4>|</h4>'],
+					'<h5>Heading 5</h5>' => ['<h5>|</h5>'],
+					'<h6>Heading 6</h6>' => ['<h6>|</h6>'],
+				],
+			]);
+			self::wyciwyg('html', [
+				'Paragraph' => ['icon'=>'paragraph', '<p>|</p>'],
+				[
+					$bp->icon('quote-right', 'fa') .  ' Blockquote'     => ["<blockquote>\n\t<p>|</p>\n</blockquote>"],
+					$bp->icon('align-left', 'fa') .   ' Left Aligned'   => ['<p class="text-left">|</p>'],
+					$bp->icon('align-center', 'fa') . ' Center Aligned' => ['<p class="text-center">|</p>'],
+					$bp->icon('align-right', 'fa') .  ' Right Aligned'  => ['<p class="text-right">|</p>'],
+				],
+			]);
+			self::wyciwyg('html', [
+				$bp->icon('list-alt', 'fa') . ' List' => [
+					$bp->icon('list-ol', 'fa') . ' Ordered' =>    ["<ol>\n\t<li>|</li>\n\t<li></li>\n</ol>"],
+					$bp->icon('list-ul', 'fa') . ' Unordered' =>  ["<ul>\n\t<li>|</li>\n\t<li></li>\n</ul>"],
+					'Unstyled' =>   ["<ul class=\"unstyled\">\n\t<li>|</li>\n\t<li></li>\n</ul>"],
+					'Inline' =>     ["<ul class=\"inline\">\n\t<li>|</li>\n\t<li></li>\n</ul>"],
+					$bp->icon('th-list', 'fa') . ' Definition' => ["<dl>\n\t<dt>|</dt>\n\t<dd></dd>\n</dl>"],
+					'Horizontal' => ["<dl class=\"dl-horizontal\">\n\t<dt>|</dt>\n\t<dd></dd>\n</dl>"],
+				],
+			]);
+			self::wyciwyg('html', [
+				$bp->icon('link')    => ['Link',  '<a href="|">|</a>'],
+				$bp->icon('picture') => ['Image', '<img src="|" width="" height="", alt="">'],
+				$bp->icon('table', 'fa')   => ['Table', "<table class=\"table\">\n\t<thead>\n\t\t<tr>\n\t\t\t<th>|</th>\n\t\t\t<th></th>\n\t\t</tr>\n\t</thead>\n\t<tbody>\n\t\t<tr>\n\t\t\t<td></td>\n\t\t\t<td></td>\n\t\t</tr>\n\t</tbody>\n</table>"],
+			]);
+			self::wyciwyg('html', [
+				$bp->icon('bold', 'fa')      => ['Bold',      '<strong>|</strong>'],
+				$bp->icon('italic', 'fa')    => ['Italic',    '<em>|</em>'],
+				$bp->icon('underline', 'fa') => ['Underline', '<ul>|</ul>'],
+			]);
+		}
+		$groups = [];
+		$page->style('.wyciwyg_toolbar .btn-group.markup { margin-right:10px; }');
+		foreach (self::$wyciwyg as $filetype => $combine) {
+			foreach ($combine as $key => $group) {
+				$combine[$key] = '<div class="btn-group btn-group-xs markup">' . $group . '</div>';
+			}
+			$groups[$filetype] = "\n\t" . implode("\n\t", $combine);
+		}
+		foreach ($groups as $filetype => $toolbar) {
+			$groups[$filetype] = '<div id="toolbar_' . $filetype . '" class="wyciwyg_toolbar" style="display:none;">' . $toolbar . "\n</div>";
+		}
+		$groups = implode("\n", $groups);
+        $toolbar = <<<EOT
     <div id="toolbar" class="btn-toolbar">
-
-        <div class="btn-group btn-group-xs markup">
-            <button class="btn btn-default dropdown-toggle" data-toggle="dropdown">{$bp->icon('header', 'fa')} <span class="caret"></span></button>
-            <ul class="dropdown-menu">
-                <li><a href="#" class="insert" data-value="&lt;h1&gt;|&lt;/h1&gt;"><h1>Heading 1</h1></a></li>
-                <li><a href="#" class="insert" data-value="&lt;h2&gt;|&lt;/h2&gt;"><h2>Heading 2</h2></a></li>
-                <li><a href="#" class="insert" data-value="&lt;h3&gt;|&lt;/h3&gt;"><h3>Heading 3</h3></a></li>
-                <li><a href="#" class="insert" data-value="&lt;h4&gt;|&lt;/h4&gt;"><h4>Heading 4</h4></a></li>
-                <li><a href="#" class="insert" data-value="&lt;h5&gt;|&lt;/h5&gt;"><h5>Heading 5</h5></a></li>
-                <li><a href="#" class="insert" data-value="&lt;h6&gt;|&lt;/h6&gt;"><h6>Heading 6</h6></a></li>
-            </ul>
-        </div>
-
-        <div class="btn-group btn-group-xs markup">
-            <button class="btn btn-default insert" data-value="&lt;p&gt;|&lt;/p&gt;">{$bp->icon('paragraph', 'fa')} Paragraph</button>
-            <button class="btn btn-default dropdown-toggle" data-toggle="dropdown"><span class="caret"></span></button>
-            <ul class="dropdown-menu">
-                <li><a href="#" class="insert" data-value="&lt;blockquote&gt;&#10;&#09;&lt;p&gt;|&lt;/p&gt;&#10;&lt;/blockquote&gt;">{$bp->icon('quote-right', 'fa')} Blockquote</a></li>
-                <li><a href="#" class="insert" data-value="&lt;p class=&quot;text-left&quot;&gt;|&lt;/p&gt;">{$bp->icon('align-left', 'fa')} Left Aligned</a></li>
-                <li><a href="#" class="insert" data-value="&lt;p class=&quot;text-center&quot;&gt;|&lt;/p&gt;">{$bp->icon('align-center', 'fa')} Center Aligned</a></li>
-                <li><a href="#" class="insert" data-value="&lt;p class=&quot;text-right&quot;&gt;|&lt;/p&gt;">{$bp->icon('align-right', 'fa')} Right Aligned</a></li>
-            </ul>
-        </div>
-
-        <div class="btn-group btn-group-xs markup">
-            <button class="btn btn-default dropdown-toggle" data-toggle="dropdown">{$bp->icon('list-alt', 'fa')} List <span class="caret"></span></button>
-            <ul class="dropdown-menu">
-                <li><a href="#" class="insert" data-value="&lt;ol&gt;&#10;&#09;&lt;li&gt;|&lt;/li&gt;&#10;&#09;&lt;li&gt;&lt;/li&gt;&#10;&lt;/ol&gt;">{$bp->icon('list-ol', 'fa')} Ordered</a></li>
-                <li><a href="#" class="insert" data-value="&lt;ul&gt;&#10;&#09;&lt;li&gt;|&lt;/li&gt;&#10;&#09;&lt;li&gt;&lt;/li&gt;&#10;&lt;/ul&gt;">{$bp->icon('list-ul', 'fa')} Unordered</a></li>
-                <li><a href="#" class="insert" data-value="&lt;ul class=&quot;unstyled&quot;&gt;&#10;&#09;&lt;li&gt;|&lt;/li&gt;&#10;&#09;&lt;li&gt;&lt;/li&gt;&#10;&lt;/ul&gt;">Unstyled</a></li>
-                <li><a href="#" class="insert" data-value="&lt;ul class=&quot;inline&quot;&gt;&#10;&#09;&lt;li&gt;|&lt;/li&gt;&#10;&#09;&lt;li&gt;&lt;/li&gt;&#10;&lt;/ul&gt;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Inline</a></li>
-                <li><a href="#" class="insert" data-value="&lt;dl&gt;&#10;&#09;&lt;dt&gt;|&lt;/dt&gt;&#10;&#09;&lt;dd&gt;&lt;/dd&gt;&#10;&lt;/dl&gt;">Definition</a></li>
-                <li><a href="#" class="insert" data-value="&lt;dl class=&quot;dl-horizontal&quot;&gt;&#10;&#09;&lt;dt&gt;|&lt;/dt&gt;&#10;&#09;&lt;dd&gt;&lt;/dd&gt;&#10;&lt;/dl&gt;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Horizontal</a></li>
-            </ul>
-        </div>
-
-        <div class="btn-group btn-group-xs markup">
-            <button class="btn btn-default insert" data-value="&lt;a href=&quot;|&quot;&gt;|&lt;/a&gt;" title="Link">{$bp->icon('link')}</button>
-            <button class="btn btn-default insert" data-value="&lt;img src=&quot;|&quot; width=&quot;&quot; height=&quot;&quot; alt=&quot;&quot;&gt;" title="Image">{$bp->icon('picture')}</button>
-            <button class="btn btn-default insert" data-value="&lt;table class=&quot;table&quot;&gt;&#10;&#09;&lt;thead&gt;&#10;&#09;&#09;&lt;tr&gt;&#10;&#09;&#09;&#09;&lt;th&gt;|&lt;/th&gt;&#10;&#09;&#09;&#09;&lt;th&gt;&lt;/th&gt;&#10;&#09;&#09;&lt;/tr&gt;&#10;&#09;&lt;/thead&gt;&#10;&#09;&lt;tbody&gt;&#10;&#09;&#09;&lt;tr&gt;&#10;&#09;&#09;&#09;&lt;td&gt;&lt;/td&gt;&#10;&#09;&#09;&#09;&lt;td&gt;&lt;/td&gt;&#10;&#09;&#09;&lt;/tr&gt;&#10;&#09;&lt;/tbody&gt;&#10;&lt;/table&gt;" title="Table">{$bp->icon('table', 'fa')}</button>
-        </div>
-
-        <div class="btn-group btn-group-xs markup">
-            <button class="btn btn-default insert" data-value="&lt;strong&gt;|&lt;/strong&gt;" title="Bold">{$bp->icon('bold', 'fa')}</button>
-            <button class="btn btn-default insert" data-value="&lt;em&gt;|&lt;/em&gt;" title="Italic">{$bp->icon('italic', 'fa')}</button>
-            <button class="btn btn-default insert" data-value="&lt;u&gt;|&lt;/u&gt;" title="Underline">{$bp->icon('underline', 'fa')}</button>
-        </div>
-
+{$groups}
         <div class="pull-right" style="margin-bottom:10px;">
             <button class="eject btn btn-link btn-xs" title="Click to Return">{$bp->icon('reply', 'fa')} Return</button>
             <button class="send btn btn-primary btn-xs">{$bp->icon('save', 'fa')} Save Changes</button>
@@ -601,13 +652,22 @@ class Component {
             <div class="file pull-right" style="margin:1px 10px; font-weight:bold;"></div>
             <div class="status pull-right" style="margin:1px 0 1px 10px; font-weight:bold; display:none;"></div>
         </div>
-
-    </div> <!-- #toolbar -->
-    <div id="editor"></div>
-</div> <!-- #wyciwyg -->
+    </div>
 EOT;
+		$html = '<div id="wyciwyg" style="display:none; width:100%; padding:0 10px;">' . $toolbar . '<div id="editor"></div></div>';
         $page->filter('html', function ($prepend, $html, $append) {
             return $prepend.$html.$append;
         }, array('<div id="adminForms">', 'this', '</div>'.$html), 50);
     }
+	
+    public static function email ($email, $subject, array $message) {
+        foreach ($message as $key => $string) {
+            $message[$key] = wordwrap($string, 70, "\n");
+        }
+
+        return self::$email ? mail($email, $subject, implode("\n\n", $message), implode("\n", [
+            'From: ' . self::$email, // eg. Website <no-reply@website.com>
+        ])) : false;
+    }
+	
 }
