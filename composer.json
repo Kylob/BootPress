@@ -12,7 +12,7 @@
         "bootpress/blog": "^1.0",
         "bootpress/bootstrap": "^1.0",
         "jenssegers/agent": "^2.3",
-        "maximebf/debugbar": "^1.11",
+        "php-debugbar/php-debugbar": "^1.11",
         "jbroadway/urlify": "^1.0",
         "gargron/fileupload": "^1.1",
         "maennchen/zipstream-php": "^0.4.0",
