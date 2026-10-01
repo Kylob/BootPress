@@ -535,7 +535,7 @@ class Component {
         // End "wrapper"
         $html .= '</div>';
 		
-        if (true) { // $page->ace_editor) {
+		if (preg_match('/class="[^"]*wyciwyg[^"]*"/', $content)) {
 			self::ace_editor();
 		}
 		
