@@ -184,13 +184,14 @@ class Users
     private static function listUsers($view)
     {
         extract(Admin::params('bp', 'page', 'auth', 'website'));
+		$thirty_days_ago = time() - (30 * 24 * 60 * 60);
         $page->title = 'View Users at '.$website;
         $html = '';
 
         // Count
         $count = array();
         $count['total'] = $auth->db->value('SELECT COUNT(*) FROM users');
-        $count['active'] = $auth->db->value('SELECT COUNT(DISTINCT user_id) FROM user_sessions WHERE user_id > 1 AND last_activity > UNIX_TIMESTAMP(DATE_SUB(NOW(), INTERVAL 30 day))');
+        $count['active'] = $auth->db->value('SELECT COUNT(DISTINCT user_id) FROM user_sessions WHERE user_id > 1 AND last_activity > ' . $thirty_days_ago); // UNIX_TIMESTAMP(DATE_SUB(NOW(), INTERVAL 30 day))');
         $count['admin'] = $auth->db->value('SELECT COUNT(*) FROM users WHERE admin > 0 AND admin <= 2');
 
         // Links
@@ -219,7 +220,7 @@ class Users
             }
             $ids = $auth->db->ids(array(
                 'SELECT user_id, MAX(last_activity) AS last FROM user_sessions',
-                'WHERE user_id > 1 AND last_activity > UNIX_TIMESTAMP(DATE_SUB(NOW(), INTERVAL 30 day))',
+                'WHERE user_id > 1 AND last_activity > ' . $thirty_days_ago, // UNIX_TIMESTAMP(DATE_SUB(NOW(), INTERVAL 30 day))',
                 'GROUP BY user_id ORDER BY last DESC'.$bp->pagination->limit,
             ));
         } elseif ($view == 'admin') {
