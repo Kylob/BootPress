@@ -555,8 +555,9 @@ class Blog
                 $thumb = '<img src="'.$row['page']['image'].'?w=75&h=75" width="75" height="75">';
             }
             $listing = '<h4>';
-            $listing .= '<a href="'.$page->url('base', $row['path']).'">';
+            $listing .= '<a href="'.$page->url('base', $row['path']).'" target="_blank">';
             $listing .= (!empty($row['title'])) ? $row['title'] : $row['path'];
+			$listing .= ' '.$bp->icon('new-window');
             $listing .= '</a> <small class="pull-right">'.$reference.'</small>';
             $listing .= '</h4>';
             $listing .= '<p>';
